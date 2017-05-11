@@ -100,15 +100,16 @@ public class ClassicDeferredPipeline : RenderPipelineAsset {
 	public Shader deferredShader;
 	public Shader deferredReflectionShader;
 
-	private static int s_GBufferAlbedo;
-	private static int s_GBufferSpecRough;
-	private static int s_GBufferNormal;
-	private static int s_GBufferEmission;
-	private static int s_GBufferRedF32;
-	private static int s_GBufferZ;
+	private static RenderPassAttachment s_GBufferAlbedo;
+	private static RenderPassAttachment s_GBufferSpecRough;
+	private static RenderPassAttachment s_GBufferNormal;
+	private static RenderPassAttachment s_GBufferEmission;
+	private static RenderPassAttachment s_GBufferZ;
 
-	private static int s_CameraTarget;
-	private static int s_CameraDepthTexture;
+	private static RenderPassAttachment s_CameraTarget;
+
+	//private static int s_GBufferRedF32;
+	//private static int s_CameraDepthTexture;
 
 	private Material m_DirectionalDeferredLightingMaterial;
 	private Material m_FiniteDeferredLightingMaterial;
@@ -138,16 +139,19 @@ public class ClassicDeferredPipeline : RenderPipelineAsset {
 
 	public void Build()
 	{
-		s_GBufferAlbedo = Shader.PropertyToID ("_CameraGBufferTexture0");
-		s_GBufferSpecRough = Shader.PropertyToID ("_CameraGBufferTexture1");
-		s_GBufferNormal = Shader.PropertyToID ("_CameraGBufferTexture2");
-		s_GBufferEmission = Shader.PropertyToID ("_CameraGBufferTexture3");
-		s_GBufferRedF32 = Shader.PropertyToID ("_CameraVPDepth"); 
+		s_GBufferAlbedo = new RenderPassAttachment(RenderTextureFormat.ARGB32);
+		s_GBufferSpecRough = new RenderPassAttachment(RenderTextureFormat.ARGB32);
+		s_GBufferNormal = new RenderPassAttachment(RenderTextureFormat.ARGB2101010);
+		s_GBufferEmission = new RenderPassAttachment(RenderTextureFormat.ARGBHalf);
+		s_GBufferZ = new RenderPassAttachment(RenderTextureFormat.Depth);
+		s_CameraTarget = new RenderPassAttachment(RenderTextureFormat.ARGB32);
 
-		s_GBufferZ = Shader.PropertyToID ("_CameraGBufferZ"); // used while rendering into G-buffer+
-		s_CameraDepthTexture = Shader.PropertyToID ("_CameraDepthTexture"); // copy of that for later sampling in shaders
-		s_CameraTarget = Shader.PropertyToID ("_CameraTarget");
+		s_GBufferEmission.Clear(new Color(0.0f, 0.0f, 0.0f, 0.0f), 1.0f, 0);
+		s_GBufferZ.Clear(new Color(), 1.0f, 0);
 
+		s_CameraTarget.BindSurface(BuiltinRenderTextureType.CameraTarget, false, true);
+
+		// material setup
 		m_BlitMaterial = new Material (finalPassShader) { hideFlags = HideFlags.HideAndDontSave };
 
 		m_DirectionalDeferredLightingMaterial = new Material (deferredShader) { hideFlags = HideFlags.HideAndDontSave };
@@ -209,59 +213,83 @@ public class ClassicDeferredPipeline : RenderPipelineAsset {
 
 	public void Render(ScriptableRenderContext context, IEnumerable<Camera> cameras)
 	{
+		RenderDeferred(context, cameras);
+
+		context.Submit ();
+	}
+	void RenderDeferred(ScriptableRenderContext context, IEnumerable<Camera> cameras)
+	{
 		foreach (var camera in cameras) {
 			// Culling
 			CullingParameters cullingParams;
 			if (!CullResults.GetCullingParameters (camera, out cullingParams))
 				continue;
+			var cullResults = CullResults.Cull (ref cullingParams, context);
 
 			m_ShadowPass.UpdateCullingParameters(ref cullingParams);
+			RenderShadowMaps(cullResults, context);
 
-			var cullResults = CullResults.Cull (ref cullingParams, context);
-			ExecuteRenderLoop(camera, cullResults, context);
+			// Setup camera for rendering (sets render target, view/projection matrices and other
+			// per-camera built-in shader variables).
+			context.SetupCameraProperties(camera);
+
+			using (RenderPass rp = new RenderPass (context, camera.pixelWidth, camera.pixelHeight, 1, new[] { s_GBufferAlbedo, s_GBufferSpecRough, s_GBufferNormal, s_GBufferEmission, s_CameraTarget }, s_GBufferZ)) 
+			{
+				using (new RenderPass.SubPass(rp, new[] { s_GBufferAlbedo, s_GBufferSpecRough, s_GBufferNormal, s_GBufferEmission }, null))
+				{
+					using (var cmd = new CommandBuffer { name = "Create G-Buffer" } )
+					{
+						cmd.EnableShaderKeyword("UNITY_HDR_ON");
+
+						context.ExecuteCommandBuffer(cmd);
+					}
+
+					var settings = new DrawRendererSettings(cullResults, camera, new ShaderPassName("Deferred"))
+					{
+						sorting = { flags = SortFlags.CommonOpaque },
+						rendererConfiguration = RendererConfiguration.PerObjectLightmaps
+
+					};
+
+					settings.inputFilter.SetQueuesOpaque();
+					context.DrawRenderers(ref settings);
+				}
+
+				PushGlobalShadowParams (context);
+
+				// lighting pass
+				using (new RenderPass.SubPass(rp, new[] { s_GBufferEmission }, new[] { s_GBufferAlbedo, s_GBufferSpecRough, s_GBufferNormal, s_GBufferZ }, true))
+				{
+					using (var cmd = new CommandBuffer { name = "Lighting and Reflections"} )
+					{
+						RenderLightGeometry (camera, cullResults, cmd, context);
+						RenderReflections (camera, cmd, cullResults, context);
+
+						context.ExecuteCommandBuffer(cmd);
+					}
+				}
+
+				using (new RenderPass.SubPass (rp, new[] { s_GBufferEmission }, null, true)) {
+					context.DrawSkybox (camera);
+				}
+
+				//needed?
+				context.SetupCameraProperties(camera);
+
+				using (new RenderPass.SubPass(rp, new[] { s_CameraTarget }, new[] { s_GBufferEmission }))
+				{
+					var cmd = new CommandBuffer { name = "FinalPass" };
+
+					cmd.DrawProcedural(new Matrix4x4(), m_BlitMaterial, 0, MeshTopology.Triangles, 3);
+
+					context.ExecuteCommandBuffer(cmd);
+					cmd.Dispose();
+
+				}
+			}
 		}
-
-		context.Submit ();
 	}
 
-	void ExecuteRenderLoop(Camera camera, CullResults cullResults, ScriptableRenderContext loop)
-	{
-		RenderShadowMaps(cullResults, loop);
-
-		loop.SetupCameraProperties(camera);
-		RenderGBuffer(cullResults, camera, loop);
-	
-		//DepthOnlyForForwardOpaques(cullResults, camera, loop);
-
-		// IF PLATFORM_MAC -- cannot use framebuffer fetch
-		#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-		CopyDepthAfterGBuffer(loop);
-		#endif
-
-		PushGlobalShadowParams (loop);
-
-		RenderLighting (camera, cullResults, loop);
-
-		loop.DrawSkybox (camera);
-
-		loop.SetupCameraProperties (camera);
-
-		// present frame buffer.
-		FinalPass(loop);
-	}
-
-	static Matrix4x4 GetFlipMatrix()
-	{
-		Matrix4x4 flip = Matrix4x4.identity;
-		bool isLeftHand = ((int)LightDefinitions.USE_LEFTHAND_CAMERASPACE) != 0;
-		if (isLeftHand) flip.SetColumn(2, new Vector4(0.0f, 0.0f, -1.0f, 0.0f));
-		return flip;
-	}
-
-	static Matrix4x4 WorldToCamera(Camera camera)
-	{
-		return GetFlipMatrix() * camera.worldToCameraMatrix;
-	}
 
 	void RenderReflections(Camera camera, CommandBuffer cmd, CullResults cullResults, ScriptableRenderContext loop)
 	{
@@ -478,83 +506,6 @@ public class ClassicDeferredPipeline : RenderPipelineAsset {
 		m_Shadow3X3PCFTerms[3] = new Vector4(-flTexelEpsilonX, -flTexelEpsilonY, 0.0f, 0.0f);
 	}
 
-	static void SetupGBuffer(int width, int height, CommandBuffer cmd)
-	{
-		var format10 = RenderTextureFormat.ARGB32;
-		if (SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGB2101010))
-			format10 = RenderTextureFormat.ARGB2101010;
-		var formatHDR = RenderTextureFormat.DefaultHDR;
-
-		//@TODO: cleanup, right now only because we want to use unmodified Standard shader that encodes emission differently based on HDR or not,
-		// so we make it think we always render in HDR
-		cmd.EnableShaderKeyword ("UNITY_HDR_ON");
-
-		//@TODO: GetGraphicsCaps().buggyMRTSRGBWriteFlag
-		cmd.GetTemporaryRT(s_GBufferAlbedo, width, height, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
-		cmd.GetTemporaryRT(s_GBufferSpecRough, width, height, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
-		cmd.GetTemporaryRT(s_GBufferNormal, width, height, 0, FilterMode.Point, format10, RenderTextureReadWrite.Linear);
-		cmd.GetTemporaryRT(s_GBufferEmission, width, height, 0, FilterMode.Point, formatHDR, RenderTextureReadWrite.Linear);
-		cmd.GetTemporaryRT(s_CameraDepthTexture, width, height, 24, FilterMode.Point, RenderTextureFormat.Depth);
-		cmd.GetTemporaryRT(s_CameraTarget, width, height, 0, FilterMode.Point, formatHDR, RenderTextureReadWrite.Default, 1, true); // rtv/uav
-
-		#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-		cmd.GetTemporaryRT(s_GBufferZ, width, height, 24, FilterMode.Point, RenderTextureFormat.Depth);
-
-		var colorMRTs = new RenderTargetIdentifier[4] { s_GBufferAlbedo, s_GBufferSpecRough, s_GBufferNormal, s_GBufferEmission };
-		cmd.SetRenderTarget(colorMRTs, new RenderTargetIdentifier(s_GBufferZ));
-
-		#else
-		cmd.GetTemporaryRT(s_GBufferZ, width, height, 24, FilterMode.Point, RenderTextureFormat.Depth);
-		cmd.GetTemporaryRT(s_GBufferRedF32, width, height, 24, FilterMode.Point, RenderTextureFormat.RFloat);
-
-		var colorMRTs = new RenderTargetIdentifier[5] { s_GBufferAlbedo, s_GBufferSpecRough, s_GBufferNormal, s_GBufferEmission, s_GBufferRedF32 };
-		cmd.SetRenderTarget(colorMRTs, new RenderTargetIdentifier(s_GBufferZ));
-
-		#endif
-
-		cmd.ClearRenderTarget(true, true, new Color(0, 0, 0, 0));
-
-	}
-
-	static void RenderGBuffer(CullResults cull, Camera camera, ScriptableRenderContext loop)
-	{
-		// setup GBuffer for rendering
-		var cmd = new CommandBuffer { name = "Create G-Buffer" };
-		SetupGBuffer(camera.pixelWidth, camera.pixelHeight, cmd);
-		loop.ExecuteCommandBuffer(cmd);
-		cmd.Dispose();
-
-		// render opaque objects using Deferred pass
-		var settings = new DrawRendererSettings(cull, camera, new ShaderPassName("Deferred"))
-		{
-			sorting = {flags = SortFlags.CommonOpaque},
-			rendererConfiguration = RendererConfiguration.PerObjectLightmaps
-		};
-
-		//@TODO: need to get light probes + LPPV too?
-		settings.inputFilter.SetQueuesOpaque();
-		settings.rendererConfiguration = RendererConfiguration.PerObjectLightmaps | RendererConfiguration.PerObjectLightProbe;
-		loop.DrawRenderers(ref settings);
-	}
-
-	void RenderLighting (Camera camera, CullResults inputs, ScriptableRenderContext loop)
-	{
-		var cmd = new CommandBuffer { name = "Lighting" };
-
-		// IF PLATFORM_MAC -- cannot use framebuffer fetch
-		#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-		cmd.SetRenderTarget (new RenderTargetIdentifier (s_GBufferEmission), new RenderTargetIdentifier (s_GBufferZ));
-		#endif
-
-		RenderLightGeometry (camera, inputs, cmd, loop);
-
-		// TODO: UNITY_BRDF_PBS1 writes out alpha 1 to our emission alpha. Should preclear emission alpha after gbuffer pass in case this ever changes
-		RenderReflections (camera, cmd, inputs, loop);
-
-		loop.ExecuteCommandBuffer (cmd);
-		cmd.Dispose ();
-	}
-
 	void RenderLightGeometry (Camera camera, CullResults inputs, CommandBuffer cmd, ScriptableRenderContext loop)
 	{
 		int lightCount = inputs.visibleLights.Length;
@@ -695,38 +646,17 @@ public class ClassicDeferredPipeline : RenderPipelineAsset {
 		//m_InvCosHalfSpotAngle = 1.0f / cs;
 	}
 
-	static void DepthOnlyForForwardOpaques(CullResults cull, Camera camera, ScriptableRenderContext loop)
+	static Matrix4x4 GetFlipMatrix()
 	{
-		var cmd = new CommandBuffer { name = "Forward Opaques - Depth Only" };
-		cmd.SetRenderTarget(new RenderTargetIdentifier(s_GBufferZ));
-		loop.ExecuteCommandBuffer(cmd);
-		cmd.Dispose();
-
-		// render opaque objects using Deferred pass
-		var settings = new DrawRendererSettings(cull, camera, new ShaderPassName("DepthOnly"))
-		{
-			sorting = { flags = SortFlags.CommonOpaque }
-		};
-		settings.inputFilter.SetQueuesOpaque();
-		loop.DrawRenderers(ref settings);
+		Matrix4x4 flip = Matrix4x4.identity;
+		bool isLeftHand = ((int)LightDefinitions.USE_LEFTHAND_CAMERASPACE) != 0;
+		if (isLeftHand) flip.SetColumn(2, new Vector4(0.0f, 0.0f, -1.0f, 0.0f));
+		return flip;
 	}
 
-	static void CopyDepthAfterGBuffer(ScriptableRenderContext loop)
+	static Matrix4x4 WorldToCamera(Camera camera)
 	{
-		var cmd = new CommandBuffer { name = "Copy depth" };
-		cmd.CopyTexture(new RenderTargetIdentifier(s_GBufferZ), new RenderTargetIdentifier(s_CameraDepthTexture));
-		loop.ExecuteCommandBuffer(cmd);
-		cmd.Dispose();
+		return GetFlipMatrix() * camera.worldToCameraMatrix;
 	}
-
-	void FinalPass(ScriptableRenderContext loop)
-	{
-		var cmd = new CommandBuffer { name = "FinalPass" };
-		cmd.Blit(s_GBufferEmission, BuiltinRenderTextureType.CameraTarget, m_BlitMaterial, 0);
-		loop.ExecuteCommandBuffer(cmd);
-		cmd.Dispose();
-	}
-
-
 }
 
