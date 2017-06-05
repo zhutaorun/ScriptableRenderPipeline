@@ -42,6 +42,10 @@ sampler2D _CameraGBufferTexture2;
 #		include "../../ShaderLibrary/API/D3D11_1.hlsl"
 #	elif defined(SHADER_API_METAL)
 #		include "../../ShaderLibrary/API/Metal.hlsl"
+#	elif defined(SHADER_API_GLES3)
+#		include "../../ShaderLibrary/API/GLES3.hlsl"
+#	elif defined(SHADER_API_VULKAN)
+#		include "../../ShaderLibrary/API/Vulkan.hlsl"
 #	else
 #		error unsupported shader api
 #	endif
