@@ -96,16 +96,15 @@
 
 #ifndef INTRINSIC_BITFIELD_EXTRACT
 // unsigned integer bit field extract implementation
-uint BitFieldExtract(uint data, uint numBits, uint offset)
+uint BitFieldExtract(uint data, uint size, uint offset)
 {
-    uint mask = 0xFFFFFFFFu >> (32u - numBits);
-    return (data >> offset) & mask;
+    return (data >> offset) & ((1u << size) - 1u);
 }
 #endif // INTRINSIC_BITFIELD_EXTRACT
 
-bool IsBitSet(uint data, uint bitPos)
+bool IsBitSet(uint number, uint bitPos)
 {
-    return BitFieldExtract(data, 1u, bitPos) != 0;
+    return ((number >> bitPos) & 1) != 0;
 }
 
 #ifndef INTRINSIC_CLAMP

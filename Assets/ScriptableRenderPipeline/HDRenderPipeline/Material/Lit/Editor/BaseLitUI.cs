@@ -13,7 +13,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     {
         protected static class StylesBaseLit
         {
-            public static GUIContent doubleSidedNormalModeText = new GUIContent("Normal mode", "This will modify the normal base on the selected mode. None: untouch, Mirror: Mirror the normal with vertex normal plane, Flip: Flip the normal");
+            public static GUIContent doubleSidedMirrorEnableText = new GUIContent("Mirror normal", "This will mirror the normal with vertex normal plane if enabled, else flip the normal");
             public static GUIContent depthOffsetEnableText = new GUIContent("Enable Depth Offset", "EnableDepthOffset on this shader (Use with heightmap)");
 
             // Material ID
@@ -50,13 +50,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static string vertexAnimation = "Vertex Animation";
         }
 
-        public enum DoubleSidedNormalMode
-        {
-           None,
-           Mirror,
-           Flip
-        }
-
         public enum TessellationMode
         {
             Phong,
@@ -64,8 +57,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             DisplacementPhong,
         }
 
-        protected MaterialProperty doubleSidedNormalMode = null;
-        protected const string kDoubleSidedNormalMode = "_DoubleSidedNormalMode";
+        protected MaterialProperty doubleSidedMirrorEnable = null;
+        protected const string kDoubleSidedMirrorEnable = "_DoubleSidedMirrorEnable";
         protected MaterialProperty depthOffsetEnable = null;
         protected const string kDepthOffsetEnable = "_DepthOffsetEnable";
 
@@ -124,7 +117,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             base.FindBaseMaterialProperties(props);
 
-            doubleSidedNormalMode = FindProperty(kDoubleSidedNormalMode, props);
+            doubleSidedMirrorEnable = FindProperty(kDoubleSidedMirrorEnable, props);
             depthOffsetEnable = FindProperty(kDepthOffsetEnable, props);
 
             // MaterialID
@@ -180,7 +173,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (doubleSidedEnable.floatValue > 0.0f)
             {
                 EditorGUI.indentLevel++;
-                m_MaterialEditor.ShaderProperty(doubleSidedNormalMode, StylesBaseLit.doubleSidedNormalModeText);
+                m_MaterialEditor.ShaderProperty(doubleSidedMirrorEnable, StylesBaseLit.doubleSidedMirrorEnableText);
                 EditorGUI.indentLevel--;
             }
 
@@ -255,28 +248,23 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             SetupBaseUnlitKeywords(material);
 
             bool doubleSidedEnable = material.GetFloat(kDoubleSidedEnable) > 0.0f;
+            bool doubleSidedMirrorEnable = material.GetFloat(kDoubleSidedMirrorEnable) > 0.0f;
 
             if (doubleSidedEnable)
             {
-                DoubleSidedNormalMode doubleSidedNormalMode = (DoubleSidedNormalMode)material.GetFloat(kDoubleSidedNormalMode);
-                switch (doubleSidedNormalMode)
+                if (doubleSidedMirrorEnable)
                 {
-                    case DoubleSidedNormalMode.None:
-                        material.SetVector("_DoubleSidedConstants", new Vector4(1.0f, 1.0f, 1.0f, 0.0f));
-                        break;
-
-                    case DoubleSidedNormalMode.Mirror: // Mirror mode (in tangent space)
-                        material.SetVector("_DoubleSidedConstants", new Vector4(1.0f, 1.0f, -1.0f, 0.0f));
-                        break;
-
-                    case DoubleSidedNormalMode.Flip: // Flip mode (in tangent space)
-                        material.SetVector("_DoubleSidedConstants", new Vector4(-1.0f, -1.0f, -1.0f, 0.0f));
-                        break;
+                    // Mirror mode (in tangent space)
+                    material.SetVector("_DoubleSidedConstants", new Vector4(1.0f, 1.0f, -1.0f, 0.0f));
+                }
+                else
+                {
+                    // Flip mode (in tangent space)
+                    material.SetVector("_DoubleSidedConstants", new Vector4(-1.0f, -1.0f, -1.0f, 0.0f));
                 }
             }
 
-            // Depth offset is only enabled if per pixel displacement is
-            bool depthOffsetEnable = (material.GetFloat(kDepthOffsetEnable) > 0.0f) && (material.GetFloat(kEnablePerPixelDisplacement) > 0.0f);
+            bool depthOffsetEnable = material.GetFloat(kDepthOffsetEnable) > 0.0f;
             SetKeyword(material, "_DEPTHOFFSET_ON", depthOffsetEnable);
 
             // Set the reference value for the stencil test.

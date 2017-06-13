@@ -270,15 +270,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RebuildSkyMeshes(nearPlane, farPlane);
         }
 
-        public void Build(RenderPipelineResources renderPipelinesResources)
+        public void Build()
         {
             // Create unititialized. Lazy initialization is performed later.
-            m_iblFilterGgx = new IBLFilterGGX(renderPipelinesResources);
+            m_iblFilterGgx = new IBLFilterGGX();
 
             // TODO: We need to have an API to send our sky information to Enlighten. For now use a workaround through skybox/cubemap material...
-            m_StandardSkyboxMaterial = Utilities.CreateEngineMaterial(renderPipelinesResources.skyboxCubemap);
+            m_StandardSkyboxMaterial = Utilities.CreateEngineMaterial("Skybox/Cubemap");
 
-            m_BlitCubemapMaterial = Utilities.CreateEngineMaterial(renderPipelinesResources.blitCubemap);
+            m_BlitCubemapMaterial = Utilities.CreateEngineMaterial("Hidden/BlitCubemap");
 
             m_CurrentUpdateTime = 0.0f;
         }
