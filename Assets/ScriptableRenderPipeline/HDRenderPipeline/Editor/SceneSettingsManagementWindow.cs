@@ -35,19 +35,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 CreateAsset<CommonSettings>("NewCommonSettings");
             }
 
-            if (GUILayout.Button("Create new HDRI Sky Settings"))
+            if (GUILayout.Button("Create new HDRI sky params"))
             {
                 CreateAsset<HDRISkySettings>("NewHDRISkySettings");
             }
 
-            if (GUILayout.Button("Create new Procedural Sky Settings"))
+            if (GUILayout.Button("Create new Procedural sky params"))
             {
-                CreateAsset<ProceduralSkySettings>("NewProceduralSkySettings");
-            }
-
-            if (GUILayout.Button("Create new Ambient Occlusion Settings"))
-            {
-                CreateAsset<ScreenSpaceAmbientOcclusionSettings>("NewAmbientOcclusionSettings");
+                CreateAsset<ProceduralSkySettings>("NewProceduralSkyParameters");
             }
 
             EditorGUILayout.Space();

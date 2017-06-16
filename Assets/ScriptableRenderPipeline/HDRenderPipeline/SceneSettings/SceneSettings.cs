@@ -17,21 +17,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             get { return m_SkySettings; }
         }
 
-        public ScreenSpaceAmbientOcclusionSettings ssaoSettings
-        {
-            get { return m_SsaoSettings; }
-        }
-
         [SerializeField] private CommonSettings m_CommonSettings = null;
         [SerializeField] private SkySettings    m_SkySettings = null;
-        [SerializeField] private ScreenSpaceAmbientOcclusionSettings m_SsaoSettings = null;
 
         // Use this for initialization
         void OnEnable()
         {
             SceneSettingsManager.instance.AddSceneSettings(this);
 
-            HDRenderPipeline hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
+            HDRenderPipelineInstance hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipelineInstance;
 
             if (hdPipeline != null)
             {

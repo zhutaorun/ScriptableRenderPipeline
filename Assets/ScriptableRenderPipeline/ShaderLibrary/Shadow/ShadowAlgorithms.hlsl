@@ -208,11 +208,13 @@ int EvalShadow_GetSplitSphereIndexForDirshadows( float3 positionWS, float4 dirSh
 	dirShadowSplitSphereSqRadii.z = dirShadowSplitSpheres[2].w;
 	dirShadowSplitSphereSqRadii.w = dirShadowSplitSpheres[3].w;
 
+	if( distances2.w > dirShadowSplitSphereSqRadii.w )
+		return -1;
+
 	float4 weights = float4( distances2 < dirShadowSplitSphereSqRadii );
 	weights.yzw = saturate( weights.yzw - weights.xyz );
 
-	int idx = int( 4.0 - dot( weights, float4( 4.0, 3.0, 2.0, 1.0 ) ) );
-	return idx <= 3 ? idx : -1;
+	return int( 4.0 - dot( weights, float4(4.0, 3.0, 2.0, 1.0 ) ) );
 }
 
 uint EvalShadow_LoadSplitSpheres( ShadowContext shadowContext, int index, out float4 splitSpheres[4] )

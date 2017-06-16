@@ -520,6 +520,7 @@ public class ClassicDeferredPipeline : RenderPipelineAsset {
 			cmd.SetGlobalVector ("unity_SpecCube1_ProbePosition", new Vector4 (0.0f, 0.0f, 0.0f, 1.0f));
 
 			cmd.DrawMesh (m_QuadMesh, Matrix4x4.identity, m_ReflectionNearAndFarClipMaterial, 0, 0, props);
+
 		}
 	}
 

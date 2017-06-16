@@ -526,11 +526,7 @@ float SampleShadow_PCF_9tap_Adaptive(ShadowContext shadowContext, inout uint pay
 //
 float SampleShadow_VSM_1tap( ShadowContext shadowContext, inout uint payloadOffset, float3 tcs, uint slice, uint texIdx, uint sampIdx )
 {
-#if UNITY_REVERSED_Z
-	float  depth		 = 1.0 - tcs.z;
-#else
 	float  depth		 = tcs.z;
-#endif
 	float2 params		 = asfloat( shadowContext.payloads[payloadOffset].xy );
 	float  lightLeakBias = params.x;
 	float  varianceBias  = params.y;
@@ -543,11 +539,7 @@ float SampleShadow_VSM_1tap( ShadowContext shadowContext, inout uint payloadOffs
 
 float SampleShadow_VSM_1tap(ShadowContext shadowContext, inout uint payloadOffset, float3 tcs, uint slice, Texture2DArray tex, SamplerState samp )
 {
-#if UNITY_REVERSED_Z
-	float  depth		 = 1.0 - tcs.z;
-#else
 	float  depth		 = tcs.z;
-#endif
 	float2 params		 = asfloat( shadowContext.payloads[payloadOffset].xy );
 	float  lightLeakBias = params.x;
 	float  varianceBias  = params.y;
@@ -563,11 +555,7 @@ float SampleShadow_VSM_1tap(ShadowContext shadowContext, inout uint payloadOffse
 //
 float SampleShadow_EVSM_1tap( ShadowContext shadowContext, inout uint payloadOffset, float3 tcs, uint slice, uint texIdx, uint sampIdx, bool fourMoments )
 {
-#if UNITY_REVERSED_Z
-	float  depth		 = 1.0 - tcs.z;
-#else
 	float  depth		 = tcs.z;
-#endif
 	float4 params		 = asfloat( shadowContext.payloads[payloadOffset] );
 	float  lightLeakBias = params.x;
 	float  varianceBias	 = params.y;
@@ -597,11 +585,7 @@ float SampleShadow_EVSM_1tap( ShadowContext shadowContext, inout uint payloadOff
 
 float SampleShadow_EVSM_1tap( ShadowContext shadowContext, inout uint payloadOffset, float3 tcs, uint slice, Texture2DArray tex, SamplerState samp, bool fourMoments )
 {
-#if UNITY_REVERSED_Z
-	float  depth		 = 1.0 - tcs.z;
-#else
 	float  depth		 = tcs.z;
-#endif
 	float4 params		 = asfloat( shadowContext.payloads[payloadOffset] );
 	float  lightLeakBias = params.x;
 	float  varianceBias  = params.y;
@@ -640,11 +624,7 @@ float SampleShadow_MSM_1tap( ShadowContext shadowContext, inout uint payloadOffs
 	float  momentBias    = params.y;
 	float  depthBias	 = params.z;
 	float  bpp16		 = params.w;
-#if UNITY_REVERSED_Z
-	float  depth         = (1.0 - tcs.z) + depthBias;
-#else
 	float  depth         = tcs.z + depthBias;
-#endif
 	payloadOffset++;
 
 	float4 moments = SampleShadow_T2DA( shadowContext, texIdx, sampIdx, tcs.xy, slice );
@@ -668,11 +648,7 @@ float SampleShadow_MSM_1tap( ShadowContext shadowContext, inout uint payloadOffs
 	float  momentBias    = params.y;
 	float  depthBias	 = params.z;
 	float  bpp16		 = params.w;
-#if UNITY_REVERSED_Z
-	float  depth         = (1.0 - tcs.z) + depthBias;
-#else
-	float  depth         = tcs.z + depthBias;
-#endif
+	float  depth = tcs.z + depthBias;
 	payloadOffset++;
 
 	float4 moments = SAMPLE_TEXTURE2D_ARRAY_LOD( tex, samp, tcs.xy, slice, 0.0 );

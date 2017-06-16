@@ -116,9 +116,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public float   subsurfaceRadius;
             public float   thickness;
             public int     subsurfaceProfile;
-            public bool    enableTransmission; // Read from the SSS profile
-            public bool    useThinObjectMode;  // Read from the SSS profile
-            public Vector3 transmittance;
+            public TransmissionType transmissionType; // Compute from the SSS profile. 0 is none, 1 is regular transmission, 2 is thin transmission
+            public Vector3 transmittance; // Compute from SSS profile
 
             // SpecColor
             // fold into fresnel0
@@ -232,7 +231,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 tex.SetPixels(pixels, arrayElement);
             }
 
-            public void Build(RenderPipelineResources renderPipelineResources)
+            public void Build()
             {
                 m_InitPreFGD = Utilities.CreateEngineMaterial("Hidden/HDRenderPipeline/PreIntegratedFGD");
 
