@@ -513,6 +513,19 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 					}
 				}
 
+				// particles
+				using (new RenderPass.SubPass (rp, new[] { s_GBufferEmission }, null)) 
+				{
+					// TODO: Use Particle renderer directly? Dont hardocde shader pass name? Not sure yet. 
+					var settings = new DrawRendererSettings(cullResults, camera, new ShaderPassName("SRP_PARTICLES_ALPHA_BLEND_PREMULTIPLY"))
+					{
+						sorting = { flags = SortFlags.CommonTransparent }
+					};
+
+					settings.inputFilter.SetQueuesTransparent();
+					loop.DrawRenderers (ref settings);
+				}
+
 				//Final pass
 				using (new RenderPass.SubPass(rp, new[] { s_CameraTarget }, new[] { s_GBufferEmission }))
 				{
