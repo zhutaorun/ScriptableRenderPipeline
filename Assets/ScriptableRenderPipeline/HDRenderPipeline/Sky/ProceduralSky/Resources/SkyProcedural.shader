@@ -67,7 +67,8 @@ Shader "Hidden/HDRenderPipeline/Sky/SkyProcedural"
             float4 Frag(Varyings input) : SV_Target
             {
                 // Points towards the camera
-                float3 viewDirWS = normalize(mul(float3(input.positionCS.xy, 1.0), (float3x3)_PixelCoordToViewDirWS));
+                float3 viewDirWS_unnormalized = mul(float3(input.positionCS.xy, 1.0), (float3x3)_PixelCoordToViewDirWS);
+                float3 viewDirWS = normalize(viewDirWS_unnormalized);
                 // Reverse it to point into the scene
                 float3 dir = -viewDirWS;
 
@@ -95,7 +96,7 @@ Shader "Hidden/HDRenderPipeline/Sky/SkyProcedural"
                         if (depthRaw > 0.0f)
                         {
                             skyTexWeight = 0.0f;
-                            linearDist = LinearEyeDepth(depthRaw, _ZBufferParams) * length(input.eyeVector);
+                            linearDist = LinearEyeDepth(depthRaw, _ZBufferParams) * length(viewDirWS_unnormalized);
                             yOffset = 0.0;
                         }
                     }
