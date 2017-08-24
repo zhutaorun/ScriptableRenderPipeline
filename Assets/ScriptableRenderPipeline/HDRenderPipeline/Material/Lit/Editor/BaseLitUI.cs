@@ -50,6 +50,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static GUIContent windShiverDirectionalityText = new GUIContent("Shiver Directionality");
 
             public static string vertexAnimation = "Vertex Animation";
+
+            // FPS Mode
+            public static GUIContent fpsModeText = new GUIContent("Enable FPS Mode");
+            public static GUIContent fpsModeFovText = new GUIContent("Fov");
+
+
+            public static string fpsMode = "FPS Mode";
         }
 
         public enum DoubleSidedNormalMode
@@ -94,6 +101,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string kWindShiverDrag = "_ShiverDrag";
         protected MaterialProperty windShiverDirectionality = null;
         protected const string kWindShiverDirectionality = "_ShiverDirectionality";
+
+        // Fps mode
+        protected MaterialProperty fpsModeEnable = null;
+        protected const string kFpsModeEnabled = "_EnableFpsMode";
+        protected MaterialProperty fpsModeFov = null;
+        protected const string kFpsModeFov = "_FpsModeFov";
 
         // Per pixel displacement params
         protected MaterialProperty enablePerPixelDisplacement = null;
@@ -161,6 +174,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             windDrag = FindProperty(kWindDrag, props);
             windShiverDrag = FindProperty(kWindShiverDrag, props);
             windShiverDirectionality = FindProperty(kWindShiverDirectionality, props);
+
+            fpsModeEnable = FindProperty(kFpsModeEnabled, props);
+            fpsModeFov = FindProperty(kFpsModeFov, props);
         }
 
         void TessellationModePopup()
@@ -261,6 +277,22 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             EditorGUI.indentLevel--;
         }
 
+        protected override void FpsModePropertiesGUI()
+        {
+            GUILayout.Label(StylesBaseLit.fpsMode, EditorStyles.boldLabel);
+
+            EditorGUI.indentLevel++;
+            m_MaterialEditor.ShaderProperty(fpsModeEnable, StylesBaseLit.fpsModeText);
+            if (fpsModeEnable.floatValue > 0.0f)
+            {
+                EditorGUI.indentLevel++;
+                m_MaterialEditor.ShaderProperty(fpsModeFov, StylesBaseLit.fpsModeFovText);
+                EditorGUI.indentLevel--;
+            }
+
+            EditorGUI.indentLevel--;
+        }
+
         // All Setup Keyword functions must be static. It allow to create script to automatically update the shaders with a script if code change
         static public void SetupBaseLitKeywords(Material material)
         {
@@ -334,6 +366,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             bool windEnabled = material.GetFloat(kWindEnabled) > 0.0f;
             SetKeyword(material, "_VERTEX_WIND", windEnabled);
+
+            bool fpsModeEnabled = material.GetFloat(kFpsModeEnabled) > 0.0f;
+            SetKeyword(material, "_FPS_MODE", fpsModeEnabled);
         }
 
         static public void SetupBaseLitMaterialPass(Material material)

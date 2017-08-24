@@ -112,6 +112,8 @@ float _Drag;
 float _ShiverDrag;
 float _ShiverDirectionality;
 
+float _FpsModeFov;
+
 #ifndef LAYERED_LIT_SHADER
 
 // Set of users variables

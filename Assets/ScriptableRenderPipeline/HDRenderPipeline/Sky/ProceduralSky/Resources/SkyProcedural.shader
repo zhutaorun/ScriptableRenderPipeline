@@ -31,12 +31,14 @@ Shader "Hidden/HDRenderPipeline/Sky/SkyProcedural"
 
             // x = width, y = height, z = 1.0/width, w = 1.0/height
             float4 _ScreenSize;
+            float4 _ZBufferParams;
 
             float4 _CameraPosWS;
 
             float4x4 _InvViewProjMatrix;
 
             float _SkyDepth;
+            float _SkyYOffset;
 
             float _DisableSkyOcclusionTest;
 
@@ -81,6 +83,33 @@ Shader "Hidden/HDRenderPipeline/Sky/SkyProcedural"
                 // input.positionCS is SV_Position
                 PositionInputs posInput = GetPositionInput(input.positionCS.xy, _ScreenSize.zw);
 
+#if 1
+                float linearDist = 1.0f / _SkyDepth;
+                float yOffset = -_SkyYOffset;
+                #ifdef PERFORM_SKY_OCCLUSION_TEST
+                    // Determine whether the sky is occluded by the scene geometry.
+                    // Do not perform blending with the environment map if the sky is occluded.
+                    float skyTexWeight = 1.0;
+                    if (_DisableSkyOcclusionTest == 0.0)
+                    {
+                        float depthRaw = LOAD_TEXTURE2D(_MainDepthTexture, posInput.unPositionSS).r;
+                        if (depthRaw > 0.0f)
+                        {
+                            skyTexWeight = 0.0f;
+                            linearDist = LinearEyeDepth(depthRaw, _ZBufferParams) * length(input.eyeVector);
+                            yOffset = 0.0;
+                        }
+                    }
+
+                #else
+                    float skyTexWeight = 0.0;
+                #endif
+
+                float3 positionWS = _CameraPosWS + linearDist * dir;
+                positionWS.y += yOffset;
+#else
+
+
                 #ifdef PERFORM_SKY_OCCLUSION_TEST
                     // Determine whether the sky is occluded by the scene geometry.
                     // Do not perform blending with the environment map if the sky is occluded.
@@ -100,8 +129,11 @@ Shader "Hidden/HDRenderPipeline/Sky/SkyProcedural"
                 // Since we only need the world space position, so we don't pass the view-projection matrix.
                 UpdatePositionInput(depthRaw, _InvViewProjMatrix, k_identity4x4, posInput);
 
+                float3 positionWS = posInput.positionWS;
+#endif
+
                 float4 c1, c2, c3;
-                VolundTransferScatter(posInput.positionWS, c1, c2, c3);
+                VolundTransferScatter(positionWS, c1, c2, c3);
 
                 float4 coord1 = float4(c1.rgb + c3.rgb, max(0.f, 1.f - c1.a - c3.a));
                 float3 coord2 = c2.rgb;

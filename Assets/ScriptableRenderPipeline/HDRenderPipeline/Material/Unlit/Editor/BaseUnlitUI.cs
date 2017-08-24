@@ -73,6 +73,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected abstract void SetupMaterialKeywordsAndPassInternal(Material material);
         protected abstract void MaterialPropertiesGUI(Material material);
         protected abstract void VertexAnimationPropertiesGUI();
+        protected abstract void FpsModePropertiesGUI();
         // This function will say if emissive is used or not regarding enlighten/PVR
         protected abstract bool ShouldEmissionBeEnabled(Material material);
 
@@ -313,6 +314,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 EditorGUILayout.Space();
 
                 VertexAnimationPropertiesGUI();
+
+                EditorGUILayout.Space();
+                FpsModePropertiesGUI();
 
                 EditorGUILayout.Space();
                 MaterialPropertiesGUI(material);

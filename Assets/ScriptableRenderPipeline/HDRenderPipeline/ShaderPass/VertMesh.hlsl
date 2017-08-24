@@ -119,6 +119,12 @@ VaryingsMeshType VertMesh(AttributesMesh input)
     ApplyWind(positionWS, normalWS, rootWP, _Stiffness, _Drag, _ShiverDrag, _ShiverDirectionality, _InitialBend, vertexColor.a, _Time);
 #endif
 
+#if _FPS_MODE
+    float3 positionVS = mul(GetWorldToViewMatrix(), float4(positionWS - _WorldSpaceCameraPos, 1.0f));
+    positionVS.xy *= 1.0f / (-_ProjMatrix[1].y * tan(_FpsModeFov * 0.5f * PI / 180.0f));    // *= tan(old_fov * 0.5) / tan(new_fov * 0.5)
+    positionWS = mul(positionVS, (float3x3)GetWorldToViewMatrix()) + _WorldSpaceCameraPos;
+#endif
+
     positionWS = GetCameraRelativePositionWS(positionWS);
 
 #ifdef TESSELLATION_ON

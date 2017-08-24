@@ -53,6 +53,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         }
 
+        protected override void FpsModePropertiesGUI()
+        {
+
+        }
+
         protected override bool ShouldEmissionBeEnabled(Material mat)
         {
             return mat.GetFloat(kEmissiveIntensity) > 0.0f;

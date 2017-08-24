@@ -54,6 +54,9 @@ Shader "HDRenderPipeline/LitTessellation"
         _ShiverDrag("Shiver Drag", float) = 0.2
         _ShiverDirectionality("Shiver Directionality", Range(0.0, 1.0)) = 0.5
 
+        [ToggleOff] _EnableFpsMode("Enable Fps Mode", Float) = 0.0
+        _FpsModeFov("_FpsModeFov", Float) = 60.0
+
         _DistortionVectorMap("DistortionVectorMap", 2D) = "black" {}
 
         // Following options are for the GUI inspector and different from the input parameters above
@@ -161,6 +164,7 @@ Shader "HDRenderPipeline/LitTessellation"
     #pragma shader_feature _THICKNESSMAP
     #pragma shader_feature _SPECULARCOLORMAP
     #pragma shader_feature _VERTEX_WIND
+    #pragma shader_feature _FPS_MODE
 
     // MaterialId are used as shader feature to allow compiler to optimize properly
     // Note _MATID_STANDARD is not define as there is always the default case "_". We assign default as _MATID_STANDARD, so we never test _MATID_STANDARD

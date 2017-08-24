@@ -53,7 +53,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             atlasInit.baseInit.maxPayloadCount = 0;
             atlasInit.baseInit.shadowSupport   = ShadowmapBase.ShadowSupport.Directional | ShadowmapBase.ShadowSupport.Point | ShadowmapBase.ShadowSupport.Spot;
             atlasInit.shaderKeyword            = null;
-
+            /*
             var varianceInit = atlasInit;
             varianceInit.baseInit.shadowmapFormat = ShadowVariance.GetFormat( false, false, true );
 
@@ -62,8 +62,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             var varianceInit3 = varianceInit;
             varianceInit3.baseInit.shadowmapFormat = ShadowVariance.GetFormat( true, false, true );
-
-            m_Shadowmaps = new ShadowmapBase[] { new ShadowVariance( ref varianceInit ), new ShadowVariance( ref varianceInit2 ), new ShadowVariance( ref varianceInit3 ), new ShadowAtlas( ref atlasInit ) };
+            */
+            m_Shadowmaps = new ShadowmapBase[] { /*new ShadowVariance( ref varianceInit ), new ShadowVariance( ref varianceInit2 ), new ShadowVariance( ref varianceInit3 ), */new ShadowAtlas( ref atlasInit ) };
 
             ShadowContext.SyncDel syncer = (ShadowContext sc) =>
                 {
@@ -92,10 +92,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         cb.SetComputeBufferParam(computeShader, computeKernel, HDShaderIDs._ShadowDatasExp, s_ShadowDataBuffer);
                         cb.SetComputeBufferParam(computeShader, computeKernel, HDShaderIDs._ShadowPayloads, s_ShadowPayloadBuffer);
                         // bind textures
+                        /*
                         cb.SetComputeTextureParam(computeShader, computeKernel, HDShaderIDs._ShadowmapExp_VSM_0, tex[0]);
                         cb.SetComputeTextureParam(computeShader, computeKernel, HDShaderIDs._ShadowmapExp_VSM_1, tex[1]);
                         cb.SetComputeTextureParam(computeShader, computeKernel, HDShaderIDs._ShadowmapExp_VSM_2, tex[2]);
-                        cb.SetComputeTextureParam(computeShader, computeKernel, HDShaderIDs._ShadowmapExp_PCF, tex[3]);
+                        */
+                        cb.SetComputeTextureParam(computeShader, computeKernel, HDShaderIDs._ShadowmapExp_PCF, tex[0]);
                     }
                     else
                     {
@@ -103,10 +105,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         cb.SetGlobalBuffer(HDShaderIDs._ShadowDatasExp, s_ShadowDataBuffer);
                         cb.SetGlobalBuffer(HDShaderIDs._ShadowPayloads, s_ShadowPayloadBuffer);
                         // bind textures
+                        /*
                         cb.SetGlobalTexture(HDShaderIDs._ShadowmapExp_VSM_0, tex[0]);
                         cb.SetGlobalTexture(HDShaderIDs._ShadowmapExp_VSM_1, tex[1]);
                         cb.SetGlobalTexture(HDShaderIDs._ShadowmapExp_VSM_2, tex[2]);
-                        cb.SetGlobalTexture(HDShaderIDs._ShadowmapExp_PCF, tex[3]);
+                        */
+                        cb.SetGlobalTexture(HDShaderIDs._ShadowmapExp_PCF, tex[0]);
                     }
 
                     // TODO: Currently samplers are hard coded in ShadowContext.hlsl, so we can't really set them here
@@ -139,9 +143,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (m_Shadowmaps != null)
             {
                 (m_Shadowmaps[0] as ShadowAtlas).Dispose();
+                /*
                 (m_Shadowmaps[1] as ShadowAtlas).Dispose();
                 (m_Shadowmaps[2] as ShadowAtlas).Dispose();
                 (m_Shadowmaps[3] as ShadowAtlas).Dispose();
+                */
                 m_Shadowmaps = null;
             }
             m_ShadowMgr = null;

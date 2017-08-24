@@ -154,6 +154,9 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
         _ShiverDrag("Shiver Drag", float) = 0.2
         _ShiverDirectionality("Shiver Directionality", Range(0.0, 1.0)) = 0.5
 
+        [ToggleOff] _EnableFpsMode("Enable Fps Mode", Float) = 0.0
+        _FpsModeFov("_FpsModeFov", Float) = 60.0
+
         _EmissiveColor("EmissiveColor", Color) = (0, 0, 0)
         _EmissiveColorMap("EmissiveColorMap", 2D) = "white" {}
         _EmissiveIntensity("EmissiveIntensity", Float) = 0
@@ -296,6 +299,7 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
     #pragma shader_feature _HEIGHT_BASED_BLEND
     #pragma shader_feature _ _LAYEREDLIT_3_LAYERS _LAYEREDLIT_4_LAYERS
     #pragma shader_feature _VERTEX_WIND
+    #pragma shader_feature _FPS_MODE
 
     #pragma multi_compile LIGHTMAP_OFF LIGHTMAP_ON
     #pragma multi_compile DIRLIGHTMAP_OFF DIRLIGHTMAP_COMBINED
