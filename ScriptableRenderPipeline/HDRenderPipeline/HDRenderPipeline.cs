@@ -935,6 +935,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // Render all type of transparent forward (unlit, lit, complex (hair...)) to keep the sorting between transparent objects.
                 RenderForward(m_CullResults, camera, renderContext, cmd, false);
 
+                // SampleGame Change BEGIN
+                DebugOverlay.Render3D(hdCamera, cmd);
+                // SampleGame Change END
+
                 // Render fog.
                 VolumetricLightingPass(cmd, hdCamera);
 
@@ -965,6 +969,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             RenderDebug(hdCamera, cmd);
+
+            /// SampleGame Change BEGIN
+            DebugOverlay.Render(hdCamera, cmd);
+            /// SampleGame Change END
 
             // bind depth surface for editor grid/gizmo/selection rendering
             if (camera.cameraType == CameraType.SceneView)
