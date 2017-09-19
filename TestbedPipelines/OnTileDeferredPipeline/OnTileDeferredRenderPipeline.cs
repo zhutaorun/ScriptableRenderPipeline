@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.SceneManagement;
 
 namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 {
@@ -191,6 +190,8 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 
 		// This must match MAX_LIGHTS in UnityStandardForwardMobile
 		const int k_MaxLights = 100;
+		const float FLT_MAX = float.PositiveInfinity;
+		const float FLT_MIN = float.NegativeInfinity;
 
 		// arrays for shader data
 		private Vector4[] m_LightData = new Vector4[k_MaxLights]; // x:Light_type, y:ShadowIndex z:w:UNUSED
@@ -449,7 +450,7 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 
 		void ExecuteRenderLoop(Camera camera, CullResults cullResults, ScriptableRenderContext loop)
 		{
-			using (RenderPass rp = new RenderPass (loop, camera.pixelWidth, camera.pixelHeight, 1, s_SupportsReadOnlyDepth ? 
+			using (var rp = new RenderPass (loop, camera.pixelWidth, camera.pixelHeight, 1, s_SupportsReadOnlyDepth ? 
 				new[] { s_GBufferAlbedo, s_GBufferSpecRough, s_GBufferNormal, s_GBufferEmission } :
 				new[] { s_GBufferAlbedo, s_GBufferSpecRough, s_GBufferNormal, s_GBufferEmission, s_GBufferRedF32 }, s_Depth)) {
 
@@ -480,8 +481,8 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 				{
 					using (var cmd = new CommandBuffer { name = "Deferred Lighting and Reflections Pass"} )
 					{
-						RenderLightsDeferred (camera, cullResults, cmd, loop);
-						RenderReflections (camera, cmd, cullResults, loop);
+						RenderLightsDeferred (cullResults, cmd);
+						RenderReflections (camera, cmd, cullResults);
 
 						loop.ExecuteCommandBuffer(cmd);
 					}
@@ -498,7 +499,7 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 					using (var cmd = new CommandBuffer { name = "Forwward Lighting Setup"} )
 					{
 
-						SetupLightShaderVariables (cullResults, camera, loop, cmd);
+						SetupLightShaderVariables (cullResults, camera, cmd);
 						loop.ExecuteCommandBuffer(cmd);
 
 						var settings = new DrawRendererSettings(camera, new ShaderPassName("ForwardSinglePass"))
@@ -529,7 +530,7 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 		static Matrix4x4 GetFlipMatrix()
 		{
 			Matrix4x4 flip = Matrix4x4.identity;
-			bool isLeftHand = ((int)LightDefinitions.USE_LEFTHAND_CAMERASPACE) != 0;
+			bool isLeftHand = (LightDefinitions.USE_LEFTHAND_CAMERASPACE) != 0;
 			if (isLeftHand) flip.SetColumn(2, new Vector4(0.0f, 0.0f, -1.0f, 0.0f));
 			return flip;
 		}
@@ -603,7 +604,7 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 		}
 
 		// Reflections
-		void RenderReflections(Camera camera, CommandBuffer cmd, CullResults cullResults, ScriptableRenderContext loop)
+		void RenderReflections(Camera camera, CommandBuffer cmd, CullResults cullResults)
 		{
 			var probes = cullResults.visibleReflectionProbes;
 			var worldToView = camera.worldToCameraMatrix; //WorldToCamera(camera);
@@ -614,7 +615,7 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 			var viewDir = camera.cameraToWorldMatrix.GetColumn(2);
 			var viewDirNormalized = -1 * Vector3.Normalize(new Vector3 (viewDir.x, viewDir.y, viewDir.z));
 
-			Plane eyePlane = new Plane ();
+			var eyePlane = new Plane ();
 			eyePlane.SetNormalAndPosition(viewDirNormalized, camera.transform.position);
 
 			// Note: Optimization for tiled GPUs: render all probes in reverse order so they are blended into the existing emission buffer with the correct blend settings as follows:
@@ -693,10 +694,8 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 				cmd.SetGlobalTexture ("unity_SpecCube0", topCube);
 				cmd.SetGlobalVector ("unity_SpecCube0_HDR", defdecode);
 
-				float max = float.PositiveInfinity;
-				float min = float.NegativeInfinity;
-				cmd.SetGlobalVector("unity_SpecCube0_BoxMin", new Vector4(min, min, min, 1));
-				cmd.SetGlobalVector("unity_SpecCube0_BoxMax", new Vector4(max, max, max, 1));
+				cmd.SetGlobalVector("unity_SpecCube0_BoxMin", new Vector4(FLT_MIN, FLT_MIN, FLT_MIN, 1));
+				cmd.SetGlobalVector("unity_SpecCube0_BoxMax", new Vector4(FLT_MAX, FLT_MAX, FLT_MAX, 1));
 
 				cmd.SetGlobalVector ("unity_SpecCube0_ProbePosition", new Vector4 (0.0f, 0.0f, 0.0f, 0.0f));
 				cmd.SetGlobalVector ("unity_SpecCube1_ProbePosition", new Vector4 (0.0f, 0.0f, 0.0f, 1.0f));
@@ -705,7 +704,7 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 			}
 		}
 
-		Matrix4x4 SpotlightMatrix (VisibleLight light, Matrix4x4 worldToLight, float range, float chsa)
+		Matrix4x4 SpotlightMatrix (Matrix4x4 worldToLight, float range, float chsa)
 		{
 			Matrix4x4 temp1 = Matrix4x4.Scale(new Vector3 (-.5f, -.5f, 1.0f));
 			Matrix4x4 temp2 = Matrix4x4.Translate( new Vector3 (.5f, .5f, 0.0f));
@@ -713,7 +712,7 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 			return temp2 * temp1 * temp3 * worldToLight;
 		}
 			
-		void RenderSpotlight(VisibleLight light, CommandBuffer cmd, MaterialPropertyBlock properties, bool renderAsQuad, bool intersectsNear, bool deferred)
+		void RenderSpotlight(VisibleLight light, CommandBuffer cmd, MaterialPropertyBlock properties, bool renderAsQuad, bool intersectsNear)
 		{
 			float range = light.range;
 			var lightToWorld = light.localToWorld;
@@ -721,7 +720,7 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 			float chsa = GetCotanHalfSpotAngle (light.spotAngle);
 
 			// Setup Light Matrix
-			properties.SetMatrix ("_LightMatrix0", SpotlightMatrix(light, worldToLight, range, chsa));
+			properties.SetMatrix ("_LightMatrix0", SpotlightMatrix(worldToLight, range, chsa));
 
 			// Setup Spot Rendering mesh matrix
 			float sideLength = range / chsa;
@@ -748,7 +747,7 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 			}
 		}
 
-		void RenderPointLight(VisibleLight light, CommandBuffer cmd, MaterialPropertyBlock properties, bool renderAsQuad, bool intersectsNear, bool deferred)
+		void RenderPointLight(VisibleLight light, CommandBuffer cmd, MaterialPropertyBlock properties, bool renderAsQuad, bool intersectsNear)
 		{
 			Vector3 lightPos = light.localToWorld.GetColumn (3); //position
 			float range = light.range;
@@ -781,7 +780,7 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 			return temp2 * temp1 * worldToLight;
 		}
 
-		void RenderDirectionalLight(VisibleLight light, CommandBuffer cmd, MaterialPropertyBlock properties, bool intersectsNear)
+		void RenderDirectionalLight(VisibleLight light, CommandBuffer cmd, MaterialPropertyBlock properties)
 		{
 			var lightToWorld = light.localToWorld;
 			var worldToLight = lightToWorld.inverse;
@@ -798,7 +797,7 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 			cmd.DrawMesh (m_QuadMesh, Matrix4x4.identity, m_DirectionalDeferredLightingMaterial, 0, 0, properties);
 		}
 
-		void RenderLightsDeferred (Camera camera, CullResults inputs, CommandBuffer cmd, ScriptableRenderContext loop)
+		void RenderLightsDeferred (CullResults inputs, CommandBuffer cmd)
 		{
 			int lightCount = inputs.visibleLights.Count;
 			for (int lightNum = 0; lightNum < lightCount; lightNum++) 
@@ -813,7 +812,6 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 				Vector3 lightDir = light.localToWorld.GetColumn (2); //z axis
 				float range = light.range;
 				var lightToWorld = light.localToWorld;
-				var worldToLight = lightToWorld.inverse;
 
 				cmd.SetGlobalMatrix ("unity_WorldToLight", lightToWorld.inverse);
 
@@ -824,7 +822,7 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 				props.SetVector ("_LightColor", light.finalColor);
 
 				int shadowIdx;
-				float lightShadowNDXOrNot = m_ShadowIndices.TryGetValue( (int) lightNum, out shadowIdx ) ? (float) shadowIdx : -1.0f;
+				float lightShadowNDXOrNot = m_ShadowIndices.TryGetValue( lightNum, out shadowIdx ) ? (float) shadowIdx : -1.0f;
 				props.SetFloat ("_LightIndexForShadowMatrixArray", lightShadowNDXOrNot);
 				props.SetFloat ("_useLegacyCookies", UseLegacyCookies?1.0f:0.0f);
 
@@ -840,13 +838,13 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 				switch (light.lightType)
 				{
 				case LightType.Point:
-					RenderPointLight (light, cmd, props, renderAsQuad, intersectsNear, true);
+					RenderPointLight (light, cmd, props, renderAsQuad, intersectsNear);
 					break;
 				case LightType.Spot:
-					RenderSpotlight (light, cmd, props, renderAsQuad, intersectsNear, true);
+					RenderSpotlight (light, cmd, props, renderAsQuad, intersectsNear);
 					break;
 				case LightType.Directional:
-					RenderDirectionalLight(light, cmd, props, intersectsNear);
+					RenderDirectionalLight(light, cmd, props);
 					break;
 				}
 			}
@@ -865,7 +863,7 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 			}
 		}
 
-		private void SetupLightShaderVariables(CullResults cull, Camera camera, ScriptableRenderContext context, CommandBuffer cmd)
+		private void SetupLightShaderVariables(CullResults cull, Camera camera, CommandBuffer cmd)
 		{
 			int totalLightCount = cull.visibleLights.Count;
 			InitializeLightData();
@@ -892,9 +890,10 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 				Vector3 lightPos = light.localToWorld.GetColumn (3); //position
 				Vector3 lightDir = light.localToWorld.GetColumn (2); //z axis
 				float range = light.range;
-				float rangeSq = light.range * light.range;
+				float rangeSq = range * range;
 				var lightToWorld = light.localToWorld;
 				var worldToLight = lightToWorld.inverse;
+				var cookie = light.light.cookie;
 
 				m_WorldToLightMatrix[i] = worldToLight;
 
@@ -910,34 +909,46 @@ namespace UnityEngine.Experimental.Rendering.OnTileDeferredRenderPipeline
 				// color
 				m_LightColors [i] = light.finalColor;
 
-				if (light.lightType == LightType.Point) {
-					m_LightData[i].x = LightDefinitions.SPHERE_LIGHT;
+				switch (light.lightType) 
+				{
+					case LightType.Point: 
+					{
+						m_LightData[i].x = LightDefinitions.SPHERE_LIGHT;
 
-					if (light.light.cookie != null)
-						m_LightData[i].z = m_CubeCookieTexArray.FetchSlice(light.light.cookie);
+						if (cookie != null)
+							m_LightData[i].z = m_CubeCookieTexArray.FetchSlice(cookie);
 
-				} else if (light.lightType == LightType.Spot) {
-					m_LightData[i].x = LightDefinitions.SPOT_LIGHT;
+						break;
+					} 
+					case LightType.Spot: 
+					{
+						m_LightData[i].x = LightDefinitions.SPOT_LIGHT;
 
-					float chsa = GetCotanHalfSpotAngle (light.spotAngle);
+						float chsa = GetCotanHalfSpotAngle (light.spotAngle);
 
-					// Setup Light Matrix
-					m_LightMatrix[i] = SpotlightMatrix (light, worldToLight, range, chsa); 
+						// Setup Light Matrix
+						m_LightMatrix[i] = SpotlightMatrix (worldToLight, range, chsa); 
 
-					if (light.light.cookie != null)
-						m_LightData[i].z = m_CookieTexArray.FetchSlice (light.light.cookie);
-					else
-						m_LightData [i].z = m_CookieTexArray.FetchSlice (m_DefaultSpotCookie);
-					
-				} else if (light.lightType == LightType.Directional) {
-					m_LightData[i].x = LightDefinitions.DIRECTIONAL_LIGHT;
+						// If light has cookie use it, otherwise use default cookie set on asset
+						if (cookie != null) 
+							m_LightData[i].z = m_CookieTexArray.FetchSlice (cookie); 
+						else 
+							m_LightData [i].z = m_CookieTexArray.FetchSlice (m_DefaultSpotCookie);
 
-					// Setup Light Matrix
-					m_LightMatrix[i] = DirectionalLightmatrix (light, worldToLight);
+						break;
+					} 
+					case LightType.Directional: 
+					{
+						m_LightData[i].x = LightDefinitions.DIRECTIONAL_LIGHT;
 
-					if (light.light.cookie != null)
-						m_LightData[i].z = m_CookieTexArray.FetchSlice (light.light.cookie);
+						// Setup Light Matrix
+						m_LightMatrix[i] = DirectionalLightmatrix (light, worldToLight);
 
+						if (cookie != null)
+							m_LightData[i].z = m_CookieTexArray.FetchSlice (cookie);
+
+						break;
+					}
 				}
 			}
 
