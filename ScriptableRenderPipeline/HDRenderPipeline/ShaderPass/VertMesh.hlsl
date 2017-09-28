@@ -98,13 +98,11 @@ VaryingsMeshType VertMesh(AttributesMesh input)
     VaryingsMeshType output;
 
     float3 positionWS = TransformObjectToWorld(input.positionOS);
-    float3 normalWS = float3(0.0, 0.0, 0.0);
+#if defined(ATTRIBUTES_NEED_NORMAL)
+    float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
+#endif
     float4 tangentWS = float4(0.0, 0.0, 0.0, 0.0);
     float4 vertexColor = float4(0.0, 0.0, 0.0, 0.0);
-
-#if (defined(VARYINGS_NEED_TANGENT_TO_WORLD) || defined(TESSELLATION_ON)) && (SHADERPASS != SHADERPASS_VELOCITY)
-    normalWS = TransformObjectToWorldNormal(input.normalOS);
-#endif
 
 #if defined(VARYINGS_NEED_TANGENT_TO_WORLD) || defined(VARYINGS_DS_NEED_TANGENT)
     tangentWS = float4(TransformObjectToWorldDir(input.tangentOS.xyz), input.tangentOS.w);
@@ -114,9 +112,11 @@ VaryingsMeshType VertMesh(AttributesMesh input)
     vertexColor = input.color;
 #endif
 
-#if _VERTEX_WIND
+    // This code is disabled for velocity pass for now because at the moment we cannot have Normals with the velocity pass (this attributes holds last frame data)
+    // TODO: Remove the velocity pass test when velocity is properly handled.
+#if defined(_VERTEX_WIND) && (SHADERPASS != SHADERPASS_VELOCITY)
     float3 rootWP = mul(GetObjectToWorldMatrix(), float4(0, 0, 0, 1)).xyz;
-    ApplyWind(positionWS, normalWS, rootWP, _Stiffness, _Drag, _ShiverDrag, _ShiverDirectionality, _InitialBend, vertexColor.a, _Time);
+    ApplyWind(positionWS, normalWS, rootWP, _Stiffness, _Drag, _ShiverDrag, _ShiverDirectionality, _InitialBend, input.color.a, _Time);
 #endif
 
 #if _FPS_MODE

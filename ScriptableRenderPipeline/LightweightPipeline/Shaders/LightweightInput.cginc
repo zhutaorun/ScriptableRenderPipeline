@@ -5,33 +5,35 @@
 
 // Main light initialized without indexing
 #define INITIALIZE_MAIN_LIGHT(light) \
-    light.pos = _LightPosition; \
-    light.color = _LightColor; \
-    light.atten = _LightAttenuationParams; \
-    light.spotDir = _LightSpotDir;
+    light.pos = _MainLightPosition; \
+    light.color = _MainLightColor; \
+    light.atten = _MainLightAttenuationParams; \
+    light.spotDir = _MainLightSpotDir;
 
 // Indexing might have a performance hit for old mobile hardware
 #define INITIALIZE_LIGHT(light, lightIndex) \
-                            light.pos = globalLightPos[lightIndex]; \
-                            light.color = globalLightColor[lightIndex]; \
-                            light.atten = globalLightAtten[lightIndex]; \
-                            light.spotDir = globalLightSpotDir[lightIndex]
+                            light.pos = _AdditionalLightPosition[lightIndex]; \
+                            light.color = _AdditionalLightColor[lightIndex]; \
+                            light.atten = _AdditionalLightAttenuationParams[lightIndex]; \
+                            light.spotDir = _AdditionalLightSpotDir[lightIndex]
 
-#if !(defined(_SINGLE_DIRECTIONAL_LIGHT) || defined(_SINGLE_SPOT_LIGHT) || defined(_SINGLE_POINT_LIGHT))
-#define _MULTIPLE_LIGHTS
+#if (defined(_MAIN_DIRECTIONAL_LIGHT) || defined(_MAIN_SPOT_LIGHT) || defined(_MAIN_POINT_LIGHT))
+#define _MAIN_LIGHT
+#endif
+
+#ifdef _SPECULAR_SETUP
+#define SAMPLE_METALLICSPECULAR(uv) tex2D(_SpecGlossMap, uv)
+#else
+#define SAMPLE_METALLICSPECULAR(uv) tex2D(_MetallicGlossMap, uv)
 #endif
 
 #if defined(UNITY_COLORSPACE_GAMMA) && defined(_LIGHTWEIGHT_FORCE_LINEAR)
-// Ideally we want an approximation of gamma curve 2.0 to save ALU on GPU but as off now it won't match the GammaToLinear conversion of props in engine
 #define LIGHTWEIGHT_GAMMA_TO_LINEAR(gammaColor) gammaColor * gammaColor
 #define LIGHTWEIGHT_LINEAR_TO_GAMMA(linColor) sqrt(color)
-//#define LIGHTWEIGHT_GAMMA_TO_LINEAR(sRGB) sRGB * (sRGB * (sRGB * 0.305306011h + 0.682171111h) + 0.012522878h)
-//#define LIGHTWEIGHT_LINEAR_TO_GAMMA(linRGB) max(1.055h * pow(max(linRGB, 0.h), 0.416666667h) - 0.055h, 0.h)
 #else
 #define LIGHTWEIGHT_GAMMA_TO_LINEAR(color) color
 #define LIGHTWEIGHT_LINEAR_TO_GAMMA(color) color
 #endif
-
 
 struct LightInput
 {
@@ -41,34 +43,29 @@ struct LightInput
     half4 spotDir;
 };
 
-sampler2D _AttenuationTexture;
-
-// Per object light list data
-#ifdef _MULTIPLE_LIGHTS
+CBUFFER_START(_PerObject)
 half4 unity_LightIndicesOffsetAndCount;
 half4 unity_4LightIndices0;
-
-// The variables are very similar to built-in unity_LightColor, unity_LightPosition,
-// unity_LightAtten, unity_SpotDirection as used by the VertexLit shaders, except here
-// we use world space positions instead of view space.
-half4 globalLightCount;
-half4 globalLightColor[MAX_VISIBLE_LIGHTS];
-float4 globalLightPos[MAX_VISIBLE_LIGHTS];
-half4 globalLightSpotDir[MAX_VISIBLE_LIGHTS];
-float4 globalLightAtten[MAX_VISIBLE_LIGHTS];
-#else
-float4 _LightPosition;
-half4 _LightColor;
-float4 _LightAttenuationParams;
-half4 _LightSpotDir;
-#endif
-
-sampler2D _MetallicSpecGlossMap;
-
-half4 _DieletricSpec;
 half _Shininess;
-samplerCUBE _Cube;
-half4 _ReflectColor;
+CBUFFER_END
+
+CBUFFER_START(_PerCamera)
+float4 _MainLightPosition;
+half4 _MainLightColor;
+float4 _MainLightAttenuationParams;
+half4 _MainLightSpotDir;
+
+half4 _AdditionalLightCount;
+float4 _AdditionalLightPosition[MAX_VISIBLE_LIGHTS];
+half4 _AdditionalLightColor[MAX_VISIBLE_LIGHTS];
+float4 _AdditionalLightAttenuationParams[MAX_VISIBLE_LIGHTS];
+half4 _AdditionalLightSpotDir[MAX_VISIBLE_LIGHTS];
+CBUFFER_END
+
+CBUFFER_START(_PerFrame)
+half4 _GlossyEnvironmentColor;
+sampler2D _AttenuationTexture;
+CBUFFER_END
 
 struct LightweightVertexInput
 {
@@ -97,32 +94,68 @@ struct LightweightVertexOutput
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
-inline void NormalMap(LightweightVertexOutput i, out half3 normal)
+struct SurfaceData
 {
-#if _NORMALMAP
-    half3 normalmap = UnpackNormal(tex2D(_BumpMap, i.uv01.xy));
+    half3 albedo;
+    half  alpha;
+    half4 metallicSpecGloss;
+    half3 normalWorld;
+    half  ao;
+    half3 emission;
+};
+
+struct BRDFData
+{
+    half3 diffuse;
+    half3 specular;
+    half perceptualRoughness;
+    half roughness;
+    half grazingTerm;
+};
+
+inline half Alpha(half albedoAlpha)
+{
+#if defined(_SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A)
+    half alpha = _Color.a;
+#else
+    half alpha = albedoAlpha * _Color.a;
+#endif
+
+#if defined(_ALPHATEST_ON)
+    clip(alpha - _Cutoff);
+#endif
+
+    return alpha;
+}
+
+inline half3 Normal(LightweightVertexOutput i)
+{
+    #if _NORMALMAP
+    half3 normalTangent = UnpackNormal(tex2D(_BumpMap, i.uv01.xy));
 
     // glsl compiler will generate underperforming code by using a row-major pre multiplication matrix: mul(normalmap, i.tangentToWorld)
     // i.tangetToWorld was initialized as column-major in vs and here dot'ing individual for better performance.
     // The code below is similar to post multiply: mul(i.tangentToWorld, normalmap)
-    normal = normalize(half3(dot(normalmap, i.tangentToWorld0), dot(normalmap, i.tangentToWorld1), dot(normalmap, i.tangentToWorld2)));
+    half3 normalWorld = normalize(half3(dot(normalTangent, i.tangentToWorld0), dot(normalTangent, i.tangentToWorld1), dot(normalTangent, i.tangentToWorld2)));
 #else
-    normal = normalize(i.normal);
+    half3 normalWorld = normalize(i.normal);
 #endif
+
+    return normalWorld;
 }
 
 inline void SpecularGloss(half2 uv, half alpha, out half4 specularGloss)
 {
+    specularGloss = half4(0, 0, 0, 1);
 #ifdef _SPECGLOSSMAP
     specularGloss = tex2D(_SpecGlossMap, uv);
-#if defined(UNITY_COLORSPACE_GAMMA) && defined(_LIGHTWEIGHT_FORCE_LINEAR)
     specularGloss.rgb = LIGHTWEIGHT_GAMMA_TO_LINEAR(specularGloss.rgb);
-#endif
-#elif defined(_SPECGLOSSMAP_BASE_ALPHA)
-    specularGloss.rgb = LIGHTWEIGHT_GAMMA_TO_LINEAR(tex2D(_SpecGlossMap, uv).rgb) * _SpecColor.rgb;
-    specularGloss.a = alpha;
-#else
+#elif defined(_SPECULAR_COLOR)
     specularGloss = _SpecColor;
+#endif
+
+#ifdef _GLOSSINESS_FROM_BASE_ALPHA
+    specularGloss.a = alpha;
 #endif
 }
 
@@ -131,18 +164,16 @@ half4 MetallicSpecGloss(float2 uv, half albedoAlpha)
     half4 specGloss;
 
 #ifdef _METALLICSPECGLOSSMAP
+    specGloss = specGloss = SAMPLE_METALLICSPECULAR(uv);
 #ifdef _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-    specGloss.rgb = tex2D(_MetallicSpecGlossMap, uv).rgb;
-    specGloss.a = albedoAlpha;
+    specGloss.a = albedoAlpha * _GlossMapScale;
 #else
-    specGloss = tex2D(_MetallicSpecGlossMap, uv).rgba;
-#endif
     specGloss.a *= _GlossMapScale;
+#endif
 
 #else // _METALLICSPECGLOSSMAP
-
 #if _METALLIC_SETUP
-    specGloss.r = _Metallic;
+    specGloss.rgb = _Metallic.rrr;
 #else
     specGloss.rgb = _SpecColor.rgb;
 #endif
@@ -155,6 +186,31 @@ half4 MetallicSpecGloss(float2 uv, half albedoAlpha)
 #endif
 
     return specGloss;
+}
+
+half OcclusionLW(float2 uv)
+{
+#ifdef _OCCLUSIONMAP
+    #if (SHADER_TARGET < 30)
+    // SM20: instruction count limitation
+    // SM20: simpler occlusion
+    return tex2D(_OcclusionMap, uv).g;
+#else
+    half occ = tex2D(_OcclusionMap, uv).g;
+    return LerpOneTo(occ, _OcclusionStrength);
+#endif
+#else
+    return 1.0;
+#endif
+}
+
+half3 EmissionLW(float2 uv)
+{
+#ifndef _EMISSION
+    return 0;
+#else
+    return LIGHTWEIGHT_GAMMA_TO_LINEAR(tex2D(_EmissionMap, uv).rgb) * _EmissionColor.rgb;
+#endif
 }
 
 #endif
