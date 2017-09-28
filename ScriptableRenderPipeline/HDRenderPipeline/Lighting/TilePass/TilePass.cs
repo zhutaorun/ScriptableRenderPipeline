@@ -1246,7 +1246,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         // Debug.Assert(additionalData == null, "Missing HDAdditionalData on a light - Should have been create by HDLightEditor");
 
                         if (additionalData == null)
+                        {
+                            // SampleGame Change BEGIN
+                            DebugOverlay.Write(0, 0, "^F00Missing HD light data for {0}", light.light.transform.FullHierarchyName());
+                            // SampleGame Change END
                             return;                        
+                        }
 
                         LightCategory lightCategory = LightCategory.Count;
                         GPULightType gpuLightType = GPULightType.Point;
@@ -1488,6 +1493,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 Debug.Assert(m_lightList.lightVolumes.Count == m_lightCount);
 
                 UpdateDataBuffers();
+
+                //DebugOverlay.WriteNext("NumLights:    {0}", m_lightList.lights.Count);
+                //DebugOverlay.WriteNext("NumEnvLights: {0}", m_lightList.envLights.Count);
+                //DebugOverlay.WriteNext("NumShadows:   {0}", m_lightList.shadows.Count);
+                //DebugOverlay.WriteNext("NumDirLights: {0}", m_lightList.directionalLights.Count);
             }
 
             void VoxelLightListGeneration(CommandBuffer cmd, Camera camera, Matrix4x4 projscr, Matrix4x4 invProjscr, RenderTargetIdentifier cameraDepthBufferRT)
