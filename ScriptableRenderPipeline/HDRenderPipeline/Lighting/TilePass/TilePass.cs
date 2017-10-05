@@ -192,7 +192,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Area        = 1 << 9,
             Directional = 1 << 10,
             Env         = 1 << 11,
-            Sky         = 1 << 12  // If adding more light be sure to not overflow LightDefinitions.s_LightFeatureMaskFlags
+            Sky         = 1 << 12,
+            SSL         = 1 << 13  // If adding more light be sure to not overflow LightDefinitions.s_LightFeatureMaskFlags
         }
 
         [GenerateHLSL]
@@ -209,7 +210,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public static int s_TileSizeClustered = 32;
 
             // feature variants
-            public static int s_NumFeatureVariants = 26;
+            public static int s_NumFeatureVariants = 27;
 
             // Following define the maximum number of bits use in each feature category.
             public static uint s_LightFeatureMaskFlags = 0xFF00;
@@ -558,7 +559,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 s_TileList = null;
                 s_TileFeatureFlags = null;
 
-                m_DeferredAllMaterialSRT = Utilities.CreateEngineMaterial(m_Resources.deferredShader);
+                m_DeferredAllMaterialSRT = CoreUtils.CreateEngineMaterial(m_Resources.deferredShader);
                 m_DeferredAllMaterialSRT.EnableKeyword("LIGHTLOOP_TILE_PASS");
                 m_DeferredAllMaterialSRT.DisableKeyword("OUTPUT_SPLIT_LIGHTING");
                 m_DeferredAllMaterialSRT.SetInt(HDShaderIDs._StencilRef, (int)StencilLightingUsage.RegularLighting);
@@ -566,7 +567,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_DeferredAllMaterialSRT.SetInt(HDShaderIDs._SrcBlend, (int)BlendMode.One);
                 m_DeferredAllMaterialSRT.SetInt(HDShaderIDs._DstBlend, (int)BlendMode.Zero);
 
-                m_DeferredAllMaterialMRT = Utilities.CreateEngineMaterial(m_Resources.deferredShader);
+                m_DeferredAllMaterialMRT = CoreUtils.CreateEngineMaterial(m_Resources.deferredShader);
                 m_DeferredAllMaterialMRT.EnableKeyword("LIGHTLOOP_TILE_PASS");
                 m_DeferredAllMaterialMRT.EnableKeyword("OUTPUT_SPLIT_LIGHTING");
                 m_DeferredAllMaterialMRT.SetInt(HDShaderIDs._StencilRef, (int)StencilLightingUsage.SplitLighting);
@@ -574,7 +575,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_DeferredAllMaterialMRT.SetInt(HDShaderIDs._SrcBlend, (int)BlendMode.One);
                 m_DeferredAllMaterialMRT.SetInt(HDShaderIDs._DstBlend, (int)BlendMode.Zero);
 
-                m_SingleDeferredMaterialSRT = Utilities.CreateEngineMaterial(m_Resources.deferredShader);
+                m_SingleDeferredMaterialSRT = CoreUtils.CreateEngineMaterial(m_Resources.deferredShader);
                 m_SingleDeferredMaterialSRT.EnableKeyword("LIGHTLOOP_SINGLE_PASS");
                 m_SingleDeferredMaterialSRT.DisableKeyword("OUTPUT_SPLIT_LIGHTING");
                 m_SingleDeferredMaterialSRT.SetInt(HDShaderIDs._StencilRef, (int)StencilLightingUsage.RegularLighting);
@@ -582,7 +583,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_SingleDeferredMaterialSRT.SetInt(HDShaderIDs._SrcBlend, (int)BlendMode.One);
                 m_SingleDeferredMaterialSRT.SetInt(HDShaderIDs._DstBlend, (int)BlendMode.Zero);
 
-                m_SingleDeferredMaterialMRT = Utilities.CreateEngineMaterial(m_Resources.deferredShader);
+                m_SingleDeferredMaterialMRT = CoreUtils.CreateEngineMaterial(m_Resources.deferredShader);
                 m_SingleDeferredMaterialMRT.EnableKeyword("LIGHTLOOP_SINGLE_PASS");
                 m_SingleDeferredMaterialMRT.EnableKeyword("OUTPUT_SPLIT_LIGHTING");
                 m_SingleDeferredMaterialMRT.SetInt(HDShaderIDs._StencilRef, (int)StencilLightingUsage.SplitLighting);
@@ -590,7 +591,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_SingleDeferredMaterialMRT.SetInt(HDShaderIDs._SrcBlend, (int)BlendMode.One);
                 m_SingleDeferredMaterialMRT.SetInt(HDShaderIDs._DstBlend, (int)BlendMode.Zero);
 
-                m_DebugViewTilesMaterial = Utilities.CreateEngineMaterial(m_Resources.debugViewTilesShader);
+                m_DebugViewTilesMaterial = CoreUtils.CreateEngineMaterial(m_Resources.debugViewTilesShader);
 
                 m_DefaultTexture2DArray = new Texture2DArray(1, 1, 1, TextureFormat.ARGB32, false);
                 m_DefaultTexture2DArray.SetPixels32(new Color32[1] { new Color32(128, 128, 128, 128) }, 0);
@@ -612,10 +613,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 UnityEditor.SceneView.onSceneGUIDelegate -= OnSceneGUI;
 #endif
 
-                Utilities.SafeRelease(s_DirectionalLightDatas);
-                Utilities.SafeRelease(s_LightDatas);
-                Utilities.SafeRelease(s_EnvLightDatas);
-                Utilities.SafeRelease(s_shadowDatas);
+                CoreUtils.SafeRelease(s_DirectionalLightDatas);
+                CoreUtils.SafeRelease(s_LightDatas);
+                CoreUtils.SafeRelease(s_EnvLightDatas);
+                CoreUtils.SafeRelease(s_shadowDatas);
 
                 if (m_CubeReflTexArray != null)
                 {
@@ -635,21 +636,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 ReleaseResolutionDependentBuffers();
 
-                Utilities.SafeRelease(s_AABBBoundsBuffer);
-                Utilities.SafeRelease(s_ConvexBoundsBuffer);
-                Utilities.SafeRelease(s_LightVolumeDataBuffer);
-                Utilities.SafeRelease(s_DispatchIndirectBuffer);
+                CoreUtils.SafeRelease(s_AABBBoundsBuffer);
+                CoreUtils.SafeRelease(s_ConvexBoundsBuffer);
+                CoreUtils.SafeRelease(s_LightVolumeDataBuffer);
+                CoreUtils.SafeRelease(s_DispatchIndirectBuffer);
 
                 // enableClustered
-                Utilities.SafeRelease(s_GlobalLightListAtomic);
+                CoreUtils.SafeRelease(s_GlobalLightListAtomic);
 
-                Utilities.Destroy(m_DeferredAllMaterialSRT);
-                Utilities.Destroy(m_DeferredAllMaterialMRT);
+                CoreUtils.Destroy(m_DeferredAllMaterialSRT);
+                CoreUtils.Destroy(m_DeferredAllMaterialMRT);
 
-                Utilities.Destroy(m_DebugViewTilesMaterial);
+                CoreUtils.Destroy(m_DebugViewTilesMaterial);
 
-                Utilities.Destroy(m_SingleDeferredMaterialSRT);
-                Utilities.Destroy(m_SingleDeferredMaterialMRT);
+                CoreUtils.Destroy(m_SingleDeferredMaterialSRT);
+                CoreUtils.Destroy(m_SingleDeferredMaterialMRT);
             }
 
             public void NewFrame()
@@ -668,17 +669,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             public void ReleaseResolutionDependentBuffers()
             {
-                Utilities.SafeRelease(s_LightList);
-                Utilities.SafeRelease(s_TileList);
-                Utilities.SafeRelease(s_TileFeatureFlags);
+                CoreUtils.SafeRelease(s_LightList);
+                CoreUtils.SafeRelease(s_TileList);
+                CoreUtils.SafeRelease(s_TileFeatureFlags);
 
                 // enableClustered
-                Utilities.SafeRelease(s_PerVoxelLightLists);
-                Utilities.SafeRelease(s_PerVoxelOffset);
-                Utilities.SafeRelease(s_PerTileLogBaseTweak);
+                CoreUtils.SafeRelease(s_PerVoxelLightLists);
+                CoreUtils.SafeRelease(s_PerVoxelOffset);
+                CoreUtils.SafeRelease(s_PerTileLogBaseTweak);
 
                 // enableBigTilePrepass
-                Utilities.SafeRelease(s_BigTileLightList);
+                CoreUtils.SafeRelease(s_BigTileLightList);
             }
 
             int NumLightIndicesPerClusteredTile()
@@ -1324,7 +1325,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                                 case LightTypeExtent.Line:
                                     if (areaLightCount >= k_MaxAreaLightsOnScreen)
-                                        continue;                                    
+                                        continue;
                                     gpuLightType = GPULightType.Line;
                                     lightVolumeType = LightVolumeType.Box;
                                     break;
@@ -1340,7 +1341,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         sortKeys[sortCount++] = (uint)lightCategory << 27 | (uint)gpuLightType << 22 | (uint)lightVolumeType << 17 | shadow << 16 | (uint)lightIndex;
                     }
 
-                    Utilities.QuickSort(sortKeys, 0, sortCount - 1); // Call our own quicksort instead of Array.Sort(sortKeys, 0, sortCount) so we don't allocate memory (note the SortCount-1 that is different from original call).
+                    CoreUtils.QuickSort(sortKeys, 0, sortCount - 1); // Call our own quicksort instead of Array.Sort(sortKeys, 0, sortCount) so we don't allocate memory (note the SortCount-1 that is different from original call).
 
                     // TODO: Refactor shadow management
                     // The good way of managing shadow:
@@ -1468,7 +1469,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     }
 
                     // Not necessary yet but call it for future modification with sphere influence volume
-                    Utilities.QuickSort(sortKeys, 0, sortCount - 1); // Call our own quicksort instead of Array.Sort(sortKeys, 0, sortCount) so we don't allocate memory (note the SortCount-1 that is different from original call).
+                    CoreUtils.QuickSort(sortKeys, 0, sortCount - 1); // Call our own quicksort instead of Array.Sort(sortKeys, 0, sortCount) so we don't allocate memory (note the SortCount-1 that is different from original call).
 
                     for (int sortIndex = 0; sortIndex < sortCount; ++sortIndex)
                     {
@@ -1844,7 +1845,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             public void PushGlobalParams(Camera camera, CommandBuffer cmd, ComputeShader computeShader, int kernelIndex, bool forceClustered = false)
             {
-                using (new Utilities.ProfilingSample("Push Global Parameters", cmd))
+                using (new ProfilingSample(cmd, "Push Global Parameters"))
                 {
                     // Shadows
                     m_ShadowMgr.SyncData();
@@ -1873,10 +1874,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             private void SetupDebugDisplayMode(bool debugDisplayEnable)
             {
-                Utilities.SetKeyword(m_DeferredAllMaterialSRT, "DEBUG_DISPLAY", debugDisplayEnable);
-                Utilities.SetKeyword(m_DeferredAllMaterialMRT, "DEBUG_DISPLAY", debugDisplayEnable);
-                Utilities.SetKeyword(m_SingleDeferredMaterialSRT, "DEBUG_DISPLAY", debugDisplayEnable);
-                Utilities.SetKeyword(m_SingleDeferredMaterialMRT, "DEBUG_DISPLAY", debugDisplayEnable);
+                CoreUtils.SetKeyword(m_DeferredAllMaterialSRT, "DEBUG_DISPLAY", debugDisplayEnable);
+                CoreUtils.SetKeyword(m_DeferredAllMaterialMRT, "DEBUG_DISPLAY", debugDisplayEnable);
+                CoreUtils.SetKeyword(m_SingleDeferredMaterialSRT, "DEBUG_DISPLAY", debugDisplayEnable);
+                CoreUtils.SetKeyword(m_SingleDeferredMaterialMRT, "DEBUG_DISPLAY", debugDisplayEnable);
             }
 
             public void RenderLightingDebug(HDCamera hdCamera, CommandBuffer cmd, RenderTargetIdentifier colorBuffer, DebugDisplaySettings debugDisplaySettings)
@@ -1885,7 +1886,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 if (lightingDebug.tileDebugByCategory == TileSettings.TileDebug.None)
                     return;
 
-                using (new Utilities.ProfilingSample("Tiled Lighting Debug", cmd))
+                using (new ProfilingSample(cmd, "Tiled Lighting Debug"))
                 {
                     bool bUseClusteredForDeferred = !usingFptl;
 
@@ -1934,7 +1935,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         m_DebugViewTilesMaterial.EnableKeyword("SHOW_LIGHT_CATEGORIES");
                         m_DebugViewTilesMaterial.DisableKeyword("SHOW_FEATURE_VARIANTS");
 
-                        Utilities.DrawFullScreen(cmd, m_DebugViewTilesMaterial, 0, colorBuffer);
+                        CoreUtils.DrawFullScreen(cmd, m_DebugViewTilesMaterial, 0, colorBuffer);
                     }
                     SetGlobalPropertyRedirect(null, 0, null);
                 }
@@ -1951,7 +1952,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 if (m_CurrentSunLight == null)
                     return;
 
-                using (new Utilities.ProfilingSample("Deferred Directional", cmd))
+                using (new ProfilingSample(cmd, "Deferred Directional"))
                 {
                     hdCamera.SetupComputeShader(deferredDirectionalShadowComputeShader, cmd);
                     m_ShadowMgr.BindResources(cmd, deferredDirectionalShadowComputeShader, s_deferredDirectionalShadowKernel);
@@ -1987,9 +1988,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 string singlePassName = "SinglePass - Deferred Lighting Pass";
                 string SinglePassMRTName = "SinglePass - Deferred Lighting Pass MRT";
 
-                using (new Utilities.ProfilingSample(m_TileSettings.enableTileAndCluster ?
-                                                            (options.outputSplitLighting ? tilePassMRTName : tilePassName) :
-                                                            (options.outputSplitLighting ? SinglePassMRTName : singlePassName), cmd))
+                using (new ProfilingSample(cmd, m_TileSettings.enableTileAndCluster ?
+                    (options.outputSplitLighting ? tilePassMRTName : tilePassName) :
+                    (options.outputSplitLighting ? SinglePassMRTName : singlePassName)))
                 {
                     var camera = hdCamera.camera;
 
@@ -2002,7 +2003,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         // This is a debug brute force renderer to debug tile/cluster which render all the lights
                         if (options.outputSplitLighting)
                         {
-                            Utilities.DrawFullScreen(cmd, m_SingleDeferredMaterialMRT, colorBuffers, depthStencilBuffer);
+                            CoreUtils.DrawFullScreen(cmd, m_SingleDeferredMaterialMRT, colorBuffers, depthStencilBuffer);
                         }
                         else
                         {
@@ -2018,7 +2019,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 m_SingleDeferredMaterialSRT.SetInt(HDShaderIDs._StencilCmp, (int)CompareFunction.Equal);
                             }
 
-                            Utilities.DrawFullScreen(cmd, m_SingleDeferredMaterialSRT, colorBuffers[0], depthStencilBuffer);
+                            CoreUtils.DrawFullScreen(cmd, m_SingleDeferredMaterialSRT, colorBuffers[0], depthStencilBuffer);
                         }
                     }
                     else
@@ -2170,8 +2171,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                             if (options.outputSplitLighting)
                             {
-                                Utilities.SelectKeyword(m_DeferredAllMaterialMRT, "USE_CLUSTERED_LIGHTLIST", "USE_FPTL_LIGHTLIST", bUseClusteredForDeferred);
-                                Utilities.DrawFullScreen(cmd, m_DeferredAllMaterialMRT, colorBuffers, depthStencilBuffer);
+                                CoreUtils.SelectKeyword(m_DeferredAllMaterialMRT, "USE_CLUSTERED_LIGHTLIST", "USE_FPTL_LIGHTLIST", bUseClusteredForDeferred);
+                                CoreUtils.DrawFullScreen(cmd, m_DeferredAllMaterialMRT, colorBuffers, depthStencilBuffer);
                             }
                             else
                             {
@@ -2187,8 +2188,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                     m_DeferredAllMaterialSRT.SetInt(HDShaderIDs._StencilCmp, (int)CompareFunction.Equal);
                                 }
 
-                                Utilities.SelectKeyword(m_DeferredAllMaterialSRT, "USE_CLUSTERED_LIGHTLIST", "USE_FPTL_LIGHTLIST", bUseClusteredForDeferred);
-                                Utilities.DrawFullScreen(cmd, m_DeferredAllMaterialSRT, colorBuffers[0], depthStencilBuffer);
+                                CoreUtils.SelectKeyword(m_DeferredAllMaterialSRT, "USE_CLUSTERED_LIGHTLIST", "USE_FPTL_LIGHTLIST", bUseClusteredForDeferred);
+                                CoreUtils.DrawFullScreen(cmd, m_DeferredAllMaterialSRT, colorBuffers[0], depthStencilBuffer);
                             }
                         }
                     }
@@ -2204,7 +2205,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // Note: if we use render opaque with deferred tiling we need to render a opaque depth pass for these opaque objects
                 if (!m_TileSettings.enableTileAndCluster)
                 {
-                    using (new Utilities.ProfilingSample("Forward pass", cmd))
+                    using (new ProfilingSample(cmd, "Forward pass"))
                     {
                         cmd.EnableShaderKeyword("LIGHTLOOP_SINGLE_PASS");
                         cmd.DisableShaderKeyword("LIGHTLOOP_TILE_PASS");
@@ -2215,7 +2216,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Only opaques can use FPTL, transparent must use clustered!
                     bool useFptl = renderOpaque && usingFptl;
 
-                    using (new Utilities.ProfilingSample(useFptl ? "Forward Tiled pass" : "Forward Clustered pass", cmd))
+                    using (new ProfilingSample(cmd, useFptl ? "Forward Tiled pass" : "Forward Clustered pass"))
                     {
                         // say that we want to use tile of single loop
                         cmd.EnableShaderKeyword("LIGHTLOOP_TILE_PASS");
@@ -2229,7 +2230,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public void RenderDebugOverlay(Camera camera, CommandBuffer cmd, DebugDisplaySettings debugDisplaySettings, ref float x, ref float y, float overlaySize, float width)
             {
                 LightingDebugSettings lightingDebug = debugDisplaySettings.lightingDebugSettings;
-                using (new Utilities.ProfilingSample("Display Shadows", cmd))
+                using (new ProfilingSample(cmd, "Display Shadows"))
                 {
                     if (lightingDebug.shadowDebugMode == ShadowMapDebugMode.VisualizeShadowMap)
                     {
@@ -2257,14 +2258,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             for (uint i = 0; i < faceCount; ++i)
                             {
                                 m_ShadowMgr.DisplayShadow(cmd, index, i, x, y, overlaySize, overlaySize, lightingDebug.shadowMinValue, lightingDebug.shadowMaxValue);
-                                Utilities.NextOverlayCoord(ref x, ref y, overlaySize, overlaySize, camera.pixelWidth);
+                                HDUtils.NextOverlayCoord(ref x, ref y, overlaySize, overlaySize, camera.pixelWidth);
                             }
                         }
                     }
                     else if (lightingDebug.shadowDebugMode == ShadowMapDebugMode.VisualizeAtlas)
                     {
                         m_ShadowMgr.DisplayShadowMap(cmd, lightingDebug.shadowAtlasIndex, 0, x, y, overlaySize, overlaySize, lightingDebug.shadowMinValue, lightingDebug.shadowMaxValue);
-                        Utilities.NextOverlayCoord(ref x, ref y, overlaySize, overlaySize, camera.pixelWidth);
+                        HDUtils.NextOverlayCoord(ref x, ref y, overlaySize, overlaySize, camera.pixelWidth);
                     }
                 }
             }

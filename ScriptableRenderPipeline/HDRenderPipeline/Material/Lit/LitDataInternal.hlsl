@@ -1,4 +1,4 @@
-void ADD_IDX(ComputeLayerTexCoord)( float2 texCoord0, float2 texCoord1, float2 texCoord2, float2 texCoord3, float4 uvMappingMask, float4 uvMappingMaskDetail,
+﻿void ADD_IDX(ComputeLayerTexCoord)( float2 texCoord0, float2 texCoord1, float2 texCoord2, float2 texCoord3, float4 uvMappingMask, float4 uvMappingMaskDetail,
                                     float3 positionWS, int mappingType, float worldScale, inout LayerTexCoord layerTexCoord, float additionalTiling = 1.0)
 {
     // Handle uv0, uv1, uv2, uv3 based on _UVMappingMask weight (exclusif 0..1)
@@ -164,7 +164,7 @@ float ADD_IDX(GetSurfaceData)(FragInputs input, LayerTexCoord layerTexCoord, out
 
     // Perform alha test very early to save performance (a killed pixel will not sample textures)
 #if defined(_ALPHATEST_ON) && !defined(LAYERED_LIT_SHADER)
-    clip(alpha - _AlphaCutoff);
+    DoAlphaTest(alpha, _AlphaCutoff);
 #endif
 
     float3 detailNormalTS = float3(0.0, 0.0, 0.0);
@@ -184,7 +184,9 @@ float ADD_IDX(GetSurfaceData)(FragInputs input, LayerTexCoord layerTexCoord, out
 
     surfaceData.baseColor = SAMPLE_UVMAPPING_TEXTURE2D(ADD_IDX(_BaseColorMap), ADD_ZERO_IDX(sampler_BaseColorMap), ADD_IDX(layerTexCoord.base)).rgb * ADD_IDX(_BaseColor).rgb;
 #ifdef _DETAIL_MAP_IDX
-    surfaceData.baseColor *= LerpWhiteTo(2.0 * saturate(detailAlbedo * ADD_IDX(_DetailAlbedoScale)), detailMask);
+    surfaceData.baseColor *= LerpWhiteTo(2.0 * detailAlbedo, detailMask * ADD_IDX(_DetailAlbedoScale));
+    // we saturate to avoid to have a smoothness value above 1
+    surfaceData.baseColor = saturate(surfaceData.baseColor);
 #endif
 
     surfaceData.specularOcclusion = 1.0; // Will be setup outside of this function
@@ -202,7 +204,9 @@ float ADD_IDX(GetSurfaceData)(FragInputs input, LayerTexCoord layerTexCoord, out
 #endif
 
 #ifdef _DETAIL_MAP_IDX
-    surfaceData.perceptualSmoothness *= LerpWhiteTo(2.0 * saturate(detailSmoothness * ADD_IDX(_DetailSmoothnessScale)), detailMask);
+    surfaceData.perceptualSmoothness *= LerpWhiteTo(2.0 * detailSmoothness, detailMask * ADD_IDX(_DetailSmoothnessScale));
+    // we saturate to avoid to have a smoothness value above 1
+    surfaceData.perceptualSmoothness = saturate(surfaceData.perceptualSmoothness);
 #endif
 
     // MaskMap is RGBA: Metallic, Ambient Occlusion (Optional), emissive Mask (Optional), Smoothness
@@ -268,6 +272,18 @@ float ADD_IDX(GetSurfaceData)(FragInputs input, LayerTexCoord layerTexCoord, out
     surfaceData.specularColor *= SAMPLE_UVMAPPING_TEXTURE2D(_SpecularColorMap, sampler_SpecularColorMap, layerTexCoord.base).rgb;
 #endif
 
+#if defined(_REFRACTION_THINPLANE) || defined(_REFRACTION_THICKPLANE) || defined(_REFRACTION_THICKSPHERE)
+    surfaceData.ior = _IOR;
+    surfaceData.transmittanceColor = _TransmittanceColor;
+    surfaceData.atDistance = _ATDistance;
+    // Thickness already defined with SSS (from both thickness and thicknessMap)
+    surfaceData.thickness *= _ThicknessMultiplier;
+#else
+    surfaceData.ior = 1.0;
+    surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
+    surfaceData.atDistance = 1.0;
+#endif
+
     surfaceData.coatNormalWS    = input.worldToTangent[2].xyz; // Assign vertex normal
     surfaceData.coatCoverage    = _CoatCoverage;
     surfaceData.coatIOR         = _CoatIOR;
@@ -290,6 +306,11 @@ float ADD_IDX(GetSurfaceData)(FragInputs input, LayerTexCoord layerTexCoord, out
     surfaceData.coatNormalWS = float3(0.0, 0.0, 0.0);
     surfaceData.coatCoverage = 0.0f;
     surfaceData.coatIOR = 0.5;
+
+    // Transparency
+    surfaceData.ior = 1.0;
+    surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
+    surfaceData.atDistance = 1000000.0;
 
 #endif // #if !defined(LAYERED_LIT_SHADER)
 

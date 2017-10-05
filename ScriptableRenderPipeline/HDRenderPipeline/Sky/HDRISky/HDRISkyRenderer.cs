@@ -1,5 +1,3 @@
-using UnityEngine.Rendering;
-
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     public class HDRISkyRenderer : SkyRenderer
@@ -14,23 +12,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public override void Build()
         {
-            m_SkyHDRIMaterial = Utilities.CreateEngineMaterial("Hidden/HDRenderPipeline/Sky/SkyHDRI");
+            m_SkyHDRIMaterial = CoreUtils.CreateEngineMaterial("Hidden/HDRenderPipeline/Sky/SkyHDRI");
         }
 
         public override void Cleanup()
         {
-            Utilities.Destroy(m_SkyHDRIMaterial);
+            CoreUtils.Destroy(m_SkyHDRIMaterial);
         }
 
         public override void SetRenderTargets(BuiltinSkyParameters builtinParams)
         {
             if (builtinParams.depthBuffer == BuiltinSkyParameters.nullRT)
             {
-                Utilities.SetRenderTarget(builtinParams.commandBuffer, builtinParams.colorBuffer);
+                CoreUtils.SetRenderTarget(builtinParams.commandBuffer, builtinParams.colorBuffer);
             }
             else
             {
-                Utilities.SetRenderTarget(builtinParams.commandBuffer, builtinParams.colorBuffer, builtinParams.depthBuffer);
+                CoreUtils.SetRenderTarget(builtinParams.commandBuffer, builtinParams.colorBuffer, builtinParams.depthBuffer);
             }
         }
 
@@ -43,7 +41,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             MaterialPropertyBlock properties = new MaterialPropertyBlock();
             properties.SetMatrix(HDShaderIDs._PixelCoordToViewDirWS, builtinParams.pixelCoordToViewDirMatrix);
 
-            Utilities.DrawFullScreen(builtinParams.commandBuffer, m_SkyHDRIMaterial, properties, renderForCubemap ? 0 : 1);
+            CoreUtils.DrawFullScreen(builtinParams.commandBuffer, m_SkyHDRIMaterial, properties, renderForCubemap ? 0 : 1);
         }
 
         public override bool IsSkyValid()
