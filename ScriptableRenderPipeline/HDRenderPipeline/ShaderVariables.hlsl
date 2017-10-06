@@ -229,6 +229,10 @@ float4x4 _InvProjMatrix;
 float4   _InvProjParam;
 float4   _ScreenSize;       // (w, h, 1/w, 1/h)
 float4   _FrustumPlanes[6]; // (N, -dot(N, P))
+int      _FrameID;          // k % 2^24
+int      _FrameID_TAA;      // k % 8
+int      _Pad128_0;
+int      _Pad128_1;
 
 // Volumetric lighting. Should be a struct in 'UnityPerFrame'.
 // Unfortunately, we cannot modify the layout of 'UnityPerFrame',

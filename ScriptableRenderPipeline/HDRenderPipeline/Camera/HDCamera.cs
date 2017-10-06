@@ -62,6 +62,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // happen, but you never know...
         int m_LastFrameActive;
 
+        int m_FrameID;     // i % 2^24
+        int m_FrameID_TAA; // i % 8 
+
         static Dictionary<Camera, HDCamera> s_Cameras = new Dictionary<Camera, HDCamera>();
         static List<Camera> s_Cleanup = new List<Camera>(); // Recycled to reduce GC pressure
 
@@ -132,6 +135,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             m_LastFrameActive = Time.frameCount;
+
+            int k = Time.renderedFrameCount;
+            m_FrameID     = k & ((1 << 24) - 1);
+            m_FrameID_TAA = k & 7;
         }
 
         public void Reset()
@@ -185,6 +192,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalVector(HDShaderIDs._ScreenSize, screenSize);
             cmd.SetGlobalMatrix(HDShaderIDs._PrevViewProjMatrix, prevViewProjMatrix);
             cmd.SetGlobalVectorArray(HDShaderIDs._FrustumPlanes, frustumPlaneEquations);
+            cmd.SetGlobalFloat(HDShaderIDs._FrameID,     m_FrameID);     // TODO: SetGlobalInt()
+            cmd.SetGlobalFloat(HDShaderIDs._FrameID_TAA, m_FrameID_TAA); // TODO: SetGlobalInt()
         }
 
         // Does not modify global settings. Used for shadows, low res. rendering, etc.
@@ -201,6 +210,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             material.SetVector(HDShaderIDs._ScreenSize, screenSize);
             material.SetMatrix(HDShaderIDs._PrevViewProjMatrix, prevViewProjMatrix);
             material.SetVectorArray(HDShaderIDs._FrustumPlanes, frustumPlaneEquations);
+            material.SetInt(HDShaderIDs._FrameID,     m_FrameID);
+            material.SetInt(HDShaderIDs._FrameID_TAA, m_FrameID_TAA);
         }
 
         public void SetupComputeShader(ComputeShader cs, CommandBuffer cmd)
@@ -222,6 +233,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetComputeVectorParam(cs, HDShaderIDs._ScreenParams, Shader.GetGlobalVector(HDShaderIDs._ScreenParams));
             cmd.SetComputeVectorParam(cs, HDShaderIDs._ZBufferParams, Shader.GetGlobalVector(HDShaderIDs._ZBufferParams));
             cmd.SetComputeVectorParam(cs, HDShaderIDs._WorldSpaceCameraPos, Shader.GetGlobalVector(HDShaderIDs._WorldSpaceCameraPos));
+            cmd.SetComputeIntParam(cs, HDShaderIDs._FrameID,     m_FrameID);
+            cmd.SetComputeIntParam(cs, HDShaderIDs._FrameID_TAA, m_FrameID_TAA);
         }
     }
 }

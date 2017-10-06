@@ -4,6 +4,17 @@
 #include "../../../Core/ShaderLibrary/SampleUVMapping.hlsl"
 #include "../MaterialUtilities.hlsl"
 
+float GetStochasticAlphaTestRefValue()
+{
+    static const int r[] = {0, 4, 2, 6, 1, 5, 3, 7};
+
+    int i = _FrameID_TAA;
+    int n = 8; // TAA
+    int j = r[i];
+
+    return (j + 1) * rcp(n);
+}
+
 void DoAlphaTest(float alpha, float alphaCutoff)
 {
     // For Deferred:
@@ -11,7 +22,8 @@ void DoAlphaTest(float alpha, float alphaCutoff)
     // For Forward (Full forward or ForwardOnlyOpaque in deferred):
     // Opaque geometry always has a depth pre-pass so we never want to do the clip here. For transparent we perform the clip as usual.
     #if ((SHADER_PASS == SHADERPASS_GBUFFER) && !defined(_BYPASS_ALPHA_TEST)) || (SHADER_PASS == SHADERPASS_FORWARD && defined(SURFACE_TYPE_TRANSPARENT))
-        clip(alpha - alphaCutoff);
+        //clip(alpha - alphaCutoff);
+        clip(alpha - GetStochasticAlphaTestRefValue());
     #endif
 }
 
