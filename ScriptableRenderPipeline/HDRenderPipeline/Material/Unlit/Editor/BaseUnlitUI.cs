@@ -1,5 +1,7 @@
 using System;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
@@ -11,6 +13,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     {
         protected static class StylesBaseUnlit
         {
+            public static string TransparencyInputsText = "Transparency Inputs";
             public static string optionText = "Surface options";
             public static string surfaceTypeText = "Surface Type";
             public static string blendModeText = "Blend Mode";
@@ -20,10 +23,19 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             public static GUIContent alphaCutoffEnableText = new GUIContent("Alpha Cutoff Enable", "Threshold for alpha cutoff");
             public static GUIContent alphaCutoffText = new GUIContent("Alpha Cutoff", "Threshold for alpha cutoff");
+            public static GUIContent alphaCutoffShadowText = new GUIContent("Alpha Cutoff Shadow", "Threshold for alpha cutoff in case of shadow pass");
+            public static GUIContent alphaCutoffPrepassText = new GUIContent("Alpha Cutoff Prepass", "Threshold for alpha cutoff in case of depth prepass");
+            public static GUIContent transparentDepthPrepassEnableText = new GUIContent("Enable transparent depth prepass", "It allow to ");
+
             public static GUIContent doubleSidedEnableText = new GUIContent("Double Sided", "This will render the two face of the objects (disable backface culling) and flip/mirror normal");
-            public static GUIContent distortionEnableText = new GUIContent("Distortion", "Enable distortion on this shader");
+            public static GUIContent distortionEnableText = new GUIContent("Distortion", "Enable distortion on this shader"); 
             public static GUIContent distortionOnlyText = new GUIContent("Distortion Only", "This shader will only be use to render distortion");
             public static GUIContent distortionDepthTestText = new GUIContent("Distortion Depth Test", "Enable the depth test for distortion");
+            public static GUIContent distortionVectorMapText = new GUIContent("Distortion Vector Map - Dist(RG) Blur(B)", "Vector Map for the distorsion - Dist(RG) Blur(B)");
+            public static GUIContent distortionBlendModeText = new GUIContent("Distortion Blend Mode", "Distortion Blend Mode");
+            public static GUIContent distortionScaleText = new GUIContent("Distortion Scale", "Distortion Scale");
+            public static GUIContent distortionBlurScaleText = new GUIContent("Distortion Blur Scale", "Distortion Blur Scale");
+            public static GUIContent distortionBlurRemappingText = new GUIContent("Distortion Blur Remapping", "Distortion Blur Remapping");
 
             public static string advancedText = "Advanced Options";
         }
@@ -52,6 +64,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string kAlphaCutoffEnabled = "_AlphaCutoffEnable";
         protected MaterialProperty alphaCutoff = null;
         protected const string kAlphaCutoff = "_AlphaCutoff";
+        protected MaterialProperty alphaCutoffShadow = null;
+        protected const string kAlphaCutoffShadow = "_AlphaCutoffShadow";
+        protected MaterialProperty alphaCutoffPrepass = null;
+        protected const string kAlphaCutoffPrepass = "_AlphaCutoffPrepass";
+        protected MaterialProperty transparentDepthPrepassEnable = null;
+        protected const string kTransparentDepthPrepassEnable = "_TransparentDepthPrepassEnable";
         protected MaterialProperty doubleSidedEnable = null;
         protected const string kDoubleSidedEnable = "_DoubleSidedEnable";
         protected MaterialProperty blendMode = null;
@@ -62,6 +80,18 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string kDistortionOnly = "_DistortionOnly";
         protected MaterialProperty distortionDepthTest = null;
         protected const string kDistortionDepthTest = "_DistortionDepthTest";
+        protected MaterialProperty distortionVectorMap = null;
+        protected const string kDistortionVectorMap = "_DistortionVectorMap";
+        protected MaterialProperty distortionBlendMode = null;
+        protected const string kDistortionBlendMode = "_DistortionBlendMode";
+        protected MaterialProperty distortionScale = null;
+        protected const string kDistortionScale = "_DistortionScale";
+        protected MaterialProperty distortionBlurScale = null;
+        protected const string kDistortionBlurScale = "_DistortionBlurScale";
+        protected MaterialProperty distortionBlurRemapMin = null;
+        protected const string kDistortionBlurRemapMin = "_DistortionBlurRemapMin";
+        protected MaterialProperty distortionBlurRemapMax = null;
+        protected const string kDistortionBlurRemapMax = "_DistortionBlurRemapMax";
 
         // See comment in LitProperties.hlsl
         const string kEmissionColor = "_EmissionColor";
@@ -81,11 +111,22 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             surfaceType = FindProperty(kSurfaceType, props);
             alphaCutoffEnable = FindProperty(kAlphaCutoffEnabled, props);
             alphaCutoff = FindProperty(kAlphaCutoff, props);
+
+            alphaCutoffShadow = FindProperty(kAlphaCutoffShadow, props, false);
+            alphaCutoffPrepass = FindProperty(kAlphaCutoffPrepass, props, false);
+            transparentDepthPrepassEnable = FindProperty(kTransparentDepthPrepassEnable, props, false);
+
             doubleSidedEnable = FindProperty(kDoubleSidedEnable, props);
             blendMode = FindProperty(kBlendMode, props);
             distortionEnable = FindProperty(kDistortionEnable, props, false);
             distortionOnly = FindProperty(kDistortionOnly, props, false);
             distortionDepthTest = FindProperty(kDistortionDepthTest, props, false);
+            distortionVectorMap = FindProperty(kDistortionVectorMap, props, false);
+            distortionBlendMode = FindProperty(kDistortionBlendMode, props, false);
+            distortionScale = FindProperty(kDistortionScale, props, false);
+            distortionBlurScale = FindProperty(kDistortionBlurScale, props, false);
+            distortionBlurRemapMin = FindProperty(kDistortionBlurRemapMin, props, false);
+            distortionBlurRemapMax = FindProperty(kDistortionBlurRemapMax, props, false);
         }
 
         void SurfaceTypePopup()
@@ -130,27 +171,75 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if ((SurfaceType)surfaceType.floatValue == SurfaceType.Transparent)
             {
                 BlendModePopup();
-
-                if (distortionEnable != null)
-                {
-                    m_MaterialEditor.ShaderProperty(distortionEnable, StylesBaseUnlit.distortionEnableText);
-
-                    if (distortionEnable.floatValue == 1.0f)
-                    {
-                        m_MaterialEditor.ShaderProperty(distortionOnly, StylesBaseUnlit.distortionOnlyText);
-                        m_MaterialEditor.ShaderProperty(distortionDepthTest, StylesBaseUnlit.distortionDepthTestText);
-                    }
-                }
             }
             m_MaterialEditor.ShaderProperty(alphaCutoffEnable, StylesBaseUnlit.alphaCutoffEnableText);
             if (alphaCutoffEnable.floatValue == 1.0f)
             {
+                EditorGUI.indentLevel++;
                 m_MaterialEditor.ShaderProperty(alphaCutoff, StylesBaseUnlit.alphaCutoffText);
+
+                // With transparent object and few specific materials like Hair, we need more control on the cutoff to apply
+                // This allow to get a better sorting (with prepass), better shadow (better silouhette fidelity) etc...
+                if ((SurfaceType)surfaceType.floatValue == SurfaceType.Transparent)
+                {
+                    if (alphaCutoffShadow != null)
+                    {
+                        m_MaterialEditor.ShaderProperty(alphaCutoffShadow, StylesBaseUnlit.alphaCutoffShadowText);
+                    }
+
+                    if (transparentDepthPrepassEnable != null)
+                    {
+                        m_MaterialEditor.ShaderProperty(transparentDepthPrepassEnable, StylesBaseUnlit.transparentDepthPrepassEnableText);
+                        if (transparentDepthPrepassEnable.floatValue == 1.0f)
+                        {
+                            EditorGUI.indentLevel++;
+                            m_MaterialEditor.ShaderProperty(alphaCutoffPrepass, StylesBaseUnlit.alphaCutoffPrepassText);
+                            EditorGUI.indentLevel--;
+                        }
+                    }
+                }
+                EditorGUI.indentLevel--;
             }
             // This function must finish with double sided option (see LitUI.cs)
             m_MaterialEditor.ShaderProperty(doubleSidedEnable, StylesBaseUnlit.doubleSidedEnableText);
 
             EditorGUI.indentLevel--;
+        }
+
+        protected void DoDistortionInputsGUI()
+        {
+            if (distortionEnable != null)
+            {
+                m_MaterialEditor.ShaderProperty(distortionEnable, StylesBaseUnlit.distortionEnableText);
+
+                if (distortionEnable.floatValue == 1.0f)
+                {
+                    EditorGUI.indentLevel++;
+                    m_MaterialEditor.ShaderProperty(distortionBlendMode, StylesBaseUnlit.distortionBlendModeText);
+                    m_MaterialEditor.ShaderProperty(distortionOnly, StylesBaseUnlit.distortionOnlyText);
+                    m_MaterialEditor.ShaderProperty(distortionDepthTest, StylesBaseUnlit.distortionDepthTestText);
+
+                    EditorGUI.indentLevel++;
+                    m_MaterialEditor.TexturePropertySingleLine(StylesBaseUnlit.distortionVectorMapText, distortionVectorMap);
+                    EditorGUI.indentLevel++;
+                    m_MaterialEditor.ShaderProperty(distortionScale, StylesBaseUnlit.distortionScaleText);
+                    m_MaterialEditor.ShaderProperty(distortionBlurScale, StylesBaseUnlit.distortionBlurScaleText);
+                    float remapMin = distortionBlurRemapMin.floatValue;
+                    float remapMax = distortionBlurRemapMax.floatValue;
+                    EditorGUI.BeginChangeCheck();
+                    EditorGUILayout.MinMaxSlider(StylesBaseUnlit.distortionBlurRemappingText, ref remapMin, ref remapMax, 0.0f, 1.0f);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        distortionBlurRemapMin.floatValue = remapMin;
+                        distortionBlurRemapMax.floatValue = remapMax;
+                    }
+                    EditorGUI.indentLevel--;
+
+                    EditorGUI.indentLevel--;
+
+                    EditorGUI.indentLevel--;
+                }
+            }
         }
 
         static public void SetKeyword(Material m, string keyword, bool state)
@@ -167,6 +256,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             bool alphaTestEnable = material.GetFloat(kAlphaCutoffEnabled) > 0.0f;
             SurfaceType surfaceType = (SurfaceType)material.GetFloat(kSurfaceType);
             BlendMode blendMode = (BlendMode)material.GetFloat(kBlendMode);
+
+            // These need to always been set either with opaque or transparent! So a users can swtich to opaque and remove the keyword correctly
+            SetKeyword(material, "_BLENDMODE_LERP", false);
+            SetKeyword(material, "_BLENDMODE_ADD", false);
+            SetKeyword(material, "_BLENDMODE_SOFT_ADD", false);
+            SetKeyword(material, "_BLENDMODE_MULTIPLY", false);
+            SetKeyword(material, "_BLENDMODE_PRE_MULTIPLY", false);
 
             if (surfaceType == SurfaceType.Opaque)
             {
@@ -232,16 +328,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             if (material.HasProperty(kDistortionEnable))
             {
-                bool distortionEnable = material.GetFloat(kDistortionEnable) > 0.0f;
-                if (distortionEnable)
-                {
-                    material.SetShaderPassEnabled("DistortionVectors", true);
-                }
-                else
-                {
-                    material.SetShaderPassEnabled("DistortionVectors", false);
-                }
-
                 bool distortionDepthTest = material.GetFloat(kDistortionDepthTest) > 0.0f;
                 if (distortionDepthTest)
                 {
@@ -252,7 +338,30 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     material.SetInt("_ZTestMode", (int)UnityEngine.Rendering.CompareFunction.Always);
                 }
 
-                SetKeyword(material, "_DISTORTION_ON", distortionEnable);
+                var distortionBlendMode = material.GetInt(kDistortionBlendMode);
+                switch (distortionBlendMode)
+
+                {
+                    default:
+                    case 0: // Add
+                    {
+                        material.SetInt("_DistortionSrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                        material.SetInt("_DistortionDstBlend", (int)UnityEngine.Rendering.BlendMode.One);
+
+                        material.SetInt("_DistortionBlurSrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                        material.SetInt("_DistortionBlurDstBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                        material.SetInt("_DistortionBlurBlendOp", (int)UnityEngine.Rendering.BlendOp.Max);
+                            break;
+                    }
+                    case 1: // Multiply
+                        material.SetInt("_DistortionSrcBlend", (int)UnityEngine.Rendering.BlendMode.DstColor);
+                        material.SetInt("_DistortionDstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+
+                        material.SetInt("_DistortionBlurSrcBlend", (int)UnityEngine.Rendering.BlendMode.DstAlpha);
+                        material.SetInt("_DistortionBlurDstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+                        material.SetInt("_DistortionBlurBlendOp", (int)UnityEngine.Rendering.BlendOp.Add);
+                        break;
+                }
             }
 
             // A material's GI flag internally keeps track of whether emission is enabled at all, it's enabled but has no effect
@@ -266,28 +375,44 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (material.HasProperty(kDistortionEnable))
             {
                 bool distortionEnable = material.GetFloat(kDistortionEnable) > 0.0f;
-                bool distortionOnly = material.GetFloat(kDistortionOnly) > 0.0f;
 
-                if (distortionEnable && distortionOnly)
+                bool distortionOnly = false;
+                if (material.HasProperty(kDistortionOnly))
                 {
-                    // Disable all passes except debug material
-                    material.SetShaderPassEnabled("GBuffer", false);
-                    material.SetShaderPassEnabled("DebugViewMaterial", true);
-                    material.SetShaderPassEnabled("Meta", false);
-                    material.SetShaderPassEnabled("ShadowCaster", false);
-                    material.SetShaderPassEnabled("DepthOnly", false);
-                    material.SetShaderPassEnabled("MotionVectors", false);
-                    material.SetShaderPassEnabled("Forward", false);
+                    distortionOnly = material.GetFloat(kDistortionOnly) > 0.0f;
+                }
+
+                // If distortion only is enabled, disable all passes (except distortion and debug)
+                bool enablePass = !(distortionEnable && distortionOnly);
+
+                // Disable all passes except distortion
+                // Distortion is setup in code above
+                material.SetShaderPassEnabled(HDShaderPassNames.s_ForwardStr, enablePass);
+                material.SetShaderPassEnabled(HDShaderPassNames.s_ForwardDebugDisplayStr, true);
+                material.SetShaderPassEnabled(HDShaderPassNames.s_DepthOnlyStr, enablePass);
+                material.SetShaderPassEnabled(HDShaderPassNames.s_DepthForwardOnlyStr, enablePass);
+                material.SetShaderPassEnabled(HDShaderPassNames.s_ForwardOnlyStr, enablePass);
+                material.SetShaderPassEnabled(HDShaderPassNames.s_ForwardOnlyDebugDisplayStr, true);
+                material.SetShaderPassEnabled(HDShaderPassNames.s_GBufferStr, enablePass);
+                material.SetShaderPassEnabled(HDShaderPassNames.s_GBufferWithPrepassStr, enablePass);
+                material.SetShaderPassEnabled(HDShaderPassNames.s_GBufferDebugDisplayStr, true);
+                material.SetShaderPassEnabled(HDShaderPassNames.s_MotionVectorsStr, enablePass);
+                material.SetShaderPassEnabled(HDShaderPassNames.s_DistortionVectorsStr, distortionEnable); // note: use distortionEnable
+                material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentDepthPrepassStr, enablePass);
+                material.SetShaderPassEnabled(HDShaderPassNames.s_MetaStr, enablePass);
+                material.SetShaderPassEnabled(HDShaderPassNames.s_ShadowCasterStr, enablePass);
+            }
+
+            if (material.HasProperty(kTransparentDepthPrepassEnable))
+            {
+                bool depthWriteEnable = (material.GetFloat(kTransparentDepthPrepassEnable) > 0.0f) && ((SurfaceType)material.GetFloat(kSurfaceType) == SurfaceType.Transparent);
+                if (depthWriteEnable)
+                {
+                    material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentDepthPrepassStr, true);
                 }
                 else
                 {
-                    material.SetShaderPassEnabled("GBuffer", true);
-                    material.SetShaderPassEnabled("DebugViewMaterial", true);
-                    material.SetShaderPassEnabled("Meta", true);
-                    material.SetShaderPassEnabled("ShadowCaster", true);
-                    material.SetShaderPassEnabled("DepthOnly", true);
-                    material.SetShaderPassEnabled("MotionVectors", true);
-                    material.SetShaderPassEnabled("Forward", true);
+                    material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentDepthPrepassStr, false);
                 }
             }
         }
@@ -330,7 +455,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField(StylesBaseUnlit.advancedText, EditorStyles.boldLabel);
-                // NB renderqueue editor is not shown on purpose: we want to override it based on blend mode
+                // NB RenderQueue editor is not shown on purpose: we want to override it based on blend mode
                 EditorGUI.indentLevel++;
                 m_MaterialEditor.EnableInstancingField();
                 m_MaterialEditor.DoubleSidedGIField();
