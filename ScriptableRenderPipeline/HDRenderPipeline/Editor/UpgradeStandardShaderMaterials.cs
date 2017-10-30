@@ -13,6 +13,29 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return upgraders;
         }
 
+
+        static List<MaterialUpgrader> GetHDUpgraders_SS()
+        {
+            var upgraders = new List<MaterialUpgrader>();
+            upgraders.Add(new StandardToHDLitMaterialUpgrader_SS("Standard", "HDRenderPipeline/LitTransitional", LitGUI.SetupMaterialKeywordsAndPass));           
+            return upgraders;
+        }
+
+/*
+        [MenuItem("RenderPipeline/HDRenderPipeline/Material Upgraders/Upgrade Standard Materials to Lit Materials (SS) - Project Folder", false, 4)]
+        static void UpgradeMaterialsProject_SS()
+        {
+            MaterialUpgrader.UpgradeProjectFolder_SS(GetHDUpgraders(), "Upgrade to HD Material");
+        }
+*/
+
+        [MenuItem("RenderPipeline/HDRenderPipeline/Material Upgraders/Upgrade Standard Materials to Lit Materials (SS) - Selection", false, 2)]
+        static void UpgradeMaterialsSelection_SS()
+        {
+            MaterialUpgrader.UpgradeSelection_SS(GetHDUpgraders_SS(), "Upgrade to HD Material");
+        }
+
+
         [MenuItem("RenderPipeline/HDRenderPipeline/Material Upgraders/Upgrade Standard Materials to Lit Materials - Project Folder", false, 1)]
         static void UpgradeMaterialsProject()
         {
