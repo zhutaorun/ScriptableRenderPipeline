@@ -21,13 +21,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return upgraders;
         }
 
-/*
+
         [MenuItem("RenderPipeline/HDRenderPipeline/Material Upgraders/Upgrade Standard Materials to Lit Materials (SS) - Project Folder", false, 4)]
         static void UpgradeMaterialsProject_SS()
         {
-            MaterialUpgrader.UpgradeProjectFolder_SS(GetHDUpgraders(), "Upgrade to HD Material");
+            MaterialUpgrader.UpgradeProjectFolder_SS(GetHDUpgraders_SS(), "Upgrade to HD Material");
         }
-*/
+
 
         [MenuItem("RenderPipeline/HDRenderPipeline/Material Upgraders/Upgrade Standard Materials to Lit Materials (SS) - Selection", false, 2)]
         static void UpgradeMaterialsSelection_SS()

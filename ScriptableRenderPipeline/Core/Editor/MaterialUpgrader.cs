@@ -252,20 +252,13 @@ namespace UnityEditor.Experimental.Rendering
                     if (UnityEditor.EditorUtility.DisplayCancelableProgressBar(progressBarName, string.Format("({0} of {1}) {2}", materialIndex, totalMaterialCount, path), (float)materialIndex / (float)totalMaterialCount))
                         break;
 
-                    Material m = UnityEditor.AssetDatabase.LoadMainAssetAtPath(path) as Material;
-                    Upgrade_SS(m, upgraders, flags);
-
-                    //SaveAssetsAndFreeMemory();
+                    Material material = UnityEditor.AssetDatabase.LoadMainAssetAtPath(path) as Material;
+                    Upgrade(material, upgraders, flags);
                 }
             }
 
             UnityEditor.EditorUtility.ClearProgressBar();
         }
-
-        public static void Upgrade_SS(Material material, List<MaterialUpgrader> upgraders, UpgradeFlags flags)
-        {
-        }
-
 
         public static void Upgrade(Material material, MaterialUpgrader upgrader, UpgradeFlags flags)
         {
