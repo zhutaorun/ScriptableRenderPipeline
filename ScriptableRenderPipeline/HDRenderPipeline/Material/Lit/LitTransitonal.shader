@@ -13,6 +13,8 @@ Shader "HDRenderPipeline/LitTransitional"
         _Smoothness("Smoothness", Range(0.0, 1.0)) = 1.0
         _MaskMap("MaskMap", 2D) = "white" {}
 		_OcclusionMap("Occlusion", 2D) = "white" {}
+		_DetailMapLegacy("Detail Map", 2D) = "white" {}
+		_DetailMaskMapLegacy("Detail Mask Map", 2D) = "white" {}
         _SmoothnessRemapMin("SmoothnessRemapMin", Float) = 0.0
         _SmoothnessRemapMax("SmoothnessRemapMax", Float) = 1.0
 
@@ -30,7 +32,9 @@ Shader "HDRenderPipeline/LitTransitional"
         _HeightMax("Heightmap Max", Float) = 1
         _HeightCenter("Height Center", Range(0.0, 1.0)) = 0.5 // In texture space
 
-        _DetailMap("DetailMap", 2D) = "black" {}
+        _DetailMap("DetailMap", 2D) = "grey" {}
+		_DetailMask("DetailMask", 2D) = "white" {}
+		_DetailNormalMap("DetailNormalMap", 2D) = "bump" {}
         _DetailAlbedoScale("_DetailAlbedoScale", Range(0.0, 2.0)) = 1
         _DetailNormalScale("_DetailNormalScale", Range(0.0, 2.0)) = 1
         _DetailSmoothnessScale("_DetailSmoothnessScale", Range(0.0, 2.0)) = 1
@@ -172,7 +176,6 @@ Shader "HDRenderPipeline/LitTransitional"
     #pragma shader_feature _NORMALMAP
     #pragma shader_feature _MASKMAP
 	#pragma shader_feature _OCCLUSIONMAP
-	#pragma shader_feature _DETAILMAP_LEGACY
     #pragma shader_feature _BENTNORMALMAP
     #pragma shader_feature _EMISSIVE_COLOR_MAP
     #pragma shader_feature _ENABLESPECULAROCCLUSION
@@ -180,6 +183,8 @@ Shader "HDRenderPipeline/LitTransitional"
     #pragma shader_feature _TANGENTMAP
     #pragma shader_feature _ANISOTROPYMAP
     #pragma shader_feature _DETAIL_MAP
+	#pragma shader_feature _DETAIL_MAP_LEGACY
+	#pragma shader_feature _DETAIL_MASK_MAP_LEGACY
     #pragma shader_feature _SUBSURFACE_RADIUS_MAP
     #pragma shader_feature _THICKNESSMAP
     #pragma shader_feature _SPECULARCOLORMAP
@@ -226,10 +231,16 @@ Shader "HDRenderPipeline/LitTransitional"
     // variable declaration
     //-------------------------------------------------------------------------------------
 
-    #include "../../Material/Lit/LitProperties.hlsl"
+	TEXTURE2D(_DetailMapLegacy);
+	SAMPLER2D(sampler_DetailMapLegacy);
+
+	TEXTURE2D(_DetailMaskMapLegacy);
+	SAMPLER2D(sampler_DetailMaskMapLegacy);
 
 	TEXTURE2D(_OcclusionMap);
 	SAMPLER2D(sampler_OcclusionMap);
+
+    #include "../../Material/Lit/LitProperties.hlsl"
 
     // All our shaders use same name for entry point
     #pragma vertex Vert

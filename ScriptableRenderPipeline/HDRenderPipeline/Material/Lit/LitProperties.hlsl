@@ -31,6 +31,9 @@ SAMPLER2D(sampler_NormalMapOS);
 TEXTURE2D(_DetailMap);
 SAMPLER2D(sampler_DetailMap);
 
+TEXTURE2D(_DetailMask);
+SAMPLER2D(sampler_DetailMask);
+
 TEXTURE2D(_HeightMap);
 SAMPLER2D(sampler_HeightMap);
 

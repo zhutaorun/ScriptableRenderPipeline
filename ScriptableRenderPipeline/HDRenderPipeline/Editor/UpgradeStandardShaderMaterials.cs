@@ -17,7 +17,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static List<MaterialUpgrader> GetHDUpgraders_SS()
         {
             var upgraders = new List<MaterialUpgrader>();
-            upgraders.Add(new StandardToHDLitMaterialUpgrader_SS("Standard", "HDRenderPipeline/LitTransitional", LitGUI.SetupMaterialKeywordsAndPass));           
+            upgraders.Add(new StandardToHDLitMaterialUpgrader_SS("Standard", "HDRenderPipeline/LitTransitional", LitTransitionalGUI.SetupMaterialKeywordsAndPass));
+            upgraders.Add(new StandardSpecularToHDLitMaterialUpgrader_SS("Standard (Specular setup)", "HDRenderPipeline/LitTransitional", LitTransitionalGUI.SetupMaterialKeywordsAndPass));
             return upgraders;
         }
 

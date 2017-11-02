@@ -76,6 +76,10 @@ namespace UnityEditor.Experimental.Rendering
             }
 
             Convert(material, newMaterial);
+            if (newMaterial.shaderKeywords.Length > 250)
+            {
+                Debug.LogError(string.Format("Too many keywords in material {0}", material.name));
+            }
 
             material.shader = Shader.Find(m_NewShader);
             material.CopyPropertiesFromMaterial(newMaterial);
@@ -112,19 +116,6 @@ namespace UnityEditor.Experimental.Rendering
                 dstMaterial.SetColor(prop.Key, prop.Value);
             foreach (var t in m_KeywordFloatRename)
                 dstMaterial.SetFloat(t.property, srcMaterial.IsKeywordEnabled(t.keyword) ? t.setVal : t.unsetVal);
-
-            if (srcMaterial.GetTexture("_MetallicGlossMap") != null)
-            {
-                dstMaterial.SetFloat("_Metallic", 1.0f);
-            }
-
-            if (srcMaterial.GetTexture("_ParallaxMap") != null)
-            {
-                dstMaterial.SetFloat("_DisplacementMode", 2.0f);
-                dstMaterial.SetFloat("_DisplacementLockObjectScale", 0.0f);
-                dstMaterial.SetFloat("_DepthOffsetEnable", 1.0f);
-            }
-            dstMaterial.SetFloat("_EmissiveIntensity", 3.141f); // same as lights
         }
 
         public void RenameShader(string oldName, string newName, MaterialFinalizer finalizer = null)

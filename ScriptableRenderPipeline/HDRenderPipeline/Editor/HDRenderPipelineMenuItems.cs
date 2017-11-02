@@ -20,8 +20,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 if (light.GetComponent<HDAdditionalLightData>() == null)
                     light.gameObject.AddComponent<HDAdditionalLightData>();
 
-                if (light.GetComponent<AdditionalShadowData>() == null)
-                    light.gameObject.AddComponent<AdditionalShadowData>();
+//                if (light.GetComponent<AdditionalShadowData>() == null)
+//                    light.gameObject.AddComponent<AdditionalShadowData>();
             }
         }
 

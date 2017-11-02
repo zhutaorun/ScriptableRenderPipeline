@@ -3,13 +3,14 @@ using UnityEngine;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    public class StandardToHDLitMaterialUpgrader_SS : MaterialUpgrader
+    class StandardSpecularToHDLitMaterialUpgrader_SS : MaterialUpgrader
     {
-       
-        public StandardToHDLitMaterialUpgrader_SS() : this("Standard", "HDRenderPipeline/LitTransitional", LitGUI.SetupMaterialKeywordsAndPass) { }
+        public StandardSpecularToHDLitMaterialUpgrader_SS() : this("Standard (Specular setup)", "HDRenderPipeline/Lit", LitGUI.SetupMaterialKeywordsAndPass) { }
 
-        public StandardToHDLitMaterialUpgrader_SS(string sourceShaderName, string destShaderName, MaterialFinalizer finalizer)
+        public StandardSpecularToHDLitMaterialUpgrader_SS(string sourceShaderName, string destShaderName, MaterialFinalizer finalizer)
         {
+            // Anything reasonable that can be done here?
+            //RenameFloat("_SpecColor", ...);
             RenameShader(sourceShaderName, destShaderName, finalizer);
 
             RenameTexture("_MainTex", "_BaseColorMap");
@@ -22,31 +23,24 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             RenameFloat("_DetailNormalMapScale", "_DetailNormalScale");
             RenameFloat("_Cutoff", "_AlphaCutoff");
             RenameKeywordToFloat("_ALPHATEST_ON", "_AlphaCutoffEnable", 1f, 0f);
-            RenameTexture("_MetallicGlossMap", "_MaskMap");
+            RenameTexture("_SpecGlossMap", "_SpecularColorMap");
             RenameTexture("_ParallaxMap", "_HeightMap");
 
             // the HD renderloop packs detail albedo and detail normals into a single texture.
             // mapping the detail normal map, if any, to the detail map, should do the right thing if
             // there is no detail albedo.
-            RenameTexture("_DetailNormalMap", "_DetailMap");
-
+            RenameTexture("_DetailAlbedoMap", "_DetailMapLegacy");
+            RenameTexture("_DetailMask", "_DetailMaskMapLegacy");
+            
             // Metallic uses [Gamma] attribute in standard shader but not in Lit.
             // @Seb: Should we convert?
             RenameFloat("_Metallic", "_Metallic");
 
-            //@TODO: Seb. Why do we multiply color by intensity
-            //       in shader when we can just store a color?
-            // builtinData.emissiveColor * builtinData.emissiveIntensity
         }
 
         public override void Convert(Material srcMaterial, Material dstMaterial)
         {
             base.Convert(srcMaterial, dstMaterial);
-            if (srcMaterial.GetTexture("_MetallicGlossMap") != null)
-            {
-                dstMaterial.SetFloat("_Metallic", 1.0f);
-            }
-
             if (srcMaterial.GetTexture("_ParallaxMap") != null)
             {
                 dstMaterial.SetFloat("_DisplacementMode", 2.0f);
@@ -54,13 +48,18 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 dstMaterial.SetFloat("_DepthOffsetEnable", 1.0f);
             }
             dstMaterial.SetFloat("_EmissiveIntensity", 3.141f); // same as lights
+            dstMaterial.SetFloat("_MaterialID", 4.0f);
+            Color c = new Color(1,1,1,1);
+            dstMaterial.SetColor("_SpecularColor", c);
+            float smoothness = srcMaterial.GetFloat("_Glossiness");
+            dstMaterial.SetFloat("_Smoothness", smoothness * smoothness);
         }
 
         [Test]
         public void UpgradeMaterial()
         {
             var newShader = Shader.Find("HDRenderPipeline/Lit");
-            var mat = new Material(Shader.Find("Standard"));
+            var mat = new Material(Shader.Find("Standard (Specular setup)"));
             var albedo = new Texture2D(1, 1);
             var normals = new Texture2D(1, 1);
             var baseScale = new Vector2(1, 1);

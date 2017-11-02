@@ -24,6 +24,13 @@ PackedVaryingsToPS VertTesselation(VaryingsToDS input)
 
 #endif // TESSELLATION_ON
 
+half3 LerpWhiteTo(half3 b, half t)
+{
+    half oneMinusT = 1 - t;
+    return half3(oneMinusT, oneMinusT, oneMinusT) + b * t;
+}
+
+
 void Frag(  PackedVaryingsToPS packedInput,
             OUTPUT_GBUFFER(outGBuffer)
             OUTPUT_GBUFFER_VELOCITY(outVelocityBuffer)    
@@ -51,6 +58,18 @@ void Frag(  PackedVaryingsToPS packedInput,
 #else   
     surfaceData.ambientOcclusion = 1.0f;
 #endif
+
+#ifdef _DETAIL_MAP_LEGACY
+	UVMapping detailTexcoord;
+	ZERO_INITIALIZE(UVMapping, detailTexcoord);
+	detailTexcoord.uv = input.texCoord0 * _DetailMap_ST.xy + _DetailMap_ST.zw;
+    float3 detailAlbedo = saturate(SAMPLE_UVMAPPING_TEXTURE2D(_DetailMapLegacy, sampler_DetailMapLegacy, detailTexcoord).rgb * 2.0f);
+	float detailMask =  1.0f;
+	#ifdef _DETAIL_MASK_MAP_LEGACY
+		detailMask = SAMPLE_UVMAPPING_TEXTURE2D(_DetailMaskMapLegacy, sampler_DetailMaskMapLegacy, detailTexcoord).a;
+	#endif
+	surfaceData.baseColor *= LerpWhiteTo (detailAlbedo, detailMask);
+#endif    
 
     BSDFData bsdfData = ConvertSurfaceDataToBSDFData(surfaceData);
 
