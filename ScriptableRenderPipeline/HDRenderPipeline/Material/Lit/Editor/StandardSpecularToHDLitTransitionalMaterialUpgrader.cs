@@ -30,7 +30,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // mapping the detail normal map, if any, to the detail map, should do the right thing if
             // there is no detail albedo.
             RenameTexture("_DetailAlbedoMap", "_DetailMapLegacy");
-            RenameTexture("_DetailMask", "_DetailMaskMapLegacy");            
+            RenameTexture("_DetailMask", "_DetailMaskMapLegacy");
+            RenameVector("_DetailAlbedoMap_ST", "_DetailMap_ST");
         }
 
         public override void Convert(Material srcMaterial, Material dstMaterial)

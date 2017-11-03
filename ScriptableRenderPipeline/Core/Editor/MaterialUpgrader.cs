@@ -16,6 +16,7 @@ namespace UnityEditor.Experimental.Rendering
 
         Dictionary<string, string> m_TextureRename = new Dictionary<string, string>();
         Dictionary<string, string> m_FloatRename = new Dictionary<string, string>();
+        Dictionary<string, string> m_VectorRename = new Dictionary<string, string>();
         Dictionary<string, string> m_ColorRename = new Dictionary<string, string>();
 
         Dictionary<string, float> m_FloatPropertiesToSet = new Dictionary<string, float>();
@@ -103,6 +104,9 @@ namespace UnityEditor.Experimental.Rendering
             foreach (var t in m_FloatRename)
                 dstMaterial.SetFloat(t.Value, srcMaterial.GetFloat(t.Key));
 
+            foreach (var t in m_VectorRename)
+                dstMaterial.SetVector(t.Value, srcMaterial.GetVector(t.Key));
+
             foreach (var t in m_ColorRename)
                 dstMaterial.SetColor(t.Value, srcMaterial.GetColor(t.Key));
 
@@ -133,6 +137,11 @@ namespace UnityEditor.Experimental.Rendering
         public void RenameFloat(string oldName, string newName)
         {
             m_FloatRename[oldName] = newName;
+        }
+
+        public void RenameVector(string oldName, string newName)
+        {
+            m_VectorRename[oldName] = newName;
         }
 
         public void RenameColor(string oldName, string newName)
