@@ -30,12 +30,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // mapping the detail normal map, if any, to the detail map, should do the right thing if
             // there is no detail albedo.
             RenameTexture("_DetailAlbedoMap", "_DetailMapLegacy");
-            RenameTexture("_DetailMask", "_DetailMaskMapLegacy");
-            
-            // Metallic uses [Gamma] attribute in standard shader but not in Lit.
-            // @Seb: Should we convert?
-            RenameFloat("_Metallic", "_Metallic");
-
+            RenameTexture("_DetailMask", "_DetailMaskMapLegacy");            
         }
 
         public override void Convert(Material srcMaterial, Material dstMaterial)
