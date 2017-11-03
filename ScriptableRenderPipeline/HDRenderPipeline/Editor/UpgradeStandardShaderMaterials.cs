@@ -17,20 +17,20 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static List<MaterialUpgrader> GetHDUpgraders_SS()
         {
             var upgraders = new List<MaterialUpgrader>();
-            upgraders.Add(new StandardToHDLitMaterialUpgrader_SS("Standard", "HDRenderPipeline/LitTransitional", LitTransitionalGUI.SetupMaterialKeywordsAndPass));
-            upgraders.Add(new StandardSpecularToHDLitMaterialUpgrader_SS("Standard (Specular setup)", "HDRenderPipeline/LitTransitional", LitTransitionalGUI.SetupMaterialKeywordsAndPass));
+            upgraders.Add(new StandardToHDLitTransitionalMaterialUpgrader("Standard", "HDRenderPipeline/LitTransitional", LitTransitionalGUI.SetupMaterialKeywordsAndPass));
+            upgraders.Add(new StandardSpecularToHDLitTransitionalMaterialUpgrader("Standard (Specular setup)", "HDRenderPipeline/LitTransitional", LitTransitionalGUI.SetupMaterialKeywordsAndPass));
             return upgraders;
         }
 
 
-        [MenuItem("RenderPipeline/HDRenderPipeline/Material Upgraders/Upgrade Standard Materials to Lit Materials (SS) - Project Folder", false, 4)]
+        [MenuItem("RenderPipeline/HDRenderPipeline/Material Upgraders/Upgrade Standard Materials to LitTransitional Materials - Project Folder", false, 4)]
         static void UpgradeMaterialsProject_SS()
         {
             MaterialUpgrader.UpgradeProjectFolder_SS(GetHDUpgraders_SS(), "Upgrade to HD Material");
         }
 
 
-        [MenuItem("RenderPipeline/HDRenderPipeline/Material Upgraders/Upgrade Standard Materials to Lit Materials (SS) - Selection", false, 2)]
+        [MenuItem("RenderPipeline/HDRenderPipeline/Material Upgraders/Upgrade Standard Materials to LitTransitional Materials - Selection", false, 5)]
         static void UpgradeMaterialsSelection_SS()
         {
             MaterialUpgrader.UpgradeSelection_SS(GetHDUpgraders_SS(), "Upgrade to HD Material");

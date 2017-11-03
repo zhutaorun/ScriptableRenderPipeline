@@ -3,11 +3,11 @@ using UnityEngine;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    class StandardSpecularToHDLitMaterialUpgrader_SS : MaterialUpgrader
+    class StandardSpecularToHDLitTransitionalMaterialUpgrader : MaterialUpgrader
     {
-        public StandardSpecularToHDLitMaterialUpgrader_SS() : this("Standard (Specular setup)", "HDRenderPipeline/Lit", LitGUI.SetupMaterialKeywordsAndPass) { }
+        public StandardSpecularToHDLitTransitionalMaterialUpgrader() : this("Standard (Specular setup)", "HDRenderPipeline/Lit", LitGUI.SetupMaterialKeywordsAndPass) { }
 
-        public StandardSpecularToHDLitMaterialUpgrader_SS(string sourceShaderName, string destShaderName, MaterialFinalizer finalizer)
+        public StandardSpecularToHDLitTransitionalMaterialUpgrader(string sourceShaderName, string destShaderName, MaterialFinalizer finalizer)
         {
             // Anything reasonable that can be done here?
             //RenameFloat("_SpecColor", ...);

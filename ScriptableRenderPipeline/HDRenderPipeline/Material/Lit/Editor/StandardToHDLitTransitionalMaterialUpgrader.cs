@@ -3,12 +3,12 @@ using UnityEngine;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    public class StandardToHDLitMaterialUpgrader_SS : MaterialUpgrader
+    public class StandardToHDLitTransitionalMaterialUpgrader : MaterialUpgrader
     {
        
-        public StandardToHDLitMaterialUpgrader_SS() : this("Standard", "HDRenderPipeline/LitTransitional", LitGUI.SetupMaterialKeywordsAndPass) { }
+        public StandardToHDLitTransitionalMaterialUpgrader() : this("Standard", "HDRenderPipeline/LitTransitional", LitGUI.SetupMaterialKeywordsAndPass) { }
 
-        public StandardToHDLitMaterialUpgrader_SS(string sourceShaderName, string destShaderName, MaterialFinalizer finalizer)
+        public StandardToHDLitTransitionalMaterialUpgrader(string sourceShaderName, string destShaderName, MaterialFinalizer finalizer)
         {
             RenameShader(sourceShaderName, destShaderName, finalizer);
 
