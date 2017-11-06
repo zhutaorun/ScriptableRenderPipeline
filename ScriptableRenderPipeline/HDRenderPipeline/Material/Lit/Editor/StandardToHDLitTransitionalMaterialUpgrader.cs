@@ -28,15 +28,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // the HD renderloop packs detail albedo and detail normals into a single texture.
             // mapping the detail normal map, if any, to the detail map, should do the right thing if
             // there is no detail albedo.
-            RenameTexture("_DetailNormalMap", "_DetailMap");
+            RenameTexture("_DetailAlbedoMap", "_DetailMapLegacy");
+            RenameTexture("_DetailMask", "_DetailMaskMapLegacy");
+            RenameVector("_DetailAlbedoMap_ST", "_DetailMap_ST");
 
             // Metallic uses [Gamma] attribute in standard shader but not in Lit.
             // @Seb: Should we convert?
-            RenameFloat("_Metallic", "_Metallic");
-
-            //@TODO: Seb. Why do we multiply color by intensity
-            //       in shader when we can just store a color?
-            // builtinData.emissiveColor * builtinData.emissiveIntensity
+            RenameFloat("_Metallic", "_Metallic");          
         }
 
         public override void Convert(Material srcMaterial, Material dstMaterial)

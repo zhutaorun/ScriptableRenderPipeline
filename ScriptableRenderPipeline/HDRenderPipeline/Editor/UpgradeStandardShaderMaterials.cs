@@ -19,6 +19,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var upgraders = new List<MaterialUpgrader>();
             upgraders.Add(new StandardToHDLitTransitionalMaterialUpgrader("Standard", "HDRenderPipeline/LitTransitional", LitTransitionalGUI.SetupMaterialKeywordsAndPass));
             upgraders.Add(new StandardSpecularToHDLitTransitionalMaterialUpgrader("Standard (Specular setup)", "HDRenderPipeline/LitTransitional", LitTransitionalGUI.SetupMaterialKeywordsAndPass));
+            upgraders.Add(new StandardSpecularToHDLitTransitionalMaterialUpgrader("Adam/Standard (Specular setup)", "HDRenderPipeline/LitTransitional", LitTransitionalGUI.SetupMaterialKeywordsAndPass));
             return upgraders;
         }
 
