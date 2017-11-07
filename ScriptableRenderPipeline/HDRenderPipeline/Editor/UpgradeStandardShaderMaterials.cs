@@ -58,6 +58,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 l.intensity *= Mathf.PI;
             }
+            lights = Light.GetLights(LightType.Point, 0);
+            foreach (var l in lights)
+            {
+                l.intensity *= Mathf.PI;
+            }
+            lights = Light.GetLights(LightType.Spot, 0);
+            foreach (var l in lights)
+            {
+                l.intensity *= Mathf.PI;
+            }
         }
     }
 }
