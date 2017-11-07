@@ -122,6 +122,35 @@ namespace UnityEditor.Experimental.Rendering
                 dstMaterial.SetFloat(t.property, srcMaterial.IsKeywordEnabled(t.keyword) ? t.setVal : t.unsetVal);
         }
 
+        public void CommonRename()
+        {
+            RenameTexture("_MainTex", "_BaseColorMap");
+            RenameColor("_Color", "_BaseColor");
+            RenameFloat("_Glossiness", "_Smoothness");
+            RenameTexture("_BumpMap", "_NormalMap");
+            RenameFloat("_BumpScale", "_NormalScale");
+            RenameTexture("_EmissionMap", "_EmissiveColorMap");
+            RenameColor("_EmissionColor", "_EmissiveColor");
+            RenameFloat("_Cutoff", "_AlphaCutoff");
+            RenameKeywordToFloat("_ALPHATEST_ON", "_AlphaCutoffEnable", 1f, 0f);
+            RenameTexture("_ParallaxMap", "_HeightMap");
+            RenameTexture("_DetailAlbedoMap", "_DetailMapLegacy");
+            RenameTexture("_DetailMask", "_DetailMaskMapLegacy");
+            RenameVector("_DetailAlbedoMap_ST", "_DetailMap_ST");   
+        }
+
+        public void CommonConvert(Material srcMaterial, Material dstMaterial)
+        {
+            if (srcMaterial.GetTexture("_ParallaxMap") != null)
+            {
+                dstMaterial.SetFloat("_DisplacementMode", 2.0f);
+                dstMaterial.SetFloat("_DisplacementLockObjectScale", 0.0f);
+                dstMaterial.SetFloat("_DepthOffsetEnable", 1.0f);
+            }
+            dstMaterial.SetFloat("_EmissiveIntensity", 3.141f); // same as lights
+        }
+
+
         public void RenameShader(string oldName, string newName, MaterialFinalizer finalizer = null)
         {
             m_OldShader = oldName;
