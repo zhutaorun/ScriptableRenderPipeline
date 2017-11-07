@@ -65,6 +65,9 @@ namespace UnityEditor.Experimental.Rendering
 
         public void Upgrade(Material material, UpgradeFlags flags)
         {
+            if(material.shader.name != m_OldShader)
+                return;
+
             Material newMaterial;
             if ((flags & UpgradeFlags.CleanupNonUpgradedProperties) != 0)
             {
@@ -77,11 +80,7 @@ namespace UnityEditor.Experimental.Rendering
             }
 
             Convert(material, newMaterial);
-            if (newMaterial.shaderKeywords.Length > 250)
-            {
-                Debug.LogError(string.Format("Too many keywords in material {0}", material.name));
-            }
-
+          
             material.shader = Shader.Find(m_NewShader);
             material.CopyPropertiesFromMaterial(newMaterial);
             UnityEngine.Object.DestroyImmediate(newMaterial);
