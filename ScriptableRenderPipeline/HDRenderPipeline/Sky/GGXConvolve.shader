@@ -11,7 +11,7 @@ Shader "Hidden/HDRenderPipeline/GGXConvolve"
 
             HLSLPROGRAM
             #pragma target 4.5
-            #pragma only_renderers d3d11 ps4 metal  // TEMP: until we go further in dev
+            #pragma only_renderers d3d11 ps4 vulkan metal  // TEMP: until we go further in dev
 
             #pragma multi_compile _ USE_MIS
 
@@ -33,7 +33,6 @@ Shader "Hidden/HDRenderPipeline/GGXConvolve"
             #endif
 
             float _Level;
-            float _LastLevel;
             float _InvOmegaP;
             float4x4 _PixelCoordToViewDirWS; // Actually just 3x3, but Unity can only set 4x4
 
@@ -83,7 +82,6 @@ Shader "Hidden/HDRenderPipeline/GGXConvolve"
                                          V, N,
                                          roughness,
                                          _Level - 1,
-                                         _LastLevel,
                                          _InvOmegaP,
                                          sampleCount, // Must be a Fibonacci number
                                          true,

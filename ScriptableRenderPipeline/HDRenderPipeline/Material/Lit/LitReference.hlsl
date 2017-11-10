@@ -153,8 +153,8 @@ float3 IntegrateLambertIBLRef(LightLoopContext lightLoopContext,
         {
             float4 val = SampleEnv(lightLoopContext, lightData.envIndex, L, 0);
 
-            // diffuse Albedo is apply here as describe in ImportanceSampleLambert function
-            acc += bsdfData.diffuseColor * LambertNoPI() * weightOverPdf * val.rgb;
+            // We don't multiply by 'bsdfData.diffuseColor' here. It's done only once in PostEvaluateBSDF().
+            acc += LambertNoPI() * weightOverPdf * val.rgb;
         }
     }
 
@@ -166,7 +166,7 @@ float3 IntegrateDisneyDiffuseIBLRef(LightLoopContext lightLoopContext,
                                     uint sampleCount = 4096)
 {
     float3x3 localToWorld = float3x3(bsdfData.tangentWS, bsdfData.bitangentWS, bsdfData.normalWS);
-    float    NdotV        = max(preLightData.NdotV, MIN_N_DOT_V);
+    float    NdotV        = preLightData.NdotV;
     float3   acc          = float3(0.0, 0.0, 0.0);
 
     // Add some jittering on Hammersley2d
@@ -185,15 +185,14 @@ float3 IntegrateDisneyDiffuseIBLRef(LightLoopContext lightLoopContext,
 
         if (NdotL > 0.0)
         {
-            float3 H = normalize(L + V);
-            float LdotH = dot(L, H);
+            float LdotV = dot(L, V);
             // Note: we call DisneyDiffuse that require to multiply by Albedo / PI. Divide by PI is already taken into account
             // in weightOverPdf of ImportanceSampleLambert call.
-            float disneyDiffuse = DisneyDiffuse(NdotV, NdotL, LdotH, bsdfData.perceptualRoughness);
+            float disneyDiffuse = DisneyDiffuse(NdotV, NdotL, LdotV, bsdfData.perceptualRoughness);
 
-            // diffuse Albedo is apply here as describe in ImportanceSampleLambert function
             float4 val = SampleEnv(lightLoopContext, lightData.envIndex, L, 0);
-            acc += bsdfData.diffuseColor * disneyDiffuse * weightOverPdf * val.rgb;
+            // We don't multiply by 'bsdfData.diffuseColor' here. It's done only once in PostEvaluateBSDF().
+            acc += disneyDiffuse * weightOverPdf * val.rgb;
         }
     }
 
@@ -203,11 +202,22 @@ float3 IntegrateDisneyDiffuseIBLRef(LightLoopContext lightLoopContext,
 // Ref: Moving Frostbite to PBR (Appendix A)
 float3 IntegrateSpecularGGXIBLRef(LightLoopContext lightLoopContext,
                                   float3 V, PreLightData preLightData, EnvLightData lightData, BSDFData bsdfData,
-                                  uint sampleCount = 4096)
+                                  uint sampleCount = 2048)
 {
-    float3x3 localToWorld = float3x3(bsdfData.tangentWS, bsdfData.bitangentWS, bsdfData.normalWS);
-    float    NdotV        = max(preLightData.NdotV, MIN_N_DOT_V);
-    float3   acc          = float3(0.0, 0.0, 0.0);
+    float3x3 localToWorld;
+
+    if (bsdfData.materialId == MATERIALID_LIT_ANISO)
+    {
+        localToWorld = float3x3(bsdfData.tangentWS, bsdfData.bitangentWS, bsdfData.normalWS);
+    }
+    else
+    {
+        // We do not have a tangent frame unless we use anisotropic GGX.
+        localToWorld = GetLocalFrame(bsdfData.normalWS);
+    }
+
+    float  NdotV = preLightData.NdotV;
+    float3 acc   = float3(0.0, 0.0, 0.0);
 
     // Add some jittering on Hammersley2d
     float2 randNum  = InitRandom(V.xy * 0.5 + 0.5);
@@ -231,7 +241,6 @@ float3 IntegrateSpecularGGXIBLRef(LightLoopContext lightLoopContext,
         {
             ImportanceSampleGGX(u, V, localToWorld, bsdfData.roughness, NdotV, L, VdotH, NdotL, weightOverPdf);
         }
-
 
         if (NdotL > 0.0)
         {

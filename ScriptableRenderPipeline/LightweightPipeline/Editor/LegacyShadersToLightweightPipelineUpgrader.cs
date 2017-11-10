@@ -4,23 +4,21 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
 {
     public class LegacyShadersToLightweightPipelineUpgrader
     {
-        [MenuItem("RenderPipeline/LightweightPipeline/Material Upgraders/Upgrade Legacy Materials to LightweightPipeline - Project", false, 3)]
-        public static void UpgradeMaterialsToLDProject()
-        {
-            List<MaterialUpgrader> materialUpgraders = new List<MaterialUpgrader>();
-            GetUpgraders(ref materialUpgraders);
+        //[MenuItem("Edit/Render Pipeline/Upgrade/Lightweight/Upgrade Legacy Materials to Lightweight Pipeline (Project)", priority = CoreUtils.editMenuPriority)]
+        //public static void UpgradeMaterialsToLDProject()
+        //{
+        //    List<MaterialUpgrader> materialUpgraders = new List<MaterialUpgrader>();
+        //    GetUpgraders(ref materialUpgraders);
+        //    MaterialUpgrader.UpgradeProjectFolder(materialUpgraders, "Upgrade to LD Materials");
+        //}
 
-            MaterialUpgrader.UpgradeProjectFolder(materialUpgraders, "Upgrade to LD Materials");
-        }
-
-        [MenuItem("RenderPipeline/LightweightPipeline/Material Upgraders/Upgrade Legacy Materials to LightweightPipeline - Selection", false, 4)]
-        public static void UpgradeMaterialsToLDSelection()
-        {
-            List<MaterialUpgrader> materialUpgraders = new List<MaterialUpgrader>();
-            GetUpgraders(ref materialUpgraders);
-
-            MaterialUpgrader.UpgradeSelection(materialUpgraders, "Upgrade to Lightweight Materials");
-        }
+        //[MenuItem("Edit/Render Pipeline/Upgrade/Lightweight/Upgrade Legacy Materials to Lightweight Pipeline (Selection)", priority = CoreUtils.editMenuPriority)]
+        //public static void UpgradeMaterialsToLDSelection()
+        //{
+        //    List<MaterialUpgrader> materialUpgraders = new List<MaterialUpgrader>();
+        //    GetUpgraders(ref materialUpgraders);
+        //    MaterialUpgrader.UpgradeSelection(materialUpgraders, "Upgrade to Lightweight Materials");
+        //}
 
         private static void GetUpgraders(ref List<MaterialUpgrader> materialUpgraders)
         {

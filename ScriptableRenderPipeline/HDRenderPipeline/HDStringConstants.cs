@@ -133,8 +133,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _CosTime = Shader.PropertyToID("_CosTime");
         public static readonly int unity_DeltaTime = Shader.PropertyToID("unity_DeltaTime");
         public static readonly int _EnvLightSkyEnabled = Shader.PropertyToID("_EnvLightSkyEnabled");
-        public static readonly int _AmbientOcclusionDirectLightStrenght = Shader.PropertyToID("_AmbientOcclusionDirectLightStrenght");
+        public static readonly int _AmbientOcclusionParam = Shader.PropertyToID("_AmbientOcclusionParam");
         public static readonly int _SkyTexture = Shader.PropertyToID("_SkyTexture");
+        public static readonly int _SkyTextureMipCount = Shader.PropertyToID("_SkyTextureMipCount");
 
         public static readonly int _UseDisneySSS = Shader.PropertyToID("_UseDisneySSS");
         public static readonly int _EnableSSSAndTransmission = Shader.PropertyToID("_EnableSSSAndTransmission");
@@ -194,7 +195,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _CameraFilteringBuffer          = Shader.PropertyToID("_CameraFilteringTexture");
         public static readonly int _IrradianceSource               = Shader.PropertyToID("_IrradianceSource");
 
+        public static readonly int[] _GBufferTexture =
+        {
+            Shader.PropertyToID("_GBufferTexture0"),
+            Shader.PropertyToID("_GBufferTexture1"),
+            Shader.PropertyToID("_GBufferTexture2"),
+            Shader.PropertyToID("_GBufferTexture3"),
+            Shader.PropertyToID("_GBufferTexture4"),
+            Shader.PropertyToID("_GBufferTexture5"),
+            Shader.PropertyToID("_GBufferTexture6"),
+            Shader.PropertyToID("_GBufferTexture7")
+        };
+
         public static readonly int _VelocityTexture = Shader.PropertyToID("_VelocityTexture");
+        public static readonly int _ShadowMaskTexture = Shader.PropertyToID("_ShadowMaskTexture");
         public static readonly int _DistortionTexture = Shader.PropertyToID("_DistortionTexture");
         public static readonly int _GaussianPyramidColorTexture = Shader.PropertyToID("_GaussianPyramidColorTexture");
         public static readonly int _DepthPyramidTexture = Shader.PropertyToID("_PyramidDepthTexture");

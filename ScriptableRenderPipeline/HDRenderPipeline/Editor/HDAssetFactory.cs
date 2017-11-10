@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
@@ -12,7 +13,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             get { return HDEditorUtils.GetHDRenderPipelinePath() + "RenderPipelineResources/HDRenderPipelineResources.asset"; }
         }
 
-        [MenuItem("RenderPipeline/HDRenderPipeline/Create Pipeline Asset", false, 16)]
+        [MenuItem("Assets/Create/Render Pipeline/High Definition/Render Pipeline", priority = CoreUtils.assetCreateMenuPriority1)]
         static void CreateHDRenderPipeline()
         {
             var instance = ScriptableObject.CreateInstance<HDRenderPipelineAsset>();
@@ -24,7 +25,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         // TODO skybox/cubemap
 
-        [MenuItem("RenderPipeline/HDRenderPipeline/Create Resources Asset", false, 15)]
+        [MenuItem("Assets/Create/Render Pipeline/High Definition/Render Pipeline Resources", priority = CoreUtils.assetCreateMenuPriority2)]
         static void CreateRenderPipelineResources()
         {
             string HDRenderPipelinePath = HDEditorUtils.GetHDRenderPipelinePath();
@@ -39,7 +40,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             instance.debugFullScreenShader = Load<Shader>(HDRenderPipelinePath + "Debug/DebugFullScreen.Shader");
 
             instance.deferredShader = Load<Shader>(HDRenderPipelinePath + "Lighting/Deferred.Shader");
-            instance.screenSpaceAmbientOcclusionShader = Load<Shader>(HDRenderPipelinePath + "Lighting/AmbientOcclusion/ScreenSpaceAmbientOcclusion.Shader");
             instance.subsurfaceScatteringCS = Load<ComputeShader>(HDRenderPipelinePath + "Material/Lit/Resources/SubsurfaceScattering.compute");
             instance.volumetricLightingCS = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/Volumetrics/Resources/VolumetricLighting.compute");
             instance.gaussianPyramidCS = Load<ComputeShader>(PostProcessingPath + "Shaders/Builtins/GaussianDownsample.compute");
@@ -70,6 +70,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             instance.buildProbabilityTables = Load<ComputeShader>(HDRenderPipelinePath + "Sky/BuildProbabilityTables.compute");
             instance.computeGgxIblSampleData = Load<ComputeShader>(HDRenderPipelinePath + "Sky/ComputeGgxIblSampleData.compute");
             instance.GGXConvolve = Load<Shader>(HDRenderPipelinePath + "Sky/GGXConvolve.shader");
+            instance.opaqueAtmosphericScattering = Load<Shader>(HDRenderPipelinePath + "Sky/OpaqueAtmosphericScattering.shader");
 
             // Skybox/Cubemap is a builtin shader, must use Sahder.Find to access it. It is fine because we are in the editor
             instance.skyboxCubemap = Shader.Find("Skybox/Cubemap");

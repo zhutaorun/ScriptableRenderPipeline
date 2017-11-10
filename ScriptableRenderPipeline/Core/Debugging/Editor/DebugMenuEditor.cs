@@ -1,4 +1,3 @@
-﻿using UnityEngine;
 using UnityEditor;
 
 namespace UnityEngine.Experimental.Rendering
@@ -9,7 +8,7 @@ namespace UnityEngine.Experimental.Rendering
         [SerializeField]
         private DebugMenuState m_DebugMenuState;
 
-        [MenuItem("HDRenderPipeline/Debug Window")]
+        [MenuItem("Edit/Render Pipeline/Tools/High Definition/Debug Window", priority = CoreUtils.editMenuPriority2)]
         static void DisplayDebugMenu()
         {
             var window = EditorWindow.GetWindow<DebugMenuEditor>("Debug Window");
@@ -44,9 +43,12 @@ namespace UnityEngine.Experimental.Rendering
         {
             DebugItemState debugItemState = m_DebugMenuState.FindDebugItemState(item);
 
-            UnityEditor.Undo.RecordObject(debugItemState, "DebugMenu State Update");
-            debugItemState.SetValue(item.GetValue());
-            EditorUtility.SetDirty(m_DebugMenuState);
+            if(debugItemState != null)
+            {
+                UnityEditor.Undo.RecordObject(debugItemState, "DebugMenu State Update");
+                debugItemState.SetValue(item.GetValue());
+                EditorUtility.SetDirty(m_DebugMenuState);
+            }
         }
 
         void OnGUI()

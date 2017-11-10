@@ -2,18 +2,18 @@ Shader "HDRenderPipeline/Unlit"
 {
     Properties
     {
-        _Color("Color", Color) = (1,1,1,1)
-        _ColorMap("ColorMap", 2D) = "white" {}
+        // Be careful, do not change the name here to _Color. It will conflict with the "fake" parameters (see end of properties) required for GI.
+        _UnlitColor("Color", Color) = (1,1,1,1)
+        _UnlitColorMap("ColorMap", 2D) = "white" {}
 
-        _DistortionVectorMap("DistortionVectorMap", 2D) = "black" {}
-
-        _EmissiveColor("EmissiveColor", Color) = (0, 0, 0)
+        _EmissiveColor("EmissiveColor", Color) = (1, 1, 1)
         _EmissiveColorMap("EmissiveColorMap", 2D) = "white" {}
         _EmissiveIntensity("EmissiveIntensity", Float) = 0
 
+        _DistortionVectorMap("DistortionVectorMap", 2D) = "black" {}
         [ToggleOff] _DistortionEnable("Enable Distortion", Float) = 0.0
         [ToggleOff] _DistortionOnly("Distortion Only", Float) = 0.0
-        [ToggleOff] _DistortionDepthTest("Distortion Depth Test Enable", Float) = 0.0
+        [ToggleOff] _DistortionDepthTest("Distortion Depth Test Enable", Float) = 1.0
         [Enum(Add, 0, Multiply, 1)] _DistortionBlendMode("Distortion Blend Mode", Int) = 0
         [HideInInspector] _DistortionSrcBlend("Distortion Blend Src", Int) = 0
         [HideInInspector] _DistortionDstBlend("Distortion Blend Dst", Int) = 0
@@ -21,9 +21,14 @@ Shader "HDRenderPipeline/Unlit"
         [HideInInspector] _DistortionBlurDstBlend("Distortion Blur Blend Dst", Int) = 0
         [HideInInspector] _DistortionBlurBlendMode("Distortion Blur Blend Mode", Int) = 0
         _DistortionScale("Distortion Scale", Float) = 1
+        _DistortionVectorScale("Distortion Vector Scale", Float) = 2
+        _DistortionVectorBias("Distortion Vector Bias", Float) = -1
         _DistortionBlurScale("Distortion Blur Scale", Float) = 1
         _DistortionBlurRemapMin("DistortionBlurRemapMin", Float) = 0.0
         _DistortionBlurRemapMax("DistortionBlurRemapMax", Float) = 1.0
+
+        // Transparency
+        [ToggleOff] _PreRefractionPass("PreRefractionPass", Float) = 0.0
 
         [ToggleOff]  _AlphaCutoffEnable("Alpha Cutoff Enable", Float) = 0.0
         _AlphaCutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
@@ -37,6 +42,7 @@ Shader "HDRenderPipeline/Unlit"
         [HideInInspector] _CullMode("__cullmode", Float) = 2.0
         [HideInInspector] _ZTestMode("_ZTestMode", Int) = 8
 
+        [ToggleOff] _EnableFogOnTransparent("Enable Fog", Float) = 0.0
         [ToggleOff] _DoubleSidedEnable("Double sided enable", Float) = 0.0
 
         // Caution: C# code in BaseLitUI.cs call LightmapEmissionFlagsProperty() which assume that there is an existing "_EmissionColor"
@@ -44,13 +50,18 @@ Shader "HDRenderPipeline/Unlit"
         // In our case we don't use such a mechanism but need to keep the code quiet. We declare the value and always enable it.
         // TODO: Fix the code in legacy unity so we can customize the beahvior for GI
         _EmissionColor("Color", Color) = (1, 1, 1)
+        
+        // HACK: GI Baking system relies on some properties existing in the shader ("_MainTex", "_Cutoff" and "_Color") for opacity handling, so we need to store our version of those parameters in the hard-coded name the GI baking system recognizes.
+        _MainTex("Albedo", 2D) = "white" {}
+        _Color("Color", Color) = (1,1,1,1)
+        _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
     }
 
     HLSLINCLUDE
 
     #pragma target 4.5
-    #pragma only_renderers d3d11 ps4 metal  // TEMP: until we go further in dev
-    // #pragma enable_d3d11_debug_symbols
+    #pragma only_renderers d3d11 ps4 vulkan metal  // TEMP: until we go further in dev
+    //#pragma enable_d3d11_debug_symbols
 
     //-------------------------------------------------------------------------------------
     // Variant
@@ -61,7 +72,10 @@ Shader "HDRenderPipeline/Unlit"
 
     #pragma shader_feature _EMISSIVE_COLOR_MAP
 
-    #pragma shader_feature _ _BLENDMODE_LERP _BLENDMODE_ADD _BLENDMODE_SOFT_ADD _BLENDMODE_MULTIPLY _BLENDMODE_PRE_MULTIPLY
+    // Keyword for transparent
+    #pragma shader_feature _SURFACE_TYPE_TRANSPARENT
+    #pragma shader_feature _ _BLENDMODE_ALPHA _BLENDMODE_ADD _BLENDMODE_MULTIPLY _BLENDMODE_PRE_MULTIPLY
+    #pragma shader_feature _ENABLE_FOG_ON_TRANSPARENT
 
     //-------------------------------------------------------------------------------------
     // Define
@@ -109,7 +123,7 @@ Shader "HDRenderPipeline/Unlit"
 
             #define SHADERPASS SHADERPASS_LIGHT_TRANSPORT
             #include "../../Material/Material.hlsl"
-            #include "ShaderPass/UnlitMetaPass.hlsl"
+            #include "ShaderPass/UnlitSharePass.hlsl"
             #include "UnlitData.hlsl"
             #include "../../ShaderPass/ShaderPassLightTransport.hlsl"
 

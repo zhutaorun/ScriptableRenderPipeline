@@ -50,6 +50,9 @@ SAMPLER2D(sampler_ThicknessMap);
 TEXTURE2D(_SpecularColorMap);
 SAMPLER2D(sampler_SpecularColorMap);
 
+TEXTURE2D(_TransmittanceColorMap);
+SAMPLER2D(sampler_TransmittanceColorMap);
+
 #else
 
 // Set of users variables
@@ -72,8 +75,11 @@ PROP_DECL_TEX2D(_MaskMap);
 PROP_DECL_TEX2D(_BentNormalMap);
 PROP_DECL_TEX2D(_NormalMap);
 PROP_DECL_TEX2D(_NormalMapOS);
-PROP_DECL_TEX2D(_HeightMap);
 PROP_DECL_TEX2D(_DetailMap);
+PROP_DECL_TEX2D(_HeightMap);
+
+PROP_DECL_TEX2D(_SubsurfaceRadiusMap);
+PROP_DECL_TEX2D(_ThicknessMap);
 
 TEXTURE2D(_LayerMaskMap);
 SAMPLER2D(sampler_LayerMaskMap);
@@ -88,6 +94,8 @@ CBUFFER_START(_PerMaterial)
 float _AlphaCutoff;
 float4 _DoubleSidedConstants;
 float _DistortionScale;
+float _DistortionVectorScale;
+float _DistortionVectorBias;
 float _DistortionBlurScale;
 float _DistortionBlurRemapMin;
 float _DistortionBlurRemapMax;
@@ -113,6 +121,7 @@ float _ThicknessMultiplier;
 // In our case we don't use such a mechanism but need to keep the code quiet. We declare the value and always enable it.
 // TODO: Fix the code in legacy unity so we can customize the beahvior for GI
 float3 _EmissionColor;
+float4 _EmissiveColorMap_ST;
 
 float4 _InvPrimScale; // Only XY are used
 
@@ -135,6 +144,8 @@ float _Metallic;
 float _Smoothness;
 float _SmoothnessRemapMin;
 float _SmoothnessRemapMax;
+float _AORemapMin;
+float _AORemapMax;
 
 float _NormalScale;
 
@@ -153,6 +164,7 @@ float _Anisotropy;
 int   _SubsurfaceProfile;
 float _SubsurfaceRadius;
 float _Thickness;
+float4 _ThicknessRemap;
 
 float _CoatCoverage;
 float _CoatIOR;
@@ -178,6 +190,9 @@ PROP_DECL(float, _Metallic);
 PROP_DECL(float, _Smoothness);
 PROP_DECL(float, _SmoothnessRemapMin);
 PROP_DECL(float, _SmoothnessRemapMax);
+PROP_DECL(float, _AORemapMin);
+PROP_DECL(float, _AORemapMax);
+
 PROP_DECL(float, _NormalScale);
 float4 _NormalMap0_TexelSize; // Unity facility. This will provide the size of the base normal to the shader
 
@@ -197,6 +212,11 @@ PROP_DECL(float, _DetailSmoothnessScale);
 
 PROP_DECL(float, _HeightAmplitude);
 PROP_DECL(float, _HeightCenter);
+
+PROP_DECL(int, _SubsurfaceProfile);
+PROP_DECL(float, _SubsurfaceRadius);
+PROP_DECL(float, _Thickness);
+PROP_DECL(float4, _ThicknessRemap);
 
 PROP_DECL(float, _OpacityAsDensity);
 float _InheritBaseNormal1;

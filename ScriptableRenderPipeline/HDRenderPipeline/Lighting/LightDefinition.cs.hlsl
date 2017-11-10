@@ -1,5 +1,5 @@
 //
-// This file was automatically generated from Assets/ScriptableRenderLoop/ScriptableRenderPipeline/HDRenderPipeline/Lighting/LightDefinition.cs.  Please don't edit by hand.
+// This file was automatically generated. Please don't edit by hand.
 //
 
 #ifndef LIGHTDEFINITION_CS_HLSL
@@ -8,12 +8,18 @@
 // UnityEngine.Experimental.Rendering.HDPipeline.GPULightType:  static fields
 //
 #define GPULIGHTTYPE_DIRECTIONAL (0)
-#define GPULIGHTTYPE_PROJECTOR_BOX (1)
+#define GPULIGHTTYPE_POINT (1)
 #define GPULIGHTTYPE_SPOT (2)
-#define GPULIGHTTYPE_POINT (3)
-#define GPULIGHTTYPE_PROJECTOR_PYRAMID (4)
+#define GPULIGHTTYPE_PROJECTOR_PYRAMID (3)
+#define GPULIGHTTYPE_PROJECTOR_BOX (4)
 #define GPULIGHTTYPE_LINE (5)
 #define GPULIGHTTYPE_RECTANGLE (6)
+
+//
+// UnityEngine.Experimental.Rendering.HDPipeline.GPUImageBasedLightingType:  static fields
+//
+#define GPUIMAGEBASEDLIGHTINGTYPE_REFLECTION (0)
+#define GPUIMAGEBASEDLIGHTINGTYPE_REFRACTION (1)
 
 //
 // UnityEngine.Experimental.Rendering.HDPipeline.EnvShapeType:  static fields
@@ -49,6 +55,10 @@ struct DirectionalLightData
     float specularScale;
     float3 up;
     float diffuseScale;
+    bool dynamicShadowCasterOnly;
+    float2 fadeDistanceScaleAndBias;
+    float unused0;
+    float4 shadowMaskSelector;
 };
 
 // Generated from UnityEngine.Experimental.Rendering.HDPipeline.LightData
@@ -68,10 +78,11 @@ struct LightData
     float angleScale;
     float angleOffset;
     float shadowDimmer;
-    int unused0;
+    bool dynamicShadowCasterOnly;
     float2 size;
     int lightType;
     float minRoughness;
+    float4 shadowMaskSelector;
 };
 
 // Generated from UnityEngine.Experimental.Rendering.HDPipeline.EnvLightData
@@ -85,11 +96,11 @@ struct EnvLightData
     float3 up;
     float blendDistance;
     float3 right;
-    int unused0;
+    float minProjectionDistance;
     float3 innerDistance;
-    float unused1;
+    float unused0;
     float3 offsetLS;
-    float unused2;
+    float unused1;
 };
 
 //
@@ -134,6 +145,22 @@ float3 GetUp(DirectionalLightData value)
 float GetDiffuseScale(DirectionalLightData value)
 {
 	return value.diffuseScale;
+}
+bool GetDynamicShadowCasterOnly(DirectionalLightData value)
+{
+	return value.dynamicShadowCasterOnly;
+}
+float2 GetFadeDistanceScaleAndBias(DirectionalLightData value)
+{
+	return value.fadeDistanceScaleAndBias;
+}
+float GetUnused0(DirectionalLightData value)
+{
+	return value.unused0;
+}
+float4 GetShadowMaskSelector(DirectionalLightData value)
+{
+	return value.shadowMaskSelector;
 }
 
 //
@@ -191,9 +218,9 @@ float GetShadowDimmer(LightData value)
 {
 	return value.shadowDimmer;
 }
-int GetUnused0(LightData value)
+bool GetDynamicShadowCasterOnly(LightData value)
 {
-	return value.unused0;
+	return value.dynamicShadowCasterOnly;
 }
 float2 GetSize(LightData value)
 {
@@ -206,6 +233,10 @@ int GetLightType(LightData value)
 float GetMinRoughness(LightData value)
 {
 	return value.minRoughness;
+}
+float4 GetShadowMaskSelector(LightData value)
+{
+	return value.shadowMaskSelector;
 }
 
 //
@@ -239,25 +270,25 @@ float3 GetRight(EnvLightData value)
 {
 	return value.right;
 }
-int GetUnused0(EnvLightData value)
+float GetMinProjectionDistance(EnvLightData value)
 {
-	return value.unused0;
+	return value.minProjectionDistance;
 }
 float3 GetInnerDistance(EnvLightData value)
 {
 	return value.innerDistance;
 }
-float GetUnused1(EnvLightData value)
+float GetUnused0(EnvLightData value)
 {
-	return value.unused1;
+	return value.unused0;
 }
 float3 GetOffsetLS(EnvLightData value)
 {
 	return value.offsetLS;
 }
-float GetUnused2(EnvLightData value)
+float GetUnused1(EnvLightData value)
 {
-	return value.unused2;
+	return value.unused1;
 }
 
 

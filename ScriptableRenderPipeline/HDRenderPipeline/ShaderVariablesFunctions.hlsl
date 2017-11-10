@@ -72,28 +72,30 @@ float4 TransformWorldToHClip(float3 positionWS)
     return mul(GetWorldToHClipMatrix(), float4(positionWS, 1.0));
 }
 
-float3 GetAbsolutePositionWS(float3 cameraRelativePositionWS)
+float3 GetAbsolutePositionWS(float3 positionWS)
 {
-    float3 pos = cameraRelativePositionWS;
 #if (SHADEROPTIONS_CAMERA_RELATIVE_RENDERING != 0)
-    pos += _WorldSpaceCameraPos;
+    positionWS += _WorldSpaceCameraPos;
 #endif
-    return pos;
+    return positionWS;
 }
 
-float3 GetCameraRelativePositionWS(float3 absolutePositionWS)
+float3 GetCameraRelativePositionWS(float3 positionWS)
 {
-    float3 pos = absolutePositionWS;
 #if (SHADEROPTIONS_CAMERA_RELATIVE_RENDERING != 0)
-    pos -= _WorldSpaceCameraPos;
+    positionWS -= _WorldSpaceCameraPos;
 #endif
-    return pos;
+    return positionWS;
 }
 
 // Note: '_WorldSpaceCameraPos' is set by the legacy Unity code.
 float3 GetPrimaryCameraPosition()
 {
-    return GetCameraRelativePositionWS(_WorldSpaceCameraPos);
+#if (SHADEROPTIONS_CAMERA_RELATIVE_RENDERING != 0)
+    return float3(0, 0, 0);
+#else
+    return _WorldSpaceCameraPos;
+#endif
 }
 
 // Could be e.g. the position of a primary camera or a shadow-casting light.

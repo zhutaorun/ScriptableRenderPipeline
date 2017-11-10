@@ -1,25 +1,26 @@
 using System.Collections.Generic;
+using UnityEngine.Experimental.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.LightweightPipeline
 {
     public class StandardToLightweightMaterialUpgrader
     {
-        [MenuItem("RenderPipeline/LightweightPipeline/Material Upgraders/Upgrade Standard Materials to Lightweight Mobile - Project Folder", false, 1)]
+        [MenuItem("Edit/Render Pipeline/Upgrade/Lightweight/Upgrade Standard Materials to Lightweight Pipeline (Project)", priority = CoreUtils.editMenuPriority2)]
         private static void UpgradeMaterialsToLDProject()
         {
             List<MaterialUpgrader> upgraders = new List<MaterialUpgrader>();
             GetUpgraders(ref upgraders);
 
-            MaterialUpgrader.UpgradeProjectFolder(upgraders, "Upgrade to LD Materials");
+            MaterialUpgrader.UpgradeProjectFolder(upgraders, "Upgrade to Lightweight Pipeline Materials");
         }
 
-        [MenuItem("RenderPipeline/LightweightPipeline/Material Upgraders/Upgrade Standard Materials to Lightweight Mobile - Selection", false, 2)]
+        [MenuItem("Edit/Render Pipeline/Upgrade/Lightweight/Upgrade Standard Materials to Lightweight Pipeline (Selection)", priority = CoreUtils.editMenuPriority2)]
         private static void UpgradeMaterialsToLDSelection()
         {
             List<MaterialUpgrader> upgraders = new List<MaterialUpgrader>();
             GetUpgraders(ref upgraders);
 
-            MaterialUpgrader.UpgradeSelection(upgraders, "Upgrade to LD Materials");
+            MaterialUpgrader.UpgradeSelection(upgraders, "Upgrade to Lightweight Pipeline Materials");
         }
 
         private static void GetUpgraders(ref List<MaterialUpgrader> upgraders)
