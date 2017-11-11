@@ -90,11 +90,13 @@ void GetBSDFDataDebug(uint paramId, BSDFData bsdfData, inout float3 result, inou
 }
 
 #ifdef WANT_SSS_CODE
+#define SKIN_SPECULAR_VALUE 0.028
+
 void FillMaterialIdSSSData(float3 baseColor, int subsurfaceProfile, float subsurfaceRadius, float thickness, inout BSDFData bsdfData)
 {
     bsdfData.diffuseColor = baseColor;
 
-    bsdfData.fresnel0 = 0.028; // TODO take from subsurfaceProfile instead
+    bsdfData.fresnel0 = SKIN_SPECULAR_VALUE; // TODO take from subsurfaceProfile instead
     bsdfData.subsurfaceProfile = subsurfaceProfile;
     bsdfData.subsurfaceRadius  = subsurfaceRadius;
     bsdfData.thickness = _ThicknessRemaps[subsurfaceProfile].x + _ThicknessRemaps[subsurfaceProfile].y * thickness;
@@ -102,40 +104,16 @@ void FillMaterialIdSSSData(float3 baseColor, int subsurfaceProfile, float subsur
     uint transmissionMode = BitFieldExtract(_TransmissionFlags, 2u, 2u * subsurfaceProfile);
 
     bsdfData.enableTransmission = transmissionMode != SSS_TRSM_MODE_NONE && (_EnableSSSAndTransmission > 0);
-    bsdfData.useThinObjectMode  = transmissionMode == SSS_TRSM_MODE_THIN;
-
-    bool performPostScatterTexturing = IsBitSet(_TexturingModeFlags, subsurfaceProfile);
-
-#if defined(SHADERPASS) && (SHADERPASS == SHADERPASS_LIGHT_TRANSPORT) // In case of GI pass don't modify the diffuseColor
-    bool enableSssAndTransmission = false;
-#elif defined(SHADERPASS) && (SHADERPASS == SHADERPASS_SUBSURFACE_SCATTERING)
-    bool enableSssAndTransmission = true;
-#else
-    bool enableSssAndTransmission = _EnableSSSAndTransmission != 0;
-#endif
-
-    if (enableSssAndTransmission) // If we globally disable SSS effect, don't modify diffuseColor
-    {
-        // We modify the albedo here as this code is used by all lighting (including light maps and GI).
-        if (performPostScatterTexturing)
-        {
-        #if !defined(SHADERPASS) || (SHADERPASS != SHADERPASS_SUBSURFACE_SCATTERING)
-            bsdfData.diffuseColor = float3(1.0, 1.0, 1.0);
-        #endif
-        }
-        else
-        {
-            bsdfData.diffuseColor = sqrt(bsdfData.diffuseColor);
-        }
-    }
 
     if (bsdfData.enableTransmission)
     {
+        bsdfData.useThinObjectMode = transmissionMode == SSS_TRSM_MODE_THIN;
+
         if (_UseDisneySSS)
         {
-            bsdfData.transmittance = ComputeTransmittance(_ShapeParams[subsurfaceProfile].rgb,
-                                                          _TransmissionTints[subsurfaceProfile].rgb,
-                                                          bsdfData.thickness, bsdfData.subsurfaceRadius);
+            bsdfData.transmittance = ComputeTransmittanceDisney(_ShapeParams[subsurfaceProfile].rgb,
+                                                                _TransmissionTints[subsurfaceProfile].rgb,
+                                                                bsdfData.thickness, bsdfData.subsurfaceRadius);
         }
         else
         {
@@ -146,10 +124,46 @@ void FillMaterialIdSSSData(float3 baseColor, int subsurfaceProfile, float subsur
                                                                  _TransmissionTints[subsurfaceProfile].rgb,
                                                                  bsdfData.thickness, bsdfData.subsurfaceRadius);
         }
-
-        bsdfData.transmittance *= bsdfData.diffuseColor; // Premultiply
     }
 }
+
+// Returns the modified albedo (diffuse color) for materials with subsurface scattering.
+// Ref: Advanced Techniques for Realistic Real-Time Skin Rendering.
+float3 ApplyDiffuseTexturingMode(BSDFData bsdfData)
+{
+    float3 albedo = bsdfData.diffuseColor;
+
+    if (bsdfData.materialId == MATERIALID_LIT_SSS)
+    {
+    #if defined(SHADERPASS) && (SHADERPASS == SHADERPASS_SUBSURFACE_SCATTERING)
+        // If the SSS pass is executed, we know we have SSS enabled.
+        bool enableSssAndTransmission = true;
+    #else
+        bool enableSssAndTransmission = _EnableSSSAndTransmission != 0;
+    #endif
+
+        if (enableSssAndTransmission)
+        {
+            bool performPostScatterTexturing = IsBitSet(_TexturingModeFlags, bsdfData.subsurfaceProfile);
+
+            if (performPostScatterTexturing)
+            {
+                // Post-scatter texturing mode: the albedo is only applied during the SSS pass.
+            #if !defined(SHADERPASS) || (SHADERPASS != SHADERPASS_SUBSURFACE_SCATTERING)
+                albedo = float3(1, 1, 1);
+            #endif
+            }
+            else
+            {
+                // Pre- and pos- scatter texturing mode.
+                albedo = sqrt(albedo);
+            }
+        }
+    }
+
+    return albedo;
+}
+
 #endif
 
 // For image based lighting, a part of the BSDF is pre-integrated.
@@ -209,20 +223,20 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, BSDFData bsdfDat
 {
     PreLightData preLightData;
 
-    preLightData.NdotV = dot(bsdfData.normalWS, V); // Store the unaltered (geometric) version
-    float NdotV = preLightData.NdotV;
+    float3 N;
+    float  NdotV;
 
-    // In the case of IBL we want  shift a bit the normal that are not toward the viewver to reduce artifact
-    float3 iblNormalWS = GetViewShiftedNormal(bsdfData.normalWS, V, NdotV, MIN_N_DOT_V); // Use non clamped NdotV
-    float3 iblR = reflect(-V, iblNormalWS);
+    N = bsdfData.normalWS;
+    NdotV = saturate(dot(N, V));
+    preLightData.NdotV = NdotV;
 
-    NdotV = max(NdotV, MIN_N_DOT_V); // Use the modified (clamped) version
+    float3 iblR;
 
     // GGX aniso
     if (bsdfData.materialId == MATERIALID_LIT_ANISO)
     {
-        preLightData.TdotV       = dot(bsdfData.tangentWS, V);
-        preLightData.BdotV       = dot(bsdfData.bitangentWS, V);
+        preLightData.TdotV = dot(bsdfData.tangentWS, V);
+        preLightData.BdotV = dot(bsdfData.bitangentWS, V);
         preLightData.partLambdaV = GetSmithJointGGXAnisoPartLambdaV(preLightData.TdotV, preLightData.BdotV, NdotV, bsdfData.roughnessT, bsdfData.roughnessB);
 
         // For GGX aniso and IBL we have done an empirical (eye balled) approximation compare to the reference.
@@ -232,10 +246,10 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, BSDFData bsdfDat
         float3 grainDirWS = (bsdfData.anisotropy >= 0) ? bsdfData.bitangentWS : bsdfData.tangentWS;
         // Reduce stretching for (perceptualRoughness < 0.2).
         float  stretch = abs(bsdfData.anisotropy) * saturate(5 * bsdfData.perceptualRoughness);
-        // NOTE: If we follow the theory we should use the modified normal for the different calculation implying a normal (like NdotV) and use iblNormalWS
+        // NOTE: If we follow the theory we should use the modified normal for the different calculation implying a normal (like NdotV) and use 'anisoIblNormalWS'
         // into function like GetSpecularDominantDir(). However modified normal is just a hack. The goal is just to stretch a cubemap, no accuracy here.
         // With this in mind and for performance reasons we chose to only use modified normal to calculate R.
-        float3 anisoIblNormalWS = GetAnisotropicModifiedNormal(grainDirWS, iblNormalWS, V, stretch);
+        float3 anisoIblNormalWS = GetAnisotropicModifiedNormal(grainDirWS, N, V, stretch);
         iblR = reflect(-V, anisoIblNormalWS);
     }
     else // GGX iso
@@ -243,7 +257,7 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, BSDFData bsdfDat
         preLightData.TdotV       = 0;
         preLightData.BdotV       = 0;
         preLightData.partLambdaV = GetSmithJointGGXPartLambdaV(NdotV, bsdfData.roughness);
-        iblR                     = reflect(-V, iblNormalWS);
+        iblR                     = reflect(-V, N);
     }
 
     float reflectivity;
@@ -267,7 +281,7 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, BSDFData bsdfDat
         iblPerceptualRoughness = bsdfData.perceptualRoughness;
     }
 
-    preLightData.iblDirWS = GetSpecularDominantDir(iblNormalWS, iblR, iblRoughness, NdotV);
+    preLightData.iblDirWS = GetSpecularDominantDir(N, iblR, iblRoughness, NdotV);
     preLightData.iblMipLevel = PerceptualRoughnessToMipmapLevel(iblPerceptualRoughness);
 
 #ifdef LIT_USE_GGX_ENERGY_COMPENSATION
