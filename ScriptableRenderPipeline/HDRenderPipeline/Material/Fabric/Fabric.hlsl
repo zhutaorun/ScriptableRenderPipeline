@@ -66,6 +66,8 @@ float4 EncodeSplitLightingGBuffer1(SurfaceData surfaceData)
 // This function require the 3 structure surfaceData, builtinData, bsdfData because it may require both the engine side data, and data that will not be store inside the gbuffer.
 float3 GetBakedDiffuseLigthing(SurfaceData surfaceData, BuiltinData builtinData, BSDFData bsdfData, PreLightData preLightData)
 {
+    bsdfData.diffuseColor = ApplyDiffuseTexturingMode(bsdfData);
+
 	// Premultiply bake diffuse lighting information with DisneyDiffuse pre-integration
 	return builtinData.bakeDiffuseLighting * preLightData.diffuseFGD * surfaceData.ambientOcclusion * bsdfData.diffuseColor + builtinData.emissiveColor;
 }
@@ -129,11 +131,11 @@ void BSDF_CottonWool(float3 V, float3 L, float3 positionWS, PreLightData preLigh
 	// Maybe always using aniso maybe a win ?
 	float3 H = (L + V) * invLenLV;
 	bsdfData.roughness = 1- ClampRoughnessForAnalyticalLights(bsdfData.roughness);
-	float roughnessSq = bsdfData.roughness*bsdfData.roughness;  
-	float N = 1.0 / (PI * (4.0 * roughnessSq + 1.0));  
+	float roughnessSq = bsdfData.roughness*bsdfData.roughness;
+	float N = 1.0 / (PI * (4.0 * roughnessSq + 1.0));
 
 	float NdotH2 = NdotH*NdotH;
-	float cotNdotH2 = NdotH2 / (1.000001 - NdotH2);  
+	float cotNdotH2 = NdotH2 / (1.000001 - NdotH2);
 	float sinNdotH2 = 1.0 - NdotH2;
 	D_Velvet = N * (1.0 + (4.0 * exp(-cotNdotH2 / roughnessSq) / max(sinNdotH2*sinNdotH2,1e-5)));
 

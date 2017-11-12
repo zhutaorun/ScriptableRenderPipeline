@@ -136,7 +136,6 @@ float3 ApplyDiffuseTexturingMode(BSDFData bsdfData)
     float3 albedo = bsdfData.diffuseColor;
 
 #ifdef WANT_SSS_CODE
-    if (bsdfData.materialId == MATERIALID_LIT_SSS)
     {
     #if defined(SHADERPASS) && (SHADERPASS == SHADERPASS_SUBSURFACE_SCATTERING)
         // If the SSS pass is executed, we know we have SSS enabled.

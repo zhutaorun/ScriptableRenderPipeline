@@ -52,6 +52,8 @@ BSDFData ConvertSurfaceDataToBSDFData(SurfaceData surfaceData)
 // This function require the 3 structure surfaceData, builtinData, bsdfData because it may require both the engine side data, and data that will not be store inside the gbuffer.
 float3 GetBakedDiffuseLigthing(SurfaceData surfaceData, BuiltinData builtinData, BSDFData bsdfData, PreLightData preLightData)
 {
+    bsdfData.diffuseColor = ApplyDiffuseTexturingMode(bsdfData);
+
     // Premultiply bake diffuse lighting information with DisneyDiffuse pre-integration
     return builtinData.bakeDiffuseLighting * preLightData.diffuseFGD * surfaceData.ambientOcclusion * bsdfData.diffuseColor + builtinData.emissiveColor;
 }
@@ -93,13 +95,13 @@ float3 KajiyaKaySpecular(float3 H, float3 V, float3 N, float3 T, float shift, fl
 	// We can rewrite specExp from exp2(10 * (1.0 - roughness)) in order
 	// to remove the need to take the square root of sinTH
 	float specExp = exp2(9 - 10*roughness);
-	
+
 	float dotTH = dot (T, H);
 	float sinTHSq = (saturate(1.0 - (dotTH * dotTH)));
 
 	float dirAttn = clamp(dotTH + 1, 0, 1);
 
-	return dirAttn * pow (sinTHSq, specExp) ;	
+	return dirAttn * pow (sinTHSq, specExp) ;
 }
 
 //-----------------------------------------------------------------------------
@@ -137,7 +139,7 @@ void BSDF(  float3 V, float3 L, float3 positionWS, PreLightData preLightData, BS
     // TODO: Do comparison between this correct version and the one from isotropic and see if there is any visual difference
 
     float3 hairSpec1 =	0.5*_PrimarySpecular*KajiyaKaySpecular(H, V, bsdfData.normalWS, B1, _PrimarySpecularShift, 0.5*bsdfData.roughness)*lerp(1,_SpecularTint,0.3);
-	float3 hairSpec2 =	_SecondarySpecular*KajiyaKaySpecular(H, V, bsdfData.normalWS, B2, _SecondarySpecularShift, bsdfData.roughness)*lerp(bsdfData.diffuseColor,_SpecularTint,0.5);	
+	float3 hairSpec2 =	_SecondarySpecular*KajiyaKaySpecular(H, V, bsdfData.normalWS, B2, _SecondarySpecularShift, bsdfData.roughness)*lerp(bsdfData.diffuseColor,_SpecularTint,0.5);
     specularLighting = 0.15*bsdfData.perceptualRoughness*(hairSpec1 + hairSpec2);
 	specularLighting *= (bsdfData.isFrontFace ? 1.0 : 0.0); //Disable backfacing specular for now. Look into having a flipped normal entirely.
 	float scatterFresnel;
