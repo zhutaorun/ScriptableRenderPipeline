@@ -127,12 +127,15 @@ void FillMaterialIdSSSData(float3 baseColor, int subsurfaceProfile, float subsur
     }
 }
 
+#endif
+
 // Returns the modified albedo (diffuse color) for materials with subsurface scattering.
 // Ref: Advanced Techniques for Realistic Real-Time Skin Rendering.
 float3 ApplyDiffuseTexturingMode(BSDFData bsdfData)
 {
     float3 albedo = bsdfData.diffuseColor;
 
+#ifdef WANT_SSS_CODE
     if (bsdfData.materialId == MATERIALID_LIT_SSS)
     {
     #if defined(SHADERPASS) && (SHADERPASS == SHADERPASS_SUBSURFACE_SCATTERING)
@@ -160,11 +163,10 @@ float3 ApplyDiffuseTexturingMode(BSDFData bsdfData)
             }
         }
     }
+#endif
 
     return albedo;
 }
-
-#endif
 
 // For image based lighting, a part of the BSDF is pre-integrated.
 // This is done both for specular and diffuse (in case of DisneyDiffuse)
