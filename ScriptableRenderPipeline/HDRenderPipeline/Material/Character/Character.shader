@@ -6,9 +6,9 @@
 
 		_DiffuseColor("DiffuseColor", Color) = (1, 1, 1, 1)
 		_DiffuseColorMap("DiffuseColorMap", 2D) = "white" {}
-		
+
 		_NormalMap("NormalMap", 2D) = "bump" {}
-		
+
 		[HideInInspector] _BlendMode("__blendmode", Float) = 0.0
         [HideInInspector] _SrcBlend("__src", Float) = 1.0
         [HideInInspector] _DstBlend("__dst", Float) = 0.0
@@ -17,7 +17,7 @@
         [HideInInspector] _ZTestMode("_ZTestMode", Int) = 8
 
 		//Skin
-		
+
 		//Hair
 		[ToggleOff]  _HairSprays("Hair Sprays", Float) = 0.0
 		_HairSpecularShift("SpecularShift", Range(0, 1)) = 0.5
@@ -56,8 +56,8 @@
 	//---------------------------------
 	//Include
 	//---------------------------------
-	#include "../../../ShaderLibrary/Common.hlsl"
-	#include "../../../ShaderLibrary/Wind.hlsl"
+	#include "../../../Core/ShaderLibrary/Common.hlsl"
+	#include "../../../Core/ShaderLibrary/Wind.hlsl"
 	#include "../../ShaderConfig.cs.hlsl"
 	#include "../../ShaderVariables.hlsl"
 	#include "../../ShaderPass/FragInputs.hlsl"
@@ -76,10 +76,10 @@
 	ENDHLSL
 
 	SubShader{
-		
+
 		Tags { "RenderType"="Opaque" "PerformanceChecks"="False" }
 		LOD 300
-		
+
 		Pass{
 			Name "ShadowCaster"
 			Tags { "LightMode"="ShadowCaster" }
@@ -93,7 +93,7 @@
 			ZWrite On
 
 			HLSLPROGRAM
-			
+
 			#define SHADERPASS SHADERPASS_DEPTH_ONLY
 			#include "../../Material/Material.hlsl"
 			#include "ShaderPass/CharacterDepthPass.hlsl"
@@ -144,7 +144,7 @@
 			ENDHLSL
 
 		}
-	
+
 	}
 
 	CustomEditor "Experimental.Rendering.HDPipeline.CharacterGUI"

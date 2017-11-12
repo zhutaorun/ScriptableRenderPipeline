@@ -7,9 +7,11 @@ Material:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: GroundLeaf_DoubleSidedMirror
-  m_Shader: {fileID: 4800000, guid: 6e4ae4064600d784cac1e41a9e6f2e59, type: 3}
-  m_ShaderKeywords: _ALPHATEST_ON _BLENDMODE_PRESERVE_SPECULAR_LIGHTING _MASKMAP _NORMALMAP
-    _NORMALMAP_TANGENT_SPACE
+  m_Shader: {fileID: 4800000, guid: ff1b756ebf5550048bed17a617e8f5b0, type: 3}
+  m_ShaderKeywords: _ALBEDOAFFECTEMISSIVE_OFF _ALPHATEST_ON _BLENDMODE_PRESERVE_SPECULAR_LIGHTING
+    _DEPTHOFFSETENABLE_OFF _DISTORTIONDEPTHTEST_OFF _DISTORTIONENABLE_OFF _DOUBLESIDEDENABLE_OFF
+    _ENABLESPECULAROCCLUSION_OFF _ENABLEWIND_OFF _HAIRSPRAYS_OFF _MASKMAP _NORMALMAP
+    _NORMALMAP_TANGENT_SPACE _PREREFRACTIONPASS_OFF
   m_LightmapFlags: 1
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -54,6 +56,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DiffuseColorMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -133,14 +139,31 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _TransmittanceColorMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _VegNoise:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _VegWindMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Floats:
+    - _AORemapMax: 1
+    - _AORemapMin: 0
     - _ATDistance: 1
     - _AlbedoAffectEmissive: 0
     - _AlphaCutoff: 0.5
     - _AlphaCutoffEnable: 1
+    - _AlphaCutoffPrepass: 0.5
+    - _AlphaCutoffShadow: 0.5
     - _Anisotropy: 0
     - _BlendMode: 0
     - _BumpScale: 1
+    - _CharacterMaterialID: 0
     - _CoatCoverage: 1
     - _CoatIOR: 0.5
     - _CullMode: 2
@@ -169,6 +192,8 @@ Material:
     - _DistortionOnly: 0
     - _DistortionScale: 1
     - _DistortionSrcBlend: 1
+    - _DistortionVectorBias: -1
+    - _DistortionVectorScale: 2
     - _DoubleSidedEnable: 0
     - _DoubleSidedMirrorEnable: 1
     - _DoubleSidedMode: 3
@@ -182,9 +207,13 @@ Material:
     - _EnablePerPixelDisplacement: 0
     - _EnableSpecularOcclusion: 0
     - _EnableWind: 0
+    - _EyeIOR: 0.5
+    - _EyeIrisDepth: 0.5
+    - _EyeIrisRadius: 0.5
     - _GlossMapScale: 0.892
     - _Glossiness: 0.507
     - _GlossyReflections: 1
+    - _HairSprays: 0
     - _HeightAmplitude: 0.32
     - _HeightBias: 0
     - _HeightCenter: 0.68
@@ -211,7 +240,12 @@ Material:
     - _PPDPrimitiveWidth: 1
     - _Parallax: 0.02
     - _PreRefractionPass: 0
+    - _PrimarySpecular: 0.8
+    - _PrimarySpecularShift: 0
     - _RefractionMode: 0
+    - _Scatter: 0.7
+    - _SecondarySpecular: 0.5
+    - _SecondarySpecularShift: 0
     - _ShiverDirectionality: 0.5
     - _ShiverDrag: 0.2
     - _Smoothness: 0.5
@@ -236,20 +270,38 @@ Material:
     - _TexWorldScale: 1
     - _Thickness: 1
     - _ThicknessMultiplier: 1
+    - _TransparentDepthPrepassEnable: 1
     - _UVBase: 0
     - _UVDetail: 0
     - _UVMappingPlanar: 0
     - _UVSec: 0
+    - _VegDetailVariation: 1
+    - _VegLeafShakePower: 1
+    - _VegLeafShakeScale: 1
+    - _VegLeafShakeSpeed: 1
+    - _VegPerLeafBendPower: 1
+    - _VegPerLeafBendScale: 1
+    - _VegPerLeafBendSpeed: 1
+    - _VegStiffness: 1
+    - _VegWindIntensity: 1
+    - _VegWindSpeed: 1
     - _ZTestMode: 8
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 0.5882353, g: 0.5882353, b: 0.5882353, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _DiffuseColor: {r: 1, g: 1, b: 1, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _EmissiveColor: {r: 0, g: 0, b: 0, a: 1}
+    - _EyeLookVector: {r: 0, g: 0, b: 1, a: 1}
     - _InvPrimScale: {r: 1, g: 1, b: 0, a: 0}
     - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
+    - _SpecularTint: {r: 1, g: 1, b: 1, a: 1}
+    - _ThicknessRemap: {r: 0, g: 1, b: 0, a: 0}
     - _TransmittanceColor: {r: 1, g: 1, b: 1, a: 1}
     - _UVDetailsMappingMask: {r: 1, g: 0, b: 0, a: 0}
     - _UVMappingMask: {r: 1, g: 0, b: 0, a: 0}
+    - _VegAssistantDirectional: {r: 0, g: 0, b: 0, a: 0}
+    - _VegPivot: {r: 0, g: 0, b: 0, a: 0}
+    - _VegWindDirection: {r: 0, g: 0, b: 0, a: 0}
