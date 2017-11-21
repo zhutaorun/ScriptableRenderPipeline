@@ -137,7 +137,7 @@ OLD SAMPLEGAME
                 }
 
                 // Since we only need the world space position, so we don't pass the view-projection matrix.
-                UpdatePositionInput(depthRaw, _InvViewProjMatrix, k_identity4x4, posInput);
+                UpdatePositionInput(depthRaw, UNITY_MATRIX_I_VP, k_identity4x4, posInput);
 
                 float3 positionWS = posInput.positionWS;
 #endif

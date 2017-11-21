@@ -100,7 +100,7 @@ Shader "Hidden/HDRenderPipeline/Deferred"
                 // input.positionCS is SV_Position
                 PositionInputs posInput = GetPositionInput(input.positionCS.xy, _ScreenSize.zw, uint2(input.positionCS.xy) / GetTileSize());
                 float depth = LOAD_TEXTURE2D(_MainDepthTexture, posInput.unPositionSS).x;
-                UpdatePositionInput(depth, _InvViewProjMatrix, _ViewProjMatrix, posInput);
+                UpdatePositionInput(depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_VP, posInput);
                 float3 V = GetWorldSpaceNormalizeViewDir(posInput.positionWS);
 
                 FETCH_GBUFFER(gbuffer, _GBufferTexture, posInput.unPositionSS);
@@ -118,9 +118,18 @@ Shader "Hidden/HDRenderPipeline/Deferred"
                 LightLoop(V, posInput, preLightData, bsdfData, bakeLightingData, LIGHT_FEATURE_MASK_FLAGS_OPAQUE, diffuseLighting, specularLighting);
 
                 Outputs outputs;
+
             #ifdef OUTPUT_SPLIT_LIGHTING
-                outputs.specularLighting = float4(specularLighting, 1.0);
-                outputs.diffuseLighting  = TagLightingForSSS(diffuseLighting);
+                if (_EnableSSSAndTransmission != 0)
+                {
+                    outputs.specularLighting = float4(specularLighting, 1.0);
+                    outputs.diffuseLighting  = TagLightingForSSS(diffuseLighting);
+                }
+                else
+                {
+                    outputs.specularLighting = float4(diffuseLighting + specularLighting, 1.0);
+                    outputs.diffuseLighting  = 0;
+                }
             #else
                 outputs.combinedLighting = float4(diffuseLighting + specularLighting, 1.0);
             #endif
