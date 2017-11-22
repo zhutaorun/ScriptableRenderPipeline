@@ -96,7 +96,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cb.SetGlobalTexture(HDShaderIDs._ShadowmapExp_VSM_1, tex[1]);
                     cb.SetGlobalTexture(HDShaderIDs._ShadowmapExp_VSM_2, tex[2]);
 		    */
-                    cb.SetGlobalTexture(HDShaderIDs._ShadowmapExp_PCF, tex[3]);
+                    cb.SetGlobalTexture(HDShaderIDs._ShadowmapExp_PCF, tex[0]);
 
                     // TODO: Currently samplers are hard coded in ShadowContext.hlsl, so we can't really set them here
                 };
