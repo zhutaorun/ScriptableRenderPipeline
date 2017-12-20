@@ -329,7 +329,7 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
     HLSLINCLUDE
 
     #pragma target 5.0
-    #pragma only_renderers d3d11 ps4 vulkan // TEMP: until we go further in dev
+    #pragma only_renderers d3d11 ps4 vulkan metal // TEMP: until we go further in dev
     // #pragma enable_d3d11_debug_symbols
 
     #pragma shader_feature _ALPHATEST_ON
@@ -396,7 +396,7 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
 
     // Keyword for transparent
     #pragma shader_feature _SURFACE_TYPE_TRANSPARENT
-    #pragma shader_feature _ _BLENDMODE_ALPHA _BLENDMODE_ADD _BLENDMODE_MULTIPLY _BLENDMODE_PRE_MULTIPLY
+    #pragma shader_feature _ _BLENDMODE_ALPHA _BLENDMODE_ADD _BLENDMODE_PRE_MULTIPLY
     #pragma shader_feature _BLENDMODE_PRESERVE_SPECULAR_LIGHTING
     #pragma shader_feature _ENABLE_FOG_ON_TRANSPARENT
 
@@ -425,10 +425,10 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
     // Include
     //-------------------------------------------------------------------------------------
 
-    #include "../../../Core/ShaderLibrary/common.hlsl"
-    #include "../../../Core/ShaderLibrary/Wind.hlsl"
-    #include "../../../Core/ShaderLibrary/GeometricTools.hlsl"
-    #include "../../../Core/ShaderLibrary/tessellation.hlsl"
+    #include "ShaderLibrary/common.hlsl"
+    #include "ShaderLibrary/Wind.hlsl"
+    #include "ShaderLibrary/GeometricTools.hlsl"
+    #include "ShaderLibrary/tessellation.hlsl"
     #include "../../ShaderPass/FragInputs.hlsl"
     #include "../../ShaderPass/ShaderPass.cs.hlsl"
 
@@ -634,6 +634,8 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
             ZWrite On
             ZTest LEqual
 
+            ColorMask 0
+
             HLSLPROGRAM
 
             #pragma hull Hull
@@ -658,6 +660,8 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
             Cull[_CullMode]
 
             ZWrite On
+
+            ColorMask 0
 
             HLSLPROGRAM
 
