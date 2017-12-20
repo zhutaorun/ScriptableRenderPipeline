@@ -1366,7 +1366,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     if (additionalData == null)
                     {
                         // SampleGame Change BEGIN
-                        DebugOverlay.Write(0, 0, "^F00Missing HD light data for {0}", light.light.transform.FullHierarchyName());
+                        //DebugOverlay.Write(0, 0, "^F00Missing HD light data for {0}", light.light.transform.FullHierarchyName());
                         // SampleGame Change END
                         return false;
                     }

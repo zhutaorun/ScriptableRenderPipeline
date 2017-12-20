@@ -100,6 +100,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
     public partial class HDRenderPipeline : RenderPipeline
     {
+        // SampleGame Change BEGIN
+        public delegate void RenderCallback(HDCamera hdCamera, CommandBuffer cmd);
+        public RenderCallback DebugLayer2DCallback;
+        public RenderCallback DebugLayer3DCallback;
+        // SampleGame Change END
+
         enum ForwardPass
         {
             Opaque,
@@ -797,7 +803,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         RenderForwardError(m_CullResults, camera, renderContext, cmd, ForwardPass.PreRefraction);
 
 			// SampleGame Change BEGIN
-			DebugOverlay.Render3D(hdCamera, cmd);
+                        if(DebugLayer3DCallback != null)
+                            DebugLayer3DCallback(hdCamera, cmd);
 			// SampleGame Change END
 
                         RenderGaussianPyramidColor(camera, cmd, renderContext, FullScreenDebugMode.PreRefractionColorPyramid);
@@ -836,9 +843,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Make sure to unbind every render texture here because in the next iteration of the loop we might have to reallocate render texture (if the camera size is different)
                     cmd.SetRenderTarget(new RenderTargetIdentifier(-1), new RenderTargetIdentifier(-1));
 
-            /// SampleGame Change BEGIN
-            DebugOverlay.Render(hdCamera, cmd);
-            /// SampleGame Change END
+                    /// SampleGame Change BEGIN
+                    if(DebugLayer2DCallback != null)
+                        DebugLayer2DCallback(hdCamera, cmd);
+                    /// SampleGame Change END
 
 #if UNITY_EDITOR
                     // We still need to bind correctly default camera target with our depth buffer in case we are currently rendering scene view. It should be the last camera here

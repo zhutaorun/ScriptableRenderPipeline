@@ -398,7 +398,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
 
             bool fpsModeEnabled = material.GetFloat(kFpsModeEnabled) > 0.0f;
-            SetKeyword(material, "_FPS_MODE", fpsModeEnabled);
+            CoreUtils.SetKeyword(material, "_FPS_MODE", fpsModeEnabled);
 
             SetupMainTexForAlphaTestGI("_BaseColorMap", "_BaseColor", material);
         }
