@@ -27,7 +27,6 @@
 #define GBUFFER_LIT_STANDARD_REGULAR_ID (0)
 #define GBUFFER_LIT_STANDARD_SPECULAR_COLOR_ID (1)
 #define DEFAULT_SPECULAR_VALUE (0.04)
-#define SKIN_SPECULAR_VALUE (0.028)
 
 //
 // UnityEngine.Experimental.Rendering.HDPipeline.Lit+RefractionMode:  static fields
@@ -78,7 +77,7 @@
 #define DEBUGVIEW_LIT_BSDFDATA_THICKNESS (1042)
 #define DEBUGVIEW_LIT_BSDFDATA_SUBSURFACE_PROFILE (1043)
 #define DEBUGVIEW_LIT_BSDFDATA_ENABLE_TRANSMISSION (1044)
-#define DEBUGVIEW_LIT_BSDFDATA_USE_THIN_OBJECT_MODE (1045)
+#define DEBUGVIEW_LIT_BSDFDATA_USE_THICK_OBJECT_MODE (1045)
 #define DEBUGVIEW_LIT_BSDFDATA_TRANSMITTANCE (1046)
 #define DEBUGVIEW_LIT_BSDFDATA_COAT_NORMAL_WS (1047)
 #define DEBUGVIEW_LIT_BSDFDATA_COAT_COVERAGE (1048)
@@ -137,7 +136,7 @@ struct BSDFData
     float thickness;
     int subsurfaceProfile;
     bool enableTransmission;
-    bool useThinObjectMode;
+    bool useThickObjectMode;
     float3 transmittance;
     float3 coatNormalWS;
     float coatCoverage;
@@ -272,8 +271,8 @@ void GetGeneratedBSDFDataDebug(uint paramId, BSDFData bsdfdata, inout float3 res
         case DEBUGVIEW_LIT_BSDFDATA_ENABLE_TRANSMISSION:
             result = (bsdfdata.enableTransmission) ? float3(1.0, 1.0, 1.0) : float3(0.0, 0.0, 0.0);
             break;
-        case DEBUGVIEW_LIT_BSDFDATA_USE_THIN_OBJECT_MODE:
-            result = (bsdfdata.useThinObjectMode) ? float3(1.0, 1.0, 1.0) : float3(0.0, 0.0, 0.0);
+        case DEBUGVIEW_LIT_BSDFDATA_USE_THICK_OBJECT_MODE:
+            result = (bsdfdata.useThickObjectMode) ? float3(1.0, 1.0, 1.0) : float3(0.0, 0.0, 0.0);
             break;
         case DEBUGVIEW_LIT_BSDFDATA_TRANSMITTANCE:
             result = bsdfdata.transmittance;

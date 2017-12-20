@@ -1,9 +1,9 @@
 ﻿Shader "Hidden/SRP/BlitCubeTextureFace"
 {
-    SubShader 
+    SubShader
     {
         // Cubemap blit.  Takes a face index.
-        Pass 
+        Pass
         {
 
             ZTest Always
@@ -11,14 +11,14 @@
             Cull Off
 
             HLSLPROGRAM
-            #include "../ShaderLibrary/Common.hlsl"
+            #include "ShaderLibrary/Common.hlsl"
 
             #pragma vertex vert
             #pragma fragment frag
             #pragma target 3.0
 
             TEXTURECUBE(_InputTex);
-            SAMPLERCUBE(sampler_InputTex);
+            SAMPLER(sampler_InputTex);
 
             float _FaceIndex;
             float _LoD;

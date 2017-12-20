@@ -46,7 +46,7 @@
 struct DirectionalLightData
 {
     float3 positionWS;
-    bool tileCookie;
+    int tileCookie;
     float3 color;
     int shadowIndex;
     float3 forward;
@@ -57,7 +57,7 @@ struct DirectionalLightData
     float diffuseScale;
     float2 fadeDistanceScaleAndBias;
     float unused0;
-    bool dynamicShadowCasterOnly;
+    int dynamicShadowCasterOnly;
     float4 shadowMaskSelector;
 };
 
@@ -78,7 +78,7 @@ struct LightData
     float angleScale;
     float angleOffset;
     float shadowDimmer;
-    bool dynamicShadowCasterOnly;
+    int dynamicShadowCasterOnly;
     float4 shadowMaskSelector;
     float2 size;
     int lightType;
@@ -100,7 +100,7 @@ struct EnvLightData
     float3 innerDistance;
     float unused0;
     float3 offsetLS;
-    float unused1;
+    float dimmer;
 };
 
 //
@@ -110,7 +110,7 @@ float3 GetPositionWS(DirectionalLightData value)
 {
 	return value.positionWS;
 }
-bool GetTileCookie(DirectionalLightData value)
+int GetTileCookie(DirectionalLightData value)
 {
 	return value.tileCookie;
 }
@@ -154,7 +154,7 @@ float GetUnused0(DirectionalLightData value)
 {
 	return value.unused0;
 }
-bool GetDynamicShadowCasterOnly(DirectionalLightData value)
+int GetDynamicShadowCasterOnly(DirectionalLightData value)
 {
 	return value.dynamicShadowCasterOnly;
 }
@@ -218,7 +218,7 @@ float GetShadowDimmer(LightData value)
 {
 	return value.shadowDimmer;
 }
-bool GetDynamicShadowCasterOnly(LightData value)
+int GetDynamicShadowCasterOnly(LightData value)
 {
 	return value.dynamicShadowCasterOnly;
 }
@@ -286,9 +286,9 @@ float3 GetOffsetLS(EnvLightData value)
 {
 	return value.offsetLS;
 }
-float GetUnused1(EnvLightData value)
+float GetDimmer(EnvLightData value)
 {
-	return value.unused1;
+	return value.dimmer;
 }
 
 

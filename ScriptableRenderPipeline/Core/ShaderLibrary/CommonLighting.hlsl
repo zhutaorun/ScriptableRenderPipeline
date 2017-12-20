@@ -233,6 +233,12 @@ float SphericalCapIntersectionSolidArea(float cosC1, float cosC2, float cosB)
     return area;
 }
 
+// Ref: Steve McAuley - Energy-Conserving Wrapped Diffuse
+float ComputeWrappedDiffuseLighting(float NdotL, float w)
+{
+    return saturate((NdotL + w) / ((1 + w) * (1 + w)));
+}
+
 //-----------------------------------------------------------------------------
 // Helper functions
 //-----------------------------------------------------------------------------
@@ -269,7 +275,8 @@ float3 GetViewReflectedNormal(float3 N, float3 V, out float NdotV)
 
     NdotV = dot(N, V);
 
-    N = (NdotV >= 0.0) ? N : (N - 2.0 * NdotV * V);
+    // N = (NdotV >= 0.0) ? N : (N - 2.0 * NdotV * V);
+    N += (2.0 * saturate(-NdotV)) * V;
     NdotV = abs(NdotV);
 
     return N;

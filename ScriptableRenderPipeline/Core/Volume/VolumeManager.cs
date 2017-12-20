@@ -1,15 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine.Assertions;
 
 namespace UnityEngine.Experimental.Rendering
 {
+    using UnityObject = UnityEngine.Object;
+
     public sealed class VolumeManager
     {
         //>>> System.Lazy<T> is broken in Unity (legacy runtime) so we'll have to do it ourselves :|
         static volatile VolumeManager s_Instance;
-        static object s_LockObj = new Object();
+        static object s_LockObj = new UnityObject();
 
         public static VolumeManager instance
         {
@@ -30,17 +33,23 @@ namespace UnityEngine.Experimental.Rendering
         }
         //<<<
 
+        // Internal stack
+        public VolumeStack stack { get; private set; }
+
+        // Current list of tracked component types
+        public IEnumerable<Type> baseComponentTypes { get; private set; }
+
         // Max amount of layers available in Unity
         const int k_MaxLayerCount = 32;
 
-        // List of all volumes (sorted by priority) per layer
-        readonly List<Volume>[] m_Volumes;
+        // Cached lists of all volumes (sorted by priority) by layer mask
+        readonly Dictionary<LayerMask, List<Volume>> m_SortedVolumes;
 
-        // Keep track of sorting states for all layers
-        readonly bool[] m_SortNeeded;
+        // Holds all the registered volumes
+        readonly List<Volume> m_Volumes;
 
-        // Internal state of all component types
-        readonly Dictionary<Type, VolumeComponent> m_Components;
+        // Keep track of sorting states for layer masks
+        readonly Dictionary<LayerMask, bool> m_SortNeeded;
 
         // Internal list of default state for each component type - this is used to reset component
         // states on update instead of having to implement a Reset method on all components (which
@@ -50,118 +59,105 @@ namespace UnityEngine.Experimental.Rendering
         // Recycled list used for volume traversal
         readonly List<Collider> m_TempColliders;
 
-        // In the editor, when entering play-mode, it will call the constructor and OnEditorReload()
-        // which in turn will call ReloadBaseTypes() twice, so we need to keep track of the reloads
-        // to avoid wasting any more CPU than required
-        static bool s_StopReloads = false;
-
         VolumeManager()
         {
-            m_Volumes = new List<Volume>[k_MaxLayerCount];
-            m_SortNeeded = new bool[k_MaxLayerCount];
+            m_SortedVolumes = new Dictionary<LayerMask, List<Volume>>();
+            m_Volumes = new List<Volume>();
+            m_SortNeeded = new Dictionary<LayerMask, bool>();
             m_TempColliders = new List<Collider>(8);
-            m_Components = new Dictionary<Type, VolumeComponent>();
             m_ComponentsDefaultState = new List<VolumeComponent>();
 
             ReloadBaseTypes();
+
+            stack = CreateStack();
         }
 
-#if UNITY_EDITOR
-        // Called every time Unity recompiles scripts in the editor. We need this to keep track of
-        // any new custom component the user might add to the project.
-        [UnityEditor.Callbacks.DidReloadScripts]
-        static void OnEditorReload()
+        public VolumeStack CreateStack()
         {
-            if (!s_StopReloads)
-                instance.ReloadBaseTypes();
-
-            s_StopReloads = false;
+            var stack = new VolumeStack();
+            stack.Reload(baseComponentTypes);
+            return stack;
         }
-#endif
 
         // This will be called only once at runtime and everytime script reload kicks-in in the
         // editor as we need to keep track of any compatible component in the project
         void ReloadBaseTypes()
         {
-            // Clean component map & default states
-            foreach (var component in m_Components)
-                CoreUtils.Destroy(component.Value);
-
-            foreach (var component in m_ComponentsDefaultState)
-                CoreUtils.Destroy(component);
-
-            m_Components.Clear();
             m_ComponentsDefaultState.Clear();
 
-            // Rebuild it from scratch
-            var types = AppDomain.CurrentDomain.GetAssemblies()
-                            .SelectMany(
-                                a => a.GetTypes()
-                                .Where(
-                                    t => t.IsSubclassOf(typeof(VolumeComponent))
-                                )
-                            );
+            // Grab all the component types we can find
+            baseComponentTypes = CoreUtils.GetAllAssemblyTypes()
+                            .Where(t => t.IsSubclassOf(typeof(VolumeComponent)) && !t.IsAbstract);
 
-            foreach (var type in types)
+            // Keep an instance of each type to be used in a virtual lowest priority global volume
+            // so that we have a default state to fallback to when exiting volumes
+            foreach (var type in baseComponentTypes)
             {
-                // We need two instances, one for global state tracking and another one to keep a
-                // default state that will act as the lowest priority global volume (so that we have
-                // a state to fallback to when exiting volumes)
                 var inst = (VolumeComponent)ScriptableObject.CreateInstance(type);
-                m_Components.Add(type, inst);
-
-                inst = (VolumeComponent)ScriptableObject.CreateInstance(type);
-                inst.SetAllOverridesTo(true);
                 m_ComponentsDefaultState.Add(inst);
             }
-
-            s_StopReloads = true;
-        }
-
-        public T GetComponent<T>()
-            where T : VolumeComponent
-        {
-            var comp = GetComponent(typeof(T));
-            return (T)comp;
-        }
-
-        public VolumeComponent GetComponent(Type type)
-        {
-            VolumeComponent comp;
-            m_Components.TryGetValue(type, out comp);
-            Assert.IsNotNull(comp, "Component map is corrupted, \"" + type + "\" not found");
-            return comp;
         }
 
         public void Register(Volume volume, int layer)
         {
-            var volumes = m_Volumes[layer];
+            m_Volumes.Add(volume);
 
-            if (volumes == null)
+            // Look for existing cached layer masks and add it there if needed
+            foreach (var kvp in m_SortedVolumes)
             {
-                volumes = new List<Volume>();
-                m_Volumes[layer] = volumes;
+                if ((kvp.Key & (1 << layer)) != 0)
+                    kvp.Value.Add(volume);
             }
 
-            Assert.IsFalse(volumes.Contains(volume), "Volume has already been registered");
-            volumes.Add(volume);
             SetLayerDirty(layer);
         }
 
         public void Unregister(Volume volume, int layer)
         {
-            var volumes = m_Volumes[layer];
+            m_Volumes.Remove(volume);
 
-            if (volumes == null)
-                return;
+            foreach (var kvp in m_SortedVolumes)
+            {
+                // Skip layer masks this volume doesn't belong to
+                if ((kvp.Key & (1 << layer)) == 0)
+                    continue;
 
-            volumes.Remove(volume);
+                kvp.Value.Remove(volume);
+            }
+        }
+
+        public bool IsComponentActiveInMask<T>(LayerMask layerMask)
+            where T : VolumeComponent
+        {
+            int mask = layerMask.value;
+
+            foreach (var kvp in m_SortedVolumes)
+            {
+                if ((kvp.Key & mask) == 0)
+                    continue;
+
+                foreach (var volume in kvp.Value)
+                {
+                    T component;
+                    if (volume.TryGet(out component) && component.active)
+                        return true;
+                }
+            }
+
+            return false;
         }
 
         internal void SetLayerDirty(int layer)
         {
             Assert.IsTrue(layer >= 0 && layer <= k_MaxLayerCount, "Invalid layer bit");
-            m_SortNeeded[layer] = true;
+
+            foreach (var kvp in m_SortedVolumes)
+            {
+                var mask = kvp.Key;
+
+                if ((mask & (1 << layer)) != 0)
+                    m_SortNeeded[mask] = true;
+            }
         }
 
         internal void UpdateVolumeLayer(Volume volume, int prevLayer, int newLayer)
@@ -172,34 +168,36 @@ namespace UnityEngine.Experimental.Rendering
         }
 
         // Go through all listed components and lerp overriden values in the global state
-        void OverrideData(List<VolumeComponent> components, float interpFactor)
+        void OverrideData(VolumeStack stack, List<VolumeComponent> components, float interpFactor)
         {
             foreach (var component in components)
             {
                 if (!component.active)
                     continue;
 
-                var target = GetComponent(component.GetType());
+                var target = stack.GetComponent(component.GetType());
                 int count = component.parameters.Count;
 
                 for (int i = 0; i < count; i++)
                 {
+                    var fromParam = target.parameters[i];
                     var toParam = component.parameters[i];
+
+                    // Keep track of the override state for debugging purpose
+                    fromParam.overrideState = toParam.overrideState;
+
                     if (toParam.overrideState)
-                    {
-                        var fromParam = target.parameters[i];
                         fromParam.Interp(fromParam, toParam, interpFactor);
-                    }
                 }
             }
         }
 
         // Faster version of OverrideData to force replace values in the global state
-        void ReplaceData(List<VolumeComponent> components)
+        void ReplaceData(VolumeStack stack, List<VolumeComponent> components)
         {
             foreach (var component in components)
             {
-                var target = GetComponent(component.GetType());
+                var target = stack.GetComponent(component.GetType());
                 int count = component.parameters.Count;
 
                 for (int i = 0; i < count; i++)
@@ -207,109 +205,151 @@ namespace UnityEngine.Experimental.Rendering
             }
         }
 
-        // Update the global state - should be called once per frame in the update loop before
-        // anything else
+        [Conditional("UNITY_EDITOR")]
+        public void CheckBaseTypes()
+        {
+            // Editor specific hack to work around serialization doing funky things when exiting
+            if (m_ComponentsDefaultState == null || (m_ComponentsDefaultState.Count > 0 && m_ComponentsDefaultState[0] == null))
+                ReloadBaseTypes();
+        }
+
+        [Conditional("UNITY_EDITOR")]
+        public void CheckStack(VolumeStack stack)
+        {
+            // The editor doesn't reload the domain when exiting play mode but still kills every
+            // object created while in play mode, like stacks' component states
+            var components = stack.components;
+
+            if (components == null)
+            {
+                stack.Reload(baseComponentTypes);
+                return;
+            }
+
+            foreach (var kvp in components)
+            {
+                if (kvp.Key == null || kvp.Value == null)
+                {
+                    stack.Reload(baseComponentTypes);
+                    return;
+                }
+            }
+        }
+
+        // Update the global state - should be called once per frame per transform/layer mask combo
+        // in the update loop before rendering
         public void Update(Transform trigger, LayerMask layerMask)
         {
-#if UNITY_EDITOR
-            // Editor specific hack to work around serialization doing funky things when exiting
-            // play mode -> re-create the world when bad things happen
-            if (m_ComponentsDefaultState == null
-            || (m_ComponentsDefaultState.Count > 0 && m_ComponentsDefaultState[0] == null))
-            {
-                ReloadBaseTypes();
-            }
-            else
-#endif
-            {
-                // Start by resetting the global state to default values
-                ReplaceData(m_ComponentsDefaultState);
-            }
+            Update(stack, trigger, layerMask);
+        }
 
-            // Do magic
+        // Update a specific stack - can be used to manage your own stack and store it for later use
+        public void Update(VolumeStack stack, Transform trigger, LayerMask layerMask)
+        {
+            Assert.IsNotNull(stack);
+
+            CheckBaseTypes();
+            CheckStack(stack);
+
+            // Start by resetting the global state to default values
+            ReplaceData(stack, m_ComponentsDefaultState);
+
             bool onlyGlobal = trigger == null;
-            int mask = layerMask.value;
             var triggerPos = onlyGlobal ? Vector3.zero : trigger.position;
 
-            for (int i = 0; i < k_MaxLayerCount; i++)
+            // Sort the cached volume list(s) for the given layer mask if needed and return it
+            var volumes = GrabVolumes(layerMask);
+
+            // Traverse all volumes
+            foreach (var volume in volumes)
             {
-                // Skip layers not in the mask
-                if ((mask & (1 << i)) == 0)
+                // Skip disabled volumes and volumes without any data or weight
+                if (!volume.enabled || volume.weight <= 0f)
                     continue;
 
-                // Skip empty layers
-                var volumes = m_Volumes[i];
+                // Global volumes always have influence
+                if (volume.isGlobal)
+                {
+                    OverrideData(stack, volume.components, Mathf.Clamp01(volume.weight));
+                    continue;
+                }
 
-                if (volumes == null)
+                if (onlyGlobal)
                     continue;
 
-                // Sort the volume list if needed
-                if (m_SortNeeded[i])
+                // If volume isn't global and has no collider, skip it as it's useless
+                var colliders = m_TempColliders;
+                volume.GetComponents(colliders);
+                if (colliders.Count == 0)
+                    continue;
+
+                // Find closest distance to volume, 0 means it's inside it
+                float closestDistanceSqr = float.PositiveInfinity;
+
+                foreach (var collider in colliders)
                 {
-                    SortByPriority(volumes);
-                    m_SortNeeded[i] = false;
+                    if (!collider.enabled)
+                        continue;
+
+                    var closestPoint = collider.ClosestPoint(triggerPos);
+                    var d = (closestPoint - triggerPos).sqrMagnitude;
+
+                    if (d < closestDistanceSqr)
+                        closestDistanceSqr = d;
                 }
 
-                // Traverse all volumes
-                foreach (var volume in volumes)
-                {
-                    // Skip disabled volumes and volumes without any data or weight
-                    if (!volume.enabled || volume.weight <= 0f)
-                        continue;
+                colliders.Clear();
+                float blendDistSqr = volume.blendDistance * volume.blendDistance;
 
-                    var components = volume.components;
+                // Volume has no influence, ignore it
+                // Note: Volume doesn't do anything when `closestDistanceSqr = blendDistSqr` but we
+                //       can't use a >= comparison as blendDistSqr could be set to 0 in which case
+                //       volume would have total influence
+                if (closestDistanceSqr > blendDistSqr)
+                    continue;
 
-                    // Global volumes always have influence
-                    if (volume.isGlobal)
-                    {
-                        OverrideData(components, Mathf.Clamp01(volume.weight));
-                        continue;
-                    }
+                // Volume has influence
+                float interpFactor = 1f;
 
-                    if (onlyGlobal)
-                        continue;
+                if (blendDistSqr > 0f)
+                    interpFactor = 1f - (closestDistanceSqr / blendDistSqr);
 
-                    // If volume isn't global and has no collider, skip it as it's useless
-                    var colliders = m_TempColliders;
-                    volume.GetComponents(colliders);
-                    if (colliders.Count == 0)
-                        continue;
-
-                    // Find closest distance to volume, 0 means it's inside it
-                    float closestDistanceSqr = float.PositiveInfinity;
-
-                    foreach (var collider in colliders)
-                    {
-                        if (!collider.enabled)
-                            continue;
-
-                        var closestPoint = collider.ClosestPoint(triggerPos);
-                        var d = (closestPoint - triggerPos).sqrMagnitude;
-
-                        if (d < closestDistanceSqr)
-                            closestDistanceSqr = d;
-                    }
-
-                    colliders.Clear();
-                    float blendDistSqr = volume.blendDistance * volume.blendDistance;
-
-                    // Volume has no influence, ignore it
-                    // Note: Volume doesn't do anything when `closestDistanceSqr = blendDistSqr` but
-                    //       we can't use a >= comparison as blendDistSqr could be set to 0 in which
-                    //       case volume would have total influence
-                    if (closestDistanceSqr > blendDistSqr)
-                        continue;
-
-                    // Volume has influence
-                    float interpFactor = 1f;
-
-                    if (blendDistSqr > 0f)
-                        interpFactor = 1f - (closestDistanceSqr / blendDistSqr);
-
-                    // No need to clamp01 the interpolation factor as it'll always be in [0;1[ range
-                    OverrideData(components, interpFactor * Mathf.Clamp01(volume.weight));
-                }
+                // No need to clamp01 the interpolation factor as it'll always be in [0;1[ range
+                OverrideData(stack, volume.components, interpFactor * Mathf.Clamp01(volume.weight));
             }
+        }
+
+        List<Volume> GrabVolumes(LayerMask mask)
+        {
+            List<Volume> list;
+
+            if (!m_SortedVolumes.TryGetValue(mask, out list))
+            {
+                // New layer mask detected, create a new list and cache all the volumes that belong
+                // to this mask in it
+                list = new List<Volume>();
+
+                foreach (var volume in m_Volumes)
+                {
+                    if ((mask & (1 << volume.gameObject.layer)) == 0)
+                        continue;
+
+                    list.Add(volume);
+                    m_SortNeeded[mask] = true;
+                }
+
+                m_SortedVolumes.Add(mask, list);
+            }
+
+            // Check sorting state
+            bool sortNeeded;
+            if (m_SortNeeded.TryGetValue(mask, out sortNeeded) && sortNeeded)
+            {
+                m_SortNeeded[mask] = false;
+                SortByPriority(list);
+            }
+
+            return list;
         }
 
         // Stable insertion sort. Faster than List<T>.Sort() for our needs.

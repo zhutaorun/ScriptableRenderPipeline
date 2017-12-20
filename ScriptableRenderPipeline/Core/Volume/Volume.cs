@@ -12,7 +12,7 @@ namespace UnityEngine.Experimental.Rendering
         [Tooltip("Volume priority in the stack. Higher number means higher priority. Negative values are supported.")]
         public float priority = 0f;
 
-        [Tooltip("Outer distance to start blending from. A value of 0 means no blending and the volume overrides will be applied immediatly upon entry.")]
+        [Tooltip("Outer distance to start blending from. A value of 0 means no blending and the volume overrides will be applied immediately upon entry.")]
         public float blendDistance = 0f;
 
         [Range(0f, 1f), Tooltip("Total weight of this volume in the scene. 0 means it won't do anything, 1 means full effect.")]
@@ -78,11 +78,17 @@ namespace UnityEngine.Experimental.Rendering
         public T Add<T>(bool overrides = false)
             where T : VolumeComponent
         {
-            if (Has<T>())
+            return (T)Add(typeof(T), overrides);
+        }
+
+        public VolumeComponent Add(Type type, bool overrides = false)
+        {
+            if (Has(type))
                 throw new InvalidOperationException("Component already exists in the volume");
 
-            var component = ScriptableObject.CreateInstance<T>();
+            var component = (VolumeComponent)ScriptableObject.CreateInstance(type);
             component.SetAllOverridesTo(overrides);
+            components.Add(component);
             isDirty = true;
             return component;
         }
@@ -90,8 +96,12 @@ namespace UnityEngine.Experimental.Rendering
         public void Remove<T>()
             where T : VolumeComponent
         {
+            Remove(typeof(T));
+        }
+
+        public void Remove(Type type)
+        {
             int toRemove = -1;
-            var type = typeof(T);
 
             for (int i = 0; i < components.Count; i++)
             {
@@ -112,8 +122,11 @@ namespace UnityEngine.Experimental.Rendering
         public bool Has<T>()
             where T : VolumeComponent
         {
-            var type = typeof(T);
+            return Has(typeof(T));
+        }
 
+        public bool Has(Type type)
+        {
             foreach (var component in components)
             {
                 if (component.GetType() == type)
@@ -159,7 +172,7 @@ namespace UnityEngine.Experimental.Rendering
             var scale = transform.localScale;
             var invScale = new Vector3(1f / scale.x, 1f / scale.y, 1f / scale.z);
             Gizmos.matrix = Matrix4x4.TRS(transform.position, transform.rotation, scale);
-            Gizmos.color = new Color(0f, 1f, 0.1f, 0.6f);
+            Gizmos.color = new Color(0f, 1f, 0.1f, 0.35f);
 
             // Draw a separate gizmo for each collider
             foreach (var collider in colliders)

@@ -37,7 +37,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public struct DirectionalLightData
     {
         public Vector3 positionWS;
-        public bool tileCookie;
+        public int tileCookie; // TODO: make it a bool
 
         public Vector3 color;
         public int shadowIndex; // -1 if unused
@@ -45,15 +45,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3 forward;
         public int cookieIndex; // -1 if unused
 
-        public Vector3 right;   // Rescaled by (2 / shapeLength)
+        public Vector3 right;   // Rescaled by (2 / shapeWidth)
         public float specularScale;
 
-        public Vector3 up;      // Rescaled by (2 / shapeWidth)
+        public Vector3 up;      // Rescaled by (2 / shapeHeight)
         public float diffuseScale;
 
         public Vector2 fadeDistanceScaleAndBias; // Use with ShadowMask feature
         public float unused0;
-        public bool dynamicShadowCasterOnly; // Use with ShadowMask feature
+        public int dynamicShadowCasterOnly; // Use with ShadowMask feature // TODO: make it a bool
 
         public Vector4 shadowMaskSelector; // Use with ShadowMask feature
     };
@@ -70,20 +70,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3 forward;
         public int cookieIndex; // -1 if unused
 
-        public Vector3 right;   // If spot: rescaled by cot(outerHalfAngle); if projector: rescaled by (2 / shapeLength)
+        public Vector3 right;   // If spot: rescaled by cot(outerHalfAngle); if projector: rescaled by (2 / shapeWidth)
         public float specularScale;
 
-        public Vector3 up;      // If spot: rescaled by cot(outerHalfAngle); if projector: rescaled by (2 / shapeWidth)
+        public Vector3 up;      // If spot: rescaled by cot(outerHalfAngle); if projector: rescaled by (2 / shapeHeight)
         public float diffuseScale;
 
         public float angleScale;  // Spot light
         public float angleOffset; // Spot light
         public float shadowDimmer;
-        public bool dynamicShadowCasterOnly; // Use with ShadowMask feature
+        public int dynamicShadowCasterOnly; // Use with ShadowMask feature // TODO: make it a bool
 
         public Vector4 shadowMaskSelector; // Use with ShadowMask feature
 
-        public Vector2 size;      // Used by area and pyramid projector lights
+        public Vector2 size;        // Used by area (X = length or width, Y = height) and box projector lights (X = range (depth))
         public GPULightType lightType;
         public float minRoughness;  // This is use to give a small "area" to punctual light, as if we have a light with a radius.
     };
@@ -130,7 +130,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public float unused0;
 
         public Vector3 offsetLS;
-        public float unused1;
+        public float dimmer;
     };
 
     // Usage of StencilBits.Lighting on 2 bits.
