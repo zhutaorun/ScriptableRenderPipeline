@@ -67,6 +67,17 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         Subtractive,
     };
 
+    public static class AdvancedFeatureIDs
+    {
+
+    //SSAO
+    //############################################
+    public static readonly int _AmbientOcclusionTexture = Shader.PropertyToID("_AmbientOcclusionTexture");
+    public static readonly int _AmbientOcclusionParam   = Shader.PropertyToID("_AmbientOcclusionParam");
+    //############################################
+
+    }
+
     public static class CameraRenderTargetID
     {
         // Camera color target. Not used when camera is rendering to backbuffer or camera
@@ -285,7 +296,14 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 context.SetupCameraProperties(m_CurrCamera, stereoEnabled);
 
                 if (LightweightUtils.HasFlag(frameRenderingConfiguration, FrameRenderingConfiguration.DepthPass))
+                {   
                     DepthPass(ref context);
+                    
+                    //<<< MSVO BEGIN
+                    RenderMSVO(ref context);
+                    //>>> MSVO END
+                }
+                    
                 ForwardPass(visibleLights, frameRenderingConfiguration, ref context, ref lightData, stereoEnabled);
 
                 // Release temporary RT
@@ -301,6 +319,36 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 context.Submit();
             }
         }
+
+         //<<< MSVO BEGIN
+        private void RenderMSVO(ref ScriptableRenderContext context)
+        {
+            if(m_CameraPostProcessLayer == null) return;
+
+            CommandBuffer cmd = CommandBufferPool.Get("MSVO");
+            var settings = m_CameraPostProcessLayer.GetSettings<AmbientOcclusion>();
+
+            if(settings.IsEnabledAndSupported(null))
+            {
+                cmd.GetTemporaryRT(AdvancedFeatureIDs._AmbientOcclusionTexture, new RenderTextureDescriptor(m_CurrCamera.pixelWidth, m_CurrCamera.pixelHeight, RenderTextureFormat.R8, 0)
+                {
+                    sRGB = false,
+                    enableRandomWrite = true
+                }, FilterMode.Bilinear);
+
+                m_CameraPostProcessLayer.BakeMSVOMap(cmd, m_CurrCamera, AdvancedFeatureIDs._AmbientOcclusionTexture, m_DepthRT, true);
+                cmd.SetGlobalVector(AdvancedFeatureIDs._AmbientOcclusionParam, new Vector4(settings.color.value.r, settings.color.value.g, settings.color.value.b, settings.directLightingStrength.value));
+            }
+            else 
+            {
+                cmd.SetGlobalTexture(AdvancedFeatureIDs._AmbientOcclusionTexture, RuntimeUtilities.blackTexture); // Neutral is black, see the comment in the shaders
+                cmd.SetGlobalVector(AdvancedFeatureIDs._AmbientOcclusionParam, Vector4.zero);
+            }
+
+            context.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
+        }
+        //>>> MSVO END
 
         private void ShadowPass(VisibleLight[] visibleLights, ref ScriptableRenderContext context, ref LightData lightData)
         {
