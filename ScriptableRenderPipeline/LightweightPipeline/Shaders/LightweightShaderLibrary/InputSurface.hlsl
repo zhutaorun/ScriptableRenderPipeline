@@ -26,13 +26,13 @@ half4 _EmissionColor;
 half _Shininess;
 CBUFFER_END
 
-//<<< MSVO BEGIN
+//Begin MSVO Params
 TEXTURE2D(_AmbientOcclusionTexture); SAMPLER(sampler_AmbientOcclusionTexture);
 
 CBUFFER_START(UnityAmbientOcclusionParameters)
 float4 _AmbientOcclusionParam;
 CBUFFER_END
-//>>> MSVO END
+//End MSVO Params
 
 TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
 TEXTURE2D(_MetallicGlossMap); SAMPLER(sampler_MetallicGlossMap);
@@ -142,12 +142,10 @@ half Occlusion(float2 uv)
 #endif
 }
 
-//<<< MSVO BEGIN
 half MSVO(float4 uv)
 {
     return 1.0 - SAMPLE_TEXTURE2D(_AmbientOcclusionTexture, sampler_AmbientOcclusionTexture, uv.xy / uv.w).x;
 }
-//>>> MSVO END
 
 half3 Emission(float2 uv)
 {

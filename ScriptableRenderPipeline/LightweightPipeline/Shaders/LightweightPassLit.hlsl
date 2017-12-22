@@ -28,9 +28,7 @@ struct LightweightVertexOutput
     half3 viewDir                   : TEXCOORD6;
     half4 fogFactorAndVertexLight   : TEXCOORD7; // x: fogFactor, yzw: vertex light
 
-    //<<< MSVO BEGIN
     float4 screenUV                 : TEXCOORD8;
-    //>>> MSVO END
 
     float4 clipPos                  : SV_POSITION;
 };
@@ -63,11 +61,11 @@ LightweightVertexOutput LitPassVertex(LightweightVertexInput v)
     half fogFactor = ComputeFogFactor(o.clipPos.z);
     o.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
 
-    //<<< MSVO BEGIN
+    //TODO: flip Y based on screen params.
+    //Is there a function in the library to already do this?
     o.screenUV = o.clipPos * 0.5f;
     o.screenUV.xy = float2(o.screenUV.x, o.screenUV.y * -1) + o.screenUV.w;
     o.screenUV.zw = o.clipPos.zw;
-    //>>> MSVO END
 
     return o;
 }
@@ -87,11 +85,9 @@ half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
     half3 indirectDiffuse = SampleGI(IN.lightmapUVOrVertexSH, normalWS);
     float fogFactor = IN.fogFactorAndVertexLight.x;
 
-    //<<< MSVO BEGIN
     //TODO: Work with JP to properly apply this AO term.
     //      For now just roll into texture ao so it takes part in proper lighting calculations
     surfaceData.occlusion *= MSVO(IN.screenUV);  
-    //>>> MSVO END
 
     half4 color = LightweightFragmentPBR(IN.posWS.xyz, normalWS, IN.viewDir, indirectDiffuse, IN.fogFactorAndVertexLight.yzw, surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.occlusion, surfaceData.emission, surfaceData.alpha);
 

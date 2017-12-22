@@ -298,10 +298,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 if (LightweightUtils.HasFlag(frameRenderingConfiguration, FrameRenderingConfiguration.DepthPass))
                 {   
                     DepthPass(ref context);
-                    
-                    //<<< MSVO BEGIN
                     RenderMSVO(ref context);
-                    //>>> MSVO END
                 }
                     
                 ForwardPass(visibleLights, frameRenderingConfiguration, ref context, ref lightData, stereoEnabled);
@@ -320,7 +317,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             }
         }
 
-         //<<< MSVO BEGIN
         private void RenderMSVO(ref ScriptableRenderContext context)
         {
             if(m_CameraPostProcessLayer == null) return;
@@ -348,7 +344,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
-        //>>> MSVO END
 
         private void ShadowPass(VisibleLight[] visibleLights, ref ScriptableRenderContext context, ref LightData lightData)
         {
