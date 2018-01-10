@@ -888,7 +888,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                     additionalLightIndex++;
                 }
             }
-            m_CullResults.SetLightIndexMap(perObjectLightIndexMap);
+            //m_CullResults.SetLightIndexMap(perObjectLightIndexMap);
 
             cmd.SetGlobalVector(PerCameraBuffer._AdditionalLightCount, new Vector4(lightData.pixelAdditionalLightsCount,
                     lightData.totalAdditionalLightsCount, 0.0f, 0.0f));
@@ -1249,8 +1249,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         RendererConfiguration GetRendererSettings(ref LightData lightData)
         {
             RendererConfiguration settings = RendererConfiguration.PerObjectReflectionProbes | RendererConfiguration.PerObjectLightmaps | RendererConfiguration.PerObjectLightProbe;
-            if (lightData.totalAdditionalLightsCount > 0)
-                settings |= RendererConfiguration.PerObjectLightIndices8;
+            //if (lightData.totalAdditionalLightsCount > 0)
+//                settings |= RendererConfiguration.PerObjectLightIndices8;
+           settings |= RendererConfiguration.ProvideLightIndices;
+            settings |= RendererConfiguration.PerObjectLights8;
             return settings;
         }
 

@@ -57,20 +57,18 @@ LightInput GetMainLight()
 LightInput GetLight(int i)
 {
     LightInput light;
-    half4 indices = (i < 4) ? unity_4LightIndices0 : unity_4LightIndices1;
-    int index = (i < 4) ? i : i - 4;
-    int lightIndex = indices[index];
-    light.position = _AdditionalLightPosition[lightIndex];
-    light.color = _AdditionalLightColor[lightIndex].rgb;
-    light.distanceAttenuation = _AdditionalLightDistanceAttenuation[lightIndex];
-    light.spotDirection = _AdditionalLightSpotDir[lightIndex];
-    light.spotAttenuation = _AdditionalLightSpotAttenuation[lightIndex];
+    light.position = unity_LightPosition[i];
+    light.color = unity_LightColor[i].rgb;
+    
+    light.distanceAttenuation = unity_LightAtten[i];
+    light.spotDirection = unity_SpotDirection[i];
+    light.spotAttenuation = unity_SpotAtten[i];
     return light;
 }
 
 half GetPixelLightCount()
 {
-    return min(_AdditionalLightCount.x, unity_LightIndicesOffsetAndCount.y);
+    return unity_LightIndicesOffsetAndCount.y;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -526,10 +524,9 @@ half4 LightweightFragmentBlinnPhong(float3 positionWS, half3 normalWS, half3 vie
     half3 indirectDiffuse = DiffuseGI(diffuseGI, lambert, realtimeMainLightAtten, 1.0);
     half mainLightAtten = MixRealtimeAndBakedOcclusion(realtimeMainLightAtten, bakedOcclusion, mainLight.distanceAttenuation);
 
-    half3 diffuseColor = lambert * mainLightAtten + indirectDiffuse;
-    half3 specularColor = LightingSpecular(mainLight.color * mainLightAtten, lightDirection, normalWS, viewDirectionWS, specularGloss, shininess);
+    half3 diffuseColor = 0;// lambert * mainLightAtten + indirectDiffuse;
+    half3 specularColor = 0;//LightingSpecular(mainLight.color * mainLightAtten, lightDirection, normalWS, viewDirectionWS, specularGloss, shininess);
 
-#ifdef _ADDITIONAL_LIGHTS
     int pixelLightCount = GetPixelLightCount();
     for (int lightIter = 0; lightIter < pixelLightCount; ++lightIter)
     {
@@ -541,7 +538,6 @@ half4 LightweightFragmentBlinnPhong(float3 positionWS, half3 normalWS, half3 vie
         diffuseColor += LightingLambert(attenuatedLightColor, lightDirection, normalWS);
         specularColor += LightingSpecular(attenuatedLightColor, lightDirection, normalWS, viewDirectionWS, specularGloss, shininess);
     }
-#endif
 
     half3 finalColor = diffuseColor * diffuse + emission;
     finalColor += specularColor;

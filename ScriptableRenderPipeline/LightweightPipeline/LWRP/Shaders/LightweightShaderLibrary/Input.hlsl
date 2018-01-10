@@ -1,7 +1,7 @@
 #ifndef LIGHTWEIGHT_INPUT_INCLUDED
 #define LIGHTWEIGHT_INPUT_INCLUDED
 
-#define MAX_VISIBLE_LIGHTS 16
+#define MAX_VISIBLE_LIGHTS 8
 
 ///////////////////////////////////////////////////////////////////////////////
 //                      Constant Buffers                                     //
@@ -21,11 +21,11 @@ half4 _MainLightSpotAttenuation;
 float4x4 _WorldToLight;
 
 half4 _AdditionalLightCount;
-float4 _AdditionalLightPosition[MAX_VISIBLE_LIGHTS];
-half4 _AdditionalLightColor[MAX_VISIBLE_LIGHTS];
-half4 _AdditionalLightDistanceAttenuation[MAX_VISIBLE_LIGHTS];
-half4 _AdditionalLightSpotDir[MAX_VISIBLE_LIGHTS];
-half4 _AdditionalLightSpotAttenuation[MAX_VISIBLE_LIGHTS];
+float4 unity_LightColor[MAX_VISIBLE_LIGHTS];
+half4 unity_LightPosition[MAX_VISIBLE_LIGHTS];
+half4 unity_LightAtten[MAX_VISIBLE_LIGHTS];
+half4 unity_SpotDirection[MAX_VISIBLE_LIGHTS];
+half4 unity_SpotAtten[MAX_VISIBLE_LIGHTS];
 CBUFFER_END
 
 // These are set internally by the engine upon request by RendererConfiguration.

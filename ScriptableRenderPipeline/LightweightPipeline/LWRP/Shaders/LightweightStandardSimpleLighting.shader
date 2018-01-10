@@ -63,7 +63,7 @@ Shader "LightweightPipeline/Standard (Simple Lighting)"
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
             #pragma target 3.0
-
+            #pragma enable_d3d11_debug_symbols 
             // -------------------------------------
             // Material Keywords
             #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON
