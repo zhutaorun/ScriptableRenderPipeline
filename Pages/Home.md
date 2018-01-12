@@ -11,4 +11,4 @@ A Shader Graph enables you to build your shaders visually. Instead of hand writi
 The graph framework gives instant feedback on the changes, and it’s simple enough that new users can become involved in shader creation.
 
 ## Contents
-* [Node Library](https://github.com/Kink3d/WikiTest/wiki/Node-Library)
+* [Node Library](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node-Library)
