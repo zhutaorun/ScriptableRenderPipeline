@@ -55,4 +55,20 @@
 <p align="center"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/NegateNodeThumb.png" alt="Negate Node" height="360" width="360"></p>
 <p align="left">Returns the inverse value of input In.</p></td>
     </tr>
+    <tr>
+        <td width="370"><p align="center" valign="top"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Normalize-Node">Normalize</a></b></p>
+<p align="center"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/NormalizeNodeThumb.png" alt="Normalize Node" height="360" width="360"></p>
+<p align="left">Returns the normalized vector of input In.</p></td>
+        <td width="370"><p align="center" valign="top"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Posterize-Node">Posterize</a></b></p>
+<p align="center"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/PosterizeNodeThumb.png" alt="Posterize Node" height="360" width="360"></p>
+<p align="left">Returns the input In converted into a number of values defined by input Steps.</p></td>
+    </tr>
+    <tr>
+        <td width="370"><p align="center" valign="top"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Reciprocal-Node">Reciprocal</a></b></p>
+<p align="center"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ReciprocalNodeThumb.png" alt="Reciprocal Node" height="360" width="360"></p>
+<p align="left">Returns the result of 1 divided by input In.</p></td>
+        <td width="370"><p align="center" valign="top"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Reciprocal-Square-Root-Node">Reciprocal Square Root</a></b></p>
+<p align="center"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ReciprocalSquareRootNodeThumb.png" alt="Reciprocal Square Root Node" height="360" width="360"></p>
+<p align="left">Returns the result of 1 divided by the square root of input In.</p></td>
+    </tr>
 </table>
