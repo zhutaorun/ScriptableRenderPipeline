@@ -1,6 +1,6 @@
 ## Contents
 
-<a href="https://github.com/Kink3d/WikiTest/wiki/Node-Library">Node Library Home</a>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Node-Library">Node Library Home</a>
 
 <details><summary>Artistic</summary></details>
 <details><summary>Channel</summary></details>
