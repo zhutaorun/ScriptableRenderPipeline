@@ -23,14 +23,18 @@ Therefore the base-2 logarithmic value of 8 is 3
 
 | Name        | Type           | Options  | Description |
 |:------------ |:-------------|:-----|:---|
-| Base      | Dropdown | BaseE, Base2 | Selects the exponential base |
+| Base      | Dropdown | BaseE, Base2, Base10 | Selects the logarithmic base |
 
 ## Shader Function
 
 **Base E**
 
-`Out = exp(In)`
+`Out = log(In)`
 
 **Base 2**
 
-`Out = exp2(In)`
+`Out = log2(In)`
+
+**Base 10**
+
+`Out = log10(In)`
