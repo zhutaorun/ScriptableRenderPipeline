@@ -2,32 +2,27 @@
 
 ## Description
 
-Returns the length of input In. This is also known as magnitude. A vector's length is calculated with Pythagorean Formula.
+Returns the length of input In. This is also known as magnitude. A vector's length is calculated with <a href=https://en.wikipedia.org/wiki/Pythagorean_theorem>Pythagorean Theorum</a>.
 
 ## Example
 
 The length of a vector 2 can be calculated as:
-`(x ^ 2) * (y ^ 2)
+
+![](https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/PageImages/LengthNodePage02.png)
+
+Where `x` and `y` are the x and y components of the input vector. Similarly the length of a vector 3 can be calculated as:
+
+![](https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/PageImages/LengthNodePage03.png)
+
+And so on.
 
 ## Ports
 
 | Name        | Direction           | Type  | Description |
 |:------------ |:-------------|:-----|:---|
 | In      | Input | Dynamic Vector | Input value |
-| Out | Output      |    Dynamic Vector | Output value |
-
-## Parameters
-
-| Name        | Type           | Options  | Description |
-|:------------ |:-------------|:-----|:---|
-| Base      | Dropdown | BaseE, Base2 | Selects the exponential base |
+| Out | Output      |   Vector 1 | Output value |
 
 ## Shader Function
 
-**Base E**
-
-`Out = exp(In)`
-
-**Base 2**
-
-`Out = exp2(In)`
+`Out = length(In)`
