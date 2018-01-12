@@ -2,10 +2,12 @@
 
 ## Description
 
-Returns the exponential value of input In. The exponential base can be switched between base-e and base 2 from a dropdown on the node. 
+Returns the length of input In. This is also known as magnitude. A vector's length is calculated with Pythagorean Formula.
 
-* **Base E** : Returns e to the power of input In
-* **Base 2** : Returns 2 to the power of input In
+## Example
+
+The length of a vector 2 can be calculated as:
+`(x ^ 2) * (y ^ 2)
 
 ## Ports
 
