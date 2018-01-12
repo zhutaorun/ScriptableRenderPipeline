@@ -6,11 +6,11 @@ Returns the logarithm of input In. Log is the inverse operation to Exponential. 
 
 ## Example
 
-The base-2 exponential value of 3 is 8
+The base-2 exponential value of 3 is 8.
 
-`2^3 = 2 * 2 * 2 = 8`
+![](https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/PageImages/LogNodePage02.png)
 
-Therefore the base-2 logarithmic value of 8 is 3
+Therefore the base-2 logarithmic value of 8 is 3.
 
 ## Ports
 
