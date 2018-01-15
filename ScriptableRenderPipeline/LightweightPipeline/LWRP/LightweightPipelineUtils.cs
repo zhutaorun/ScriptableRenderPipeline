@@ -94,6 +94,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         DepthCopy = (1 << 5),
         DefaultViewport = (1 << 6),
         IntermediateTexture = (1 << 7),
+        RequireColorTexture = (1 << 8)
     }
 
     public static class LightweightUtils

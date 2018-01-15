@@ -216,7 +216,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             m_ShadowMapRTID = Shader.PropertyToID("_ShadowMap");
 
             CameraRenderTargetID.color = Shader.PropertyToID("_CameraColorRT");
-            CameraRenderTargetID.copyColor = Shader.PropertyToID("_CameraCopyColorRT");
+            CameraRenderTargetID.copyColor = Shader.PropertyToID("_CameraColorTexture");
             CameraRenderTargetID.depth = Shader.PropertyToID("_CameraDepthTexture");
             CameraRenderTargetID.depthCopy = Shader.PropertyToID("_CameraCopyDepthTexture");
 
@@ -265,7 +265,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             {
                 reflectionProbeSupportFlags = SupportedRenderingFeatures.ReflectionProbeSupportFlags.None,
                 defaultMixedLightingMode = SupportedRenderingFeatures.LightmapMixedBakeMode.Subtractive,
-                supportedMixedLightingModes = SupportedRenderingFeatures.LightmapMixedBakeMode.Subtractive,
+                supportedMixedLightingModes = SupportedRenderingFeatures.LightmapMixedBakeMode.Subtractive | SupportedRenderingFeatures.LightmapMixedBakeMode.IndirectOnly,
                 supportedLightmapBakeTypes = LightmapBakeType.Baked | LightmapBakeType.Mixed,
                 supportedLightmapsModes = LightmapsMode.CombinedDirectional | LightmapsMode.NonDirectional,
                 rendererSupportsLightProbeProxyVolumes = false,
@@ -434,11 +434,18 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         private void AfterOpaque(ref ScriptableRenderContext context, FrameRenderingConfiguration config)
         {
+            bool requireColorTexture = LightweightUtils.HasFlag(config, FrameRenderingConfiguration.RequireColorTexture);
             if (!m_RequiredDepth)
                 return;
 
             CommandBuffer cmd = CommandBufferPool.Get("After Opaque");
             cmd.SetGlobalTexture(CameraRenderTargetID.depth, m_DepthRT);
+
+            if (requireColorTexture)
+            {
+                cmd.SetGlobalTexture(m_BlitTexID, m_ColorRT);
+                cmd.SetGlobalTexture(CameraRenderTargetID.copyColor, m_CopyColorRT);
+            }
 
             // When only one opaque effect is active we need to blit to a work RT. We blit to copy color.
             // TODO: We can check if there are more than one opaque postfx and avoid an extra blit.
@@ -448,6 +455,12 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             if (LightweightUtils.HasFlag(config, FrameRenderingConfiguration.BeforeTransparentPostProcess))
             {
                 RenderPostProcess(cmd, m_CurrCameraColorRT, m_CopyColorRT, true);
+                m_CurrCameraColorRT = m_CopyColorRT;
+            }
+
+            if (requireColorTexture)
+            {
+                cmd.Blit(m_CurrCameraColorRT, m_CopyColorRT, m_BlitMaterial);
                 m_CurrCameraColorRT = m_CopyColorRT;
             }
 
@@ -564,10 +577,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
                 if (m_CameraPostProcessLayer.HasOpaqueOnlyEffects(m_PostProcessRenderContext))
                     configuration |= FrameRenderingConfiguration.BeforeTransparentPostProcess;
-
-                // Resolving depth msaa requires texture2DMS. Currently if msaa is enabled we do a depth pre-pass.
-                if (msaaEnabled)
-                    configuration |= FrameRenderingConfiguration.DepthPass;
             }
 
             // In case of soft particles we need depth copy. If depth copy not supported fallback to depth prepass
@@ -575,11 +584,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             {
                 m_RequiredDepth = true;
                 intermediateTexture = true;
-
-                bool supportsDepthCopy = m_CopyTextureSupport != CopyTextureSupport.None && m_Asset.CopyDepthShader.isSupported;
-
-                // currently fallback to depth prepass if msaa is enabled since. We need texture2DMS to support depth resolve.
-                configuration |= (msaaEnabled || !supportsDepthCopy) ? FrameRenderingConfiguration.DepthPass : FrameRenderingConfiguration.DepthCopy;
             }
 
             if (msaaEnabled)
@@ -591,6 +595,19 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             Rect cameraRect = m_CurrCamera.rect;
             if (!(Math.Abs(cameraRect.x) > 0.0f || Math.Abs(cameraRect.y) > 0.0f || Math.Abs(cameraRect.width) < 1.0f || Math.Abs(cameraRect.height) < 1.0f))
                 configuration |= FrameRenderingConfiguration.DefaultViewport;
+
+            if (m_Asset.RequireCameraColorTexture)
+            {
+                intermediateTexture = true;
+                m_RequiredDepth = true;
+                configuration |= (FrameRenderingConfiguration.RequireColorTexture | FrameRenderingConfiguration.DepthCopy);
+            }
+
+            // Resolving depth msaa requires texture2DMS. Currently if msaa is enabled we do a depth pre-pass.
+            if (m_RequiredDepth && msaaEnabled)
+            {
+                configuration |= FrameRenderingConfiguration.DepthPass;
+            }
 
             if (intermediateTexture)
                 configuration |= FrameRenderingConfiguration.IntermediateTexture;
@@ -645,7 +662,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             // When postprocessing is enabled we might have a before transparent effect. In that case we need to
             // use the camera render target as input. We blit to an opaque RT and then after before postprocessing is done
             // we blit to the final camera RT. If no postprocessing we blit to final camera RT from beginning.
-            if (LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.BeforeTransparentPostProcess))
+            if (LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.BeforeTransparentPostProcess) || LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.RequireColorTexture))
                 cmd.GetTemporaryRT(CameraRenderTargetID.copyColor, colorRTDesc, FilterMode.Point);
         }
 
@@ -1208,7 +1225,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 if (!m_IsOffscreenCamera)
                     colorRT = m_CurrCameraColorRT;
 
-                if (m_RequiredDepth && !LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.DepthPass))
+                if (m_RequiredDepth || !LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.DepthPass))
                     depthRT = m_DepthRT;
             }
 

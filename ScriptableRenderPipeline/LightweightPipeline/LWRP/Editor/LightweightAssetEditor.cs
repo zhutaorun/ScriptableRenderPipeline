@@ -20,6 +20,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             public static GUIContent requireCameraDepthTexture = new GUIContent("Camera Depth Texture", "If enabled the pipeline will generate camera's depth that can be bound in shaders as _CameraDepthTexture. This is necessary for some effect like Soft Particles.");
 
+            public static GUIContent requireCameraColorTexture = new GUIContent("Camera Color Texture", "If enabled the pipeline will generate camera's color that can be bound in shaders as _CameraColorTexture.");
+
             public static GUIContent shadowType = new GUIContent("Type",
                     "Global shadow settings. Options are NO_SHADOW, HARD_SHADOWS and SOFT_SHADOWS.");
 
@@ -51,6 +53,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private SerializedProperty m_MaxPixelLights;
         private SerializedProperty m_SupportsVertexLightProp;
         private SerializedProperty m_RequireCameraDepthTextureProp;
+        private SerializedProperty m_RequireCameraColorTextureProp;
         private SerializedProperty m_ShadowTypeProp;
         private SerializedProperty m_ShadowNearPlaneOffsetProp;
         private SerializedProperty m_ShadowDistanceProp;
@@ -67,6 +70,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             m_MaxPixelLights = serializedObject.FindProperty("m_MaxPixelLights");
             m_SupportsVertexLightProp = serializedObject.FindProperty("m_SupportsVertexLight");
             m_RequireCameraDepthTextureProp = serializedObject.FindProperty("m_RequireCameraDepthTexture");
+            m_RequireCameraColorTextureProp = serializedObject.FindProperty("m_RequireCameraColorTexture");
             m_ShadowTypeProp = serializedObject.FindProperty("m_ShadowType");
             m_ShadowNearPlaneOffsetProp = serializedObject.FindProperty("m_ShadowNearPlaneOffset");
             m_ShadowDistanceProp = serializedObject.FindProperty("m_ShadowDistance");
@@ -110,6 +114,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             m_MaxPixelLights.intValue = EditorGUILayout.IntSlider(m_MaxPixelLights.intValue, 0, kMaxSupportedPixelLights);
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.PropertyField(m_SupportsVertexLightProp, Styles.enableVertexLightLabel);
+            EditorGUILayout.PropertyField(m_RequireCameraColorTextureProp, Styles.requireCameraColorTexture);
             EditorGUILayout.PropertyField(m_RequireCameraDepthTextureProp, Styles.requireCameraDepthTexture);
             EditorGUILayout.PropertyField(m_HDR, Styles.hdrContent);
             EditorGUILayout.PropertyField(m_MSAA, Styles.msaaContent);
