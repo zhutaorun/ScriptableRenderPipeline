@@ -120,6 +120,9 @@ half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
     SurfaceData surfaceData;
     InitializeStandardLitSurfaceData(IN.uv, surfaceData);
 
+    InputData inputData;
+    InitializeInputData(IN, surfaceData.normalTS, inputData);
+
     //TODO: Work with JP to properly apply this AO term.
     //      For now just roll into texture ao so it takes part in proper lighting calculations
     surfaceData.occlusion *= MSVO(IN.screenUV);
