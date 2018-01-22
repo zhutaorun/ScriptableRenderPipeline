@@ -3,11 +3,12 @@ Shader "Hidden/HDRenderPipeline/Deferred"
     Properties
     {
         // We need to be able to control the blend mode for deferred shader in case we do multiple pass
-        _SrcBlend("", Float) = 1
-        _DstBlend("", Float) = 1
+        [HideInInspector] _SrcBlend("", Float) = 1
+        [HideInInspector] _DstBlend("", Float) = 1
 
-        _StencilRef("", Int) = 0
-        _StencilCmp("", Int) = 3
+        [HideInInspector] _StencilMask("_StencilMask", Int) = 7
+        [HideInInspector] _StencilRef("", Int) = 0
+        [HideInInspector] _StencilCmp("", Int) = 3
     }
 
     SubShader
@@ -16,6 +17,7 @@ Shader "Hidden/HDRenderPipeline/Deferred"
         {
             Stencil
             {
+                ReadMask[_StencilMask]
                 Ref  [_StencilRef]
                 Comp [_StencilCmp]
                 Pass Keep
@@ -47,23 +49,26 @@ Shader "Hidden/HDRenderPipeline/Deferred"
             // Include
             //-------------------------------------------------------------------------------------
 
+            #include "../ShaderPass/ShaderPass.cs.hlsl"
+            #define SHADERPASS SHADERPASS_DEFERRED_LIGHTING
+
             #include "CoreRP/ShaderLibrary/Common.hlsl"
-            #include "../Debug/DebugDisplay.hlsl"
 
             // Note: We have fix as guidelines that we have only one deferred material (with control of GBuffer enabled). Mean a users that add a new
             // deferred material must replace the old one here. If in the future we want to support multiple layout (cause a lot of consistency problem),
             // the deferred shader will require to use multicompile.
             #define UNITY_MATERIAL_LIT // Need to be define before including Material.hlsl
             #include "../ShaderVariables.hlsl"
+            #include "../Debug/DebugDisplay.hlsl"
             #include "../Lighting/Lighting.hlsl" // This include Material.hlsl
 
             //-------------------------------------------------------------------------------------
             // variable declaration
             //-------------------------------------------------------------------------------------
 
-            #ifdef SHADOWS_SHADOWMASK
+        #ifdef SHADOWS_SHADOWMASK
             TEXTURE2D(_ShadowMaskTexture);
-            #endif
+        #endif
 
             struct Attributes
             {
@@ -104,7 +109,7 @@ Shader "Hidden/HDRenderPipeline/Deferred"
 
                 BSDFData bsdfData;
                 BakeLightingData bakeLightingData;
-                DECODE_FROM_GBUFFER(posInput.positionSS, MATERIAL_FEATURE_MASK_FLAGS, bsdfData, bakeLightingData.bakeDiffuseLighting);
+                DECODE_FROM_GBUFFER(posInput.positionSS, UINT_MAX, bsdfData, bakeLightingData.bakeDiffuseLighting);
                 #ifdef SHADOWS_SHADOWMASK
                 DecodeShadowMask(LOAD_TEXTURE2D(_ShadowMaskTexture, posInput.positionSS), bakeLightingData.bakeShadowMask);
                 #endif
@@ -118,7 +123,7 @@ Shader "Hidden/HDRenderPipeline/Deferred"
                 Outputs outputs;
 
             #ifdef OUTPUT_SPLIT_LIGHTING
-                if (_EnableSSSAndTransmission != 0 && bsdfData.materialId == MATERIALID_LIT_SSS)
+                if (_EnableSubsurfaceScattering != 0 && PixelHasSubsurfaceScattering(bsdfData))
                 {
                     outputs.specularLighting = float4(specularLighting, 1.0);
                     outputs.diffuseLighting  = TagLightingForSSS(diffuseLighting);

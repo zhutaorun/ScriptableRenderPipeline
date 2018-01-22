@@ -48,7 +48,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         bool                    m_UpdateRequired = false;
         bool                    m_NeedUpdateRealtimeEnv = false;
-        bool                    m_NeedUpdateBakingSky = false;
+        bool                    m_NeedUpdateBakingSky = true;
 
         // This is the sky used for rendering in the main view. It will also be used for lighting if no lighting override sky is setup.
         // Ambient Probe: Only for real time GI (otherwise we use the baked one)
@@ -75,6 +75,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static Dictionary<int, Type> skyTypesDict { get { if (m_SkyTypesDict == null) UpdateSkyTypes(); return m_SkyTypesDict; } }
 
         public Texture skyReflection { get { return m_SkyRenderingContext.reflectionTexture; } }
+
+        // This list will hold the sky settings that should be used for baking.
+        // In practice we will always use the last one registered but we use a list to be able to roll back to the previous one once the user deletes the superfluous instances.
+        private static List<SkySettings> m_BakingSkySettings = new List<SkySettings>();
 
 
         SkySettings GetSkySetting(VolumeStack stack)
@@ -131,7 +135,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         void UpdateCurrentSkySettings(HDCamera camera)
         {
             m_VisualSky.skySettings = GetSkySetting(VolumeManager.instance.stack);
-            m_BakingSky.skySettings = SkySettings.GetBakingSkySettings();
+            m_BakingSky.skySettings = SkyManager.GetBakingSkySettings();
             
             // Update needs to happen before testing if the component is active other internal data structure are not properly updated yet.
             VolumeManager.instance.Update(m_LightingOverrideVolumeStack, camera.camera.transform, m_LightingOverrideLayerMask);
@@ -255,7 +259,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             UpdateSkyTypes();
             UpdateCurrentSkySettings(camera);
 
-            m_NeedUpdateBakingSky = m_BakingSkyRenderingContext.UpdateEnvironment(m_BakingSky, camera, sunLight, m_UpdateRequired, cmd);
+            // For the baking sky, we don't want to take the sun into account because we usually won't include it (this would cause double highlight in the reflection for example).
+            // So we pass null so that's it doesn't affect the hash and the rendering.
+            m_NeedUpdateBakingSky = m_BakingSkyRenderingContext.UpdateEnvironment(m_BakingSky, camera, null, m_UpdateRequired, cmd);
             SkyUpdateContext currentSky = m_LightingOverrideSky.IsValid() ? m_LightingOverrideSky : m_VisualSky;
             m_NeedUpdateRealtimeEnv = m_SkyRenderingContext.UpdateEnvironment(currentSky, camera, sunLight, m_UpdateRequired, cmd);
 
@@ -283,6 +289,31 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 CoreUtils.DrawFullScreen(cmd, m_OpaqueAtmScatteringMaterial);
             }
+        }
+
+        static public SkySettings GetBakingSkySettings()
+        {
+            if (m_BakingSkySettings.Count == 0)
+                return null;
+            else
+                return m_BakingSkySettings[m_BakingSkySettings.Count - 1];
+        }
+
+        static public void RegisterBakingSky(SkySettings bakingSky)
+        {
+            if (!m_BakingSkySettings.Contains(bakingSky))
+            {
+                if (m_BakingSkySettings.Count != 0)
+                {
+                    Debug.LogWarning("One sky component was already set for baking, only the latest one will be used.");
+                }
+                m_BakingSkySettings.Add(bakingSky);
+            }
+        }
+
+        static public void UnRegisterBakingSky(SkySettings bakingSky)
+        {
+            m_BakingSkySettings.Remove(bakingSky);
         }
 
         public Texture2D ExportSkyToTexture()

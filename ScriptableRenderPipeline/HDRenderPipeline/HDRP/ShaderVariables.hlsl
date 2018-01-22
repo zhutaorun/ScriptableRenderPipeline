@@ -10,10 +10,6 @@
 // As I haven't change the variables name yet, I simply don't define anything, and I put the transform function at the end of the file outside the guard header.
 // This need to be fixed.
 
-#if defined (DIRECTIONAL_COOKIE) || defined (DIRECTIONAL)
-    #define USING_DIRECTIONAL_LIGHT
-#endif
-
 #if defined(UNITY_SINGLE_PASS_STEREO) || defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
     #define USING_STEREO_MATRICES
 #endif
@@ -95,12 +91,7 @@ CBUFFER_END
 
 // ----------------------------------------------------------------------------
 
-CBUFFER_START(UnityPerDraw : register(b0))
-#ifdef UNITY_USE_PREMULTIPLIED_MATRICES
-    float4x4 glstate_matrix_mvp;
-    float4x4 glstate_matrix_modelview0;
-    float4x4 glstate_matrix_invtrans_modelview0;
-#endif
+CBUFFER_START(UnityPerDraw)
 
     float4x4 unity_ObjectToWorld;
     float4x4 unity_WorldToObject;
@@ -129,6 +120,14 @@ CBUFFER_START(UnityPerDraw : register(b0))
 
     // This contain occlusion factor from 0 to 1 for dynamic objects (no SH here)
     float4 unity_ProbesOcclusion;
+
+    // Velocity
+    float4x4 unity_MatrixPreviousM;
+    float4x4 unity_MatrixPreviousMI;
+    //X : Use last frame positions (right now skinned meshes are the only objects that use this
+    //Y : Force No Motion
+    //Z : Z bias value
+    float4 unity_MotionVectorsParams;
 
 CBUFFER_END
 
@@ -188,15 +187,26 @@ CBUFFER_START(UnityPerFrame)
     int unity_StereoEyeIndex;
 #endif
 
-    float3 unity_ShadowColor;
-    uint _TaaFrameIndex;      // [0, 7]
+    float4 unity_ShadowColor;
+    float2 _TaaFrameRotation; // {x = sin(_TaaFrameIndex * PI/2), y = cos(_TaaFrameIndex * PI/2), z = unused}
+    uint   _TaaFrameIndex;    // [0, 7]
+    uint   _Align128;         // Pad for 128-bit alignment
+    // Volumetric lighting. Should be a struct in 'UnityPerFrame'.
+    // Unfortunately, structures inside constant buffers are not supported by Unity.
+    float3 _GlobalFog_Scattering;
+    float  _GlobalFog_Extinction;
+    float4 _VBufferResolution;          // { w, h, 1/w, 1/h }
+    float4 _VBufferScaleAndSliceCount;  // { fracVisW, fracVisH, count, 1/count }
+    float4 _VBufferDepthEncodingParams; // { n, log2(f/n), 1/n, 1/log2(f/n) }
 CBUFFER_END
 
 // ----------------------------------------------------------------------------
 
 // These are the samplers available in the HDRenderPipeline.
 // Avoid declaring extra samplers as they are 4x SGPR each on GCN.
+SAMPLER(s_point_clamp_sampler);
 SAMPLER(s_linear_clamp_sampler);
+SAMPLER(s_linear_repeat_sampler);
 SAMPLER(s_trilinear_clamp_sampler);
 
 // ----------------------------------------------------------------------------
@@ -222,17 +232,6 @@ TEXTURE2D(unity_ShadowMask);
 // TODO: Change code here so probe volume use only one transform instead of all this parameters!
 TEXTURE3D(unity_ProbeVolumeSH);
 SAMPLER(samplerunity_ProbeVolumeSH);
-
-CBUFFER_START(UnityVelocityPass)
-    float4x4 unity_MatrixNonJitteredVP;
-    float4x4 unity_MatrixPreviousVP;
-    float4x4 unity_MatrixPreviousM;
-	float4x4 unity_MatrixPreviousMI;
-    //X : Use last frame positions (right now skinned meshes are the only objects that use this
-    //Y : Force No Motion
-    //Z : Z bias value
-    float4 unity_MotionVectorsParams;
-CBUFFER_END
 
 // ----------------------------------------------------------------------------
 
@@ -275,6 +274,7 @@ float4x4 OptimizeProjectionMatrix(float4x4 M)
     #include "ShaderVariablesMatrixDefsHDCamera.hlsl"
 #endif
 
+#include "CoreRP/ShaderLibrary/UnityInstancing.hlsl"
 #include "ShaderVariablesFunctions.hlsl"
 
 #endif // UNITY_SHADER_VARIABLES_INCLUDED

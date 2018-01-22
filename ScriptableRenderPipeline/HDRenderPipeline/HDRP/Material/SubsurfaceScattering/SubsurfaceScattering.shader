@@ -3,6 +3,8 @@ Shader "Hidden/HDRenderPipeline/SubsurfaceScattering"
     Properties
     {
         [HideInInspector] _DstBlend("", Float) = 1 // Can be set to 1 for blending with specular
+
+        [HideInInspector] _StencilMask("_StencilMask", Int) = 7
     }
 
     SubShader
@@ -11,6 +13,7 @@ Shader "Hidden/HDRenderPipeline/SubsurfaceScattering"
         {
             Stencil
             {
+                ReadMask[_StencilMask]
                 Ref  1 // StencilLightingUsage.SplitLighting
                 Comp Equal
                 Pass Keep
@@ -47,7 +50,7 @@ Shader "Hidden/HDRenderPipeline/SubsurfaceScattering"
             // Inputs & outputs
             //-------------------------------------------------------------------------------------
 
-            float4 _FilterKernelsBasic[SSS_N_PROFILES][SSS_BASIC_N_SAMPLES]; // RGB = weights, A = radial distance
+            float4 _FilterKernelsBasic[DIFFUSION_PROFILE_COUNT][SSS_BASIC_N_SAMPLES]; // RGB = weights, A = radial distance
             float4 _HalfRcpWeightedVariances[SSS_BASIC_N_SAMPLES];           // RGB for chromatic, A for achromatic
 
             TEXTURE2D(_IrradianceSource);             // Includes transmitted light
@@ -81,8 +84,8 @@ Shader "Hidden/HDRenderPipeline/SubsurfaceScattering"
                 SSSData sssData;
                 DECODE_FROM_SSSBUFFER(posInput.positionSS, sssData);
 
-                int    profileID   = sssData.subsurfaceProfile;
-                float  distScale   = sssData.subsurfaceRadius;
+                int    profileID   = sssData.diffusionProfile;
+                float  distScale   = sssData.subsurfaceMask;
                 float  maxDistance = _FilterKernelsBasic[profileID][SSS_BASIC_N_SAMPLES - 1].a;
 
                 // Take the first (central) sample.
@@ -123,7 +126,7 @@ Shader "Hidden/HDRenderPipeline/SubsurfaceScattering"
                 float  halfRcpVariance = _HalfRcpWeightedVariances[profileID].a;
             #endif
 
-            float3 albedo = ApplyDiffuseTexturingMode(sssData.diffuseColor, profileID);
+            float3 albedo = ApplySubsurfaceScatteringTexturingMode(sssData.diffuseColor, profileID);
 
             #ifndef SSS_FILTER_HORIZONTAL_AND_COMBINE
                 albedo = float3(1, 1, 1);

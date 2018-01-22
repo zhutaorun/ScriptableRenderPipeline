@@ -42,8 +42,8 @@ SAMPLER(sampler_TangentMapOS);
 TEXTURE2D(_AnisotropyMap);
 SAMPLER(sampler_AnisotropyMap);
 
-TEXTURE2D(_SubsurfaceRadiusMap);
-SAMPLER(sampler_SubsurfaceRadiusMap);
+TEXTURE2D(_SubsurfaceMaskMap);
+SAMPLER(sampler_SubsurfaceMaskMap);
 TEXTURE2D(_ThicknessMap);
 SAMPLER(sampler_ThicknessMap);
 
@@ -78,7 +78,7 @@ PROP_DECL_TEX2D(_NormalMapOS);
 PROP_DECL_TEX2D(_DetailMap);
 PROP_DECL_TEX2D(_HeightMap);
 
-PROP_DECL_TEX2D(_SubsurfaceRadiusMap);
+PROP_DECL_TEX2D(_SubsurfaceMaskMap);
 PROP_DECL_TEX2D(_ThicknessMap);
 
 TEXTURE2D(_LayerMaskMap);
@@ -88,7 +88,7 @@ SAMPLER(sampler_LayerInfluenceMaskMap);
 
 #endif
 
-CBUFFER_START(_PerMaterial)
+CBUFFER_START(UnityPerMaterial)
 
 // shared constant between lit and layered lit
 float _AlphaCutoff;
@@ -124,6 +124,8 @@ float _ThicknessMultiplier;
 // TODO: Fix the code in legacy unity so we can customize the beahvior for GI
 float3 _EmissionColor;
 float4 _EmissiveColorMap_ST;
+float _TexWorldScaleEmissive;
+float4 _UVMappingMaskEmissive;
 
 float4 _InvPrimScale; // Only XY are used
 
@@ -139,6 +141,8 @@ float _ShiverDirectionality;
 // Set of users variables
 float4 _BaseColor;
 float4 _BaseColorMap_ST;
+float4 _BaseColorMap_TexelSize;
+float4 _BaseColorMap_MipInfo;
 
 float _Metallic;
 float _Smoothness;
@@ -161,15 +165,15 @@ float _HeightCenter;
 
 float _Anisotropy;
 
-int   _SubsurfaceProfile;
-float _SubsurfaceRadius;
+int   _DiffusionProfile;
+float _SubsurfaceMask;
 float _Thickness;
 float4 _ThicknessRemap;
 
-float _CoatCoverage;
-float _CoatIOR;
+float _CoatMask;
 
 float4 _SpecularColor;
+float _EnergyConservingSpecularColor;
 
 float _TexWorldScale;
 float _InvTilingScale;
@@ -185,6 +189,9 @@ float4 _BaseColorMap0_ST;
 float4 _BaseColorMap1_ST;
 float4 _BaseColorMap2_ST;
 float4 _BaseColorMap3_ST;
+
+float4 _BaseColorMap0_TexelSize;
+float4 _BaseColorMap0_MipInfo;
 
 PROP_DECL(float, _Metallic);
 PROP_DECL(float, _Smoothness);
@@ -213,8 +220,8 @@ PROP_DECL(float, _DetailSmoothnessScale);
 PROP_DECL(float, _HeightAmplitude);
 PROP_DECL(float, _HeightCenter);
 
-PROP_DECL(int, _SubsurfaceProfile);
-PROP_DECL(float, _SubsurfaceRadius);
+PROP_DECL(int, _DiffusionProfile);
+PROP_DECL(float, _SubsurfaceMask);
 PROP_DECL(float, _Thickness);
 PROP_DECL(float4, _ThicknessRemap);
 

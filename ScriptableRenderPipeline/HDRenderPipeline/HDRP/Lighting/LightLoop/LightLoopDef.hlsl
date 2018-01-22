@@ -32,6 +32,10 @@ StructuredBuffer<uint> g_vLayeredOffsetsBuffer;     // don't support Buffer yet 
 StructuredBuffer<float> g_logBaseBuffer;            // don't support Buffer yet in unity
 //#endif
 
+#ifdef USE_INDIRECT
+    StructuredBuffer<uint> g_TileFeatureFlags;
+#endif
+
 StructuredBuffer<DirectionalLightData> _DirectionalLightDatas;
 StructuredBuffer<LightData>            _LightDatas;
 StructuredBuffer<EnvLightData>         _EnvLightDatas;
@@ -69,10 +73,18 @@ struct LightLoopContext
 // ----------------------------------------------------------------------------
 
 // Used by directional and spot lights.
-float3 SampleCookie2D(LightLoopContext lightLoopContext, float2 coord, int index)
+float3 SampleCookie2D(LightLoopContext lightLoopContext, float2 coord, int index, bool repeat)
 {
-    // TODO: add MIP maps to combat aliasing?
-    return SAMPLE_TEXTURE2D_ARRAY_LOD(_CookieTextures, s_linear_clamp_sampler, coord, index, 0).rgb;
+    if (repeat)
+    {
+        // TODO: add MIP maps to combat aliasing?
+        return SAMPLE_TEXTURE2D_ARRAY_LOD(_CookieTextures, s_linear_repeat_sampler, coord, index, 0).rgb;
+    }
+    else // clamp
+    {
+        // TODO: add MIP maps to combat aliasing?
+        return SAMPLE_TEXTURE2D_ARRAY_LOD(_CookieTextures, s_linear_clamp_sampler, coord, index, 0).rgb;
+    }
 }
 
 // Used by point lights.
@@ -154,23 +166,43 @@ uint GetTileSize()
     return TILE_SIZE_CLUSTERED;
 }
 
-void GetCountAndStartCluster(PositionInputs posInput, uint lightCategory, out uint start, out uint lightCount)
+float GetLightClusterMinLinearDepth(uint2 tileIndex, uint clusterIndex)
 {
-    uint2 tileIndex = posInput.tileCoord;
-
     float logBase = g_fClustBase;
     if (g_isLogBaseBufferEnabled)
     {
         logBase = g_logBaseBuffer[tileIndex.y * _NumTileClusteredX + tileIndex.x];
     }
 
-    int clustIdx = SnapToClusterIdxFlex(posInput.linearDepth, logBase, g_isLogBaseBufferEnabled != 0);
+    return ClusterIdxToZFlex(clusterIndex, logBase, g_isLogBaseBufferEnabled != 0);
+}
 
+uint GetLightClusterIndex(uint2 tileIndex, float linearDepth)
+{
+    float logBase = g_fClustBase;
+    if (g_isLogBaseBufferEnabled)
+    {
+        logBase = g_logBaseBuffer[tileIndex.y * _NumTileClusteredX + tileIndex.x];
+    }
+
+    return SnapToClusterIdxFlex(linearDepth, logBase, g_isLogBaseBufferEnabled != 0);
+}
+
+void GetCountAndStartCluster(uint2 tileIndex, uint clusterIndex, uint lightCategory, out uint start, out uint lightCount)
+{
     int nrClusters = (1 << g_iLog2NumClusters);
-    const int idx = ((lightCategory * nrClusters + clustIdx) * _NumTileClusteredY + tileIndex.y) * _NumTileClusteredX + tileIndex.x;
+    const int idx = ((lightCategory * nrClusters + clusterIndex) * _NumTileClusteredY + tileIndex.y) * _NumTileClusteredX + tileIndex.x;
     uint dataPair = g_vLayeredOffsetsBuffer[idx];
     start = dataPair & 0x7ffffff;
     lightCount = (dataPair >> 27) & 31;
+}
+
+void GetCountAndStartCluster(PositionInputs posInput, uint lightCategory, out uint start, out uint lightCount)
+{
+    uint2 tileIndex    = posInput.tileCoord;
+    uint  clusterIndex = GetLightClusterIndex(tileIndex, posInput.linearDepth);
+
+    GetCountAndStartCluster(tileIndex, clusterIndex, lightCategory, start, lightCount);
 }
 
 void GetCountAndStart(PositionInputs posInput, uint lightCategory, out uint start, out uint lightCount)

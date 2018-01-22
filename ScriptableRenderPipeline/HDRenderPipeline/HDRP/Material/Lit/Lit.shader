@@ -26,10 +26,22 @@ Shader "HDRenderPipeline/Lit"
 
         _HeightMap("HeightMap", 2D) = "black" {}
         // Caution: Default value of _HeightAmplitude must be (_HeightMax - _HeightMin) * 0.01
+        // Those two properties are computed from the ones exposed in the UI and depends on the displaement mode so they are separate because we don't want to lose information upon displacement mode change.
         [HideInInspector] _HeightAmplitude("Height Amplitude", Float) = 0.02 // In world units. This will be computed in the UI.
+        [HideInInspector] _HeightCenter("Height Center", Range(0.0, 1.0)) = 0.5 // In texture space
+
+		[Enum(MinMax, 0, Amplitude, 1)] _HeightMapParametrization("Heightmap Parametrization", Int) = 0
+        // These parameters are for vertex displacement/Tessellation
+		_HeightOffset("Height Offset", Float) = 0
+		// MinMax mode
         _HeightMin("Heightmap Min", Float) = -1
         _HeightMax("Heightmap Max", Float) = 1
-        _HeightCenter("Height Center", Range(0.0, 1.0)) = 0.5 // In texture space
+		// Amplitude mode
+		_HeightTessAmplitude("Amplitude", Float) = 2.0 // in Centimeters
+        _HeightTessCenter("Height Center", Range(0.0, 1.0)) = 0.5 // In texture space
+
+        // These parameters are for pixel displacement
+        _HeightPoMAmplitude("Height Amplitude", Float) = 2.0 // In centimeters
 
         _DetailMap("DetailMap", 2D) = "black" {}
         _DetailAlbedoScale("_DetailAlbedoScale", Range(0.0, 2.0)) = 1
@@ -41,31 +53,31 @@ Shader "HDRenderPipeline/Lit"
         _Anisotropy("Anisotropy", Range(-1.0, 1.0)) = 0
         _AnisotropyMap("AnisotropyMap", 2D) = "white" {}
 
-        _SubsurfaceProfile("Subsurface Profile", Int) = 0
-        _SubsurfaceRadius("Subsurface Radius", Range(0.0, 1.0)) = 1.0
-        _SubsurfaceRadiusMap("Subsurface Radius Map", 2D) = "white" {}
+        _DiffusionProfile("Diffusion Profile", Int) = 0
+        _SubsurfaceMask("Subsurface Radius", Range(0.0, 1.0)) = 1.0
+        _SubsurfaceMaskMap("Subsurface Radius Map", 2D) = "white" {}
         _Thickness("Thickness", Range(0.0, 1.0)) = 1.0
         _ThicknessMap("Thickness Map", 2D) = "white" {}
         _ThicknessRemap("Thickness Remap", Vector) = (0, 1, 0, 0)
 
-        _CoatCoverage("Coat Coverage", Range(0.0, 1.0)) = 1.0
-        _CoatIOR("Coat IOR", Range(0.0, 1.0)) = 0.5
+        _CoatMask("Coat Mask", Range(0.0, 1.0)) = 1.0
 
+        [ToggleUI] _EnergyConservingSpecularColor("_EnergyConservingSpecularColor", Float) = 1.0
         _SpecularColor("SpecularColor", Color) = (1, 1, 1, 1)
         _SpecularColorMap("SpecularColorMap", 2D) = "white" {}
 
         // Following options are for the GUI inspector and different from the input parameters above
         // These option below will cause different compilation flag.
-        [ToggleOff]  _EnableSpecularOcclusion("Enable specular occlusion", Float) = 0.0
+        [ToggleUI]  _EnableSpecularOcclusion("Enable specular occlusion", Float) = 0.0
 
         _EmissiveColor("EmissiveColor", Color) = (1, 1, 1)
         _EmissiveColorMap("EmissiveColorMap", 2D) = "white" {}
         _EmissiveIntensity("EmissiveIntensity", Float) = 0
-        [ToggleOff] _AlbedoAffectEmissive("Albedo Affect Emissive", Float) = 0.0
+        [ToggleUI] _AlbedoAffectEmissive("Albedo Affect Emissive", Float) = 0.0
 
         _DistortionVectorMap("DistortionVectorMap", 2D) = "black" {}
-        [ToggleOff] _DistortionEnable("Enable Distortion", Float) = 0.0
-        [ToggleOff] _DistortionDepthTest("Distortion Depth Test Enable", Float) = 1.0
+        [ToggleUI] _DistortionEnable("Enable Distortion", Float) = 0.0
+        [ToggleUI] _DistortionDepthTest("Distortion Depth Test Enable", Float) = 1.0
         [Enum(Add, 0, Multiply, 1)] _DistortionBlendMode("Distortion Blend Mode", Int) = 0
         [HideInInspector] _DistortionSrcBlend("Distortion Blend Src", Int) = 0
         [HideInInspector] _DistortionDstBlend("Distortion Blend Dst", Int) = 0
@@ -79,13 +91,13 @@ Shader "HDRenderPipeline/Lit"
         _DistortionBlurRemapMin("DistortionBlurRemapMin", Float) = 0.0
         _DistortionBlurRemapMax("DistortionBlurRemapMax", Float) = 1.0
 
-        [ToggleOff]  _AlphaCutoffEnable("Alpha Cutoff Enable", Float) = 0.0
+        [ToggleUI]  _AlphaCutoffEnable("Alpha Cutoff Enable", Float) = 0.0
         _AlphaCutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
         _AlphaCutoffPrepass("_AlphaCutoffPrepass", Range(0.0, 1.0)) = 0.5
         _AlphaCutoffPostpass("_AlphaCutoffPostpass", Range(0.0, 1.0)) = 0.5
-        [ToggleOff] _TransparentDepthPrepassEnable("_TransparentDepthPrepassEnable", Float) = 0.0
-        [ToggleOff] _TransparentBackfaceEnable("_TransparentBackfaceEnable", Float) = 0.0
-        [ToggleOff] _TransparentDepthPostpassEnable("_TransparentDepthPostpassEnable", Float) = 0.0
+        [ToggleUI] _TransparentDepthPrepassEnable("_TransparentDepthPrepassEnable", Float) = 0.0
+        [ToggleUI] _TransparentBackfaceEnable("_TransparentBackfaceEnable", Float) = 0.0
+        [ToggleUI] _TransparentDepthPostpassEnable("_TransparentDepthPostpassEnable", Float) = 0.0
 
         // Transparency
         [Enum(None, 0, Plane, 1, Sphere, 2)]_RefractionMode("Refraction Mode", Int) = 0
@@ -94,7 +106,7 @@ Shader "HDRenderPipeline/Lit"
         _TransmittanceColor("Transmittance Color", Color) = (1.0, 1.0, 1.0)
         _TransmittanceColorMap("TransmittanceColorMap", 2D) = "white" {}
         _ATDistance("Transmittance Absorption Distance", Float) = 1.0
-        [ToggleOff] _PreRefractionPass("PreRefractionPass", Float) = 0.0
+        [ToggleUI] _PreRefractionPass("PreRefractionPass", Float) = 0.0
 
         // Stencil state
         [HideInInspector] _StencilRef("_StencilRef", Int) = 2 // StencilLightingUsage.RegularLighting  (fixed at compile time)
@@ -112,10 +124,10 @@ Shader "HDRenderPipeline/Lit"
         [HideInInspector] _CullModeForward("__cullmodeForward", Float) = 2.0 // This mode is dedicated to Forward to correctly handle backface then front face rendering thin transparent
         [HideInInspector] _ZTestMode("_ZTestMode", Int) = 8
 
-        [ToggleOff] _EnableFogOnTransparent("Enable Fog", Float) = 1.0
-        [ToggleOff] _EnableBlendModePreserveSpecularLighting("Enable Blend Mode Preserve Specular Lighting", Float) = 1.0
+        [ToggleUI] _EnableFogOnTransparent("Enable Fog", Float) = 1.0
+        [ToggleUI] _EnableBlendModePreserveSpecularLighting("Enable Blend Mode Preserve Specular Lighting", Float) = 1.0
 
-        [ToggleOff] _DoubleSidedEnable("Double sided enable", Float) = 0.0
+        [ToggleUI] _DoubleSidedEnable("Double sided enable", Float) = 0.0
         [Enum(Flip, 0, Mirror, 1)] _DoubleSidedNormalMode("Double sided normal mode", Float) = 1
         [HideInInspector] _DoubleSidedConstants("_DoubleSidedConstants", Vector) = (1, 1, -1, 0)
 
@@ -128,11 +140,11 @@ Shader "HDRenderPipeline/Lit"
         [Enum(Subsurface Scattering, 0, Standard, 1, Anisotropy, 2, ClearCoat, 3, Specular Color, 4)] _MaterialID("MaterialId", Int) = 1 // MaterialId.RegularLighting
 
         [Enum(None, 0, Vertex displacement, 1, Pixel displacement, 2)] _DisplacementMode("DisplacementMode", Int) = 0
-        [ToggleOff] _DisplacementLockObjectScale("displacement lock object scale", Float) = 1.0
-        [ToggleOff] _DisplacementLockTilingScale("displacement lock tiling scale", Float) = 1.0
-        [ToggleOff] _DepthOffsetEnable("Depth Offset View space", Float) = 0.0
+        [ToggleUI] _DisplacementLockObjectScale("displacement lock object scale", Float) = 1.0
+        [ToggleUI] _DisplacementLockTilingScale("displacement lock tiling scale", Float) = 1.0
+        [ToggleUI] _DepthOffsetEnable("Depth Offset View space", Float) = 0.0
 
-        [ToggleOff] _EnableMotionVectorForVertexAnimation("EnableMotionVectorForVertexAnimation", Float) = 0.0
+        [ToggleUI] _EnableMotionVectorForVertexAnimation("EnableMotionVectorForVertexAnimation", Float) = 0.0
 
         _PPDMinSamples("Min sample for POM", Range(1.0, 64.0)) = 5
         _PPDMaxSamples("Max sample for POM", Range(1.0, 64.0)) = 15
@@ -143,11 +155,15 @@ Shader "HDRenderPipeline/Lit"
 
         [Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3)] _UVDetail("UV Set for detail", Float) = 0
         [HideInInspector] _UVDetailsMappingMask("_UVDetailsMappingMask", Color) = (1, 0, 0, 0)
-        [ToggleOff] _LinkDetailsWithBase("LinkDetailsWithBase", Float) = 1.0
+        [ToggleUI] _LinkDetailsWithBase("LinkDetailsWithBase", Float) = 1.0
+
         [Enum(Use Emissive Color, 0, Use Emissive Mask, 1)] _EmissiveColorMode("Emissive color mode", Float) = 1
+        [Enum(UV0, 0, Planar, 4, TriPlanar, 5)] _UVEmissive("UV Set for emissive", Float) = 0
+        _TexWorldScaleEmissive("Scale to apply on world coordinate", Float) = 1.0
+        [HideInInspector] _UVMappingMaskEmissive("_UVMappingMaskEmissive", Color) = (1, 0, 0, 0)
 
         // Wind
-        [ToggleOff]  _EnableWind("Enable Wind", Float) = 0.0
+        [ToggleUI]  _EnableWind("Enable Wind", Float) = 0.0
         _InitialBend("Initial Bend", float) = 1.0
         _Stiffness("Stiffness", float) = 1.0
         _Drag("Drag", float) = 1.0
@@ -185,6 +201,7 @@ Shader "HDRenderPipeline/Lit"
     #pragma shader_feature _VERTEX_WIND
     #pragma shader_feature _ _REFRACTION_PLANE _REFRACTION_SPHERE
 
+    #pragma shader_feature _ _EMISSIVE_MAPPING_PLANAR _EMISSIVE_MAPPING_TRIPLANAR
     #pragma shader_feature _ _MAPPING_PLANAR _MAPPING_TRIPLANAR
     #pragma shader_feature _NORMALMAP_TANGENT_SPACE
     #pragma shader_feature _ _REQUIRE_UV2 _REQUIRE_UV3
@@ -198,7 +215,7 @@ Shader "HDRenderPipeline/Lit"
     #pragma shader_feature _TANGENTMAP
     #pragma shader_feature _ANISOTROPYMAP
     #pragma shader_feature _DETAIL_MAP
-    #pragma shader_feature _SUBSURFACE_RADIUS_MAP
+    #pragma shader_feature _SUBSURFACE_MASK_MAP
     #pragma shader_feature _THICKNESSMAP
     #pragma shader_feature _SPECULARCOLORMAP
     #pragma shader_feature _TRANSMITTANCECOLORMAP
@@ -209,14 +226,19 @@ Shader "HDRenderPipeline/Lit"
     #pragma shader_feature _BLENDMODE_PRESERVE_SPECULAR_LIGHTING
     #pragma shader_feature _ENABLE_FOG_ON_TRANSPARENT
 
-    // MaterialId are used as shader feature to allow compiler to optimize properly
-    // Note _MATID_STANDARD is not define as there is always the default case "_". We assign default as _MATID_STANDARD, so we never test _MATID_STANDARD
-    #pragma shader_feature _ _MATID_SSS _MATID_ANISO _MATID_SPECULAR _MATID_CLEARCOAT
+    // MaterialFeature are used as shader feature to allow compiler to optimize properly
+    #pragma shader_feature _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
+    #pragma shader_feature _MATERIAL_FEATURE_TRANSMISSION
+    #pragma shader_feature _MATERIAL_FEATURE_ANISOTROPY
+    #pragma shader_feature _MATERIAL_FEATURE_CLEAR_COAT
+    #pragma shader_feature _MATERIAL_FEATURE_IRIDESCENCE
+    #pragma shader_feature _MATERIAL_FEATURE_SPECULAR_COLOR
 
     // enable dithering LOD crossfade
     #pragma multi_compile _ LOD_FADE_CROSSFADE
-    // TODO: We should have this keyword only if VelocityInGBuffer is enable, how to do that ?
-    //#pragma multi_compile VELOCITYOUTPUT_OFF VELOCITYOUTPUT_ON
+
+    //enable GPU instancing support
+    #pragma multi_compile_instancing
 
     //-------------------------------------------------------------------------------------
     // Define
@@ -229,7 +251,7 @@ Shader "HDRenderPipeline/Lit"
     #define HAVE_VERTEX_MODIFICATION
 
     // If we use subsurface scattering, enable output split lighting (for forward pass)
-    #if defined(_MATID_SSS) && !defined(_SURFACE_TYPE_TRANSPARENT)
+    #if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) && !defined(_SURFACE_TYPE_TRANSPARENT)
     #define OUTPUT_SPLIT_LIGHTING
     #endif
 
@@ -275,9 +297,9 @@ Shader "HDRenderPipeline/Lit"
 
             HLSLPROGRAM
 
-            #pragma multi_compile LIGHTMAP_OFF LIGHTMAP_ON
-            #pragma multi_compile DIRLIGHTMAP_OFF DIRLIGHTMAP_COMBINED
-            #pragma multi_compile DYNAMICLIGHTMAP_OFF DYNAMICLIGHTMAP_ON
+            #pragma multi_compile _ LIGHTMAP_ON
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
             #pragma multi_compile _ SHADOWS_SHADOWMASK
 
             #define SHADERPASS SHADERPASS_GBUFFER
@@ -309,9 +331,9 @@ Shader "HDRenderPipeline/Lit"
 
             HLSLPROGRAM
 
-            #pragma multi_compile LIGHTMAP_OFF LIGHTMAP_ON
-            #pragma multi_compile DIRLIGHTMAP_OFF DIRLIGHTMAP_COMBINED
-            #pragma multi_compile DYNAMICLIGHTMAP_OFF DYNAMICLIGHTMAP_ON
+            #pragma multi_compile _ LIGHTMAP_ON
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
             #pragma multi_compile _ SHADOWS_SHADOWMASK
 
             #define SHADERPASS SHADERPASS_GBUFFER
@@ -342,9 +364,9 @@ Shader "HDRenderPipeline/Lit"
 
             HLSLPROGRAM
 
-            #pragma multi_compile LIGHTMAP_OFF LIGHTMAP_ON
-            #pragma multi_compile DIRLIGHTMAP_OFF DIRLIGHTMAP_COMBINED
-            #pragma multi_compile DYNAMICLIGHTMAP_OFF DYNAMICLIGHTMAP_ON
+            #pragma multi_compile _ LIGHTMAP_ON
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
             #pragma multi_compile _ SHADOWS_SHADOWMASK
 
             #define DEBUG_DISPLAY
@@ -449,7 +471,7 @@ Shader "HDRenderPipeline/Lit"
 
             Cull[_CullMode]
 
-            ZWrite Off // TODO: Test Z equal here.
+            ZWrite On
 
             HLSLPROGRAM
 
@@ -520,9 +542,9 @@ Shader "HDRenderPipeline/Lit"
 
             HLSLPROGRAM
 
-            #pragma multi_compile LIGHTMAP_OFF LIGHTMAP_ON
-            #pragma multi_compile DIRLIGHTMAP_OFF DIRLIGHTMAP_COMBINED
-            #pragma multi_compile DYNAMICLIGHTMAP_OFF DYNAMICLIGHTMAP_ON
+            #pragma multi_compile _ LIGHTMAP_ON
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
             #pragma multi_compile _ SHADOWS_SHADOWMASK
             // #include "../../Lighting/Forward.hlsl"
             #pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
@@ -557,9 +579,9 @@ Shader "HDRenderPipeline/Lit"
 
             HLSLPROGRAM
 
-            #pragma multi_compile LIGHTMAP_OFF LIGHTMAP_ON
-            #pragma multi_compile DIRLIGHTMAP_OFF DIRLIGHTMAP_COMBINED
-            #pragma multi_compile DYNAMICLIGHTMAP_OFF DYNAMICLIGHTMAP_ON
+            #pragma multi_compile _ LIGHTMAP_ON
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
             #pragma multi_compile _ SHADOWS_SHADOWMASK
             // #include "../../Lighting/Forward.hlsl"
             #pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
@@ -594,9 +616,9 @@ Shader "HDRenderPipeline/Lit"
 
             HLSLPROGRAM
 
-            #pragma multi_compile LIGHTMAP_OFF LIGHTMAP_ON
-            #pragma multi_compile DIRLIGHTMAP_OFF DIRLIGHTMAP_COMBINED
-            #pragma multi_compile DYNAMICLIGHTMAP_OFF DYNAMICLIGHTMAP_ON
+            #pragma multi_compile _ LIGHTMAP_ON
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
             #pragma multi_compile _ SHADOWS_SHADOWMASK
             // #include "../../Lighting/Forward.hlsl"
             #pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS

@@ -122,6 +122,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SubsurfaceMaskMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SubsurfaceRadiusMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -156,6 +160,7 @@ Material:
     - _BumpScale: 1
     - _CoatCoverage: 1
     - _CoatIOR: 0.5
+    - _CoatMask: 1
     - _CullMode: 2
     - _CullModeForward: 2
     - _Cutoff: 0.5
@@ -164,6 +169,7 @@ Material:
     - _DetailNormalMapScale: 1
     - _DetailNormalScale: 1
     - _DetailSmoothnessScale: 1
+    - _DiffusionProfile: 0
     - _DisplacementLockObjectScale: 1
     - _DisplacementLockTilingScale: 1
     - _DisplacementMode: 0
@@ -204,9 +210,14 @@ Material:
     - _HeightBias: 0
     - _HeightCenter: 0.5
     - _HeightMapMode: 0
+    - _HeightMapParametrization: 1
     - _HeightMax: 1
     - _HeightMin: -1
+    - _HeightOffset: 0
+    - _HeightPoMAmplitude: 2
     - _HeightScale: 1
+    - _HeightTessAmplitude: 2
+    - _HeightTessCenter: 0.5
     - _HorizonFade: 1
     - _IOR: 1.01
     - _InitialBend: 1
@@ -246,10 +257,12 @@ Material:
     - _StencilWriteMaskMV: 128
     - _Stiffness: 1
     - _SubSurfaceRadius: 0
+    - _SubsurfaceMask: 1
     - _SubsurfaceProfile: 0
     - _SubsurfaceRadius: 1
     - _SurfaceType: 1
     - _TexWorldScale: 1
+    - _TexWorldScaleEmissive: 1
     - _Thickness: 0.747
     - _ThicknessMultiplier: 1
     - _TransparentBackfaceEnable: 0
@@ -257,6 +270,7 @@ Material:
     - _TransparentDepthPrepassEnable: 0
     - _UVBase: 0
     - _UVDetail: 0
+    - _UVEmissive: 0
     - _UVMappingPlanar: 0
     - _UVSec: 0
     - _VertexDisplacementObjectScale: 1
@@ -276,3 +290,4 @@ Material:
     - _TransmittanceColor: {r: 0.816, g: 0.6632562, b: 0.374544, a: 1}
     - _UVDetailsMappingMask: {r: 1, g: 0, b: 0, a: 0}
     - _UVMappingMask: {r: 1, g: 0, b: 0, a: 0}
+    - _UVMappingMaskEmissive: {r: 1, g: 0, b: 0, a: 0}

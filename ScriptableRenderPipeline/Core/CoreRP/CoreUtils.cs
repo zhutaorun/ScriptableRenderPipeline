@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Rendering;
@@ -49,6 +49,7 @@ namespace UnityEngine.Experimental.Rendering
         public const int editMenuPriority2 = 331;
         public const int assetCreateMenuPriority1 = 230;
         public const int assetCreateMenuPriority2 = 241;
+        public const int gameObjectMenuPriority = 10;
 
         static Cubemap m_BlackCubeTexture;
         public static Cubemap blackCubeTexture
@@ -163,23 +164,28 @@ namespace UnityEngine.Experimental.Rendering
         }
 
         public static void CreateCmdTemporaryRT(CommandBuffer cmd, int nameID, RenderTextureDescriptor baseDesc,
-                                                int depthBufferBits, FilterMode filter, RenderTextureFormat format,
-                                                RenderTextureReadWrite readWrite = RenderTextureReadWrite.Default, int msaaSamples = 1, bool enableRandomWrite = false)
+            int depthBufferBits, FilterMode filter, RenderTextureFormat format,
+            RenderTextureReadWrite readWrite = RenderTextureReadWrite.Default, int msaaSamples = 1, bool enableRandomWrite = false)
+        {
+            UpdateRenderTextureDescriptor(ref baseDesc, depthBufferBits, format, readWrite, msaaSamples, enableRandomWrite);
+
+            cmd.GetTemporaryRT(nameID, baseDesc, filter);
+        }
+
+        public static void UpdateRenderTextureDescriptor(ref RenderTextureDescriptor baseDesc, int depthBufferBits, RenderTextureFormat format, RenderTextureReadWrite readWrite, int msaaSamples, bool enableRandomWrite)
         {
             baseDesc.depthBufferBits = depthBufferBits;
             baseDesc.colorFormat = format;
             baseDesc.sRGB = (readWrite != RenderTextureReadWrite.Linear);
             baseDesc.msaaSamples = msaaSamples;
             baseDesc.enableRandomWrite = enableRandomWrite;
-
-            cmd.GetTemporaryRT(nameID, baseDesc, filter);
         }
 
         public static void ClearCubemap(CommandBuffer cmd, RenderTargetIdentifier buffer, Color clearColor)
         {
             // We should have the option to clear mip maps here, but since RenderTargetIdentifier, we can't know the number to clear...
             // So for now, we won't do it.
-            for(int i = 0; i < 6; ++i)
+            for (int i = 0; i < 6; ++i)
                 SetRenderTarget(cmd, buffer, ClearFlag.Color, clearColor, 0, (CubemapFace)i);
         }
 
@@ -193,7 +199,7 @@ namespace UnityEngine.Experimental.Rendering
 
             for (int i = 0; i < 6; ++i)
             {
-                for (int mip = 0; mip < mipCount; ++ mip )
+                for (int mip = 0; mip < mipCount; ++mip)
                 {
                     SetRenderTarget(cmd, new RenderTargetIdentifier(renderTexture), ClearFlag.Color, clearColor, mip, (CubemapFace)i);
                 }
@@ -255,6 +261,17 @@ namespace UnityEngine.Experimental.Rendering
             return IsPostProcessingActive(layer)
                 && layer.antialiasingMode == PostProcessLayer.Antialiasing.TemporalAntialiasing
                 && layer.temporalAntialiasing.IsSupported();
+        }
+
+        // Color space utilities
+        public static Color ConvertSRGBToActiveColorSpace(Color color)
+        {
+            return (QualitySettings.activeColorSpace == ColorSpace.Linear) ? color.linear : color;
+        }
+
+        public static Color ConvertLinearToActiveColorSpace(Color color)
+        {
+            return (QualitySettings.activeColorSpace == ColorSpace.Linear) ? color : color.gamma;
         }
 
         // Unity specifics
@@ -336,7 +353,7 @@ namespace UnityEngine.Experimental.Rendering
                     {
                         innerTypes = t.GetTypes();
                     }
-                    catch {}
+                    catch { }
                     return innerTypes;
                 });
         }
@@ -384,7 +401,7 @@ namespace UnityEngine.Experimental.Rendering
 
         public static void QuickSort(uint[] arr, int left, int right)
         {
-            // For Recusrion
+            // For Recursion
             if (left < right)
             {
                 int pivot = Partition(arr, left, right);
@@ -395,6 +412,42 @@ namespace UnityEngine.Experimental.Rendering
                 if (pivot + 1 < right)
                     QuickSort(arr, pivot + 1, right);
             }
+        }
+
+        public static Mesh CreateCubeMesh(Vector3 min, Vector3 max)
+        {
+            Mesh mesh = new Mesh();
+
+            Vector3[] vertices = new Vector3[8];
+
+            vertices[0] = new Vector3(min.x, min.y, min.z);
+            vertices[1] = new Vector3(max.x, min.y, min.z);
+            vertices[2] = new Vector3(max.x, max.y, min.z);
+            vertices[3] = new Vector3(min.x, max.y, min.z);
+            vertices[4] = new Vector3(min.x, min.y, max.z);
+            vertices[5] = new Vector3(max.x, min.y, max.z);
+            vertices[6] = new Vector3(max.x, max.y, max.z);
+            vertices[7] = new Vector3(min.x, max.y, max.z);
+
+            mesh.vertices = vertices;
+
+            int[] triangles = new int[36];
+
+            triangles[0] = 0; triangles[1] = 2; triangles[2] = 1;
+            triangles[3] = 0; triangles[4] = 3; triangles[5] = 2;
+            triangles[6] = 1; triangles[7] = 6; triangles[8] = 5;
+            triangles[9] = 1; triangles[10] = 2; triangles[11] = 6;
+            triangles[12] = 5; triangles[13] = 7; triangles[14] = 4;
+            triangles[15] = 5; triangles[16] = 6; triangles[17] = 7;
+            triangles[18] = 4; triangles[19] = 3; triangles[20] = 0;
+            triangles[21] = 4; triangles[22] = 7; triangles[23] = 3;
+            triangles[24] = 3; triangles[25] = 6; triangles[26] = 2;
+            triangles[27] = 3; triangles[28] = 7; triangles[29] = 6;
+            triangles[30] = 4; triangles[31] = 1; triangles[32] = 5;
+            triangles[33] = 4; triangles[34] = 0; triangles[35] = 1;
+
+            mesh.triangles = triangles;
+            return mesh;
         }
     }
 }

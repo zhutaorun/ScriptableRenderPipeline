@@ -4,6 +4,7 @@ Shader "HDRenderPipeline/Decal"
     {      
         _BaseColorMap("BaseColorMap", 2D) = "white" {}
 		_NormalMap("NormalMap", 2D) = "bump" {}     // Tangent space normal map
+		_MaskMap("MaskMap", 2D) = "white" {}    
 		_DecalBlend("_DecalBlend", Range(0.0, 1.0)) = 0.5
     }
 
@@ -18,14 +19,14 @@ Shader "HDRenderPipeline/Decal"
     //-------------------------------------------------------------------------------------
 	#pragma shader_feature _COLORMAP
 	#pragma shader_feature _NORMALMAP
+	#pragma shader_feature _MASKMAP
 
-
+	#pragma multi_compile_instancing
     //-------------------------------------------------------------------------------------
     // Define
     //-------------------------------------------------------------------------------------
-	#define UNITY_MATERIAL_DECAL // do we need this now that Material.hlsl is not getting included?
-
-
+	#define UNITY_MATERIAL_DECAL 
+	
     //-------------------------------------------------------------------------------------
     // Include
     //-------------------------------------------------------------------------------------
@@ -55,10 +56,12 @@ Shader "HDRenderPipeline/Decal"
             Name "DBuffer"  // Name is not used
             Tags { "LightMode" = "DBuffer" } // This will be only for opaque object based on the RenderQueue index
 
-			// need to optimize this and use proper Cull and ZTest modes for cases when decal geometry is clipped by camera 
-            Cull Off
+			// back faces with zfail, for cases when camera is inside the decal volume
+            Cull Front
 			ZWrite Off
-			ZTest Always
+			ZTest Greater
+			// using alpha compositing https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch23.html
+			Blend SrcAlpha OneMinusSrcAlpha, Zero OneMinusSrcAlpha
 
 			HLSLPROGRAM
 

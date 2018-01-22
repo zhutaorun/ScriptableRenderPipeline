@@ -20,6 +20,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector4[] frustumPlaneEquations;
         public Camera camera;
         public uint taaFrameIndex;
+        public Vector2 taaFrameRotation;
         public Vector4 viewParam;
         public PostProcessRenderContext postprocessRenderContext;
 
@@ -84,7 +85,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             // If TAA is enabled projMatrix will hold a jittered projection matrix. The original,
             // non-jittered projection matrix can be accessed via nonJitteredProjMatrix.
-            bool taaEnabled = Application.isPlaying && CoreUtils.IsTemporalAntialiasingActive(postProcessLayer);
+            bool taaEnabled = Application.isPlaying && camera.cameraType == CameraType.Game &&
+                CoreUtils.IsTemporalAntialiasingActive(postProcessLayer);
 
             var nonJitteredCameraProj = camera.projectionMatrix;
             var cameraProj = taaEnabled
@@ -128,6 +130,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             const uint taaFrameCount = 8;
             taaFrameIndex = taaEnabled ? (uint)Time.renderedFrameCount % taaFrameCount : 0;
+            taaFrameRotation = new Vector2(Mathf.Sin(taaFrameIndex * (0.5f * Mathf.PI)),
+                                           Mathf.Cos(taaFrameIndex * (0.5f * Mathf.PI)));
 
             viewMatrix = gpuView;
             projMatrix = gpuProj;
@@ -233,6 +237,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalMatrix(HDShaderIDs._PrevViewProjMatrix, prevViewProjMatrix);
             cmd.SetGlobalVectorArray(HDShaderIDs._FrustumPlanes, frustumPlaneEquations);
             cmd.SetGlobalInt(HDShaderIDs._TaaFrameIndex, (int)taaFrameIndex);
+            cmd.SetGlobalVector(HDShaderIDs._TaaFrameRotation, taaFrameRotation);
         }
 
         // TODO: We should set all the value below globally and not let it under the control of Unity,
@@ -243,7 +248,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Copy values set by Unity which are not configured in scripts.
             cmd.SetComputeVectorParam(cs, HDShaderIDs.unity_OrthoParams, Shader.GetGlobalVector(HDShaderIDs.unity_OrthoParams));
             cmd.SetComputeVectorParam(cs, HDShaderIDs._ProjectionParams, Shader.GetGlobalVector(HDShaderIDs._ProjectionParams));
-            cmd.SetComputeVectorParam(cs, HDShaderIDs._ViewParam, Shader.GetGlobalVector(HDShaderIDs._ViewParam));
             cmd.SetComputeVectorParam(cs, HDShaderIDs._ScreenParams, Shader.GetGlobalVector(HDShaderIDs._ScreenParams));
             cmd.SetComputeVectorParam(cs, HDShaderIDs._ZBufferParams, Shader.GetGlobalVector(HDShaderIDs._ZBufferParams));
             cmd.SetComputeVectorParam(cs, HDShaderIDs._WorldSpaceCameraPos, Shader.GetGlobalVector(HDShaderIDs._WorldSpaceCameraPos));

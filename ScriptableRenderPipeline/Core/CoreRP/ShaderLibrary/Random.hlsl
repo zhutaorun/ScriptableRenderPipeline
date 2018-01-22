@@ -1,5 +1,5 @@
-#ifndef UNITY_NOISE_INCLUDED
-#define UNITY_NOISE_INCLUDED
+#ifndef UNITY_RANDOM_INCLUDED
+#define UNITY_RANDOM_INCLUDED
 
 #if !defined(SHADER_API_GLES)
 
@@ -22,12 +22,12 @@ uint JenkinsHash(uint2 v)
 
 uint JenkinsHash(uint3 v)
 {
-    return JenkinsHash(v.x ^ JenkinsHash(v.y) ^ JenkinsHash(v.z));
+	return JenkinsHash(v.x ^ JenkinsHash(v.yz));
 }
 
 uint JenkinsHash(uint4 v)
 {
-    return JenkinsHash(v.x ^ JenkinsHash(v.y) ^ JenkinsHash(v.z) ^ JenkinsHash(v.w));
+	return JenkinsHash(v.x ^ JenkinsHash(v.yzw));
 }
 
 // Construct a float with half-open range [0, 1) using low 23 bits.
@@ -70,6 +70,26 @@ float GenerateHashedRandomFloat(uint4 v)
     return ConstructFloat(JenkinsHash(v));
 }
 
+float Hash(uint s)
+{
+    s = s ^ 2747636419u;
+    s = s * 2654435769u;
+    s = s ^ (s >> 16);
+    s = s * 2654435769u;
+    s = s ^ (s >> 16);
+    s = s * 2654435769u;
+    return float(s) * rcp(4294967296.0); // 2^-32
+}
+
+float2 InitRandom(float2 input)
+{
+    float2 r;
+    r.x = Hash(uint(input.x * UINT_MAX));
+    r.y = Hash(uint(input.y * UINT_MAX));
+
+    return r;
+}
+
 #endif // SHADER_API_GLES
 
-#endif // UNITY_NOISE_INCLUDED
+#endif // UNITY_RANDOM_INCLUDED
