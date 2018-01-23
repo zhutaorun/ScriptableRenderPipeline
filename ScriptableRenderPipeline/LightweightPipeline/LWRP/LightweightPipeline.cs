@@ -121,6 +121,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             "_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE",
             "_MAIN_LIGHT_DIRECTIONAL_SHADOW_SOFT",
             "_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SOFT",
+            "_MAIN_LIGHT_DIRECTIONAL_SHADOW_SCREEN",
+            "_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SCREEN",
+            "_MAIN_LIGHT_DIRECTIONAL_SHADOW_SCREEN_SOFT",
+            "_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SCREEN_SOFT",
 
             "_MAIN_LIGHT_SPOT_SHADOW",
             "_MAIN_LIGHT_SPOT_SHADOW_SOFT"
@@ -147,9 +151,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private const int kMaxCascades = 4;
         private int m_ShadowCasterCascadesCount;
         private int m_ShadowMapRTID;
+        private int m_ScreenSpaceShadowMapRTID;
         private Matrix4x4[] m_ShadowMatrices = new Matrix4x4[kMaxCascades + 1];
         private RenderTargetIdentifier m_CurrCameraColorRT;
         private RenderTargetIdentifier m_ShadowMapRT;
+        private RenderTargetIdentifier m_ScreenSpaceShadowMapRT;
         private RenderTargetIdentifier m_ColorRT;
         private RenderTargetIdentifier m_CopyColorRT;
         private RenderTargetIdentifier m_DepthRT;
@@ -160,6 +166,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private bool m_RequireDepthTexture;
         private bool m_RequireCopyColor;
         private bool m_DepthRenderBuffer;
+        private bool m_RequireScreenSpaceShadows;
         private MixedLightingSetup m_MixedLightingSetup;
 
         private const int kDepthStencilBufferBits = 32;
@@ -203,6 +210,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private Material m_BlitMaterial;
         private Material m_CopyDepthMaterial;
         private Material m_ErrorMaterial;
+        private Material m_ScreenSpaceShadowsMaterial;
         private int m_BlitTexID = Shader.PropertyToID("_BlitTex");
 
         private CopyTextureSupport m_CopyTextureSupport;
@@ -241,8 +249,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             ShadowConstantBuffer._ShadowOffset2 = Shader.PropertyToID("_ShadowOffset2");
             ShadowConstantBuffer._ShadowOffset3 = Shader.PropertyToID("_ShadowOffset3");
             ShadowConstantBuffer._ShadowmapSize = Shader.PropertyToID("_ShadowmapSize");
+            ShadowConstantBuffer._FrustumCorners = Shader.PropertyToID("_FrustumCorners");
 
             m_ShadowMapRTID = Shader.PropertyToID("_ShadowMap");
+            m_ScreenSpaceShadowMapRTID = Shader.PropertyToID("_ScreenSpaceShadowMap");
 
             CameraRenderTargetID.color = Shader.PropertyToID("_CameraColorRT");
             CameraRenderTargetID.copyColor = Shader.PropertyToID("_CameraCopyColorRT");
@@ -250,6 +260,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             CameraRenderTargetID.depthCopy = Shader.PropertyToID("_CameraCopyDepthTexture");
 
             m_ShadowMapRT = new RenderTargetIdentifier(m_ShadowMapRTID);
+            m_ScreenSpaceShadowMapRT = new RenderTargetIdentifier(m_ScreenSpaceShadowMapRTID);
 
             m_ColorRT = new RenderTargetIdentifier(CameraRenderTargetID.color);
             m_CopyColorRT = new RenderTargetIdentifier(CameraRenderTargetID.copyColor);
@@ -273,6 +284,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             m_BlitMaterial = CoreUtils.CreateEngineMaterial(m_Asset.BlitShader);
             m_CopyDepthMaterial = CoreUtils.CreateEngineMaterial(m_Asset.CopyDepthShader);
             m_ErrorMaterial = CoreUtils.CreateEngineMaterial("Hidden/InternalErrorShader");
+            m_ScreenSpaceShadowsMaterial = CoreUtils.CreateEngineMaterial("Hidden/LightweightPipeline/ScreenSpaceShadows");
         }
 
         public override void Dispose()
@@ -358,11 +370,14 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 context.SetupCameraProperties(m_CurrCamera, stereoEnabled);
 
                 if (LightweightUtils.HasFlag(frameRenderingConfiguration, FrameRenderingConfiguration.DepthPrePass))
-				{
+                {
                     DepthPass(ref context);
                     RenderMSVO(ref context);
-                }
                     
+                    if(m_RequireScreenSpaceShadows) //NOTE: Should this be added to the FrameRenderingConfiguration?
+                        ShadowCollectPass(ref context, visibleLights, ref lightData);
+                }
+
                 ForwardPass(visibleLights, frameRenderingConfiguration, ref context, ref lightData, stereoEnabled);
 
                 // Release temporary RT
@@ -456,6 +471,24 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             };
 
             context.DrawRenderers(m_CullResults.visibleRenderers, ref opaqueDrawSettings, opaqueFilterSettings);
+        }
+
+        private void ShadowCollectPass(ref ScriptableRenderContext context, List<VisibleLight> lights, ref LightData lightData)
+        {
+            if (m_Asset.AreShadowsEnabled() && lightData.mainLightIndex != -1)
+            {
+                CommandBuffer cmd = CommandBufferPool.Get("Collect Shadows");
+
+                //NOTE: We need to set up certain constants + keywords in case of collecting shadows. Ideally a cleaner way than this.
+                SetupShadowReceiverConstants(cmd, lights[lightData.mainLightIndex]); 
+                SetShaderKeywords(cmd, ref lightData, lights);
+
+                cmd.GetTemporaryRT(m_ScreenSpaceShadowMapRTID, m_CurrCamera.pixelWidth, m_CurrCamera.pixelHeight, 0, FilterMode.Bilinear, RenderTextureFormat.R8);
+                cmd.Blit(null, m_ScreenSpaceShadowMapRT, m_ScreenSpaceShadowsMaterial);
+
+                context.ExecuteCommandBuffer(cmd);
+                CommandBufferPool.Release(cmd);
+            }
         }
 
         private void ForwardPass(List<VisibleLight> visibleLights, FrameRenderingConfiguration frameRenderingConfiguration, ref ScriptableRenderContext context, ref LightData lightData, bool stereoEnabled)
@@ -671,6 +704,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                     configuration |= FrameRenderingConfiguration.DepthPrePass;
                 }
             }
+          
+            m_RequireScreenSpaceShadows = m_Asset.RequireScreenSpaceShadows && LightweightUtils.HasFlag(configuration, FrameRenderingConfiguration.DepthPrePass);
 
             Rect cameraRect = m_CurrCamera.rect;
             if (!(Math.Abs(cameraRect.x) > 0.0f || Math.Abs(cameraRect.y) > 0.0f || Math.Abs(cameraRect.width) < 1.0f || Math.Abs(cameraRect.height) < 1.0f))
@@ -1093,6 +1128,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             cmd.SetGlobalVector(ShadowConstantBuffer._ShadowOffset2, new Vector4(-invHalfShadowResolution,  invHalfShadowResolution, 0.0f, 0.0f));
             cmd.SetGlobalVector(ShadowConstantBuffer._ShadowOffset3, new Vector4( invHalfShadowResolution,  invHalfShadowResolution, 0.0f, 0.0f));
             cmd.SetGlobalVector(ShadowConstantBuffer._ShadowmapSize, new Vector4(invShadowResolution, invShadowResolution, m_Asset.ShadowAtlasResolution, m_Asset.ShadowAtlasResolution));
+            cmd.SetGlobalVectorArray(ShadowConstantBuffer._FrustumCorners, LightweightUtils.GetFarPlaneCorners(m_CurrCamera));
         }
 
         private void SetShaderKeywords(CommandBuffer cmd, ref LightData lightData, List<VisibleLight> visibleLights)
@@ -1113,6 +1149,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                     m_MainLightKeywordString.Append("_DIRECTIONAL_SHADOW");
                     if (m_Asset.CascadeCount > 1)
                         m_MainLightKeywordString.Append("_CASCADE");
+
+                    if(m_RequireScreenSpaceShadows)
+                        m_MainLightKeywordString.Append("_SCREEN");
                 }
                 else
                 {
@@ -1130,7 +1169,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             CoreUtils.SetKeyword(cmd, "_MIXED_LIGHTING_SUBTRACTIVE", m_MixedLightingSetup == MixedLightingSetup.Subtractive);
             CoreUtils.SetKeyword(cmd, "_VERTEX_LIGHTS", vertexLightsCount > 0);
             CoreUtils.SetKeyword(cmd, "SOFTPARTICLES_ON", m_RequireDepthTexture && m_Asset.RequireSoftParticles);
-
+           
             bool linearFogModeEnabled = false;
             bool exponentialFogModeEnabled = false;
             if (RenderSettings.fog)

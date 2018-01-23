@@ -12,21 +12,28 @@
 // In order to reduce shader variations main light keywords were combined    //
 // here we define shadow keywords.                                           //
 ///////////////////////////////////////////////////////////////////////////////
-#if defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_SOFT) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SOFT) || defined(_MAIN_LIGHT_SPOT_SHADOW) || defined(_MAIN_LIGHT_SPOT_SHADOW_SOFT)
+#if defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_SOFT) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SOFT) || defined(_MAIN_LIGHT_SPOT_SHADOW) || defined(_MAIN_LIGHT_SPOT_SHADOW_SOFT) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_SCREEN) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_SCREEN_SOFT) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SCREEN) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SCREEN_SOFT)
     #define _SHADOWS_ENABLED
 #endif
 
-#if defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_SOFT) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SOFT) || defined(_MAIN_LIGHT_SPOT_SHADOW_SOFT)
+#if defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_SOFT) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SOFT) || defined(_MAIN_LIGHT_SPOT_SHADOW_SOFT) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_SCREEN_SOFT) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SCREEN_SOFT)
     #define _SHADOWS_SOFT
 #endif
 
-#if defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SOFT)
+#if defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SOFT) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SCREEN) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SCREEN_SOFT)
     #define _SHADOWS_CASCADE
 #endif
 
 #if defined(_MAIN_LIGHT_SPOT_SHADOW) || defined(_MAIN_LIGHT_SPOT_SHADOW_SOFT)
     #define _SHADOWS_PERSPECTIVE
 #endif
+
+#if defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_SCREEN) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_SCREEN_SOFT) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SCREEN) || defined(_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SCREEN_SOFT)
+    #define _SHADOWS_SCREEN
+#endif
+
+TEXTURE2D(_ScreenSpaceShadowMap);
+SAMPLER(sampler_ScreenSpaceShadowMap);
 
 TEXTURE2D_SHADOW(_ShadowMap);
 SAMPLER_CMP(sampler_ShadowMap);
@@ -44,7 +51,14 @@ half4       _ShadowOffset2;
 half4       _ShadowOffset3;
 half4       _ShadowData;    // (x: shadowStrength)
 float4      _ShadowmapSize; // (xy: 1/width and 1/height, zw: width and height)
+float4      _FrustumCorners[4];
 CBUFFER_END
+
+inline half SampleScreenSpaceShadowMap(float4 shadowCoord)
+{
+    //NOTE: No macro for proj sample?
+    return SAMPLE_TEXTURE2D(_ScreenSpaceShadowMap, sampler_ScreenSpaceShadowMap, shadowCoord.xy / shadowCoord.w).x;
+}
 
 inline half SampleShadowmap(float4 shadowCoord)
 {
@@ -55,29 +69,52 @@ inline half SampleShadowmap(float4 shadowCoord)
     half attenuation;
 
 #ifdef _SHADOWS_SOFT
-#ifdef SHADER_API_MOBILE
-    // 4-tap hardware comparison
-    half4 attenuation4;
-    attenuation4.x = SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, shadowCoord.xyz + _ShadowOffset0.xyz);
-    attenuation4.y = SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, shadowCoord.xyz + _ShadowOffset1.xyz);
-    attenuation4.z = SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, shadowCoord.xyz + _ShadowOffset2.xyz);
-    attenuation4.w = SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, shadowCoord.xyz + _ShadowOffset3.xyz);
-    attenuation = dot(attenuation4, 0.25);
-#else
-    real fetchesWeights[9];
-    real2 fetchesUV[9];
-    SampleShadow_ComputeSamples_Tent_5x5(_ShadowmapSize, shadowCoord.xy, fetchesWeights, fetchesUV);
+    #ifdef SHADER_API_MOBILE
+        // 4-tap hardware comparison
+        half4 attenuation4;
+        attenuation4.x = SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, shadowCoord.xyz + _ShadowOffset0.xyz);
+        attenuation4.y = SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, shadowCoord.xyz + _ShadowOffset1.xyz);
+        attenuation4.z = SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, shadowCoord.xyz + _ShadowOffset2.xyz);
+        attenuation4.w = SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, shadowCoord.xyz + _ShadowOffset3.xyz);
+        attenuation = dot(attenuation4, 0.25);
+    #else
+        #ifdef _SHADOWS_SCREEN
+            real fetchesWeights[16];
+            real2 fetchesUV[16];
+            SampleShadow_ComputeSamples_Tent_7x7(_ShadowmapSize, shadowCoord.xy, fetchesWeights, fetchesUV);
 
-    attenuation  = fetchesWeights[0] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[0].xy, shadowCoord.z));
-    attenuation += fetchesWeights[1] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[1].xy, shadowCoord.z));
-    attenuation += fetchesWeights[2] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[2].xy, shadowCoord.z));
-    attenuation += fetchesWeights[3] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[3].xy, shadowCoord.z));
-    attenuation += fetchesWeights[4] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[4].xy, shadowCoord.z));
-    attenuation += fetchesWeights[5] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[5].xy, shadowCoord.z));
-    attenuation += fetchesWeights[6] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[6].xy, shadowCoord.z));
-    attenuation += fetchesWeights[7] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[7].xy, shadowCoord.z));
-    attenuation += fetchesWeights[8] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[8].xy, shadowCoord.z));
-#endif
+            attenuation  = fetchesWeights[0]  * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[0].xy,  shadowCoord.z));
+            attenuation += fetchesWeights[1]  * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[1].xy,  shadowCoord.z));
+            attenuation += fetchesWeights[2]  * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[2].xy,  shadowCoord.z));
+            attenuation += fetchesWeights[3]  * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[3].xy,  shadowCoord.z));
+            attenuation += fetchesWeights[4]  * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[4].xy,  shadowCoord.z));
+            attenuation += fetchesWeights[5]  * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[5].xy,  shadowCoord.z));
+            attenuation += fetchesWeights[6]  * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[6].xy,  shadowCoord.z));
+            attenuation += fetchesWeights[7]  * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[7].xy,  shadowCoord.z));
+            attenuation += fetchesWeights[8]  * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[8].xy,  shadowCoord.z));
+            attenuation += fetchesWeights[9]  * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[9].xy,  shadowCoord.z));
+            attenuation += fetchesWeights[10] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[10].xy, shadowCoord.z));
+            attenuation += fetchesWeights[11] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[11].xy, shadowCoord.z));
+            attenuation += fetchesWeights[12] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[12].xy, shadowCoord.z));
+            attenuation += fetchesWeights[13] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[13].xy, shadowCoord.z));
+            attenuation += fetchesWeights[14] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[14].xy, shadowCoord.z));
+            attenuation += fetchesWeights[15] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[15].xy, shadowCoord.z));
+        #else
+            real fetchesWeights[9];
+            real2 fetchesUV[9];
+            SampleShadow_ComputeSamples_Tent_5x5(_ShadowmapSize, shadowCoord.xy, fetchesWeights, fetchesUV);
+
+            attenuation  = fetchesWeights[0] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[0].xy, shadowCoord.z));
+            attenuation += fetchesWeights[1] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[1].xy, shadowCoord.z));
+            attenuation += fetchesWeights[2] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[2].xy, shadowCoord.z));
+            attenuation += fetchesWeights[3] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[3].xy, shadowCoord.z));
+            attenuation += fetchesWeights[4] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[4].xy, shadowCoord.z));
+            attenuation += fetchesWeights[5] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[5].xy, shadowCoord.z));
+            attenuation += fetchesWeights[6] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[6].xy, shadowCoord.z));
+            attenuation += fetchesWeights[7] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[7].xy, shadowCoord.z));
+            attenuation += fetchesWeights[8] * SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, real3(fetchesUV[8].xy, shadowCoord.z));
+        #endif
+    #endif
 #else
     // 1-tap hardware comparison
     attenuation = SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, shadowCoord.xyz);
@@ -137,11 +174,14 @@ half RealtimeShadowAttenuation(float3 positionWS, float4 shadowCoord)
     return 1.0;
 #endif
 
-#ifdef _SHADOWS_CASCADE
-    shadowCoord = ComputeShadowCoord(positionWS);
+#ifdef _SHADOWS_SCREEN
+    return SampleScreenSpaceShadowMap(shadowCoord);
+#else
+    #ifdef _SHADOWS_CASCADE
+        shadowCoord = ComputeShadowCoord(positionWS);
+    #endif
+        return SampleShadowmap(shadowCoord);
 #endif
-
-    return SampleShadowmap(shadowCoord);
 }
 
 #endif
