@@ -89,7 +89,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         // we need use copyColor RT as a work RT.
         public static int copyColor;
 
-        // Camera depth target. Only used when post processing or soft particles are enabled.
+        // Camera depth target. Only used when post processing, soft particles, or screen space shadows are enabled.
         public static int depth;
 
         // If soft particles are enabled and no depth prepass is performed we need to copy depth.
@@ -121,10 +121,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             "_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE",
             "_MAIN_LIGHT_DIRECTIONAL_SHADOW_SOFT",
             "_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SOFT",
-            "_MAIN_LIGHT_DIRECTIONAL_SHADOW_SCREEN",
-            "_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SCREEN",
-            "_MAIN_LIGHT_DIRECTIONAL_SHADOW_SCREEN_SOFT",
-            "_MAIN_LIGHT_DIRECTIONAL_SHADOW_CASCADE_SCREEN_SOFT",
 
             "_MAIN_LIGHT_SPOT_SHADOW",
             "_MAIN_LIGHT_SPOT_SHADOW_SOFT"
@@ -166,7 +162,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private bool m_RequireDepthTexture;
         private bool m_RequireCopyColor;
         private bool m_DepthRenderBuffer;
-        private bool m_RequireScreenSpaceShadows;
         private MixedLightingSetup m_MixedLightingSetup;
 
         private const int kDepthStencilBufferBits = 32;
@@ -374,7 +369,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                     DepthPass(ref context);
                     RenderMSVO(ref context);
                     
-                    if(m_RequireScreenSpaceShadows) //NOTE: Should this be added to the FrameRenderingConfiguration?
+                    if(m_ShadowCasterCascadesCount > 1) 
                         ShadowCollectPass(ref context, visibleLights, ref lightData);
                 }
 
@@ -678,6 +673,15 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 }
             }
 
+            bool requireScreenSpaceShadows = m_Asset.CascadeCount > 1;
+            if (requireScreenSpaceShadows)
+            {
+                m_RequireDepthTexture = true;
+
+                if(!msaaEnabled) 
+                    intermediateTexture = true;
+            }
+
             if (msaaEnabled)
             {
                 configuration |= FrameRenderingConfiguration.Msaa;
@@ -688,7 +692,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             {
                 // If msaa is enabled we don't use a depth renderbuffer as we might not have support to Texture2DMS to resolve depth.
                 // Instead we use a depth prepass and whenever depth is needed we use the 1 sample depth from prepass.
-                if (!msaaEnabled)
+                if (!msaaEnabled && !requireScreenSpaceShadows)
                 {
                     bool supportsDepthCopy = m_CopyTextureSupport != CopyTextureSupport.None && m_Asset.CopyDepthShader.isSupported;
                     m_DepthRenderBuffer = true;
@@ -705,8 +709,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 }
             }
           
-            m_RequireScreenSpaceShadows = m_Asset.RequireScreenSpaceShadows && LightweightUtils.HasFlag(configuration, FrameRenderingConfiguration.DepthPrePass);
-
             Rect cameraRect = m_CurrCamera.rect;
             if (!(Math.Abs(cameraRect.x) > 0.0f || Math.Abs(cameraRect.y) > 0.0f || Math.Abs(cameraRect.width) < 1.0f || Math.Abs(cameraRect.height) < 1.0f))
                 configuration |= FrameRenderingConfiguration.DefaultViewport;
@@ -1149,9 +1151,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                     m_MainLightKeywordString.Append("_DIRECTIONAL_SHADOW");
                     if (m_Asset.CascadeCount > 1)
                         m_MainLightKeywordString.Append("_CASCADE");
-
-                    if(m_RequireScreenSpaceShadows)
-                        m_MainLightKeywordString.Append("_SCREEN");
                 }
                 else
                 {
