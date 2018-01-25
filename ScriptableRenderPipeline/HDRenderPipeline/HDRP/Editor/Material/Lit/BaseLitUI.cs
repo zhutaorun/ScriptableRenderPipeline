@@ -40,7 +40,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static readonly string[] tessellationModeNames = Enum.GetNames(typeof(TessellationMode));
 
             public static GUIContent tessellationText = new GUIContent("Tessellation options", "Tessellation options");
-            public static GUIContent tessellationFactorText = new GUIContent("Tessellation factor", "This value is the tessellation factor use for tessellation, higher mean more tessellated");
+            public static GUIContent tessellationFactorText = new GUIContent("Tessellation factor", "This value is the tessellation factor use for tessellation, higher mean more tessellated. Above 15 is costly. Maximum tessellation factor is 15 on XBone / PS4");
             public static GUIContent tessellationFactorMinDistanceText = new GUIContent("Start fade distance", "Distance (in unity unit) at which the tessellation start to fade out. Must be inferior at Max distance");
             public static GUIContent tessellationFactorMaxDistanceText = new GUIContent("End fade distance", "Maximum distance (in unity unit) to the camera where triangle are tessellated");
             public static GUIContent tessellationFactorTriangleSizeText = new GUIContent("Triangle size", "Desired screen space sized of triangle (in pixel). Smaller value mean smaller triangle.");
@@ -62,6 +62,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static GUIContent fpsModeText = new GUIContent("Enable FPS Mode");
             public static GUIContent fpsModeFovText = new GUIContent("Fov");
             public static string fpsMode = "FPS Mode";
+
+            public static GUIContent supportDBufferText = new GUIContent("Enable Decal", "Allow to specify if the material can receive decal or not");
         }
 
         public enum DoubleSidedNormalMode
@@ -175,6 +177,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected MaterialProperty tessellationBackFaceCullEpsilon = null;
         protected const string kTessellationBackFaceCullEpsilon = "_TessellationBackFaceCullEpsilon";
 
+        // Decal
+        protected MaterialProperty supportDBuffer = null;
+        protected const string kSupportDBuffer = "_SupportDBuffer";
+
+
         protected override void FindBaseMaterialProperties(MaterialProperty[] props)
         {
             base.FindBaseMaterialProperties(props);
@@ -218,6 +225,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             fpsModeEnable = FindProperty(kFpsModeEnabled, props);
             fpsModeFov = FindProperty(kFpsModeFov, props);
+
+            // Decal
+            supportDBuffer = FindProperty(kSupportDBuffer, props);
         }
 
         void TessellationModePopup()
@@ -253,6 +263,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
 
             m_MaterialEditor.ShaderProperty(materialID, StylesBaseLit.materialIDText);
+
+            m_MaterialEditor.ShaderProperty(supportDBuffer, StylesBaseLit.supportDBufferText);
 
             m_MaterialEditor.ShaderProperty(enableMotionVectorForVertexAnimation, StylesBaseLit.enableMotionVectorForVertexAnimationText);
 
@@ -420,6 +432,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             CoreUtils.SetKeyword(material, "_FPS_MODE", fpsModeEnabled);
 
             SetupMainTexForAlphaTestGI("_BaseColorMap", "_BaseColor", material);
+
+            // Use negation so we don't create keyword by default
+            CoreUtils.SetKeyword(material, "_DISABLE_DBUFFER", material.GetFloat(kSupportDBuffer) == 0.0);
         }
 
         static public void SetupBaseLitMaterialPass(Material material)

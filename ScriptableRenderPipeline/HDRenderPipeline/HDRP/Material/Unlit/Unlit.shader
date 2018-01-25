@@ -11,9 +11,9 @@ Shader "HDRenderPipeline/Unlit"
         _EmissiveIntensity("EmissiveIntensity", Float) = 0
 
         _DistortionVectorMap("DistortionVectorMap", 2D) = "black" {}
-        [ToggleOff] _DistortionEnable("Enable Distortion", Float) = 0.0
-        [ToggleOff] _DistortionOnly("Distortion Only", Float) = 0.0
-        [ToggleOff] _DistortionDepthTest("Distortion Depth Test Enable", Float) = 1.0
+        [ToggleUI] _DistortionEnable("Enable Distortion", Float) = 0.0
+        [ToggleUI] _DistortionOnly("Distortion Only", Float) = 0.0
+        [ToggleUI] _DistortionDepthTest("Distortion Depth Test Enable", Float) = 1.0
         [Enum(Add, 0, Multiply, 1)] _DistortionBlendMode("Distortion Blend Mode", Int) = 0
         [HideInInspector] _DistortionSrcBlend("Distortion Blend Src", Int) = 0
         [HideInInspector] _DistortionDstBlend("Distortion Blend Dst", Int) = 0
@@ -28,10 +28,11 @@ Shader "HDRenderPipeline/Unlit"
         _DistortionBlurRemapMax("DistortionBlurRemapMax", Float) = 1.0
 
         // Transparency
-        [ToggleOff] _PreRefractionPass("PreRefractionPass", Float) = 0.0
+        [ToggleUI] _PreRefractionPass("PreRefractionPass", Float) = 0.0
 
-        [ToggleOff]  _AlphaCutoffEnable("Alpha Cutoff Enable", Float) = 0.0
+        [ToggleUI]  _AlphaCutoffEnable("Alpha Cutoff Enable", Float) = 0.0
         _AlphaCutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
+        _TransparentSortPriority("_TransparentSortPriority", Float) = 0
 
         // Blending state
         [HideInInspector] _SurfaceType("__surfacetype", Float) = 0.0
@@ -42,8 +43,8 @@ Shader "HDRenderPipeline/Unlit"
         [HideInInspector] _CullMode("__cullmode", Float) = 2.0
         [HideInInspector] _ZTestMode("_ZTestMode", Int) = 8
 
-        [ToggleOff] _EnableFogOnTransparent("Enable Fog", Float) = 0.0
-        [ToggleOff] _DoubleSidedEnable("Double sided enable", Float) = 0.0
+        [ToggleUI] _EnableFogOnTransparent("Enable Fog", Float) = 0.0
+        [ToggleUI] _DoubleSidedEnable("Double sided enable", Float) = 0.0
 
         // Stencil state
         [HideInInspector] _StencilRef("_StencilRef", Int) = 2 // StencilLightingUsage.RegularLighting  (fixed at compile time)
@@ -81,6 +82,9 @@ Shader "HDRenderPipeline/Unlit"
     #pragma shader_feature _SURFACE_TYPE_TRANSPARENT
     #pragma shader_feature _ _BLENDMODE_ALPHA _BLENDMODE_ADD _BLENDMODE_PRE_MULTIPLY
     #pragma shader_feature _ENABLE_FOG_ON_TRANSPARENT
+
+    //enable GPU instancing support
+    #pragma multi_compile_instancing
 
     //-------------------------------------------------------------------------------------
     // Define

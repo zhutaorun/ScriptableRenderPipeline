@@ -79,7 +79,7 @@ void Frag(PackedVaryingsToPS packedInput,
         LightLoop(V, posInput, preLightData, bsdfData, bakeLightingData, featureFlags, diffuseLighting, specularLighting);
 
 #ifdef OUTPUT_SPLIT_LIGHTING
-        if ((_EnableSubsurfaceScattering != 0) && HaveSubsurfaceScattering(bsdfData))
+        if (_EnableSubsurfaceScattering != 0 && PixelHasSubsurfaceScattering(bsdfData))
         {
             outColor = float4(specularLighting, 1.0);
             outDiffuseLighting = float4(TagLightingForSSS(diffuseLighting), 1.0);
@@ -112,7 +112,7 @@ void Frag(PackedVaryingsToPS packedInput,
         GetVaryingsDataDebug(_DebugViewMaterial, input, result, needLinearToSRGB);
         GetBuiltinDataDebug(_DebugViewMaterial, builtinData, result, needLinearToSRGB);
         GetSurfaceDataDebug(_DebugViewMaterial, surfaceData, result, needLinearToSRGB);
-        GetBSDFDataDebug(_DebugViewMaterial, bsdfData, result, needLinearToSRGB); // TODO: This required to initialize all field from BSDFData...
+        GetBSDFDataDebug(_DebugViewMaterial, bsdfData, result, needLinearToSRGB);
 
         // TEMP!
         // For now, the final blit in the backbuffer performs an sRGB write

@@ -119,6 +119,12 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         private bool m_IsOffscreenCamera;
 
+        private Vector4 kDefaultLightPosition = new Vector4(0.0f, 0.0f, 1.0f, 0.0f);
+        private Vector4 kDefaultLightColor = Color.black;
+        private Vector4 kDefaultLightAttenuation = new Vector4(0.0f, 1.0f, 0.0f, 1.0f);
+        private Vector4 kDefaultLightSpotDirection = new Vector4(0.0f, 0.0f, 1.0f, 0.0f);
+        private Vector4 kDefaultLightSpotAttenuation = new Vector4(0.0f, 1.0f, 0.0f, 0.0f);
+
         private Vector4[] m_LightPositions = new Vector4[kMaxVisibleLights];
         private Vector4[] m_LightColors = new Vector4[kMaxVisibleLights];
         private Vector4[] m_LightDistanceAttenuations = new Vector4[kMaxVisibleLights];
@@ -140,7 +146,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private RenderTargetIdentifier m_Color;
 
         private bool m_IntermediateTextureArray;
-        private bool m_RequiredDepth;
+        private bool m_RequireDepthTexture;
+        private bool m_RequireCopyColor;
+        private bool m_DepthRenderBuffer;
         private MixedLightingSetup m_MixedLightingSetup;
 
         private const int kDepthStencilBufferBits = 32;
@@ -213,6 +221,16 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             PerCameraBuffer._AdditionalLightSpotDir = Shader.PropertyToID("_AdditionalLightSpotDir");
             PerCameraBuffer._AdditionalLightSpotAttenuation = Shader.PropertyToID("_AdditionalLightSpotAttenuation");
 
+            ShadowConstantBuffer._WorldToShadow = Shader.PropertyToID("_WorldToShadow");
+            ShadowConstantBuffer._ShadowData = Shader.PropertyToID("_ShadowData");
+            ShadowConstantBuffer._DirShadowSplitSpheres = Shader.PropertyToID("_DirShadowSplitSpheres");
+            ShadowConstantBuffer._DirShadowSplitSphereRadii = Shader.PropertyToID("_DirShadowSplitSphereRadii");
+            ShadowConstantBuffer._ShadowOffset0 = Shader.PropertyToID("_ShadowOffset0");
+            ShadowConstantBuffer._ShadowOffset1 = Shader.PropertyToID("_ShadowOffset1");
+            ShadowConstantBuffer._ShadowOffset2 = Shader.PropertyToID("_ShadowOffset2");
+            ShadowConstantBuffer._ShadowOffset3 = Shader.PropertyToID("_ShadowOffset3");
+            ShadowConstantBuffer._ShadowmapSize = Shader.PropertyToID("_ShadowmapSize");
+
             m_ShadowMapRTID = Shader.PropertyToID("_ShadowMap");
 
             CameraRenderTargetID.color = Shader.PropertyToID("_CameraColorRT");
@@ -250,6 +268,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         {
             base.Dispose();
             Shader.globalRenderPipeline = "";
+
+            SupportedRenderingFeatures.active = new SupportedRenderingFeatures();
 
             CoreUtils.Destroy(m_ErrorMaterial);
             CoreUtils.Destroy(m_CopyDepthMaterial);
@@ -313,7 +333,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 ShadowPass(visibleLights, ref context, ref lightData);
 
                 FrameRenderingConfiguration frameRenderingConfiguration;
-                SetupFrameRendering(out frameRenderingConfiguration, stereoEnabled);
+                SetupFrameRenderingConfiguration(out frameRenderingConfiguration, stereoEnabled);
                 SetupIntermediateResources(frameRenderingConfiguration, ref context);
 
                 // SetupCameraProperties does the following:
@@ -326,7 +346,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 // Setup global time properties (_Time, _SinTime, _CosTime)
                 context.SetupCameraProperties(m_CurrCamera, stereoEnabled);
 
-                if (LightweightUtils.HasFlag(frameRenderingConfiguration, FrameRenderingConfiguration.DepthPass))
+                if (LightweightUtils.HasFlag(frameRenderingConfiguration, FrameRenderingConfiguration.DepthPrePass))
                     DepthPass(ref context);
                 ForwardPass(visibleLights, frameRenderingConfiguration, ref context, ref lightData, stereoEnabled);
 
@@ -432,30 +452,43 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         private void AfterOpaque(ref ScriptableRenderContext context, FrameRenderingConfiguration config)
         {
-            if (!m_RequiredDepth)
+            if (!m_RequireDepthTexture)
                 return;
 
             CommandBuffer cmd = CommandBufferPool.Get("After Opaque");
             cmd.SetGlobalTexture(CameraRenderTargetID.depth, m_DepthRT);
 
-            // When only one opaque effect is active we need to blit to a work RT. We blit to copy color.
-            // TODO: We can check if there are more than one opaque postfx and avoid an extra blit.
+            bool setRenderTarget = false;
+            RenderTargetIdentifier depthRT = m_DepthRT;
+
             // TODO: There's currently an issue in the PostFX stack that has a one frame delay when an effect is enabled/disabled
             // when an effect is disabled, HasOpaqueOnlyEffects returns true in the first frame, however inside render the effect
             // state is update, causing RenderPostProcess here to not blit to FinalColorRT. Until the next frame the RT will have garbage.
             if (LightweightUtils.HasFlag(config, FrameRenderingConfiguration.BeforeTransparentPostProcess))
             {
-                RenderPostProcess(cmd, m_ColorRT, m_CopyColorRT, true);
-                m_CurrCameraColorRT = (m_IsOffscreenCamera) ? BuiltinRenderTextureType.CameraTarget : m_ColorRT;
+                // When only have one effect in the stack we blit to a work RT then blit it back to active color RT.
+                // This seems like an extra blit but it saves us a depth copy/blit which has some corner cases like msaa depth resolve.
+                if (m_RequireCopyColor)
+                {
+                    RenderPostProcess(cmd, m_CurrCameraColorRT, m_CopyColorRT, true);
+                    cmd.Blit(m_CopyColorRT, m_CurrCameraColorRT);
+                }
+                else
+                    RenderPostProcess(cmd, m_CurrCameraColorRT, m_CurrCameraColorRT, true);
+
+                setRenderTarget = true;
+                SetRenderTarget(cmd, m_CurrCameraColorRT, m_DepthRT);
             }
 
             if (LightweightUtils.HasFlag(config, FrameRenderingConfiguration.DepthCopy))
             {
-                RenderTargetIdentifier colorRT = (m_IsOffscreenCamera) ? BuiltinRenderTextureType.CameraTarget : m_ColorRT;
                 CopyTexture(cmd, m_DepthRT, m_CopyDepth, m_CopyDepthMaterial);
-                SetRenderTarget(cmd, colorRT, m_CopyDepth);
+                depthRT = m_CopyDepth;
+                setRenderTarget = true;
             }
 
+            if (setRenderTarget)
+                SetRenderTarget(cmd, m_CurrCameraColorRT, depthRT);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
@@ -484,7 +517,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 return;
 
             CommandBuffer cmd = CommandBufferPool.Get("After Transparent");
-            RenderPostProcess(cmd, BuiltinRenderTextureType.CurrentActive, BuiltinRenderTextureType.CameraTarget, false);
+            RenderPostProcess(cmd, m_CurrCameraColorRT, BuiltinRenderTextureType.CameraTarget, false);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
@@ -533,7 +566,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             }
         }
 
-        private void SetupFrameRendering(out FrameRenderingConfiguration configuration, bool stereoEnabled)
+        private void SetupFrameRenderingConfiguration(out FrameRenderingConfiguration configuration, bool stereoEnabled)
         {
             configuration = (stereoEnabled) ? FrameRenderingConfiguration.Stereo : FrameRenderingConfiguration.None;
             if (stereoEnabled && XRSettings.eyeTextureDesc.dimension == TextureDimension.Tex2DArray)
@@ -546,39 +579,27 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 m_Asset.RenderScale < 1.0f || hdrEnabled;
 
             m_ColorFormat = hdrEnabled ? RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default;
-            m_RequiredDepth = false;
+            m_RequireCopyColor = false;
+            m_DepthRenderBuffer = false;
             m_CameraPostProcessLayer = m_CurrCamera.GetComponent<PostProcessLayer>();
 
             bool msaaEnabled = m_CurrCamera.allowMSAA && m_Asset.MSAASampleCount > 1 && (m_CurrCamera.targetTexture == null || m_CurrCamera.targetTexture.antiAliasing > 1);
 
             // TODO: PostProcessing and SoftParticles are currently not support for VR
             bool postProcessEnabled = m_CameraPostProcessLayer != null && m_CameraPostProcessLayer.enabled && !stereoEnabled;
-            bool softParticlesEnabled = m_Asset.RequireCameraDepthTexture && !stereoEnabled;
+            m_RequireDepthTexture = m_Asset.RequireDepthTexture && !stereoEnabled;
             if (postProcessEnabled)
             {
-                m_RequiredDepth = true;
+                m_RequireDepthTexture = true;
                 intermediateTexture = true;
 
                 configuration |= FrameRenderingConfiguration.PostProcess;
-
                 if (m_CameraPostProcessLayer.HasOpaqueOnlyEffects(m_PostProcessRenderContext))
+                {
                     configuration |= FrameRenderingConfiguration.BeforeTransparentPostProcess;
-
-                // Resolving depth msaa requires texture2DMS. Currently if msaa is enabled we do a depth pre-pass.
-                if (msaaEnabled)
-                    configuration |= FrameRenderingConfiguration.DepthPass;
-            }
-
-            // In case of soft particles we need depth copy. If depth copy not supported fallback to depth prepass
-            if (softParticlesEnabled)
-            {
-                m_RequiredDepth = true;
-                intermediateTexture = true;
-
-                bool supportsDepthCopy = m_CopyTextureSupport != CopyTextureSupport.None && m_Asset.CopyDepthShader.isSupported;
-
-                // currently fallback to depth prepass if msaa is enabled since. We need texture2DMS to support depth resolve.
-                configuration |= (msaaEnabled || !supportsDepthCopy) ? FrameRenderingConfiguration.DepthPass : FrameRenderingConfiguration.DepthCopy;
+                    if (m_CameraPostProcessLayer.sortedBundles[PostProcessEvent.BeforeTransparent].Count == 1)
+                        m_RequireCopyColor = true;
+                }
             }
 
             if (msaaEnabled)
@@ -587,9 +608,32 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 intermediateTexture = intermediateTexture || !LightweightUtils.PlatformSupportsMSAABackBuffer();
             }
 
+            if (m_RequireDepthTexture)
+            {
+                // If msaa is enabled we don't use a depth renderbuffer as we might not have support to Texture2DMS to resolve depth.
+                // Instead we use a depth prepass and whenever depth is needed we use the 1 sample depth from prepass.
+                if (!msaaEnabled)
+                {
+                    bool supportsDepthCopy = m_CopyTextureSupport != CopyTextureSupport.None && m_Asset.CopyDepthShader.isSupported;
+                    m_DepthRenderBuffer = true;
+                    intermediateTexture = true;
+
+                    // If requiring a camera depth texture we need separate depth as it reads/write to depth at same time
+                    // Post process doesn't need the copy
+                    if (!m_Asset.RequireDepthTexture && postProcessEnabled)
+                        configuration |= (supportsDepthCopy) ? FrameRenderingConfiguration.DepthCopy : FrameRenderingConfiguration.DepthPrePass;
+                }
+                else
+                {
+                    configuration |= FrameRenderingConfiguration.DepthPrePass;
+                }
+            }
+
             Rect cameraRect = m_CurrCamera.rect;
             if (!(Math.Abs(cameraRect.x) > 0.0f || Math.Abs(cameraRect.y) > 0.0f || Math.Abs(cameraRect.width) < 1.0f || Math.Abs(cameraRect.height) < 1.0f))
                 configuration |= FrameRenderingConfiguration.DefaultViewport;
+            else
+                intermediateTexture = true;
 
             if (intermediateTexture)
                 configuration |= FrameRenderingConfiguration.IntermediateTexture;
@@ -621,7 +665,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             int rtWidth = (int)((float)m_CurrCamera.pixelWidth * renderScale);
             int rtHeight = (int)((float)m_CurrCamera.pixelHeight * renderScale);
 
-            if (m_RequiredDepth)
+            if (m_RequireDepthTexture)
             {
                 RenderTextureDescriptor depthRTDesc = new RenderTextureDescriptor(rtWidth, rtHeight, RenderTextureFormat.Depth, kDepthStencilBufferBits);
                 cmd.GetTemporaryRT(CameraRenderTargetID.depth, depthRTDesc, FilterMode.Bilinear);
@@ -641,10 +685,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 m_CurrCameraColorRT = m_ColorRT;
             }
 
-            // When postprocessing is enabled we might have a before transparent effect. In that case we need to
-            // use the camera render target as input. We blit to an opaque RT and then after before postprocessing is done
-            // we blit to the final camera RT. If no postprocessing we blit to final camera RT from beginning.
-            if (LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.BeforeTransparentPostProcess))
+            // When BeforeTransparent PostFX is enabled and only one effect is in the stack we need to create a temp
+            // color RT to blit the effect.
+            if (m_RequireCopyColor)
                 cmd.GetTemporaryRT(CameraRenderTargetID.copyColor, colorRTDesc, FilterMode.Point);
         }
 
@@ -682,7 +725,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             // If we have a main light we don't shade it in the per-object light loop. We also remove it from the per-object cull list
             int mainLightPresent = (lightData.mainLightIndex >= 0) ? 1 : 0;
             int additionalPixelLightsCount = visibleLightsCount - mainLightPresent;
-            int vertexLightCount = (m_Asset.SupportsVertexLight) ? Math.Min(visibleLights.Count, kMaxPerObjectLights) - additionalPixelLightsCount : 0;
+            int vertexLightCount = (m_Asset.SupportsVertexLight) ? Math.Min(visibleLights.Count, kMaxPerObjectLights) - additionalPixelLightsCount - mainLightPresent : 0;
             vertexLightCount = Math.Min(vertexLightCount, kMaxVertexLights);
 
             lightData.pixelAdditionalLightsCount = additionalPixelLightsCount;
@@ -749,12 +792,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private void InitializeLightConstants(List<VisibleLight> lights, int lightIndex, out Vector4 lightPos, out Vector4 lightColor, out Vector4 lightDistanceAttenuation, out Vector4 lightSpotDir,
             out Vector4 lightSpotAttenuation)
         {
-            float directContributionNotBaked = 1.0f;
-            lightPos = new Vector4(0.0f, 0.0f, 1.0f, 0.0f);
-            lightColor = Color.black;
-            lightDistanceAttenuation = new Vector4(0.0f, 1.0f, 0.0f, directContributionNotBaked);
-            lightSpotDir = new Vector4(0.0f, 0.0f, 1.0f, 0.0f);
-            lightSpotAttenuation = new Vector4(0.0f, 1.0f, 0.0f, 0.0f);
+            lightPos = kDefaultLightPosition;
+            lightColor = kDefaultLightColor;
+            lightDistanceAttenuation = kDefaultLightSpotAttenuation;
+            lightSpotDir = kDefaultLightSpotDirection;
+            lightSpotAttenuation = kDefaultLightAttenuation;
 
             // When no lights are visible, main light will be set to -1.
             // In this case we initialize it to default values and return
@@ -794,7 +836,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 float oneOverFadeRangeSqr = 1.0f / fadeRangeSqr;
                 float lightRangeSqrOverFadeRangeSqr = -lightRangeSqr / fadeRangeSqr;
                 float quadAtten = 25.0f / lightRangeSqr;
-                lightDistanceAttenuation = new Vector4(quadAtten, oneOverFadeRangeSqr, lightRangeSqrOverFadeRangeSqr, directContributionNotBaked);
+                lightDistanceAttenuation = new Vector4(quadAtten, oneOverFadeRangeSqr, lightRangeSqrOverFadeRangeSqr, 1.0f);
             }
 
             if (lightData.lightType == LightType.Spot)
@@ -817,9 +859,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             }
 
             Light light = lightData.light;
+
+            // TODO: Add support to shadow mask
             if (light != null && light.bakingOutput.mixedLightingMode == MixedLightingMode.Subtractive && light.bakingOutput.lightmapBakeType == LightmapBakeType.Mixed)
             {
-                // TODO: Add support to shadow mask
                 if (m_MixedLightingSetup == MixedLightingSetup.None && lightData.light.shadows != LightShadows.None)
                 {
                     m_MixedLightingSetup = MixedLightingSetup.Subtractive;
@@ -848,8 +891,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             if (lightData.shadowMapSampleType != LightShadows.None)
                 SetupShadowReceiverConstants(cmd, lights[lightData.mainLightIndex]);
 
-            if (lightData.totalAdditionalLightsCount > 0)
-                SetupAdditionalListConstants(cmd, lights, ref lightData);
+            SetupAdditionalListConstants(cmd, lights, ref lightData);
         }
 
         private void SetupMainLightConstants(CommandBuffer cmd, List<VisibleLight> lights, int lightIndex)
@@ -882,36 +924,52 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         {
             int additionalLightIndex = 0;
 
-            // We need to update per-object light list with the proper map to our global additional light buffer
-            // First we initialize all lights in the map to -1 to tell the system to discard main light index and
-            // remaining lights in the scene that don't fit the max additional light buffer (kMaxVisibileAdditionalLights)
-            int[] perObjectLightIndexMap = m_CullResults.GetLightIndexMap();
-            for (int i = 0; i < lights.Count; ++i)
-                perObjectLightIndexMap[i] = -1;
-
-            for (int i = 0; i < lights.Count && additionalLightIndex < kMaxVisibleLights; ++i)
+            if (lightData.totalAdditionalLightsCount > 0)
             {
-                if (i != lightData.mainLightIndex)
+                // We need to update per-object light list with the proper map to our global additional light buffer
+                // First we initialize all lights in the map to -1 to tell the system to discard main light index and
+                // remaining lights in the scene that don't fit the max additional light buffer (kMaxVisibileAdditionalLights)
+                int[] perObjectLightIndexMap = m_CullResults.GetLightIndexMap();
+                for (int i = 0; i < lights.Count; ++i)
+                    perObjectLightIndexMap[i] = -1;
+
+                for (int i = 0; i < lights.Count && additionalLightIndex < kMaxVisibleLights; ++i)
                 {
-                    // The engine performs per-object light culling and initialize 8 light indices into two vec4 constants unity_4LightIndices0 and unity_4LightIndices1.
-                    // In the shader we iterate over each visible light using the indices provided in these constants to index our global light buffer
-                    // ex: first light position would be m_LightPosisitions[unity_4LightIndices[0]];
+                    if (i != lightData.mainLightIndex)
+                    {
+                        // The engine performs per-object light culling and initialize 8 light indices into two vec4 constants unity_4LightIndices0 and unity_4LightIndices1.
+                        // In the shader we iterate over each visible light using the indices provided in these constants to index our global light buffer
+                        // ex: first light position would be m_LightPosisitions[unity_4LightIndices[0]];
 
-                    // However since we sorted the lights we need to tell the engine how to map the original/unsorted indices to our global buffer
-                    // We do it by settings the perObjectLightIndexMap to the appropriate additionalLightIndex.
-                    perObjectLightIndexMap[GetLightUnsortedIndex(i)] = additionalLightIndex;
-                    InitializeLightConstants(lights, i, out m_LightPositions[additionalLightIndex],
-                        out m_LightColors[additionalLightIndex],
-                        out m_LightDistanceAttenuations[additionalLightIndex],
-                        out m_LightSpotDirections[additionalLightIndex],
-                        out m_LightSpotAttenuations[additionalLightIndex]);
-                    additionalLightIndex++;
+                        // However since we sorted the lights we need to tell the engine how to map the original/unsorted indices to our global buffer
+                        // We do it by settings the perObjectLightIndexMap to the appropriate additionalLightIndex.
+                        perObjectLightIndexMap[GetLightUnsortedIndex(i)] = additionalLightIndex;
+                        InitializeLightConstants(lights, i, out m_LightPositions[additionalLightIndex],
+                            out m_LightColors[additionalLightIndex],
+                            out m_LightDistanceAttenuations[additionalLightIndex],
+                            out m_LightSpotDirections[additionalLightIndex],
+                            out m_LightSpotAttenuations[additionalLightIndex]);
+                        additionalLightIndex++;
+                    }
                 }
-            }
-            m_CullResults.SetLightIndexMap(perObjectLightIndexMap);
+                m_CullResults.SetLightIndexMap(perObjectLightIndexMap);
 
-            cmd.SetGlobalVector(PerCameraBuffer._AdditionalLightCount, new Vector4(lightData.pixelAdditionalLightsCount,
-                    lightData.totalAdditionalLightsCount, 0.0f, 0.0f));
+                cmd.SetGlobalVector(PerCameraBuffer._AdditionalLightCount, new Vector4(lightData.pixelAdditionalLightsCount,
+                        lightData.totalAdditionalLightsCount, 0.0f, 0.0f));
+            }
+            else
+            {
+                cmd.SetGlobalVector(PerCameraBuffer._AdditionalLightCount, Vector4.zero);
+
+                // Clear to default all light cosntant data
+                for (int i = 0; i < kMaxVisibleLights; ++i)
+                    InitializeLightConstants(lights, -1, out m_LightPositions[additionalLightIndex],
+                            out m_LightColors[additionalLightIndex],
+                            out m_LightDistanceAttenuations[additionalLightIndex],
+                            out m_LightSpotDirections[additionalLightIndex],
+                            out m_LightSpotAttenuations[additionalLightIndex]);
+            }
+
             cmd.SetGlobalVectorArray(PerCameraBuffer._AdditionalLightPosition, m_LightPositions);
             cmd.SetGlobalVectorArray(PerCameraBuffer._AdditionalLightColor, m_LightColors);
             cmd.SetGlobalVectorArray(PerCameraBuffer._AdditionalLightDistanceAttenuation, m_LightDistanceAttenuations);
@@ -934,10 +992,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 // Scale bias by cascade's world space depth range.
                 // Directional shadow lights have orthogonal projection.
                 // proj.m22 = -2 / (far - near) since the projection's depth range is [-1.0, 1.0]
-                // Therefore we scale it by 0.5. We keep the negative sign and only flip it in case z is
-                // reversed.
+                // In order to be correct we should multiply bias by 0.5 but this introducing aliasing along cascades more visible.
                 float sign = (SystemInfo.usesReversedZBuffer) ? 1.0f : -1.0f;
-                bias = light.shadowBias * proj.m22 * 0.5f * sign;
+                bias = light.shadowBias * proj.m22 * sign;
 
                 // Currently only square POT cascades resolutions are used.
                 // We scale normalBias
@@ -970,7 +1027,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private void SetupShadowReceiverConstants(CommandBuffer cmd, VisibleLight shadowLight)
         {
             Light light = shadowLight.light;
-            float shadowResolution = m_ShadowSlices[0].shadowResolution;
 
             int cascadeCount = m_ShadowCasterCascadesCount;
             for (int i = 0; i < kMaxCascades; ++i)
@@ -983,15 +1039,17 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             noOpShadowMatrix.m33 = (SystemInfo.usesReversedZBuffer) ? 1.0f : 0.0f;
             m_ShadowMatrices[kMaxCascades] = noOpShadowMatrix;
 
-            float invShadowResolution = 0.5f / shadowResolution;
-            cmd.SetGlobalMatrixArray("_WorldToShadow", m_ShadowMatrices);
-            cmd.SetGlobalVector("_ShadowData", new Vector4(light.shadowStrength, 0.0f, 0.0f, 0.0f));
-            cmd.SetGlobalVectorArray("_DirShadowSplitSpheres", m_DirectionalShadowSplitDistances);
-            cmd.SetGlobalVector("_DirShadowSplitSphereRadii", m_DirectionalShadowSplitRadii);
-            cmd.SetGlobalVector("_ShadowOffset0", new Vector4(-invShadowResolution, -invShadowResolution, 0.0f, 0.0f));
-            cmd.SetGlobalVector("_ShadowOffset1", new Vector4(invShadowResolution, -invShadowResolution, 0.0f, 0.0f));
-            cmd.SetGlobalVector("_ShadowOffset2", new Vector4(-invShadowResolution,  invShadowResolution, 0.0f, 0.0f));
-            cmd.SetGlobalVector("_ShadowOffset3", new Vector4(invShadowResolution,  invShadowResolution, 0.0f, 0.0f));
+            float invShadowResolution = 1.0f / m_Asset.ShadowAtlasResolution;
+            float invHalfShadowResolution = 0.5f * invShadowResolution;
+            cmd.SetGlobalMatrixArray(ShadowConstantBuffer._WorldToShadow, m_ShadowMatrices);
+            cmd.SetGlobalVector(ShadowConstantBuffer._ShadowData, new Vector4(light.shadowStrength, 0.0f, 0.0f, 0.0f));
+            cmd.SetGlobalVectorArray(ShadowConstantBuffer._DirShadowSplitSpheres, m_DirectionalShadowSplitDistances);
+            cmd.SetGlobalVector(ShadowConstantBuffer._DirShadowSplitSphereRadii, m_DirectionalShadowSplitRadii);
+            cmd.SetGlobalVector(ShadowConstantBuffer._ShadowOffset0, new Vector4(-invHalfShadowResolution, -invHalfShadowResolution, 0.0f, 0.0f));
+            cmd.SetGlobalVector(ShadowConstantBuffer._ShadowOffset1, new Vector4( invHalfShadowResolution, -invHalfShadowResolution, 0.0f, 0.0f));
+            cmd.SetGlobalVector(ShadowConstantBuffer._ShadowOffset2, new Vector4(-invHalfShadowResolution,  invHalfShadowResolution, 0.0f, 0.0f));
+            cmd.SetGlobalVector(ShadowConstantBuffer._ShadowOffset3, new Vector4( invHalfShadowResolution,  invHalfShadowResolution, 0.0f, 0.0f));
+            cmd.SetGlobalVector(ShadowConstantBuffer._ShadowmapSize, new Vector4(invShadowResolution, invShadowResolution, m_Asset.ShadowAtlasResolution, m_Asset.ShadowAtlasResolution));
         }
 
         private void SetShaderKeywords(CommandBuffer cmd, ref LightData lightData, List<VisibleLight> visibleLights)
@@ -1028,7 +1086,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             CoreUtils.SetKeyword(cmd, "_ADDITIONAL_LIGHTS", lightData.totalAdditionalLightsCount > 0);
             CoreUtils.SetKeyword(cmd, "_MIXED_LIGHTING_SUBTRACTIVE", m_MixedLightingSetup == MixedLightingSetup.Subtractive);
             CoreUtils.SetKeyword(cmd, "_VERTEX_LIGHTS", vertexLightsCount > 0);
-            CoreUtils.SetKeyword(cmd, "SOFTPARTICLES_ON", m_Asset.RequireCameraDepthTexture);
+            CoreUtils.SetKeyword(cmd, "SOFTPARTICLES_ON", m_RequireDepthTexture && m_Asset.RequireSoftParticles);
 
             bool linearFogModeEnabled = false;
             bool exponentialFogModeEnabled = false;
@@ -1207,7 +1265,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 if (!m_IsOffscreenCamera)
                     colorRT = m_CurrCameraColorRT;
 
-                if (m_RequiredDepth && !LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.DepthPass))
+                if (m_RequireDepthTexture)
                     depthRT = m_DepthRT;
             }
 
@@ -1247,14 +1305,17 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             var cmd = CommandBufferPool.Get("Blit");
             if (m_IntermediateTextureArray)
             {
-                SetRenderTarget(cmd, BuiltinRenderTextureType.CameraTarget);
-                cmd.Blit(m_CurrCameraColorRT, BuiltinRenderTextureType.CurrentActive);
+                cmd.Blit(m_CurrCameraColorRT, BuiltinRenderTextureType.CameraTarget);
             }
             else if (LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.IntermediateTexture))
             {
+                Material blitMaterial = m_BlitMaterial;
+                if (LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.Stereo))
+                    blitMaterial = null;
+
                 // If PostProcessing is enabled, it is already blit to CameraTarget.
                 if (!LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.PostProcess))
-                    Blit(cmd, renderingConfig, BuiltinRenderTextureType.CurrentActive, BuiltinRenderTextureType.CameraTarget, m_BlitMaterial);
+                    Blit(cmd, renderingConfig, m_CurrCameraColorRT, BuiltinRenderTextureType.CameraTarget, blitMaterial);
             }
 
             SetRenderTarget(cmd, BuiltinRenderTextureType.CameraTarget);
@@ -1285,7 +1346,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         private void SetRenderTarget(CommandBuffer cmd, RenderTargetIdentifier colorRT, RenderTargetIdentifier depthRT, ClearFlag clearFlag = ClearFlag.None)
         {
-            if (depthRT == BuiltinRenderTextureType.None)
+            if (depthRT == BuiltinRenderTextureType.None || !m_DepthRenderBuffer)
             {
                 SetRenderTarget(cmd, colorRT, clearFlag);
                 return;
@@ -1308,7 +1369,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             if (opaqueOnly)
             {
                 m_CameraPostProcessLayer.RenderOpaqueOnly(m_PostProcessRenderContext);
-                cmd.Blit(m_CopyColorRT, m_ColorRT);
             }
             else
                 m_CameraPostProcessLayer.Render(m_PostProcessRenderContext);

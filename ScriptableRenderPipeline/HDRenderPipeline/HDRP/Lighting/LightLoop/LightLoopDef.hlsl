@@ -32,6 +32,10 @@ StructuredBuffer<uint> g_vLayeredOffsetsBuffer;     // don't support Buffer yet 
 StructuredBuffer<float> g_logBaseBuffer;            // don't support Buffer yet in unity
 //#endif
 
+#ifdef USE_INDIRECT
+    StructuredBuffer<uint> g_TileFeatureFlags;
+#endif
+
 StructuredBuffer<DirectionalLightData> _DirectionalLightDatas;
 StructuredBuffer<LightData>            _LightDatas;
 StructuredBuffer<EnvLightData>         _EnvLightDatas;
@@ -69,10 +73,18 @@ struct LightLoopContext
 // ----------------------------------------------------------------------------
 
 // Used by directional and spot lights.
-float3 SampleCookie2D(LightLoopContext lightLoopContext, float2 coord, int index)
+float3 SampleCookie2D(LightLoopContext lightLoopContext, float2 coord, int index, bool repeat)
 {
-    // TODO: add MIP maps to combat aliasing?
-    return SAMPLE_TEXTURE2D_ARRAY_LOD(_CookieTextures, s_linear_clamp_sampler, coord, index, 0).rgb;
+    if (repeat)
+    {
+        // TODO: add MIP maps to combat aliasing?
+        return SAMPLE_TEXTURE2D_ARRAY_LOD(_CookieTextures, s_linear_repeat_sampler, coord, index, 0).rgb;
+    }
+    else // clamp
+    {
+        // TODO: add MIP maps to combat aliasing?
+        return SAMPLE_TEXTURE2D_ARRAY_LOD(_CookieTextures, s_linear_clamp_sampler, coord, index, 0).rgb;
+    }
 }
 
 // Used by point lights.

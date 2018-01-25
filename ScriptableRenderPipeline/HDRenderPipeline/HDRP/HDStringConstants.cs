@@ -120,6 +120,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public static readonly int _ViewTilesFlags = Shader.PropertyToID("_ViewTilesFlags");
         public static readonly int _MousePixelCoord = Shader.PropertyToID("_MousePixelCoord");
+        public static readonly int _DebugFont = Shader.PropertyToID("_DebugFont");
 
         public static readonly int _DebugViewMaterial = Shader.PropertyToID("_DebugViewMaterial");
         public static readonly int _DebugLightingMode = Shader.PropertyToID("_DebugLightingMode");
@@ -162,6 +163,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _DeferredShadowTexture = Shader.PropertyToID("_DeferredShadowTexture");
         public static readonly int _DeferredShadowTextureUAV = Shader.PropertyToID("_DeferredShadowTextureUAV");
         public static readonly int _DirectionalShadowIndex = Shader.PropertyToID("_DirectionalShadowIndex");
+        public static readonly int _DirectionalContactShadowParams = Shader.PropertyToID("_ScreenSpaceShadowsParameters");
+        public static readonly int _DirectionalContactShadowSampleCount = Shader.PropertyToID("_SampleCount");
+        public static readonly int _DirectionalLightDirection = Shader.PropertyToID("_LightDirection");
 
         public static readonly int unity_OrthoParams = Shader.PropertyToID("unity_OrthoParams");
         public static readonly int _ZBufferParams = Shader.PropertyToID("_ZBufferParams");
@@ -192,7 +196,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _ScreenSize = Shader.PropertyToID("_ScreenSize");
         public static readonly int _PrevViewProjMatrix = Shader.PropertyToID("_PrevViewProjMatrix");
         public static readonly int _FrustumPlanes = Shader.PropertyToID("_FrustumPlanes");
-        public static readonly int _TaaFrameIndex = Shader.PropertyToID("_TaaFrameIndex");
+        public static readonly int _TaaFrameIndex    = Shader.PropertyToID("_TaaFrameIndex");
+        public static readonly int _TaaFrameRotation = Shader.PropertyToID("_TaaFrameRotation");
 
         public static readonly int _DepthTexture                   = Shader.PropertyToID("_DepthTexture");
         public static readonly int _CameraColorTexture             = Shader.PropertyToID("_CameraColorTexture");
@@ -273,6 +278,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Shader.PropertyToID("_DepthPyramidMip13"),
             Shader.PropertyToID("_DepthPyramidMip14"),
         };
+
+        public static readonly int _DebugColorPickerTexture = Shader.PropertyToID("_DebugColorPickerTexture");
+        public static readonly int _ColorPickerParam = Shader.PropertyToID("_ColorPickerParam");
+        public static readonly int _ColorPickerMode = Shader.PropertyToID("_ColorPickerMode");
+        public static readonly int _ApplyLinearToSRGB = Shader.PropertyToID("_ApplyLinearToSRGB");
+        public static readonly int _ColorPickerFontColor = Shader.PropertyToID("_ColorPickerFontColor");
+        public static readonly int _RequireToFlipInputTexture = Shader.PropertyToID("_RequireToFlipInputTexture");
+
         public static readonly int _DebugFullScreenTexture = Shader.PropertyToID("_DebugFullScreenTexture");
         public static readonly int _BlitTexture = Shader.PropertyToID("_BlitTexture");
 
@@ -309,6 +322,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public static readonly int _GlobalFog_Extinction       = Shader.PropertyToID("_GlobalFog_Extinction");
         public static readonly int _GlobalFog_Scattering       = Shader.PropertyToID("_GlobalFog_Scattering");
+        public static readonly int _GlobalFog_Asymmetry        = Shader.PropertyToID("_GlobalFog_Asymmetry");
         public static readonly int _VBufferResolution          = Shader.PropertyToID("_VBufferResolution");
         public static readonly int _VBufferScaleAndSliceCount  = Shader.PropertyToID("_VBufferScaleAndSliceCount");
         public static readonly int _VBufferDepthEncodingParams = Shader.PropertyToID("_VBufferDepthEncodingParams");
