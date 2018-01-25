@@ -259,7 +259,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             UpdateSkyTypes();
             UpdateCurrentSkySettings(camera);
 
-            m_NeedUpdateBakingSky = m_BakingSkyRenderingContext.UpdateEnvironment(m_BakingSky, camera, sunLight, m_UpdateRequired, cmd);
+            m_NeedUpdateBakingSky = m_BakingSkyRenderingContext.UpdateEnvironment(m_BakingSky, camera, null, m_UpdateRequired, cmd);
             SkyUpdateContext currentSky = m_LightingOverrideSky.IsValid() ? m_LightingOverrideSky : m_VisualSky;
             m_NeedUpdateRealtimeEnv = m_SkyRenderingContext.UpdateEnvironment(currentSky, camera, sunLight, m_UpdateRequired, cmd);
 
