@@ -1,6 +1,6 @@
 ## Description
 
-Returns the result of 1 divided by the square root of the input *In*.
+Returns the result of 1 divided by the square root of the input **In**.
 
 ## Ports
 
