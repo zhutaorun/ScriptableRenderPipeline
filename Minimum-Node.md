@@ -1,6 +1,6 @@
 ## Description
 
-Returns the smallest of the two inputs values *A* and *B*.
+Returns the smallest of the two inputs values **A** and **B**.
 
 ## Ports
 
