@@ -1,6 +1,6 @@
 ## Description
 
-Returns the square root of input In.
+Returns the square root of input **In**.
 
 ## Ports
 
