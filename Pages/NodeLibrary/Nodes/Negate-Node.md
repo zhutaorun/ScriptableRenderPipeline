@@ -1,6 +1,6 @@
 ## Description
 
-Returns the flipped sign value of input In. Positive values become negative and negative values become positive.
+Returns the flipped sign value of input **In**. Positive values become negative and negative values become positive.
 
 ## Ports
 
