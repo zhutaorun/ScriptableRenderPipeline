@@ -1,6 +1,6 @@
 ## Description
 
-Returns the partial derivative of the input *In* with respect to the screen-space x-coordinate. This node can only be used in the pixel shader stage.
+Returns the partial derivative of the input **In** with respect to the screen-space x-coordinate. This node can only be used in the pixel shader stage.
 
 ## Ports
 
