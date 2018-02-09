@@ -1,6 +1,6 @@
 ## Description
 
-Returns the result of input A divided by input B.
+Returns the result of input **A** divided by input **B**.
 
 ## Ports
 
