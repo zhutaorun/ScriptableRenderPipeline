@@ -1,5 +1,3 @@
-![](https://raw.githubusercontent.com/Kink3d/WikiTest/master/Images/AddNodePage.png?token=AKnrSa7IGhNcOvd4623PyrU5FQuM5iNLks5aV3LnwA%3D%3D)
-
 ## Description
 
 Returns the absolute value of the input In. Positive input values will return unaltered. Negative input values will return the inverse value (always positive).
