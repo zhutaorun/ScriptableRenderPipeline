@@ -1,6 +1,6 @@
 ## Description
 
-Returns the sum of the two input values.
+Returns the sum of the two input values **A** and **B**.
 
 ## Ports
 
