@@ -1,6 +1,6 @@
 ## Description
 
-Returns the result of input A minus input B.
+Returns the result of input **A** minus input **B**.
 ## Ports
 
 | Name        | Direction           | Type  | Description |
