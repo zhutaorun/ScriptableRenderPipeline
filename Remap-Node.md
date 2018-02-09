@@ -1,6 +1,6 @@
 ## Description
 
-Returns a value between the x and y components of input **Out Min Max** based on the linear interpolation of the value of input **In** between the x and y components of input **In Min Max** 
+Returns a value between the x and y components of input **Out Min Max** based on the linear interpolation of the value of input **In** between the x and y components of input **In Min Max**.
 
 ## Ports
 
