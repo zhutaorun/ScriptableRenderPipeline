@@ -1,11 +1,6 @@
-![](https://raw.githubusercontent.com/Kink3d/WikiTest/master/Images/AddNodePage.png?token=AKnrSa7IGhNcOvd4623PyrU5FQuM5iNLks5aV3LnwA%3D%3D)
-
 ## Description
 
-Returns the exponential value of input In. The exponential base can be switched between base-e and base 2 from a dropdown on the node. 
-
-* **Base E** : Returns e to the power of input In
-* **Base 2** : Returns 2 to the power of input In
+Returns the result of dividing 1 by the input *In*. This can be calculated by a fast approximation on Shader Model 5 by setting *Method* to *Fast*.
 
 ## Ports
 
@@ -18,14 +13,14 @@ Returns the exponential value of input In. The exponential base can be switched 
 
 | Name        | Type           | Options  | Description |
 |:------------ |:-------------|:-----|:---|
-| Base      | Dropdown | BaseE, Base2 | Selects the exponential base |
+| Method      | Dropdown | Default, Fast | Selects the method used |
 
 ## Shader Function
 
-**Base E**
+**Default**
 
-`Out = exp(In)`
+`Out = 1.0/In`
 
-**Base 2**
+**Fast** (Requires Shader Model 5)
 
-`Out = exp2(In)`
+`Out = rcp(In)`
