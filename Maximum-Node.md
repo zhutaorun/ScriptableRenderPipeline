@@ -1,6 +1,6 @@
 ## Description
 
-Returns the largest of the two inputs values *A* and *B*.
+Returns the largest of the two inputs values **A** and **B**.
 
 ## Ports
 
