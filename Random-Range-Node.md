@@ -8,10 +8,10 @@ Whilst the same value in input *Seed* will always result in the same output valu
 
 | Name        | Direction           | Type  | Description |
 |:------------ |:-------------|:-----|:---|
-| Seed      | Input | Dynamic Vector | Seed value used for generation |
-| Min      | Input | Dynamic Vector | Minimum value |
-| Max      | Input | Dynamic Vector | Maximum value |
-| Out | Output      |    Dynamic Vector | Output value |
+| Seed      | Input | Vector 2 | Seed value used for generation |
+| Min      | Input | Vector 1 | Minimum value |
+| Max      | Input | Vector 1 | Maximum value |
+| Out | Output      |    Vector 1 | Output value |
 
 ## Shader Function
 
