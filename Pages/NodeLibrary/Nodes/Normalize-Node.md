@@ -1,6 +1,6 @@
 ## Description
 
-Returns the normalized value of input In. The output vector will have the same direction as input In but a length of 1.
+Returns the normalized value of input **In**. The output vector will have the same direction as input **In** but a length of 1.
 
 ## Ports
 
@@ -10,7 +10,5 @@ Returns the normalized value of input In. The output vector will have the same d
 | Out | Output      |    Dynamic Vector | Output value |
 
 ## Shader Function
-
-**Base E**
 
 `Out = normalize(In)`
