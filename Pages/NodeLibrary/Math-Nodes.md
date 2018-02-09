@@ -108,3 +108,40 @@
 <p align="left">Returns the result of smoothly interpolating between input A and input B by input T.</p></td>
     </tr>
 </table>
+
+## Range
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Clamp-Node">Clamp</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Clamp-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ClampNodeThumb.png" alt="Clamp Node" height="350" width="350"></a></p>
+<p align="left">Returns the input In clamped between the minimum and maximum values defined by inputs Min and Max respectively.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Fraction-Node">Fraction</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Fraction-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/FractionNodeThumb.png" alt="Fraction Node" height="350" width="350"></a></p>
+<p align="left">Returns the fractional (or decimal) part of input In; which is greater than or equal to 0 and less than 1.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Maximum-Node">Maximum</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Maximum-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/MaximumNodeThumb.png" alt="Maximum Node" height="350" width="350"></a></p>
+<p align="left">Returns the largest of the two inputs values A and B.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Minimum-Node">Minimum</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Minimum-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/MinimumNodeThumb.png" alt="Minimum Node" height="350" width="350"></a></p>
+<p align="left">Returns the smallest of the two inputs values A and B.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/One-Minus-Node">One Minus</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/One-Minus-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/OneMinusNodeThumb.png" alt="One Minus Node" height="350" width="350"></a></p>
+<p align="left">Returns the result of input In subtracted from 1.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Random-Range-Node">Random Range</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Random-Range-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/RandomRangeNodeThumb.png" alt="Random Range Node" height="350" width="350"></a></p>
+<p align="left">Returns a pseudo-random number that is between the minimum and maximum values defined by inputs Min and Max.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Remap-Node">Remap</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Remap-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/RemapNodeThumb.png" alt="Remap Node" height="350" width="350"></a></p>
+<p align="left">Remaps the value of input In from between the values of input Out Min Max to between the values of input In Min Max.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Saturate-Node">Saturate</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Saturate-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/SaturateNodeThumb.png" alt="Saturate Node" height="350" width="350"></a></p>
+<p align="left">Returns the value of input In clamped between 0 and 1.</p></td>
+    </tr>
+</table>
