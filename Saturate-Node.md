@@ -1,6 +1,6 @@
 ## Description
 
-Returns the value of input *In* clamped between 0 and 1.
+Returns the value of input **In** clamped between 0 and 1.
 
 ## Ports
 
