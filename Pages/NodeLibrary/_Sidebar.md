@@ -28,6 +28,11 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Reciprocal-Node">Reciprocal</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Reciprocal-Square-Root-Node">Reciprocal Square Root</a><br>
 </details>
+<details><summary>Derivative</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/DDX-Node">DDX</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/DDXY-Node">DDXY</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/DDY-Node">DDY</a><br>
+</details>
 </details>
 <details><summary>Procedural</summary></details>
 <details><summary>Utility</summary></details>
