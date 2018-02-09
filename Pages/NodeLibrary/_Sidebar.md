@@ -38,6 +38,16 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Lerp-Node">Lerp</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Smoothstep-Node">Smoothstep</a><br>
 </details>
+<details><summary>Range</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Clamp-Node">Clamp</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Fraction-Node">Fraction</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Maximum-Node">Maximum</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Minimum-Node">Minimum</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/One-Minus-Node">One Minus</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Random-Range-Node">Random Range</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Remap-Node">Remap</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Saturate-Node">Saturate</a><br>
+</details>
 </details>
 <details><summary>Procedural</summary></details>
 <details><summary>Utility</summary></details>
