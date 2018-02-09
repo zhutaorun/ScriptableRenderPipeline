@@ -1,6 +1,6 @@
 ## Description
 
-Returns the input *In* clamped between the minimum and maximum values defined by inputs *Min* and *Max* respectively.
+Returns the input **In** clamped between the minimum and maximum values defined by inputs **Min** and **Max** respectively.
 
 ## Ports
 
