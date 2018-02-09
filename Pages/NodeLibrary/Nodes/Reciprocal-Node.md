@@ -1,6 +1,6 @@
 ## Description
 
-Returns the result of dividing 1 by the input *In*. This can be calculated by a fast approximation on Shader Model 5 by setting *Method* to *Fast*.
+Returns the result of dividing 1 by the input **In**. This can be calculated by a fast approximation on Shader Model 5 by setting **Method** to Fast.
 
 ## Ports
 
