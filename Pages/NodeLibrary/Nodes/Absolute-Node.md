@@ -1,6 +1,6 @@
 ## Description
 
-Returns the absolute value of the input In. Positive input values will return unaltered. Negative input values will return the inverse value (always positive).
+Returns the absolute value of the input **In**. Positive input values will return unaltered. Negative input values will return the inverse value (always positive).
 
 ## Ports
 
