@@ -1,6 +1,6 @@
 ## Description
 
-Returns the result of input A multiplied by input B
+Returns the result of input **A** multiplied by input **B**
 
 ## Ports
 
