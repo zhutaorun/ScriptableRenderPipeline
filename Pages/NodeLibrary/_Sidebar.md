@@ -33,6 +33,11 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/DDXY-Node">DDXY</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/DDY-Node">DDY</a><br>
 </details>
+<details><summary>Interpolation</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Inverse-Lerp-Node">Inverse Lerp</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Lerp-Node">Lerp</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Smoothstep-Node">Smoothstep</a><br>
+</details>
 </details>
 <details><summary>Procedural</summary></details>
 <details><summary>Utility</summary></details>
