@@ -90,3 +90,21 @@
 <p align="left">Returns the partial derivative with respect to the screen-space y-coordinate.</p></td>
     </tr>
 </table>
+
+## Interpolation
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Inverse-Lerp-Node">Inverse Lerp</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Inverse-Lerp-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/InverseLerpNodeThumb.png" alt="Inverse Lerp Node" height="350" width="350"></a></p>
+<p align="left">Returns the linear parameter that produces the interpolant specified by input T within the range of input A to input B.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Lerp-Node">Lerp</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Lerp-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/LerpNodeThumb.png" alt="Lerp Node" height="350" width="350"></a></p>
+<p align="left">Returns the result of linearly interpolating between input A and input B by input T.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Smoothstep-Node">Smoothstep</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Smoothstep-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/SmoothstepNodeThumb.png" alt="Smoothstep Node" height="350" width="350"></a></p>
+<p align="left">Returns the result of smoothly interpolating between input A and input B by input T.</p></td>
+    </tr>
+</table>
