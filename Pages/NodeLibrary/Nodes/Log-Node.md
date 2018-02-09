@@ -1,6 +1,6 @@
 ## Description
 
-Returns the logarithm of input In. Log is the inverse operation to Exponential. 
+Returns the logarithm of input **In**. Log is the inverse operation to Exponential. 
 
 For example, the base-2 exponential value of 3 is 8.
 
@@ -8,7 +8,7 @@ For example, the base-2 exponential value of 3 is 8.
 
 Therefore the base-2 logarithmic value of 8 is 3.
 
-The logarithmic base can be switched between base-e, base-2 and base-10 from a dropdown on the node. 
+The logarithmic base can be switched between base-e, base-2 and base-10 from the **Base** dropdown on the node. 
 
 ## Ports
 
