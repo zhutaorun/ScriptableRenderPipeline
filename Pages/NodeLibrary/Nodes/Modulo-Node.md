@@ -1,6 +1,6 @@
 ## Description
 
-Returns the remainder of dividing input A by input B.
+Returns the remainder of dividing input **A** by input **B**.
 
 ## Ports
 
