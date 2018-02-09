@@ -1,8 +1,8 @@
 ## Description
 
-Returns a pseudo-random number value based on input *Seed* that is between the minimum and maximum values defined by inputs *Min* and *Max* respectively.
+Returns a pseudo-random number value based on input **Seed** that is between the minimum and maximum values defined by inputs **Min** and **Max** respectively.
 
-Whilst the same value in input *Seed* will always result in the same output value, the output value itself will appear random. Input *Seed* is a Vector 2 value for the convenience of generating a random number based on a UV input, however for most cases a Vector 1 input will suffice.
+Whilst the same value in input **Seed** will always result in the same output value, the output value itself will appear random. Input **Seed** is a **Vector 2** value for the convenience of generating a random number based on a UV input, however for most cases a **Vector 1** input will suffice.
 
 ## Ports
 
