@@ -13,6 +13,8 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Divide-Node">Divide</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Multiply-Node">Multiply</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Power-Node">Power</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Square-Root-Node">Square Root</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Subtract-Node">Subtract</a><br>
 </details>
 <details><summary>Advanced</summary>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Absolute-Node">Absolute</a><br>
