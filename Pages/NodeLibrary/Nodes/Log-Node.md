@@ -1,16 +1,14 @@
-![](https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/PageImages/LogNodePage01.png)
-
 ## Description
 
-Returns the logarithm of input In. Log is the inverse operation to Exponential. The logarithmic base can be switched between base-e, base-2 and base-10 from a dropdown on the node. 
+Returns the logarithm of input In. Log is the inverse operation to Exponential. 
 
-## Example
-
-The base-2 exponential value of 3 is 8.
+For example, the base-2 exponential value of 3 is 8.
 
 ![](https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/PageImages/LogNodePage02.png)
 
 Therefore the base-2 logarithmic value of 8 is 3.
+
+The logarithmic base can be switched between base-e, base-2 and base-10 from a dropdown on the node. 
 
 ## Ports
 
