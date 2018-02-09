@@ -1,6 +1,6 @@
 ## Description
 
-Returns the fractional (or decimal) part of input *In*; which is greater than or equal to 0 and less than 1.
+Returns the fractional (or decimal) part of input **In**; which is greater than or equal to 0 and less than 1.
 
 ## Ports
 
