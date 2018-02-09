@@ -72,3 +72,21 @@
 <p align="left">Returns the result of 1 divided by the square root of input In.</p></td>
     </tr>
 </table>
+
+## Derivative
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/DDX-Node">DDX</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/DDX-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/DDXNodeThumb.png" alt="DDX Node" height="350" width="350"></a></p>
+<p align="left">Returns the partial derivative with respect to the screen-space x-coordinate.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/DDXY-Node">DDXY</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/DDXY-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/DDXYNodeThumb.png" alt="DDXY Node" height="350" width="350"></a></p>
+<p align="left">Returns the sum of both partial derivatives.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/DDY-Node">DDY</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/DDY-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/DDYNodeThumb.png" alt="DDY Node" height="350" width="350"></a></p>
+<p align="left">Returns the partial derivative with respect to the screen-space y-coordinate.</p></td>
+    </tr>
+</table>
