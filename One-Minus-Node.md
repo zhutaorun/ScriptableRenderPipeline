@@ -1,6 +1,6 @@
 ## Description
 
-Returns the result of input *In* subtracted from 1.
+Returns the result of input **In** subtracted from 1.
 
 ## Ports
 
