@@ -1,6 +1,6 @@
 ## Description
 
-Returns the result of input A to the power of input B.
+Returns the result of input **A** to the power of input **B**.
 
 ## Ports
 
