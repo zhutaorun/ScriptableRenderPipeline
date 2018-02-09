@@ -1,6 +1,6 @@
 ## Description
 
-Returns the linear parameter that produces the interpolant specified by input *T* within the range of input *A* to input *B*.
+Returns the linear parameter that produces the interpolant specified by input **T** within the range of input **A** to input **B**.
 
 ## Ports
 
