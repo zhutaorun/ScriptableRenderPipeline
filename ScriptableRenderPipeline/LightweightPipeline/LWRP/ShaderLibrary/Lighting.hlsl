@@ -8,6 +8,8 @@
 #include "Shadows.hlsl"
 
 #ifdef NO_ADDITIONAL_LIGHTS
+#undef _ADDITIONAL_LIGHT0
+#undef _ADDITIONAL_LIGHT2
 #undef _ADDITIONAL_LIGHTS
 #endif
 
@@ -504,6 +506,24 @@ half3 VertexLighting(float3 positionWS, half3 normalWS)
         half3 lightColor = light.color * light.attenuation;
         vertexLightColor += LightingLambert(lightColor, light.direction, normalWS);
     }
+#elif defined(_VERTEX_LIGHTS_UNROLLED)
+    int vertexLightStart = _AdditionalLightCount.x;
+
+    Light light0 = GetLight(vertexLightStart + 0, positionWS);
+    half3 lightColor0 = light0.color * light0.attenuation;
+    vertexLightColor += LightingLambert(lightColor0, light0.direction, normalWS);
+
+    Light light1 = GetLight(vertexLightStart + 1, positionWS);
+    half3 lightColor1 = light1.color * light1.attenuation;
+    vertexLightColor += LightingLambert(lightColor1, light1.direction, normalWS);
+
+    Light light2 = GetLight(vertexLightStart + 2, positionWS);
+    half3 lightColor2 = light2.color * light2.attenuation;
+    vertexLightColor += LightingLambert(lightColor2, light2.direction, normalWS);
+
+    Light light3 = GetLight(vertexLightStart + 3, positionWS);
+    half3 lightColor3 = light3.color * light3.attenuation;
+    vertexLightColor += LightingLambert(lightColor03 light3.direction, normalWS);
 #endif
 
     return vertexLightColor;
@@ -526,7 +546,19 @@ half4 LightweightFragmentPBR(InputData inputData, half3 albedo, half metallic, h
     half3 color = GlobalIllumination(brdfData, inputData.bakedGI, occlusion, inputData.normalWS, inputData.viewDirectionWS);
     color += LightingPhysicallyBased(brdfData, mainLight, inputData.normalWS, inputData.viewDirectionWS);
 
-#ifdef _ADDITIONAL_LIGHTS
+#if defined(_ADDITIONAL_LIGHT0) || defined(_ADDITIONAL_LIGHT2)
+    Light light0 = GetLight(0, inputData.positionWS);
+    color += LightingPhysicallyBased(brdfData, light0, inputData.normalWS, inputData.viewDirectionWS);
+    
+#if defined(_ADDITIONAL_LIGHT2)
+    Light light1 = GetLight(1, inputData.positionWS);
+    color += LightingPhysicallyBased(brdfData, light1, inputData.normalWS, inputData.viewDirectionWS);
+    
+    Light light2 = GetLight(2, inputData.positionWS);
+    color += LightingPhysicallyBased(brdfData, light2, inputData.normalWS, inputData.viewDirectionWS);
+#endif
+
+#elif defined(_ADDITIONAL_LIGHTS)
     int pixelLightCount = GetPixelLightCount();
     for (int i = 0; i < pixelLightCount; ++i)
     {
@@ -550,7 +582,25 @@ half4 LightweightFragmentBlinnPhong(InputData inputData, half3 diffuse, half4 sp
     half3 diffuseColor = inputData.bakedGI + LightingLambert(attenuatedLightColor, mainLight.direction, inputData.normalWS);
     half3 specularColor = LightingSpecular(attenuatedLightColor, mainLight.direction, inputData.normalWS, inputData.viewDirectionWS, specularGloss, shininess);
 
-#ifdef _ADDITIONAL_LIGHTS
+#if defined(_ADDITIONAL_LIGHT0) || defined(_ADDITIONAL_LIGHT2)
+    Light light0 = GetLight(0, inputData.positionWS);
+    half3 attenuatedLightColor0 = light0.color * light0.attenuation;
+    diffuseColor += LightingLambert(attenuatedLightColor0, light0.direction, inputData.normalWS);
+    specularColor += LightingSpecular(attenuatedLightColor0, light0.direction, inputData.normalWS, inputData.viewDirectionWS, specularGloss, shininess);
+    
+#if defined(_ADDITIONAL_LIGHT2)
+    Light light1 = GetLight(1, inputData.positionWS);
+    half3 attenuatedLightColor1 = light1.color * light1.attenuation;
+    diffuseColor += LightingLambert(attenuatedLightColor1, light1.direction, inputData.normalWS);
+    specularColor += LightingSpecular(attenuatedLightColor1, light1.direction, inputData.normalWS, inputData.viewDirectionWS, specularGloss, shininess);
+    
+    Light light2 = GetLight(2, inputData.positionWS);
+    half3 attenuatedLightColor2 = light2.color * light2.attenuation;
+    diffuseColor += LightingLambert(attenuatedLightColor2, light2.direction, inputData.normalWS);
+    specularColor += LightingSpecular(attenuatedLightColor2, light2.direction, inputData.normalWS, inputData.viewDirectionWS, specularGloss, shininess);
+#endif
+
+#elif defined(_ADDITIONAL_LIGHTS)
     int pixelLightCount = GetPixelLightCount();
     for (int i = 0; i < pixelLightCount; ++i)
     {

@@ -53,6 +53,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         // Default values set when a new LightweightPipeline asset is created
         [SerializeField] private int kAssetVersion = 2;
         [SerializeField] private int m_MaxPixelLights = 4;
+        [SerializeField] private bool m_BaseTierLighting = false;
         [SerializeField] private bool m_SupportsVertexLight = false;
         [SerializeField] private bool m_RequireDepthTexture = false;
         [SerializeField] private bool m_RequireSoftParticles = false;
@@ -199,6 +200,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         public int MaxPixelLights
         {
             get { return m_MaxPixelLights; }
+        }
+        
+        public bool BaseTierLighting
+        {
+            get { return m_BaseTierLighting; }
         }
 
         public bool SupportsVertexLight

@@ -309,9 +309,22 @@ namespace UnityEngine.Experimental.Rendering
             material.DisableKeyword(enableFirst ? keyword2 : keyword1);
         }
 
+        public static void SelectKeyword(CommandBuffer cmd, string[] keywords, int enabledKeywordIndex)
+        {
+            if(enabledKeywordIndex < keywords.Length && enabledKeywordIndex >= 0)
+                cmd.EnableShaderKeyword(keywords[enabledKeywordIndex]);
+
+            for (int i = 0; i < keywords.Length; i++)
+            {
+                if (i != enabledKeywordIndex)
+                    cmd.DisableShaderKeyword(keywords[i]);
+            }
+        }
+
         public static void SelectKeyword(Material material, string[] keywords, int enabledKeywordIndex)
         {
-            material.EnableKeyword(keywords[enabledKeywordIndex]);
+            if(enabledKeywordIndex < keywords.Length && enabledKeywordIndex >= 0)
+                material.EnableKeyword(keywords[enabledKeywordIndex]);
 
             for (int i = 0; i < keywords.Length; i++)
             {

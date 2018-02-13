@@ -114,6 +114,17 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             "_MAIN_LIGHT_SPOT_SHADOW",
             "_MAIN_LIGHT_SPOT_SHADOW_SOFT"
         };
+            
+        private static readonly string[] kAdditionalLightKeywords = {
+            "_ADDITIONAL_LIGHTS",
+            "_ADDITIONAL_LIGHT0",
+            "_ADDITIONAL_LIGHT2",
+        };
+        
+        private static readonly string[] kVertexLightKeywords = {
+            "_VERTEX_LIGHTS",
+            "_VERTEX_LIGHTS_UNROLL",
+        };
 
         private StringBuilder m_MainLightKeywordString = new StringBuilder(43);
 
@@ -1053,6 +1064,28 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             cmd.SetGlobalVector(ShadowConstantBuffer._ShadowmapSize, new Vector4(invShadowResolution, invShadowResolution, m_Asset.ShadowAtlasResolution, m_Asset.ShadowAtlasResolution));
         }
 
+        private int CalcAdditionalLightKeywordIndex(int numAdditionalLights)
+        {
+            if(numAdditionalLights == 0)
+                return -1;
+            else if(!m_Asset.BaseTierLighting)
+                return 0;
+            else if(numAdditionalLights == 1)
+                return 1;
+            else
+                return 2;
+        }
+        
+        private int CalcVertexLightKeywordIndex(int numVertexLights)
+        {
+            if(numVertexLights == 0)
+                return -1;
+            else if(!m_Asset.BaseTierLighting)
+                return 0;
+            else
+                return 1;
+        }
+
         private void SetShaderKeywords(CommandBuffer cmd, ref LightData lightData, List<VisibleLight> visibleLights)
         {
             int vertexLightsCount = lightData.totalAdditionalLightsCount - lightData.pixelAdditionalLightsCount;
@@ -1084,9 +1117,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             }
 
             CoreUtils.SetKeyword(cmd, "_MAIN_LIGHT_COOKIE", mainLightIndex != -1 && LightweightUtils.IsSupportedCookieType(visibleLights[mainLightIndex].lightType) && visibleLights[mainLightIndex].light.cookie != null);
-            CoreUtils.SetKeyword(cmd, "_ADDITIONAL_LIGHTS", lightData.totalAdditionalLightsCount > 0);
+            CoreUtils.SelectKeyword(cmd, kAdditionalLightKeywords, CalcAdditionalLightKeywordIndex(lightData.totalAdditionalLightsCount));
             CoreUtils.SetKeyword(cmd, "_MIXED_LIGHTING_SUBTRACTIVE", m_MixedLightingSetup == MixedLightingSetup.Subtractive);
             CoreUtils.SetKeyword(cmd, "_VERTEX_LIGHTS", vertexLightsCount > 0);
+            CoreUtils.SelectKeyword(cmd, kVertexLightKeywords, CalcVertexLightKeywordIndex(vertexLightsCount));
             CoreUtils.SetKeyword(cmd, "SOFTPARTICLES_ON", m_RequireDepthTexture && m_Asset.RequireSoftParticles);
 
             bool linearFogModeEnabled = false;

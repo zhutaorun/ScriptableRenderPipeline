@@ -16,6 +16,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             public static GUIContent maxPixelLightsLabel = new GUIContent("Pixel Lights",
                     "Controls the amount of pixel lights that run in fragment light loop. Lights are sorted and culled per-object.");
 
+            public static GUIContent enableLowTierLightingLabel = new GUIContent("Low Tier Lighting",
+                    "If enabled lighting evaluation will be capped at max 4 per pixel, and 4 per vertex. Evaluation will also be changed to a branch less style that suits older mobile hardware tiers better");
+
             public static GUIContent enableVertexLightLabel = new GUIContent("Vertex Lighting",
                     "If enabled shades additional lights exceeding the maximum number of pixel lights per-vertex up to the maximum of 8 lights.");
 
@@ -54,6 +57,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private float kMaxRenderScale = 4.0f;
         private SerializedProperty m_RenderScale;
         private SerializedProperty m_MaxPixelLights;
+        private SerializedProperty m_BaseTierLightingProp;
         private SerializedProperty m_SupportsVertexLightProp;
         private SerializedProperty m_RequireDepthTextureProp;
         private SerializedProperty m_RequireSoftParticlesProp;
@@ -71,6 +75,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         {
             m_RenderScale = serializedObject.FindProperty("m_RenderScale");
             m_MaxPixelLights = serializedObject.FindProperty("m_MaxPixelLights");
+            m_BaseTierLightingProp = serializedObject.FindProperty("m_BaseTierLighting");
             m_SupportsVertexLightProp = serializedObject.FindProperty("m_SupportsVertexLight");
             m_RequireDepthTextureProp = serializedObject.FindProperty("m_RequireDepthTexture");
             m_RequireSoftParticlesProp = serializedObject.FindProperty("m_RequireSoftParticles");
@@ -137,6 +142,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             EditorGUILayout.LabelField(Styles.maxPixelLightsLabel);
             m_MaxPixelLights.intValue = EditorGUILayout.IntSlider(m_MaxPixelLights.intValue, 0, kMaxSupportedPixelLights);
             EditorGUILayout.EndHorizontal();
+            EditorGUILayout.PropertyField(m_BaseTierLightingProp, Styles.enableLowTierLightingLabel);
             EditorGUILayout.PropertyField(m_SupportsVertexLightProp, Styles.enableVertexLightLabel);
             EditorGUILayout.PropertyField(m_RequireDepthTextureProp, Styles.requireDepthTexture);
             DrawAnimatedProperty(m_RequireSoftParticlesProp, Styles.requireSoftParticles, m_ShowSoftParticles);
