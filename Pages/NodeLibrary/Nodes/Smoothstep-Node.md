@@ -1,18 +1,18 @@
 ## Description
 
-Returns the result of interpolating between input **A** and input **B** by input **T**. The value of input **T** is clamped to the range of 0 to 1. 
+Returns the result of a smooth Hermite interpolation between 0 and 1, if the value of input **In** is between the values of inputs **Edge1** and **Edge2** respectively.
 
-This node is similar to the [Lerp Node](https://github.com/Unity-Technologies/ShaderGraph/wiki/Lerp-Node) except it uses Smooth Hermite Interpolation instead of Linear Interpolation. This means the interpolation will gradually speed up from the start and slow down toward the end. This is useful for creating natural-looking animation, fading and other transitions.
+This node is similar to the [Lerp Node](https://github.com/Unity-Technologies/ShaderGraph/wiki/Lerp-Node) but there are two notable differences. Firstly, with this node the user specifies the range and the return value is between 0 and 1. This can be seen as the opposite of the [Lerp Node](https://github.com/Unity-Technologies/ShaderGraph/wiki/Lerp-Node). Secondly, this node uses smooth Hermite interpolation instead of linear interpolation. This means the interpolation will gradually speed up from the start and slow down toward the end. This is useful for creating natural-looking animation, fading and other transitions.
 
 ## Ports
 
 | Name        | Direction           | Type  | Description |
 |:------------ |:-------------|:-----|:---|
-| A      | Input | Dynamic Vector | First input value |
-| B      | Input | Dynamic Vector | Second input value |
-| T      | Input | Dynamic Vector | Time value |
+| Edge1      | Input | Dynamic Vector | Minimum step value |
+| Edge2      | Input | Dynamic Vector | Maximum step value |
+| In      | Input | Dynamic Vector | Input value |
 | Out | Output      |    Dynamic Vector | Output value |
 
 ## Shader Function
 
-`Out = smoothstep(A, B, T)`
+`Out = smoothstep(Step1, Step2, In)`
