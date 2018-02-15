@@ -28,3 +28,21 @@ For example, connecting **Vector 2** type values to inputs **M0** and **M1** wil
 | Name        | Type           | Options  | Description |
 |:------------ |:-------------|:-----|:---|
 |      | Dropdown | Row, Column | Selects how the output matrix should be filled |
+
+## Shader Function
+
+**Row**
+
+```
+Out4x4 = float4x4(M0.x, M0.y, M0.z, M0.w, M1.x, M1.y, M1.z, M1.w, M2.x, M2.y, M2.z, M2.w, M3.x, M3.y, M3.z, M3.w)
+Out3x3 = float3x3(M0.x, M0.y, M0.z, M1.x, M1.y, M1.z, M2.x, M2.y, M2.z)
+Out2x2 = float2x2(M0.x, M0.y, M1.x, M1.y)
+```
+
+**Column**
+
+```
+Out4x4 = float4x4(M0.x, M1.x, M2.x, M3.x, M0.y, M1.y, M2.y, M3.y, M0.z, M1.z, M2.z, M3.z, M0.w, M1.w, M2.w, M3.w)
+Out3x3 = float3x3(M0.x, M1.x, M2.x, M0.y, M1.y, M2.y, M0.z, M1.z, M2.z)
+Out2x2 = float2x2(M0.x, M1.x, M0.y, M1.y)
+```
