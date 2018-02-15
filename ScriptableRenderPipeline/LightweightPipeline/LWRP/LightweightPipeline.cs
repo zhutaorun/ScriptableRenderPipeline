@@ -100,6 +100,31 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
     {
         private readonly LightweightPipelineAsset m_Asset;
 
+        DiffusionProfileSettings m_InternalSSSAsset;
+        public DiffusionProfileSettings DiffusionProfileSettings
+        {
+            get
+            {
+                // If no SSS asset is set, build / reuse an internal one for simplicity
+                var asset = m_Asset.DiffusionProfileSettings;
+
+                if (asset == null)
+                {
+                    if (m_InternalSSSAsset == null)
+                        m_InternalSSSAsset = ScriptableObject.CreateInstance<DiffusionProfileSettings>();
+
+                    asset = m_InternalSSSAsset;
+                }
+
+                return asset;
+            }
+        }
+
+        public bool IsInternalDiffusionProfile(DiffusionProfileSettings profile)
+        {
+            return m_InternalSSSAsset == profile;
+        }
+
         // Maximum amount of visible lights the shader can process. This controls the constant global light buffer size.
         // It must match the MAX_VISIBLE_LIGHTS in LightweightInput.cginc
         private static readonly int kMaxVisibleLights = 16;
@@ -768,6 +793,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         {
             CommandBuffer cmd = CommandBufferPool.Get("SetupShaderConstants");
             SetupShaderLightConstants(cmd, visibleLights, ref lightData);
+            SetupShaderSubsurfaceConstants(cmd);
             SetShaderKeywords(cmd, ref lightData, visibleLights);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
@@ -952,6 +978,15 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             // Lightweight pipeline also supports only a single shadow light, if available it will be the main light.
             SetupMainLightConstants(cmd, lights, lightData.mainLightIndex);
             SetupAdditionalListConstants(cmd, lights, ref lightData);
+        }
+
+        private void SetupShaderSubsurfaceConstants(CommandBuffer cmd)
+        {
+            //TODO: Safety check
+            
+            cmd.SetGlobalTexture("_PreintegratedDiffuseScatteringTextures", DiffusionProfileSettings.preintegratedScatterLUTs);
+
+            //TODO: Transmission
         }
 
         private void SetupMainLightConstants(CommandBuffer cmd, List<VisibleLight> lights, int lightIndex)

@@ -66,6 +66,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         [SerializeField] private ShadowCascades m_ShadowCascades = ShadowCascades.FOUR_CASCADES;
         [SerializeField] private float m_Cascade2Split = 0.25f;
         [SerializeField] private Vector3 m_Cascade4Split = new Vector3(0.067f, 0.2f, 0.467f);
+        [SerializeField] private DiffusionProfileSettings m_DiffusionProfileSettings;
 
         [SerializeField]
         private LightweightPipelineResources m_ResourcesAsset;
@@ -284,6 +285,12 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         {
             get { return m_Cascade4Split; }
             private set { m_Cascade4Split = value; }
+        }
+
+        public DiffusionProfileSettings DiffusionProfileSettings
+        {
+            get { return m_DiffusionProfileSettings; }
+            private set { m_DiffusionProfileSettings = value; }
         }
 
         public override Material GetDefaultMaterial()
