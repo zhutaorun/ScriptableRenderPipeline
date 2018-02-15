@@ -105,7 +105,7 @@
     <tr><tr valign="top">
         <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Smoothstep-Node">Smoothstep</a></b></p>
 <p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Smoothstep-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/SmoothstepNodeThumb.png" alt="Smoothstep Node" height="350" width="350"></a></p>
-<p align="left">Returns the result of a smooth Hermite interpolation between 0 and 1, if the value of input In is between the values of inputs Edge1 and Edge2.</p></td>
+<p align="left">Returns the result of a smooth Hermite interpolation between 0 and 1, if input In is between inputs Edge1 and Edge2.</p></td>
     </tr>
 </table>
 
