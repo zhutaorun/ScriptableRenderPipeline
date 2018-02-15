@@ -1,6 +1,6 @@
 ## Description
 
-Returns the result of a smooth Hermite interpolation between 0 and 1, if the value of input **In** is between the values of inputs **Edge1** and **Edge2** respectively.
+Returns the result of a smooth Hermite interpolation between 0 and 1, if the value of input **In** is between the values of inputs **Edge1** and **Edge2** respectively. Returns 0 if the value of input **In** is less than the value of input **Step1** and 1 if greater than the value of input **Step2**.
 
 This node is similar to the [Lerp Node](https://github.com/Unity-Technologies/ShaderGraph/wiki/Lerp-Node) but there are two notable differences. Firstly, with this node the user specifies the range and the return value is between 0 and 1. This can be seen as the opposite of the [Lerp Node](https://github.com/Unity-Technologies/ShaderGraph/wiki/Lerp-Node). Secondly, this node uses smooth Hermite interpolation instead of linear interpolation. This means the interpolation will gradually speed up from the start and slow down toward the end. This is useful for creating natural-looking animation, fading and other transitions.
 
