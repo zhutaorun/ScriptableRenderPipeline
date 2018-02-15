@@ -104,6 +104,8 @@ LightweightVertexOutput LitPassVertex(LightweightVertexInput v)
     return o;
 }
 
+float _Curvature;
+
 // Used for Standard shader
 half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
 {
@@ -120,10 +122,9 @@ half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
     normalLowWS = TangentToWorldNormal(normalLowWS, IN.tangent, IN.binormal, IN.normal);
 #endif
 
-    //TODO: UI Element
-    //NOTE: Maybe find a working relationship b/w curvature/translucency then scale one term?
+
     float curvature = ( (length(fwidth(IN.normal))) / 
-                        (length(fwidth(inputData.positionWS))) * 0.05 );
+                        (length(fwidth(inputData.positionWS))) * _Curvature );
 
     Light light = GetMainLight(inputData.positionWS);
 

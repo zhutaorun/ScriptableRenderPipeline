@@ -43,6 +43,8 @@
 
         //Subsurface
         _DiffusionProfile("Diffusion Profile", Int) = 0
+        _Curvature("Curvature", Range(0.0, 1.0))  = 0.005
+        _Thickness("Thickness", Range(0.0, 50.0)) = 20.0
 
         [Enum(UV0,0,UV1,1)] _UVSec("UV Set for secondary textures", Float) = 0
 

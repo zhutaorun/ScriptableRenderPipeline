@@ -39,6 +39,8 @@ namespace UnityEditor
             //Subsurface
             public static GUIContent subsurfaceAreaText = new GUIContent("Subsurface Scattering", "");
             public static GUIContent diffusionProfileText = new GUIContent("Diffusion profile", "A profile determines the shape of the SSS/transmission filter.");
+            public static GUIContent curvatureText = new GUIContent("Curvature", "");
+            public static GUIContent thicknessText = new GUIContent("Thickness", "");
 
             public static string primaryMapsText = "Main Maps";
             public static string secondaryMapsText = "Secondary Maps";
@@ -79,6 +81,8 @@ namespace UnityEditor
 
         //Subsurface
         private MaterialProperty diffusionProfileID;
+        private MaterialProperty curvature;
+        private MaterialProperty thickness;
 
         public override void FindProperties(MaterialProperty[] properties)
         {
@@ -108,6 +112,8 @@ namespace UnityEditor
 
             //Subsurface
             diffusionProfileID = FindProperty("_DiffusionProfile", properties);
+            curvature = FindProperty("_Curvature", properties);
+            thickness = FindProperty("_Thickness", properties);
         }
 
         public override void MaterialChanged(Material material)
@@ -335,6 +341,9 @@ namespace UnityEditor
                 if (scope.changed)
                     diffusionProfileID.floatValue = profileID;
             }
+
+            m_MaterialEditor.ShaderProperty(curvature, Styles.curvatureText);
+            m_MaterialEditor.ShaderProperty(thickness, Styles.thicknessText);
         }
 
         static SmoothnessMapChannel GetSmoothnessMapChannel(Material material)

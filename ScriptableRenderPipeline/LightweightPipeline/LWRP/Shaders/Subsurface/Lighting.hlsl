@@ -305,13 +305,37 @@ half3 DirectBDRF(BRDFData brdfData, half3 normalWS, half3 lightDirectionWS, half
 //                          Subsurface Scattering                             //
 ////////////////////////////////////////////////////////////////////////////////
 
-TEXTURE2D(_PreintegratedDiffuseScatteringTex);
-SAMPLER(sampler_PreintegratedDiffuseScatteringTex);
+#include "LWRP/DiffusionProfile/DiffusionProfileSettings.cs.hlsl"
+
+//Surface Constants
+float _Thickness;
+
+//Diffusion Profile Constants
+int    _DiffusionProfile;
+float4 _ThicknessRemaps[DIFFUSION_PROFILE_COUNT];
+float4 _TransmissionTints[DIFFUSION_PROFILE_COUNT];
+float4 _HalfRcpVariancesAndWeights[DIFFUSION_PROFILE_COUNT][2];
 
 TEXTURE2D_ARRAY(_PreintegratedDiffuseScatteringTextures);
 SAMPLER(sampler_PreintegratedDiffuseScatteringTextures);
 
-int _DiffusionProfile;
+// Evaluates transmittance for a linear combination of two normalized 2D Gaussians.
+// Ref: Real-Time Realistic Skin Translucency (2010), equation 9 (modified).
+// Note: 'volumeAlbedo' should be premultiplied by 0.25, correspondingly 'lerpWeight' by 4,
+// and 'halfRcpVariance1' should be prescaled by (0.1 * DiffusionProfileConstants.SSS_BASIC_DISTANCE_SCALE)^2.
+float3 ComputeTransmittanceJimenez(float3 halfRcpVariance1, float lerpWeight1,
+                                   float3 halfRcpVariance2, float lerpWeight2,
+                                   float3 volumeAlbedo, float thickness)
+{
+    // Thickness and SSS mask are decoupled for artists.
+    // In theory, we should modify the thickness by the inverse of the mask scale of the profile.
+    // thickness /= subsurfaceMask;
+
+    float t2 = thickness * thickness;
+
+    // T = A * lerp(exp(-t2 * halfRcpVariance1), exp(-t2 * halfRcpVariance2), lerpWeight2)
+    return volumeAlbedo * (exp(-t2 * halfRcpVariance1) * lerpWeight1 + exp(-t2 * halfRcpVariance2) * lerpWeight2);
+}
 
 half3 DiffuseScattering(BRDFData brdfData, half3 normalHighWS, half3 normalLowWS, half3 lightDirectionWS)
 {
@@ -325,11 +349,8 @@ half3 DiffuseScattering(BRDFData brdfData, half3 normalHighWS, half3 normalLowWS
                           dot(bN, lightDirectionWS));
     NdotL = 0.5 * NdotL + 0.5; //Scale to 0..1 for lookup.
 
+    //Sample the preintegrated subsurface scattering.
     float3 scatteredDiffuse;
-    // scatteredDiffuse.r = SAMPLE_TEXTURE2D(_PreintegratedDiffuseScatteringTex, sampler_PreintegratedDiffuseScatteringTex, float2(NdotL.r, brdfData.curvature)).r;
-    // scatteredDiffuse.g = SAMPLE_TEXTURE2D(_PreintegratedDiffuseScatteringTex, sampler_PreintegratedDiffuseScatteringTex, float2(NdotL.g, brdfData.curvature)).g;
-    // scatteredDiffuse.b = SAMPLE_TEXTURE2D(_PreintegratedDiffuseScatteringTex, sampler_PreintegratedDiffuseScatteringTex, float2(NdotL.b, brdfData.curvature)).b;
-    
     scatteredDiffuse.r = SAMPLE_TEXTURE2D_ARRAY(_PreintegratedDiffuseScatteringTextures, sampler_PreintegratedDiffuseScatteringTextures, float2(NdotL.r, brdfData.curvature), _DiffusionProfile).r;
     scatteredDiffuse.g = SAMPLE_TEXTURE2D_ARRAY(_PreintegratedDiffuseScatteringTextures, sampler_PreintegratedDiffuseScatteringTextures, float2(NdotL.g, brdfData.curvature), _DiffusionProfile).g;
     scatteredDiffuse.b = SAMPLE_TEXTURE2D_ARRAY(_PreintegratedDiffuseScatteringTextures, sampler_PreintegratedDiffuseScatteringTextures, float2(NdotL.b, brdfData.curvature), _DiffusionProfile).b;
@@ -342,19 +363,7 @@ half3 ShadowScattering(half shadow, half NdotL)
     //      but reusing the diffuse scattering preintegration and indexing with our shadow term does
     //      more than enough to emulate shadow scattering.
     half penumbraWidth = 0.5 * NdotL + 0.5;
-    //return SAMPLE_TEXTURE2D(_PreintegratedDiffuseScatteringTex, sampler_PreintegratedDiffuseScatteringTex, float2(shadow, penumbraWidth));
-    
     return SAMPLE_TEXTURE2D_ARRAY(_PreintegratedDiffuseScatteringTextures, sampler_PreintegratedDiffuseScatteringTextures, float2(shadow, penumbraWidth), _DiffusionProfile);
-}
-
-// This function can be precomputed for efficiency
-float3 T(float s) {
-  return float3(0.233, 0.455, 0.649) * exp(s / 0.0064) +
-         float3(0.1,   0.336, 0.344) * exp(s / 0.0484) +
-         float3(0.118, 0.198, 0.0)   * exp(s / 0.187)  +
-         float3(0.113, 0.007, 0.007) * exp(s / 0.567)  +
-         float3(0.358, 0.004, 0.0)   * exp(s / 1.99)   +
-         float3(0.078, 0.0,   0.0)   * exp(s / 7.41);
 }
 
 SamplerState Sampler_Linear_Clamp;
@@ -373,13 +382,17 @@ half3 Transmittance(float3 positionWS, float3 normalWS, float3 albedo, Light lig
     
     half d1 = SAMPLE_TEXTURE2D(_ShadowMap, Sampler_Linear_Clamp, shadowCoord.xyz);
     half d2 = shadowCoord.z;
-
-    float translucency = 0.7;
-    float scale = 8.25 * (1.0 - translucency) / 0.005;
-    float s = abs(d1 - d2) * scale;
+    
+    float  thickness = _ThicknessRemaps[_DiffusionProfile].x + _ThicknessRemaps[_DiffusionProfile].y * (abs(d1 - d2) * _Thickness);
+    float3 transmittance = ComputeTransmittanceJimenez(   _HalfRcpVariancesAndWeights[_DiffusionProfile][0].rgb,
+                                                          _HalfRcpVariancesAndWeights[_DiffusionProfile][0].a,
+                                                          _HalfRcpVariancesAndWeights[_DiffusionProfile][1].rgb,
+                                                          _HalfRcpVariancesAndWeights[_DiffusionProfile][1].a,
+                                                          _TransmissionTints[_DiffusionProfile].rgb,
+                                                          thickness);
 
     float irradiance = max(0.3 + dot(-normalWS, light.direction), 0.0);
-    return T(-s * s) * irradiance * light.color * albedo;
+    return transmittance * irradiance * light.color * albedo;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -612,7 +625,8 @@ half4 LightweightFragmentPBR(InputData inputData, half3 albedo, half metallic, h
     
     half3 color = GlobalIllumination      (brdfData, inputData.bakedGI, occlusion, inputData.normalWS, inputData.viewDirectionWS);
     color      += LightingPhysicallyBased (brdfData, mainLight, inputData.normalWS, inputData.viewDirectionWS);
-    //color      += Transmittance           (inputData.positionWS, inputData.normalWS, albedo, mainLight);
+    color      += Transmittance           (inputData.positionWS, inputData.normalWS, albedo, mainLight);
+    return half4(color ,1);
 
 #ifdef _ADDITIONAL_LIGHTS
     int pixelLightCount = GetPixelLightCount();

@@ -982,11 +982,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         private void SetupShaderSubsurfaceConstants(CommandBuffer cmd)
         {
-            //TODO: Safety check
-            
             cmd.SetGlobalTexture("_PreintegratedDiffuseScatteringTextures", DiffusionProfileSettings.preintegratedScatterLUTs);
-
-            //TODO: Transmission
+            cmd.SetGlobalVectorArray("_TransmissionTints",                  DiffusionProfileSettings.transmissionTints);
+            cmd.SetGlobalVectorArray("_ThicknessRemaps",                    DiffusionProfileSettings.thicknessRemaps);
+            cmd.SetGlobalVectorArray("_HalfRcpVariancesAndWeights",         DiffusionProfileSettings.halfRcpVariancesAndWeights);
         }
 
         private void SetupMainLightConstants(CommandBuffer cmd, List<VisibleLight> lights, int lightIndex)
