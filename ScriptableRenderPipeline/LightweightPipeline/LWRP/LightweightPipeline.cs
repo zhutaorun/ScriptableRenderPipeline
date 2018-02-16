@@ -206,6 +206,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         // and per-object light lists.
         private List<int> m_SortedLightIndexMap = new List<int>();
 
+        
+        private Vector4[] m_CascadeBiases = new Vector4[kMaxCascades];
+
         private Dictionary<VisibleLight, int> m_VisibleLightsIDMap = new Dictionary<VisibleLight, int>(new LightEqualityComparer());
 
         private Mesh m_BlitQuad;
@@ -213,6 +216,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private Material m_CopyDepthMaterial;
         private Material m_ErrorMaterial;
         private Material m_ScreenSpaceShadowsMaterial;
+        private Material m_PreintegratedScatterMaterial;
         private int m_BlitTexID = Shader.PropertyToID("_BlitTex");
 
         private CopyTextureSupport m_CopyTextureSupport;
@@ -285,6 +289,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             m_BlitMaterial = CoreUtils.CreateEngineMaterial(m_Asset.BlitShader);
             m_CopyDepthMaterial = CoreUtils.CreateEngineMaterial(m_Asset.CopyDepthShader);
             m_ScreenSpaceShadowsMaterial = CoreUtils.CreateEngineMaterial(m_Asset.ScreenSpaceShadowShader);
+            m_PreintegratedScatterMaterial = CoreUtils.CreateEngineMaterial(m_Asset.PreintegratedScatterShader);
             m_ErrorMaterial = CoreUtils.CreateEngineMaterial("Hidden/InternalErrorShader");
         }
 
@@ -982,10 +987,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         private void SetupShaderSubsurfaceConstants(CommandBuffer cmd)
         {
-            cmd.SetGlobalTexture("_PreintegratedDiffuseScatteringTextures", DiffusionProfileSettings.preintegratedScatterLUTs);
-            cmd.SetGlobalVectorArray("_TransmissionTints",                  DiffusionProfileSettings.transmissionTints);
-            cmd.SetGlobalVectorArray("_ThicknessRemaps",                    DiffusionProfileSettings.thicknessRemaps);
-            cmd.SetGlobalVectorArray("_HalfRcpVariancesAndWeights",         DiffusionProfileSettings.halfRcpVariancesAndWeights);
+            cmd.SetGlobalTexture    (DiffusionProfileShaderIDs._PreintegratedDiffuseScatteringTextures, DiffusionProfileSettings.preintegratedScatterLUTs.GetTexCache());
+            cmd.SetGlobalVectorArray(DiffusionProfileShaderIDs._TransmissionTint,                       DiffusionProfileSettings.transmissionTints);
+            cmd.SetGlobalVectorArray(DiffusionProfileShaderIDs._ThicknessRemap,                         DiffusionProfileSettings.thicknessRemaps);
+            cmd.SetGlobalVectorArray(DiffusionProfileShaderIDs._HalfRcpVariancesAndWeights,             DiffusionProfileSettings.halfRcpVariancesAndWeights); //Still need for transmission.
+            cmd.SetGlobalVectorArray ("_CascadeBiases", m_CascadeBiases);
         }
 
         private void SetupMainLightConstants(CommandBuffer cmd, List<VisibleLight> lights, int lightIndex)
@@ -1071,7 +1077,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             cmd.SetGlobalVectorArray(PerCameraBuffer._AdditionalLightSpotAttenuation, m_LightSpotAttenuations);
         }
 
-        private void SetupShadowCasterConstants(CommandBuffer cmd, ref VisibleLight visibleLight, Matrix4x4 proj, float cascadeResolution)
+        private void SetupShadowCasterConstants(CommandBuffer cmd, ref VisibleLight visibleLight, Matrix4x4 proj, float cascadeResolution, int cascadeIndex = 0)
         {
             Light light = visibleLight.light;
             float bias = 0.0f;
@@ -1101,6 +1107,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 // Since we are applying normal bias on caster side we want an inset normal offset
                 // thus we use a negative normal bias.
                 normalBias = -light.shadowNormalBias * texelSize * kernelRadius;
+
+                // Currently, cascades are computed in such a way to reduce code between directional/spot etc. We aren't given the index here, so we must cache + clear every frame for now.
+                // This is needed for offsetting transmission.
+                m_CascadeBiases[cascadeIndex].x = bias;
+                m_CascadeBiases[cascadeIndex].y = normalBias;
             }
             else if (visibleLight.lightType == LightType.Spot)
             {
@@ -1232,7 +1243,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                     if (!success)
                         break;
 
-                    SetupShadowCasterConstants(cmd, ref shadowLight, proj, shadowResolution);
+                    SetupShadowCasterConstants(cmd, ref shadowLight, proj, shadowResolution, cascadeIdx);
                     SetupShadowSliceTransform(cascadeIdx, shadowResolution, proj, view);
                     RenderShadowSlice(cmd, ref context, cascadeIdx, proj, view, settings);
                 }

@@ -25,6 +25,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         public static readonly int _HalfRcpVarianceAndWeight2 = Shader.PropertyToID("_HalfRcpVarianceAndWeight2");
         public static readonly int _TransmissionTint          = Shader.PropertyToID("_TransmissionTint");
         public static readonly int _ThicknessRemap            = Shader.PropertyToID("_ThicknessRemap");
+
+        //Addition Runtime Constants
+        public static readonly int _PreintegratedDiffuseScatteringTextures = Shader.PropertyToID("_PreintegratedDiffuseScatteringTextures");
+        public static readonly int _HalfRcpVariancesAndWeights             = Shader.PropertyToID("_HalfRcpVariancesAndWeights");
     }
 
 	[Serializable]
@@ -37,7 +41,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 		[Range(0f, 1f)] public float lerpWeight;
 		[ColorUsage(false)] public Color transmissionTint;
 		public Vector2 thicknessRemap;
-		public float worldScale;
 
 		public Vector4[] filterKernel { get; private set; }
 		public Vector4	 halfRcpWeightedVariances { get; private set; }
@@ -52,7 +55,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
 			transmissionTint = Color.white;
 			thicknessRemap = new Vector2(0f, 5f);
-			worldScale = 1f;
 
 		}
 
@@ -60,7 +62,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 		{
 			thicknessRemap.y = Mathf.Max(thicknessRemap.y, 0f);
 			thicknessRemap.x = Mathf.Clamp(thicknessRemap.x, 0f, thicknessRemap.y);
-			worldScale 	 	 = Mathf.Max(worldScale, 0.001f);
 
 			scatterDistance1 = new Color
 			{
@@ -226,8 +227,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 		[NonSerialized] public Vector4[] halfRcpVariancesAndWeights;
 		[NonSerialized] public Vector4[] filterKernels;
 
-        private Material preintegration;
-        [NonSerialized] public Texture2DArray preintegratedScatterLUTs;
+        [NonSerialized] private Material      preintegration;
+        [NonSerialized] public TextureCache2D preintegratedScatterLUTs;
 
 		public DiffusionProfile this[int index]
         {
@@ -265,23 +266,22 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 profiles[i].Validate();
             }
 
+
             ValidateArray(ref thicknessRemaps,            DiffusionProfileConstants.DIFFUSION_PROFILE_COUNT);
             ValidateArray(ref worldScales,       		  DiffusionProfileConstants.DIFFUSION_PROFILE_COUNT);
             ValidateArray(ref transmissionTints, 		  DiffusionProfileConstants.DIFFUSION_PROFILE_COUNT);
             ValidateArray(ref halfRcpWeightedVariances,   DiffusionProfileConstants.DIFFUSION_PROFILE_COUNT);
             ValidateArray(ref halfRcpVariancesAndWeights, DiffusionProfileConstants.DIFFUSION_PROFILE_COUNT * 2);
-            ValidateArray(ref filterKernels,         DiffusionProfileConstants.DIFFUSION_PROFILE_COUNT * DiffusionProfileConstants.SSS_N_SAMPLES);
+            ValidateArray(ref filterKernels,              DiffusionProfileConstants.DIFFUSION_PROFILE_COUNT * DiffusionProfileConstants.SSS_N_SAMPLES);
 
             Debug.Assert(DiffusionProfileConstants.DIFFUSION_PROFILE_NEUTRAL_ID <= 32, "Transmission and Texture flags (32-bit integer) cannot support more than 32 profiles.");
 
-            //TLS: Will this work in build? May need to do extra work to be found in resources. If broken, SSS won't work in build.
+            //NOTE: We can't get reference to the render pipeline assets from scriptable object, but we add it to the assets anyways so they get included in build.
+            //      Searching here is safe because we linked already in the LW resources, forcing it to be included in build.
             preintegration = CoreUtils.CreateEngineMaterial("Hidden/LightweightPipeline/PreintegratedScatter");
-            preintegratedScatterLUTs = new Texture2DArray(128, 128, DiffusionProfileConstants.DIFFUSION_PROFILE_COUNT, TextureFormat.ARGB32, false, true)
-            {
-                hideFlags  = HideFlags.HideAndDontSave,
-                wrapMode   = TextureWrapMode.Clamp,
-                filterMode = FilterMode.Point
-            };
+            
+            preintegratedScatterLUTs = new TextureCache2D();
+            preintegratedScatterLUTs.AllocTextureArray(DiffusionProfileConstants.DIFFUSION_PROFILE_COUNT, 128, 128, TextureFormat.ARGB32, false);
 
             UpdateCache();
 		}
@@ -295,7 +295,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             // Fill the neutral profile.
             int neutralId = DiffusionProfileConstants.DIFFUSION_PROFILE_NEUTRAL_ID;
-            worldScales[neutralId] = Vector4.one;
             halfRcpWeightedVariances[neutralId] = Vector4.one;
             for (int j = 0, n = DiffusionProfileConstants.SSS_N_SAMPLES; j < n; j++)
             {
@@ -303,9 +302,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 filterKernels[n * neutralId + j].w = 0f;
             }
 
-            //TODO: Remember to apply
-            //Graphics.CopyTexture(Texture2D.blackTexture, 0, preintegratedScatterLUTs, neutralId);
-            preintegratedScatterLUTs.Apply();
+            //Apply changes 
+            //preintegratedScatterLUTs.();
         }
 
 		public void UpdateCache(int p)
@@ -315,7 +313,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             // Erase previous value (This need to be done here individually as in the SSS editor we edit individual component)
             thicknessRemaps[i]   = new Vector4(profiles[p].thicknessRemap.x, profiles[p].thicknessRemap.y - profiles[p].thicknessRemap.x, 0f, 0f);
-            worldScales[i]       = new Vector4(profiles[p].worldScale, 1.0f / profiles[p].worldScale, 0f, 0f);
             // Convert ior to fresnel0
             transmissionTints[i] = new Vector4(profiles[p].transmissionTint.r * 0.25f, profiles[p].transmissionTint.g * 0.25f, profiles[p].transmissionTint.b * 0.25f, 0f); // Premultiplied
             //disabledTransmissionTintsAndFresnel0[i] = new Vector4(0.0f, 0.0f, 0.0f, fresnel0);
@@ -336,15 +333,17 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 filterKernels[n * i + j] = profiles[p].filterKernel[j];
             }
 
-            //Pribobly keep this too?
             RTHandle preintegratedScatterRT = RTHandle.Alloc(128, 128, 1, DepthBits.None, RenderTextureFormat.ARGB32, FilterMode.Point, TextureWrapMode.Clamp, TextureDimension.Tex2D, false); 
+
 
             preintegration.SetVector(DiffusionProfileShaderIDs._StdDev1,    stdDev1);
             preintegration.SetVector(DiffusionProfileShaderIDs._StdDev2,    stdDev2);
             preintegration.SetFloat (DiffusionProfileShaderIDs._LerpWeight, profiles[p].lerpWeight);
 
-            Graphics.Blit(null, preintegratedScatterRT, preintegration);
-            Graphics.CopyTexture(preintegratedScatterRT, 0, preintegratedScatterLUTs, i);
+            CommandBuffer cmd = new CommandBuffer() { name = "BuildSSSLUT_" + p };
+            cmd.Blit(null, preintegratedScatterRT, preintegration);
+            preintegratedScatterLUTs.TransferToSlice(cmd, i, preintegratedScatterRT);
+            Graphics.ExecuteCommandBuffer(cmd);
         }
 	}
 }

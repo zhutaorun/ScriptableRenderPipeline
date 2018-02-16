@@ -312,9 +312,10 @@ float _Thickness;
 
 //Diffusion Profile Constants
 int    _DiffusionProfile;
-float4 _ThicknessRemaps[DIFFUSION_PROFILE_COUNT];
-float4 _TransmissionTints[DIFFUSION_PROFILE_COUNT];
+float4 _ThicknessRemap[DIFFUSION_PROFILE_COUNT];
+float4 _TransmissionTint[DIFFUSION_PROFILE_COUNT];
 float4 _HalfRcpVariancesAndWeights[DIFFUSION_PROFILE_COUNT][2];
+float4 _CascadeBiases[4];
 
 TEXTURE2D_ARRAY(_PreintegratedDiffuseScatteringTextures);
 SAMPLER(sampler_PreintegratedDiffuseScatteringTextures);
@@ -339,22 +340,12 @@ float3 ComputeTransmittanceJimenez(float3 halfRcpVariance1, float lerpWeight1,
 
 half3 DiffuseScattering(BRDFData brdfData, half3 normalHighWS, half3 normalLowWS, half3 lightDirectionWS)
 {
-    float3 c = 1.0 - float3(0.5, 0.3, 0.22); //TODO: BRDFData?
-    float3 rN = lerp(normalHighWS, normalLowWS, c.r);
-    float3 gN = lerp(normalHighWS, normalLowWS, c.g);
-    float3 bN = lerp(normalHighWS, normalLowWS, c.b);
-
-    float3 NdotL = float3(dot(rN, lightDirectionWS),
-                          dot(gN, lightDirectionWS),
-                          dot(bN, lightDirectionWS));
+    float NdotL = dot(normalHighWS, lightDirectionWS);
     NdotL = 0.5 * NdotL + 0.5; //Scale to 0..1 for lookup.
 
     //Sample the preintegrated subsurface scattering.
-    float3 scatteredDiffuse;
-    scatteredDiffuse.r = SAMPLE_TEXTURE2D_ARRAY(_PreintegratedDiffuseScatteringTextures, sampler_PreintegratedDiffuseScatteringTextures, float2(NdotL.r, brdfData.curvature), _DiffusionProfile).r;
-    scatteredDiffuse.g = SAMPLE_TEXTURE2D_ARRAY(_PreintegratedDiffuseScatteringTextures, sampler_PreintegratedDiffuseScatteringTextures, float2(NdotL.g, brdfData.curvature), _DiffusionProfile).g;
-    scatteredDiffuse.b = SAMPLE_TEXTURE2D_ARRAY(_PreintegratedDiffuseScatteringTextures, sampler_PreintegratedDiffuseScatteringTextures, float2(NdotL.b, brdfData.curvature), _DiffusionProfile).b;
-    return scatteredDiffuse;
+    //NOTE: We only do broad-form scattering, too expensive on mobile to sample 3x for high detail normals.
+    return SAMPLE_TEXTURE2D_ARRAY(_PreintegratedDiffuseScatteringTextures, sampler_PreintegratedDiffuseScatteringTextures, float2(NdotL, brdfData.curvature), _DiffusionProfile).rgb;
 }
 
 half3 ShadowScattering(half shadow, half NdotL)
@@ -367,29 +358,35 @@ half3 ShadowScattering(half shadow, half NdotL)
 }
 
 SamplerState Sampler_Linear_Clamp;
-float4 _ShadowBiasForTransmission[4];
 half3 Transmittance(float3 positionWS, float3 normalWS, float3 albedo, Light light)
 {
-    //TODO: Normal bias here?
+    //First, shrink the world pos to eliminate aliasing.
     positionWS = positionWS - 0.025 * normalWS;
 
-    //Calculate the distance traveled through the media.
     half cascadeIndex = ComputeCascadeIndex(positionWS);
+
+    //BIAS: Mimic the normal bias done in the shadow pass for proper distance calculation.
+    float invNdotL = 1.0 - saturate(dot(light.direction, normalWS));
+    float scale = invNdotL * _CascadeBiases[cascadeIndex].y;
+    positionWS = normalWS * scale.xxx + positionWS;
+
     float4 shadowCoord = mul(_WorldToShadow[cascadeIndex], float4(positionWS, 1.0));
 
-    //NOTE: Need to counteract the bias done during shadowmap construction, to properly calculate thickness
-    shadowCoord.z += _ShadowBiasForTransmission[cascadeIndex].x;
+    //BIAS: Mimic the bias done in the shadow pass for proper distance calculation.
+    shadowCoord.z += _CascadeBiases[cascadeIndex].x;
     
+    //Calculate the distance traveled through the media.
     half d1 = SAMPLE_TEXTURE2D(_ShadowMap, Sampler_Linear_Clamp, shadowCoord.xyz);
     half d2 = shadowCoord.z;
+    half d  = abs(d1 - d2);
     
-    float  thickness = _ThicknessRemaps[_DiffusionProfile].x + _ThicknessRemaps[_DiffusionProfile].y * (abs(d1 - d2) * _Thickness);
-    float3 transmittance = ComputeTransmittanceJimenez(   _HalfRcpVariancesAndWeights[_DiffusionProfile][0].rgb,
-                                                          _HalfRcpVariancesAndWeights[_DiffusionProfile][0].a,
-                                                          _HalfRcpVariancesAndWeights[_DiffusionProfile][1].rgb,
-                                                          _HalfRcpVariancesAndWeights[_DiffusionProfile][1].a,
-                                                          _TransmissionTints[_DiffusionProfile].rgb,
-                                                          thickness);
+    float  thickness = _ThicknessRemap[_DiffusionProfile].x + _ThicknessRemap[_DiffusionProfile].y * (d * _Thickness);
+    float3 transmittance = ComputeTransmittanceJimenez(_HalfRcpVariancesAndWeights[_DiffusionProfile][0].rgb,
+                                                       _HalfRcpVariancesAndWeights[_DiffusionProfile][0].a,
+                                                       _HalfRcpVariancesAndWeights[_DiffusionProfile][1].rgb,
+                                                       _HalfRcpVariancesAndWeights[_DiffusionProfile][1].a,
+                                                       _TransmissionTint[_DiffusionProfile].rgb,
+                                                       thickness);
 
     float irradiance = max(0.3 + dot(-normalWS, light.direction), 0.0);
     return transmittance * irradiance * light.color * albedo;
@@ -626,7 +623,6 @@ half4 LightweightFragmentPBR(InputData inputData, half3 albedo, half metallic, h
     half3 color = GlobalIllumination      (brdfData, inputData.bakedGI, occlusion, inputData.normalWS, inputData.viewDirectionWS);
     color      += LightingPhysicallyBased (brdfData, mainLight, inputData.normalWS, inputData.viewDirectionWS);
     color      += Transmittance           (inputData.positionWS, inputData.normalWS, albedo, mainLight);
-    return half4(color ,1);
 
 #ifdef _ADDITIONAL_LIGHTS
     int pixelLightCount = GetPixelLightCount();

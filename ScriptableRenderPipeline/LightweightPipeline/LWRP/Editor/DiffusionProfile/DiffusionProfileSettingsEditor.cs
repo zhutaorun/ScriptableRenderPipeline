@@ -46,7 +46,6 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             internal SerializedProperty name;
             internal SerializedProperty transmissionTint;
             internal SerializedProperty thicknessRemap;
-            internal SerializedProperty worldScale;
             internal SerializedProperty scatterDistance1;
             internal SerializedProperty scatterDistance2;
             internal SerializedProperty lerpWeight;
@@ -100,7 +99,6 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
 
                     transmissionTint    = rp.Find(x => x.transmissionTint),
                     thicknessRemap      = rp.Find(x => x.thicknessRemap),
-                    worldScale          = rp.Find(x => x.worldScale),
                     scatterDistance1    = rp.Find(x => x.scatterDistance1),
                     scatterDistance2    = rp.Find(x => x.scatterDistance2),
                     lerpWeight          = rp.Find(x => x.lerpWeight)
@@ -155,8 +153,6 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
                         EditorGUILayout.PropertyField(profile.scatterDistance1, s_Styles.profileScatterDistance1);
                         EditorGUILayout.PropertyField(profile.scatterDistance2, s_Styles.profileScatterDistance2);
                         EditorGUILayout.PropertyField(profile.lerpWeight, s_Styles.profileLerpWeight);
-
-                        EditorGUILayout.PropertyField(profile.worldScale, s_Styles.profileWorldScale);
 
                         EditorGUILayout.Space();
                         EditorGUILayout.LabelField(s_Styles.TransmissionLabel, EditorStyles.boldLabel);

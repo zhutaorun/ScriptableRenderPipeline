@@ -31,7 +31,7 @@ Shader "Hidden/LightweightPipeline/PreintegratedScatter"
             //-------------------------------------------------------------------------------------
 
             float4 _StdDev1, _StdDev2;
-            float _LerpWeight, _MaxRadius; // See 'SubsurfaceScatteringParameters'
+            float _LerpWeight; // See 'SubsurfaceScatteringParameters'
 
             //-------------------------------------------------------------------------------------
             // Implementation
