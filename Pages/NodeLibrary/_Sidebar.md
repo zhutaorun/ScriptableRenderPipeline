@@ -54,6 +54,14 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Remap-Node">Remap</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Saturate-Node">Saturate</a><br>
 </details>
+<details><summary>Round</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Ceiling-Node">Ceiling</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Floor-Node">Floor</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Round-Node">Round</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sign-Node">Sign</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Step-Node">Step</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Truncate-Node">Truncate</a><br>
+</details>
 </details>
 <details><summary>Procedural</summary></details>
 <details><summary>Utility</summary></details>
