@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline.Internal
@@ -317,5 +318,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Internal
                 m_ReflectionProbesArray);
         }
         #endregion
+
+        public void QueryReflectionProbes(
+            List<ReflectionProbe> results,
+            bool enabled, 
+            ReflectionProbeMode mode)
+        {
+            results.Clear();
+            results.AddRange(m_ReflectionProbes.Where(
+                p => p.enabled == enabled
+                    && p.mode == mode));
+        }
+
+        public void QueryPlanarProbes(
+            List<PlanarReflectionProbe> results,
+            bool enabled, 
+            ReflectionProbeMode mode)
+        {
+            results.Clear();
+            results.AddRange(m_PlanarReflectionProbes.Where(
+                p => p.enabled == enabled
+                    && p.mode == mode));
+        }
     }
 }

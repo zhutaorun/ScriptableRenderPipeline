@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine.Experimental.Rendering.HDPipeline.Internal;
+using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -11,6 +14,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             get { return s_Instance.parameters; }
             set { s_Instance = new ReflectionSystemInternal(value, s_Instance); }
+        }
+
+        public static void QueryReflectionProbes(
+            List<ReflectionProbe> results,
+            bool enabled = true,
+            ReflectionProbeMode mode = ReflectionProbeMode.Realtime)
+        {
+            s_Instance.QueryReflectionProbes(results, enabled, mode);
+        }
+
+        public static void QueryPlanarProbes(
+            List<PlanarReflectionProbe> results,
+            bool enabled = true,
+            ReflectionProbeMode mode = ReflectionProbeMode.Realtime)
+        {
+            s_Instance.QueryPlanarProbes(results, enabled, mode);
         }
 
         public static void SetParameters(ReflectionSystemParameters parameters)

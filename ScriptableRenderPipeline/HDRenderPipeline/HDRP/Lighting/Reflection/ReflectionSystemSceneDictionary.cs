@@ -18,7 +18,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Dictionary<Object, int> m_ObjectIndex = new Dictionary<Object, int>();
         Dictionary<int, Object> m_IDIndex = new Dictionary<int, Object>();
 
-        public int GetIdFor(PlanarReflectionProbe probe)
+        public int GetIdFor(Object probe)
         {
             if (m_ObjectIndex.ContainsKey(probe))
                 return m_ObjectIndex[probe];

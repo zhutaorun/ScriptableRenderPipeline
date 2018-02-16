@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 using UnityEngine.Experimental.Rendering.HDPipeline.Internal;
 using UnityEngine.Rendering;
@@ -17,6 +18,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static int _Cubemap = Shader.PropertyToID("_Cubemap");
         const HideFlags k_ReflectionSystemDictionaryHideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector | HideFlags.DontSaveInBuild;
         static PlanarReflectionProbeBaker s_PlanarReflectionProbeBaker = new PlanarReflectionProbeBaker();
+        static ReflectionProbeBaker s_ReflectionProbeBaker = new ReflectionProbeBaker();
+
+        static List<ReflectionProbe> s_TmpReflectionProbeList = new List<ReflectionProbe>();
+        static List<PlanarReflectionProbe> s_TmpPlanarReflectionProbeList = new List<PlanarReflectionProbe>();
 
         public static bool IsCollidingWithOtherProbes(string targetPath, ReflectionProbe targetProbe, out ReflectionProbe collidingProbe)
         {
@@ -228,9 +233,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return true;
         }
 
-        static string GetBakePath(PlanarReflectionProbe probe)
+        static string GetBakePath(Component probe)
         {
-            var id = GetProbePersistentID(probe);
+            var id = GetComponentPersistentID(probe);
             if (id == -1)
                 return string.Empty;
 
@@ -255,7 +260,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return targetPath;
         }
 
-        static int GetProbePersistentID(PlanarReflectionProbe probe)
+        static int GetComponentPersistentID(Component probe)
         {
             var scene = probe.gameObject.scene;
             if (!scene.IsValid())
@@ -342,7 +347,157 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static void LightmappingOnBakeReflectionProbeRequest(Hash128 dependencyHash)
         {
-            Debug.Log("Bake: " + dependencyHash);
+            // Custom probe hashes should be handled here by the user
+            // var customProbeHash = CalculateCustomProbeHashes()
+            // dependencyHash = CombineHashes(dependencyHash, customProbeHash);
+
+            // Currently only one bounce is handled
+            // TODO: Use  UnityEngine.RenderSettings.reflectionBounces and handle bounces
+
+            ReflectionSystem.QueryReflectionProbes(
+                s_TmpReflectionProbeList,
+                mode: ReflectionProbeMode.Baked);
+            var reflectionProbeTargets = new RenderTexture[s_TmpReflectionProbeList.Count];
+            for (var i = 0; i < reflectionProbeTargets.Length; ++i)
+                reflectionProbeTargets[i] = s_ReflectionProbeBaker.NewRenderTarget(
+                    s_TmpReflectionProbeList[i], 
+                    ReflectionSystem.parameters.reflectionProbeSize
+                );
+            for (var i = 0; i < s_TmpReflectionProbeList.Count; ++i)
+                s_ReflectionProbeBaker.Render(s_TmpReflectionProbeList[i], reflectionProbeTargets[i]);
+
+
+            ReflectionSystem.QueryPlanarProbes(
+                s_TmpPlanarReflectionProbeList,
+                mode: ReflectionProbeMode.Baked);
+            var planarProbeTargets = new RenderTexture[s_TmpPlanarReflectionProbeList.Count];
+            for (var i = 0; i < planarProbeTargets.Length; ++i)
+                planarProbeTargets[i] = s_PlanarReflectionProbeBaker.NewRenderTarget(
+                    s_TmpPlanarReflectionProbeList[i], 
+                    ReflectionSystem.parameters.planarReflectionProbeSize
+                );
+            for (var i = 0; i < s_TmpPlanarReflectionProbeList.Count; ++i)
+                s_PlanarReflectionProbeBaker.Render(s_TmpPlanarReflectionProbeList[i], planarProbeTargets[i]);
+
+
+            AssetDatabase.StartAssetEditing();
+            for (var i = 0; i < reflectionProbeTargets.Length; i++)
+            {
+                var probe = s_TmpReflectionProbeList[i];
+                var bakedTexture = probe.bakedTexture;
+                var target = reflectionProbeTargets[i];
+
+                var assetPath = string.Empty;
+                if (bakedTexture != null)
+                    assetPath = AssetDatabase.GetAssetPath(bakedTexture);
+                if (string.IsNullOrEmpty(assetPath))
+                    assetPath = GetBakePath(probe);
+
+                var createAsset = false;
+
+                if (bakedTexture == null || string.IsNullOrEmpty(assetPath))
+                {
+                    bakedTexture = new Cubemap(target.width, GraphicsFormat.R16G16B16A16_SFloat, TextureCreationFlags.None);
+                    probe.bakedTexture = bakedTexture;
+                    createAsset = true;
+
+                    EditorUtility.SetDirty(probe);
+                }
+
+                for (var j = 0 ; j < 6; ++j)
+                    Graphics.CopyTexture(target, i, bakedTexture, i);
+
+                if (createAsset)
+                    AssetDatabase.CreateAsset(bakedTexture, assetPath);
+                else
+                    EditorUtility.SetDirty(bakedTexture);
+            }
+
+            for (var i = 0; i < planarProbeTargets.Length; i++)
+            {
+                var probe = s_TmpPlanarReflectionProbeList[i];
+                var bakedTexture = probe.bakedTexture;
+                var target = planarProbeTargets[i];
+
+                var assetPath = string.Empty;
+                if (bakedTexture != null)
+                    assetPath = AssetDatabase.GetAssetPath(bakedTexture);
+                if (string.IsNullOrEmpty(assetPath))
+                    assetPath = GetBakePath(probe);
+
+                var createAsset = false;
+
+                if (bakedTexture == null || string.IsNullOrEmpty(assetPath))
+                {
+                    bakedTexture = new Texture2D(target.width, target.height, GraphicsFormat.R16G16B16A16_SFloat, TextureCreationFlags.None);
+                    probe.bakedTexture = bakedTexture;
+                    createAsset = true;
+
+                    EditorUtility.SetDirty(probe);
+                }
+
+                Graphics.CopyTexture(target, 0, bakedTexture, 0);
+
+                if (createAsset)
+                    AssetDatabase.CreateAsset(bakedTexture, assetPath);
+                else
+                    EditorUtility.SetDirty(bakedTexture);
+            }
+            AssetDatabase.StopAssetEditing();
+            AssetDatabase.SaveAssets();
+
+
+            AssetDatabase.StartAssetEditing();
+            for (var i = 0; i < reflectionProbeTargets.Length; i++)
+            {
+                var probe = s_TmpReflectionProbeList[i];
+                var bakedTexture = probe.bakedTexture;
+                var path = AssetDatabase.GetAssetPath(bakedTexture);
+
+                var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+                if (importer != null)
+                {
+                    importer.alphaSource = TextureImporterAlphaSource.None;
+                    importer.sRGBTexture = false;
+                    importer.mipmapEnabled = false;
+
+                    var hdrp = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
+                    if (hdrp != null)
+                    {
+                        importer.textureCompression = hdrp.renderPipelineSettings.lightLoopSettings.reflectionCacheCompressed
+                            ? TextureImporterCompression.Compressed
+                            : TextureImporterCompression.Uncompressed;
+                    }
+
+                    importer.SaveAndReimport();
+                }
+            }
+
+            for (var i = 0; i < planarProbeTargets.Length; i++)
+            {
+                var probe = s_TmpPlanarReflectionProbeList[i];
+                var bakedTexture = probe.bakedTexture;
+                var path = AssetDatabase.GetAssetPath(bakedTexture);
+
+                var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+                if (importer != null)
+                {
+                    importer.alphaSource = TextureImporterAlphaSource.None;
+                    importer.sRGBTexture = false;
+                    importer.mipmapEnabled = false;
+
+                    var hdrp = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
+                    if (hdrp != null)
+                    {
+                        importer.textureCompression = hdrp.renderPipelineSettings.lightLoopSettings.planarReflectionCacheCompressed
+                            ? TextureImporterCompression.Compressed
+                            : TextureImporterCompression.Uncompressed;
+                    }
+
+                    importer.SaveAndReimport();
+                }
+            }
+            AssetDatabase.StopAssetEditing();
         }
 
         static void LightmappingOnBakeReflectionProbeRequestCancelled(Hash128 dependencyHash)
