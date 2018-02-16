@@ -48,6 +48,7 @@ namespace UnityEditor.Experimental.Rendering
             EditorGUILayout.PropertyField(d.reflectionCacheCompressed, _.GetContent("Compress Reflection Probe Cache"));
             EditorGUILayout.PropertyField(d.reflectionCubemapSize, _.GetContent("Reflection Cubemap Size"));
             EditorGUILayout.PropertyField(d.reflectionProbeCacheSize, _.GetContent("Probe Cache Size"));
+            EditorGUILayout.PropertyField(d.maxReflectionProbes, _.GetContent("Max Reflection Probes"));
 
             EditorGUILayout.Space();
 

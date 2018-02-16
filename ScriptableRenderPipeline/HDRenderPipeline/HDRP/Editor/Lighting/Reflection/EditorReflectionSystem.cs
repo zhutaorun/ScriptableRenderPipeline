@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Experimental.Rendering.HDPipeline.Internal;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
@@ -15,6 +16,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     {
         static int _Cubemap = Shader.PropertyToID("_Cubemap");
         const HideFlags k_ReflectionSystemDictionaryHideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector | HideFlags.DontSaveInBuild;
+        static PlanarReflectionProbeBaker s_PlanarReflectionProbeBaker = new PlanarReflectionProbeBaker();
 
         public static bool IsCollidingWithOtherProbes(string targetPath, ReflectionProbe targetProbe, out ReflectionProbe collidingProbe)
         {
@@ -109,14 +111,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public static bool BakePlanarReflectionProbe(PlanarReflectionProbe probe, string path)
         {
-            var rt = ReflectionSystem.NewRenderTarget(probe);
-            ReflectionSystem.Render(probe, rt);
+            var rt = s_PlanarReflectionProbeBaker.NewRenderTarget(probe, ReflectionSystem.parameters.planarReflectionProbeSize);
+            s_PlanarReflectionProbeBaker.Render(probe, rt);
+
             var target = new Texture2D(rt.width, rt.height, TextureFormat.RGBAHalf, false, true);
             var a = RenderTexture.active;
             RenderTexture.active = rt;
             target.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0, false);
             RenderTexture.active = a;
             rt.Release();
+
+            probe.bakedTexture = target;
 
             if (!WriteAndImportTexture(path, target))
                 return false;
@@ -165,7 +170,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public static bool BakeReflectionProbeSnapshot(PlanarReflectionProbe probe)
         {
-            var rt = ReflectionSystem.NewRenderTarget(probe);
+            var rt = s_PlanarReflectionProbeBaker.NewRenderTarget(probe, ReflectionSystem.parameters.planarReflectionProbeSize);
             var bakedTexture = probe.bakedTexture as Texture2D;
             var assetPath = string.Empty;
             if (bakedTexture != null)
@@ -181,7 +186,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 EditorUtility.SetDirty(probe);
             }
 
-            ReflectionSystem.Render(probe, rt);
+            s_PlanarReflectionProbeBaker.Render(probe, rt);
 
             var art = RenderTexture.active;
             RenderTexture.active = rt;
@@ -325,6 +330,24 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 importer.SaveAndReimport();
             }
             return true;
+        }
+
+        [InitializeOnLoadMethod]
+        static void Initialize()
+        {
+            RenderSettings.enableLegacyReflectionProbeSystem = false;
+            Lightmapping.BakeReflectionProbeRequest += LightmappingOnBakeReflectionProbeRequest;
+            Lightmapping.BakeReflectionProbeRequestCancelled += LightmappingOnBakeReflectionProbeRequestCancelled;
+        }
+
+        static void LightmappingOnBakeReflectionProbeRequest(Hash128 dependencyHash)
+        {
+            Debug.Log("Bake: " + dependencyHash);
+        }
+
+        static void LightmappingOnBakeReflectionProbeRequestCancelled(Hash128 dependencyHash)
+        {
+            Debug.Log("Cancel: " + dependencyHash);
         }
     }
 }

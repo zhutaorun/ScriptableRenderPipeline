@@ -11,6 +11,7 @@ namespace UnityEditor.Experimental.Rendering
         public SerializedProperty pointCookieSize;
         public SerializedProperty cubeCookieTexArraySize;
         public SerializedProperty reflectionProbeCacheSize;
+        public SerializedProperty maxReflectionProbes;
         public SerializedProperty reflectionCubemapSize;
         public SerializedProperty reflectionCacheCompressed;
         public SerializedProperty planarReflectionProbeCacheSize;
@@ -32,6 +33,7 @@ namespace UnityEditor.Experimental.Rendering
             reflectionProbeCacheSize = root.Find((GlobalLightLoopSettings s) => s.reflectionProbeCacheSize);
             reflectionCubemapSize = root.Find((GlobalLightLoopSettings s) => s.reflectionCubemapSize);
             reflectionCacheCompressed = root.Find((GlobalLightLoopSettings s) => s.reflectionCacheCompressed);
+            maxReflectionProbes = root.Find((GlobalLightLoopSettings s) => s.maxReflectionProbes);
 
             planarReflectionProbeCacheSize = root.Find((GlobalLightLoopSettings s) => s.planarReflectionProbeCacheSize);
             planarReflectionCubemapSize = root.Find((GlobalLightLoopSettings s) => s.planarReflectionTextureSize);

@@ -1,10 +1,17 @@
-﻿using UnityEngine.Experimental.Rendering.HDPipeline.Internal;
+﻿using System;
+using UnityEngine.Experimental.Rendering.HDPipeline.Internal;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     public static class ReflectionSystem
     {
         static ReflectionSystemInternal s_Instance = new ReflectionSystemInternal(ReflectionSystemParameters.Default, null);
+
+        public static ReflectionSystemParameters parameters
+        {
+            get { return s_Instance.parameters; }
+            set { s_Instance = new ReflectionSystemInternal(value, s_Instance); }
+        }
 
         public static void SetParameters(ReflectionSystemParameters parameters)
         {
@@ -31,11 +38,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             s_Instance.RenderAllRealtimeProbes(probeTypes);
         }
 
-        public static RenderTexture NewRenderTarget(PlanarReflectionProbe probe)
-        {
-            return s_Instance.NewRenderTarget(probe);
-        }
-
         public static void Render(PlanarReflectionProbe probe, RenderTexture target)
         {
             s_Instance.Render(probe, target);
@@ -59,6 +61,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 out aspect, out fov, out clearFlags, out backgroundColor,
                 out worldToCamera, out projection, out capturePosition, out captureRotation,
                 viewerCamera);
+        }
+
+        public static void UnregisterProbe(ReflectionProbe reflectionProbe)
+        {
+            s_Instance.RegisterProbe(reflectionProbe);
+        }
+
+        public static void RegisterProbe(ReflectionProbe reflectionProbe)
+        {
+            s_Instance.UnregisterProbe(reflectionProbe);
         }
 
         public static void CalculateCaptureCameraViewProj(PlanarReflectionProbe probe, out Matrix4x4 worldToCamera, out Matrix4x4 projection, out Vector3 capturePosition, out Quaternion captureRotation, Camera viewerCamera = null)

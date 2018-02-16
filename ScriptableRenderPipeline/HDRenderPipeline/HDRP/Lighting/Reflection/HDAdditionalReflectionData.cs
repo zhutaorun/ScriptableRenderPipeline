@@ -38,5 +38,43 @@ namespace UnityEngine.Experimental.Rendering
 
         public float sphereBlendRadiusOffset { get { return -blendDistancePositive.x; } }
         public float sphereBlendNormalRadiusOffset { get { return -blendNormalDistancePositive.x; } }
+
+        public BoundingSphere boundingSphere
+        {
+            get
+            {
+                switch (influenceShape)
+                {
+                    default:
+                    case ShapeType.Sphere:
+                        return new BoundingSphere(transform.TransformPoint(Vector3.zero), influenceSphereRadius);
+                    case ShapeType.Box:
+                    {
+                        var extents = GetComponent<ReflectionProbe>().bounds.extents;
+                        var position = transform.TransformPoint(boxBlendCenterOffset);
+                        var radius = Mathf.Max(extents.x, Mathf.Max(extents.y, extents.z));
+                        return new BoundingSphere(position, radius);
+                    }
+                }
+            }
+        }
+
+        void OnEnable()
+        {
+            ReflectionSystem.RegisterProbe(GetComponent<ReflectionProbe>());
+        }
+
+        void OnDisable()
+        {
+            ReflectionSystem.UnregisterProbe(GetComponent<ReflectionProbe>());
+        }
+
+        void OnValidate()
+        {
+            ReflectionSystem.UnregisterProbe(GetComponent<ReflectionProbe>());
+
+            if (isActiveAndEnabled)
+                ReflectionSystem.RegisterProbe(GetComponent<ReflectionProbe>());
+        }
     }
 }
