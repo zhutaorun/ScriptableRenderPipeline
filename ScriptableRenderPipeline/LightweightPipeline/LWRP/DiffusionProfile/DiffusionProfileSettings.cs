@@ -301,9 +301,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 filterKernels[n * neutralId + j]   = Vector4.one;
                 filterKernels[n * neutralId + j].w = 0f;
             }
-
-            //Apply changes 
-            //preintegratedScatterLUTs.();
         }
 
 		public void UpdateCache(int p)
@@ -340,7 +337,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             preintegration.SetVector(DiffusionProfileShaderIDs._StdDev2,    stdDev2);
             preintegration.SetFloat (DiffusionProfileShaderIDs._LerpWeight, profiles[p].lerpWeight);
 
-            CommandBuffer cmd = new CommandBuffer() { name = "BuildSSSLUT_" + p };
+            CommandBuffer cmd = new CommandBuffer() { name = "BuildLUT_" + p };
             cmd.Blit(null, preintegratedScatterRT, preintegration);
             preintegratedScatterLUTs.TransferToSlice(cmd, i, preintegratedScatterRT);
             Graphics.ExecuteCommandBuffer(cmd);
