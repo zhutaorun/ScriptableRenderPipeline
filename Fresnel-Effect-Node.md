@@ -1,6 +1,6 @@
 ## Description
 
-**Fresnel Effect** is the effect of differing reflectance on a surface depending on viewing angle, where as you approach the grazing angle more light is reflected. The **Fresnel Effect** node calculates this by the angle between the surface normal and the view direction. The wider this angle is, the greater the return value will be. This effect is often used to achieve rim lighting, common in many art styles.
+**Fresnel Effect** is the effect of differing reflectance on a surface depending on viewing angle, where as you approach the grazing angle more light is reflected. The **Fresnel Effect** node approximates this by calculating the angle between the surface normal and the view direction. The wider this angle is, the greater the return value will be. This effect is often used to achieve rim lighting, common in many art styles.
 
 ## Ports
 
