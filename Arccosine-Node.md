@@ -11,4 +11,4 @@ Returns the arccosine of each component the input **In** as a vector of equal le
 
 ## Shader Function
 
-`Out = arccos(In)`
+`Out = acos(In)`
