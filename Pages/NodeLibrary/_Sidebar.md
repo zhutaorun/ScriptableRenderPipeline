@@ -38,6 +38,12 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Lerp-Node">Lerp</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Smoothstep-Node">Smoothstep</a><br>
 </details>
+<details><summary>Matrix</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-Construction-Node">Matrix Construction</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-Determinant-Node">Matrix Determinant</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-Split-Node">Matrix Split</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-Transpose-Node">Matrix Transpose</a><br>
+</details>
 <details><summary>Range</summary>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Clamp-Node">Clamp</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Fraction-Node">Fraction</a><br>
