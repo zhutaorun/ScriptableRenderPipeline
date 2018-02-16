@@ -109,6 +109,29 @@
     </tr>
 </table>
 
+## Matrix
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-Construction-Node">Matrix Construction</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-Construction-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/MatrixConstructionNodeThumb.png" alt="Matrix Construction Node" height="350" width="350"></a></p>
+<p align="left">Constructs square matrices from the four input vectors M0, M1, M2 and M3.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-Determinant-Node">Matrix Determinant</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-Determinant-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/MatrixDeterminantNodeThumb.png" alt="Matrix Determinant Node" height="350" width="350"></a></p>
+<p align="left">Returns the determinant of the matrix defined by input In.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-Split-Node">Matrix Split</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-Split-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/MatrixSplitNodeThumb.png" alt="Matrix Split Node" height="350" width="350"></a></p>
+<p align="left">Splits a square matrix defined by input In into vectors.</p></td>
+    </tr>
+<tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-Transpose-Node">Matrix Transpose</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-Transpose-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/MatrixTransposeNodeThumb.png" alt="Matrix Transpose Node" height="350" width="350"></a></p>
+<p align="left">Returns the transposed value of the matrix defined by input In.</p></td>
+    </tr>
+</table>
+
 ## Range
 
 <table align="center">
