@@ -247,3 +247,37 @@
 <p align="left">Returns the tangent of the value of input In.</p></td>
     </tr>
 </table>
+
+## Vector
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Cross-Product-Node">Cross Product</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Cross-Product-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/CrossProductNodeThumb.png" alt="Cross Product Node" height="350" width="350"></a></p>
+<p align="left">Returns the cross product of the values of the inputs A and B.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Distance-Node">Distance</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Distance-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/DistanceNodeThumb.png" alt="Distance Node" height="350" width="350"></a></p>
+<p align="left">Returns the euclidean distance between the values of the inputs A and B.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Dot-Product-Node">Dot Product</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Dot-Product-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/DotProductNodeThumb.png" alt="Dot Product Node" height="350" width="350"></a></p>
+<p align="left">Returns the dot product, or scalar product, of the values of the inputs A and B.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Fresnel-Effect-Node">Fresnel Effect</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Fresnel-Effect-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/FresnelEffectNodeThumb.png" alt="Fresnel Effect Node" height="350" width="350"></a></p>
+<p align="left">Fresnel Effect is the effect of differing reflectance on a surface depending on viewing angle, where as you approach the grazing angle more light is reflected.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Projection-Node">Projection</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Projection-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ProjectionNodeThumb.png" alt="Projection Node" height="350" width="350"></a></p>
+<p align="left">Returns the result of projecting the value of input A onto a straight line parallel to the value of input B.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Rejection-Node">Rejection</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Rejection-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/RejectionNodeThumb.png" alt="Rejection Node" height="350" width="350"></a></p>
+<p align="left">Returns the result of the projection of the value of input A onto the plane orthogonal, or perpendicular, to the value of input B.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Transform-Node">Transform</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Transform-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/TransformNodeThumb.png" alt="Transform Node" height="350" width="350"></a></p>
+<p align="left">Returns the result of transforming the value of input In from one coordinate space to another.</p></td>
+    </tr>
+</table>
