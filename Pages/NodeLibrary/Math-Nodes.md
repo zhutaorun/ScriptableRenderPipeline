@@ -166,3 +166,32 @@
 <p align="left">Returns the value of input In clamped between 0 and 1.</p></td>
     </tr>
 </table>
+
+## Round
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Ceiling-Node">Ceiling</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Ceiling-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/CeilingNodeThumb.png" alt="Ceiling Node" height="350" width="350"></a></p>
+<p align="left">Returns the smallest integer value, or whole number, that is greater than or equal to the value of input In.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Floor-Node">Floor</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Floor-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/FloorNodeThumb.png" alt="Floor Node" height="350" width="350"></a></p>
+<p align="left">Returns the largest integer value, or whole number, that is less than or equal to the value of input In.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Round-Node">Round</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Round-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/RoundNodeThumb.png" alt="Round Node" height="350" width="350"></a></p>
+<p align="left">Returns the value of input In rounded to the nearest integer, or whole number.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sign-Node">Sign</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sign-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/SignNodeThumb.png" alt="Sign Node" height="350" width="350"></a></p>
+<p align="left">Returns -1 if the value of input In is less than zero, 0 if equal to zero and 1 if greater than zero.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Step-Node">Step</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Step-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/StepNodeThumb.png" alt="Step Node" height="350" width="350"></a></p>
+<p align="left">Returns 1 if the value of input In is greater than or equal to the value of input Edge, otherwise returns 0.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Truncate-Node">Truncate</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Truncate-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/TruncateNodeThumb.png" alt="Truncate Node" height="350" width="350"></a></p>
+<p align="left">Returns the integer, or whole number, component of the value of input In.</p></td>
+    </tr>
+</table>
