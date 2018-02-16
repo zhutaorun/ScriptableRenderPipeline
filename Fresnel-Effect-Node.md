@@ -8,8 +8,8 @@ Returns the dot product, or scalar product, of the values of the inputs **A** an
 
 | Name        | Direction           | Type  | Description |
 |:------------ |:-------------|:-----|:---|
-| A      | Input | Dynamic Vector | First input value |
-| B      | Input | Dynamic Vector | Second input value |
+| Normal      | Input | Vector 3 | First input value |
+| View Dir      | Input | Vector 3 | Second input value |
 | Out | Output      |   Vector 1 | Output value |
 
 ## Shader Function
