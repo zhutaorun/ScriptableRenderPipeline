@@ -62,6 +62,20 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Step-Node">Step</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Truncate-Node">Truncate</a><br>
 </details>
+<details><summary>Trigonometry</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Arccosine-Node">Arccosine</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Arcsine-Node">Arcsine</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Arctangent-Node">Arctangent</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Arctangent2-Node">Arctangent2</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Cosine-Node">Cosine</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Degrees-To-Radians-Node">Degrees To Radians</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Hyperbolic-Cosine-Node">Hyperbolic Cosine</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Hyperbolic-Sine-Node">Hyperbolic Sine</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Hyperbolic-Tangent-Node">Hyperbolic Tangent</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Radians-To-Degrees-Node">Radians To Degrees</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sine-Node">Sine</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Tangent-Node">Tangent</a><br>
+</details>
 </details>
 <details><summary>Procedural</summary></details>
 <details><summary>Utility</summary></details>
