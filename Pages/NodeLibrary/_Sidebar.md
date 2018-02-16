@@ -76,6 +76,15 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sine-Node">Sine</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Tangent-Node">Tangent</a><br>
 </details>
+<details><summary>Vector</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Cross-Product-Node">Cross Product</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Distance-Node">Distance</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Dot-Product-Node">Dot Product</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Fresnel-Effect-Node">Fresnel Effect</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Projection-Node">Projection</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Rejection-Node">Rejection</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Transform-Node">Transform</a><br>
+</details>
 </details>
 <details><summary>Procedural</summary></details>
 <details><summary>Utility</summary></details>
