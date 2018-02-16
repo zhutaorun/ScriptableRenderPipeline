@@ -11,4 +11,4 @@ Returns the arcsine of each component the input **In** as a vector of equal leng
 
 ## Shader Function
 
-`Out = arcsin(In)`
+`Out = asin(In)`
