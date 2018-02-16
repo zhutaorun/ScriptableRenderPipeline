@@ -195,3 +195,55 @@
 <p align="left">Returns the integer, or whole number, component of the value of input In.</p></td>
     </tr>
 </table>
+
+## Trigonometry
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Arccosine-Node">Arccosine</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Arccosine-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ArccosineNodeThumb.png" alt="Arccosine Node" height="350" width="350"></a></p>
+<p align="left">Returns the arccosine of each component the input In as a vector of equal length.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Arcsine-Node">Arcsine</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Arcsine-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ArcsineNodeThumb.png" alt="Arcsine Node" height="350" width="350"></a></p>
+<p align="left">Returns the arcsine of each component the input In as a vector of equal length.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Arctangent-Node">Arctangent</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Arctangent-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ArctangentNodeThumb.png" alt="Arctangent Node" height="350" width="350"></a></p>
+<p align="left">Returns the arctangent of the value of input In. Each component should be within the range of -Pi/2 to Pi/2.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Arctangent2-Node">Arctangent2</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Arctangent2-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/Arctangent2NodeThumb.png" alt="Arctangent2 Node" height="350" width="350"></a></p>
+<p align="left">Returns the arctangent of the values of both input A and input B.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Cosine-Node">Cosine</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Cosine-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/CosineNodeThumb.png" alt="Cosine Node" height="350" width="350"></a></p>
+<p align="left">Returns the cosine of the value of input In.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Degrees-To-Radians-Node">Degrees To Radians</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Degrees-To-Radians-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/DegreesToRadiansNodeThumb.png" alt="Degrees To Radians Node" height="350" width="350"></a></p>
+<p align="left">Returns the value of input In converted from degrees to radians.</p></td>
+    </tr>    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Hyperbolic-Cosine-Node">Hyperbolic Cosine</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Hyperbolic-Cosine-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/HyperbolicCosineNodeThumb.png" alt="Hyperbolic Cosine Node" height="350" width="350"></a></p>
+<p align="left">Returns the hyperbolic cosine of input In.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Hyperbolic-Sine-Node">Hyperbolic Sine</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Hyperbolic-Sine-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/HyperbolicSineNodeThumb.png" alt="Hyperbolic Sine Node" height="350" width="350"></a></p>
+<p align="left">Returns the hyperbolic sine of input In.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Hyperbolic-Tangent-Node">Hyperbolic Tangent</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Hyperbolic-Tangent-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/HyperbolicTangentNodeThumb.png" alt="Hyperbolic Tangent Node" height="350" width="350"></a></p>
+<p align="left">Returns the hyperbolic tangent of input In.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Radians-To-Degrees-Node">Radians To Degrees</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Radians-To-Degrees-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/RadiansToDegreesNodeThumb.png" alt="Radians To Degrees Node" height="350" width="350"></a></p>
+<p align="left">Returns the value of input In converted from radians to degrees.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sine-Node">Sine</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sine-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/SineNodeThumb.png" alt="Sine Node" height="350" width="350"></a></p>
+<p align="left">Returns the sine of the value of input In.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Tangent-Node">Tangent</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Tangent-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/TangentNodeThumb.png" alt="Tangent Node" height="350" width="350"></a></p>
+<p align="left">Returns the tangent of the value of input In.</p></td>
+    </tr>
+</table>
