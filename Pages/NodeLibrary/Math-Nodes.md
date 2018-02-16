@@ -124,8 +124,6 @@
         <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-Split-Node">Matrix Split</a></b></p>
 <p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-Split-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/MatrixSplitNodeThumb.png" alt="Matrix Split Node" height="350" width="350"></a></p>
 <p align="left">Splits a square matrix defined by input In into vectors.</p></td>
-    </tr>
-<tr><tr valign="top">
         <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-Transpose-Node">Matrix Transpose</a></b></p>
 <p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-Transpose-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/MatrixTransposeNodeThumb.png" alt="Matrix Transpose Node" height="350" width="350"></a></p>
 <p align="left">Returns the transposed value of the matrix defined by input In.</p></td>
