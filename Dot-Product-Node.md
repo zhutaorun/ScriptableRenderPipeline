@@ -1,6 +1,10 @@
 ## Description
 
-Returns the dot product, or scalar product, of the values of the inputs **A** and **B**. This is the product of the magnitudes, or lengths, of the two vectors and the cosine of the angle between them. This is useful for calculating the angle between two vectors and is commonly used in lighting calculations. 
+Returns the dot product, or scalar product, of the values of the inputs **A** and **B**. 
+
+The dot product is a value equal to the magnitudes of the two vectors multiplied together and then multiplied by the cosine of the angle between them.
+
+For normalized input vectors the **Dot Product** node returns 1 if they point in exactly the same direction, -1 if they point in completely opposite directions and zero if the vectors are perpendicular.
 
 ## Ports
 
