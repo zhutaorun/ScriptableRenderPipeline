@@ -26,9 +26,9 @@ UV data is typically in the range of 0 to 1 starting from the bottom left of UV 
 ## Shader Function
 
 ```
-Tile = fmod(Tile, Width * Height)
-float2 tileCount = float2(1.0, 1.0) / float2(Width, Height)
-float tileY = abs(Invert.y * Height - (floor(Tile * tileCount.x) + Invert.y * 1))
-float tileX = abs(Invert.x * Width - ((Tile - Width * floor(Tile * tileCount.x)) + Invert.x * 1))
-Out = (UV + float2(tileX, tileY)) * tileCount
+Tile = fmod(Tile, Width * Height);
+float2 tileCount = float2(1.0, 1.0) / float2(Width, Height);
+float tileY = abs(Invert.y * Height - (floor(Tile * tileCount.x) + Invert.y * 1));
+float tileX = abs(Invert.x * Width - ((Tile - Width * floor(Tile * tileCount.x)) + Invert.x * 1));
+Out = (UV + float2(tileX, tileY)) * tileCount;
 ```
