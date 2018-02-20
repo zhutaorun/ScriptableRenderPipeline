@@ -20,7 +20,7 @@
 <p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Spherize-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/SpherizeNodeThumb.png" alt="Spherize Node" height="350" width="350"></a></p>
 <p align="left">Applies a spherical warping effect similar to a fisheye camera lens to the value of input UV. </p></td>
         <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Tiling-And-Offset-Node">Tiling And Offset</a></b></p>
-<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Tiling-And-Offset-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/TilingToOffsetNodeThumb.png" alt="Tiling And Offset Node" height="350" width="350"></a></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Tiling-And-Offset-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/TilingAndOffsetNodeThumb.png" alt="Tiling And Offset Node" height="350" width="350"></a></p>
 <p align="left">Tiles and offsets the value of input UV by the inputs Tiling and Offset respectively.</p></td>
     </tr>
     <tr><tr valign="top">
