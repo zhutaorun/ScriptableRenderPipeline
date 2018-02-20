@@ -40,8 +40,7 @@ void Frag(PackedVaryingsToPS packedInput,
     FragInputs input = UnpackVaryingsMeshToFragInputs(packedInput.vmesh);
 
     // input.positionSS is SV_Position
-    PositionInputs posInput = GetPositionInput(input.positionSS.xy, _ScreenSize.zw, uint2(input.positionSS.xy) / GetTileSize());
-    UpdatePositionInput(input.positionSS.z, input.positionSS.w, input.positionWS, posInput);
+    PositionInputs posInput = GetPositionInput(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionWS.xyz, uint2(input.positionSS.xy) / GetTileSize());
 
 #ifdef VARYINGS_NEED_POSITION_WS
     float3 V = GetWorldSpaceNormalizeViewDir(input.positionWS);
@@ -52,6 +51,10 @@ void Frag(PackedVaryingsToPS packedInput,
     SurfaceData surfaceData;
     BuiltinData builtinData;
     GetSurfaceAndBuiltinData(input, V, posInput, surfaceData, builtinData);
+
+#ifdef DEBUG_DISPLAY
+    ApplyDebugToSurfaceData(input.worldToTangent, surfaceData);
+#endif
 
     BSDFData bsdfData = ConvertSurfaceDataToBSDFData(surfaceData);
 
@@ -79,7 +82,7 @@ void Frag(PackedVaryingsToPS packedInput,
         LightLoop(V, posInput, preLightData, bsdfData, bakeLightingData, featureFlags, diffuseLighting, specularLighting);
 
 #ifdef OUTPUT_SPLIT_LIGHTING
-        if (_EnableSubsurfaceScattering != 0 && PixelHasSubsurfaceScattering(bsdfData))
+        if (_EnableSubsurfaceScattering != 0 && ShouldOutputSplitLighting(bsdfData))
         {
             outColor = float4(specularLighting, 1.0);
             outDiffuseLighting = float4(TagLightingForSSS(diffuseLighting), 1.0);

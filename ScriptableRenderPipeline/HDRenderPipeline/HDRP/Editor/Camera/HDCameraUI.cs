@@ -29,7 +29,9 @@ namespace UnityEditor.Experimental.Rendering
         public static readonly CED.IDrawer[] Inspector = null;
 
         public static readonly CED.IDrawer SectionPrimarySettings = CED.Group(
-            CED.Action(Drawer_FieldBackgroundColor),
+            CED.Action(Drawer_FieldClearColorMode),
+            CED.Action(Drawer_FieldBackgroundColorHDR),
+            CED.Action(Drawer_FieldClearDepth),
             CED.Action(Drawer_FieldCullingMask),
             CED.Action(Drawer_FieldVolumeLayerMask),
             CED.space,
@@ -44,14 +46,14 @@ namespace UnityEditor.Experimental.Rendering
         public static readonly CED.IDrawer SectionCaptureSettings = CED.FoldoutGroup(
             "Capture Settings",
             (s, p, o) => s.isSectionExpandedCaptureSettings,
-            true,
+            FoldoutOption.Indent,
             CED.Action(Drawer_FieldOcclusionCulling),
             CED.Action(Drawer_FieldNormalizedViewPort));
 
         public static readonly CED.IDrawer SectionOutputSettings = CED.FoldoutGroup(
             "Output Settings",
             (s, p, o) => s.isSectionExpandedOutputSettings,
-            true,
+            FoldoutOption.Indent,
 #if ENABLE_MULTIPLE_DISPLAYS
             CED.Action(Drawer_SectionMultiDisplay),
 #endif
@@ -60,17 +62,17 @@ namespace UnityEditor.Experimental.Rendering
 
         public static readonly CED.IDrawer SectionXRSettings = CED.FadeGroup(
             (s, d, o, i) => s.isSectionAvailableXRSettings,
-            false,
+            FadeOption.None,
             CED.FoldoutGroup(
                 "XR Settings",
                 (s, p, o) => s.isSectionExpandedXRSettings,
-                true,
+                FoldoutOption.Indent,
                 CED.Action(Drawer_FieldVR),
                 CED.Action(Drawer_FieldTargetEye)));
 
         public static readonly CED.IDrawer SectionRenderLoopSettings = CED.FadeGroup(
             (s, d, o, i) => s.isSectionAvailableRenderLoopSettings,
-            false,
+            FadeOption.None,
             CED.Select(
                 (s, d, o) => s.frameSettingsUI,
                 (s, d, o) => d.frameSettings,
@@ -132,9 +134,9 @@ namespace UnityEditor.Experimental.Rendering
             frameSettingsUI.Update();
         }
 
-        static void Drawer_FieldBackgroundColor(HDCameraUI s, SerializedHDCamera p, Editor owner)
+        static void Drawer_FieldBackgroundColorHDR(HDCameraUI s, SerializedHDCamera p, Editor owner)
         {
-            EditorGUILayout.PropertyField(p.backgroundColor, _.GetContent("Background Color|The Camera clears the screen to this color before rendering."));
+            EditorGUILayout.PropertyField(p.backgroundColorHDR, _.GetContent("Background Color|The BackgroundColor used to clear the screen when selecting BackgrounColor before rendering."));
         }
 
         static void Drawer_FieldVolumeLayerMask(HDCameraUI s, SerializedHDCamera p, Editor owner)
@@ -168,16 +170,10 @@ namespace UnityEditor.Experimental.Rendering
 
         static void Drawer_FieldClippingPlanes(HDCameraUI s, SerializedHDCamera p, Editor owner)
         {
-            GUILayout.BeginHorizontal();
-            EditorGUILayout.PrefixLabel(_.GetContent("Clipping Planes"));
-            GUILayout.BeginVertical();
-            var labelWidth = EditorGUIUtility.labelWidth;
-            EditorGUIUtility.labelWidth = 45;
-            EditorGUILayout.PropertyField(p.nearClippingPlane, _.GetContent("Near|The closest point relative to the camera that drawing will occur."));
-            EditorGUILayout.PropertyField(p.farClippingPlane, _.GetContent("Far|The furthest point relative to the camera that drawing will occur.\n"));
-            GUILayout.EndVertical();
-            GUILayout.EndHorizontal();
-            EditorGUIUtility.labelWidth = labelWidth;
+            _.DrawMultipleFields(
+                "Clipping Planes",
+                new[] { p.nearClippingPlane, p.farClippingPlane },
+                new[] { _.GetContent("Near|The closest point relative to the camera that drawing will occur."), _.GetContent("Far|The furthest point relative to the camera that drawing will occur.\n") });
         }
 
         static void Drawer_FieldNormalizedViewPort(HDCameraUI s, SerializedHDCamera p, Editor owner)
@@ -190,9 +186,19 @@ namespace UnityEditor.Experimental.Rendering
             EditorGUILayout.PropertyField(p.depth, _.GetContent("Depth"));
         }
 
+        static void Drawer_FieldClearColorMode(HDCameraUI s, SerializedHDCamera p, Editor owner)
+        {
+            EditorGUILayout.PropertyField(p.clearColorMode, _.GetContent("Clear Mode|The Camera clears the screen to selected mode."));
+        }
+
         static void Drawer_FieldRenderingPath(HDCameraUI s, SerializedHDCamera p, Editor owner)
         {
             EditorGUILayout.PropertyField(p.renderingPath, _.GetContent("Rendering Path"));
+        }
+
+        static void Drawer_FieldClearDepth(HDCameraUI s, SerializedHDCamera p, Editor owner)
+        {
+            EditorGUILayout.PropertyField(p.clearDepth, _.GetContent("ClearDepth|The Camera clears the depth buffer before rendering."));
         }
 
         static void Drawer_FieldRenderTarget(HDCameraUI s, SerializedHDCamera p, Editor owner)

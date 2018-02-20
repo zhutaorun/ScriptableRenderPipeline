@@ -28,38 +28,42 @@ namespace UnityEditor.Experimental.Rendering
         public static CED.IDrawer SectionRenderingPasses = CED.FoldoutGroup(
             "Rendering Passes",
             (s, p, o) => s.isSectionExpandedRenderingPasses,
-            true,
-            CED.Action(Drawer_SectionRenderingPasses));
+            FoldoutOption.Indent,
+            CED.LabelWidth(200, CED.Action(Drawer_SectionRenderingPasses))
+            );
 
         public static CED.IDrawer SectionRenderingSettings = CED.FoldoutGroup(
             "Rendering Settings",
             (s, p, o) => s.isSectionExpandedRenderingSettings,
-            true,
-            CED.Action(Drawer_FieldForwardRenderingOnly),
-            CED.FadeGroup(
-                (s, d, o, i) => s.isSectionExpandedUseForwardOnly,
-                false,
-                CED.Action(Drawer_FieldUseDepthPrepassWithDefferedRendering),
+            FoldoutOption.Indent,
+            CED.LabelWidth(300,
+                CED.Action(Drawer_FieldForwardRenderingOnly),
                 CED.FadeGroup(
-                    (s, d, o, i) => s.isSectionExpandedUseDepthPrepass,
-                    true,
-                    CED.Action(Drawer_FieldRenderAlphaTestOnlyInDeferredPrepass))),
-            CED.Action(Drawer_SectionOtherRenderingSettings));
+                    (s, d, o, i) => s.isSectionExpandedUseForwardOnly,
+                    FadeOption.None,
+                    CED.Action(Drawer_FieldUseDepthPrepassWithDefferedRendering),
+                    CED.FadeGroup(
+                        (s, d, o, i) => s.isSectionExpandedUseDepthPrepass,
+                        FadeOption.Indent,
+                        CED.Action(Drawer_FieldRenderAlphaTestOnlyInDeferredPrepass))),
+                CED.Action(Drawer_SectionOtherRenderingSettings)
+            )
+        );
 
         public static CED.IDrawer SectionXRSettings = CED.FadeGroup(
             (s, d, o, i) => s.isSectionExpandedXRSupported,
-            false,
+            FadeOption.None,
             CED.FoldoutGroup(
                 "XR Settings",
                 (s, p, o) => s.isSectionExpandedXRSettings,
-                true,
-                CED.Action(Drawer_FieldStereoEnabled)));
+                FoldoutOption.Indent,
+                CED.LabelWidth(200, CED.Action(Drawer_FieldStereoEnabled))));
 
         public static CED.IDrawer SectionLightingSettings = CED.FoldoutGroup(
             "Lighting Settings",
             (s, p, o) => s.isSectionExpandedLightingSettings,
-            true,
-            CED.Action(Drawer_SectionLightingSettings));
+            FoldoutOption.Indent,
+            CED.LabelWidth(250, CED.Action(Drawer_SectionLightingSettings)));
 
         public AnimBool isSectionExpandedRenderingPasses { get { return m_AnimBools[0]; } }
         public AnimBool isSectionExpandedLightingSettings { get { return m_AnimBools[1]; } }

@@ -60,6 +60,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_GgxIblSampleData.autoGenerateMips = false;
                 m_GgxIblSampleData.enableRandomWrite = true;
                 m_GgxIblSampleData.filterMode = FilterMode.Point;
+                m_GgxIblSampleData.name = CoreUtils.GetRenderTargetAutoName(m_GgxIblMaxSampleCount, k_GgxIblMipCountMinusOne, RenderTextureFormat.ARGBHalf, "GGXIblSampleData");
                 m_GgxIblSampleData.Create();
 
                 m_ComputeGgxIblSampleDataCS.SetTexture(m_ComputeGgxIblSampleDataKernel, "output", m_GgxIblSampleData);
@@ -132,6 +133,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_GgxConvolveMaterial.DisableKeyword("USE_MIS");
 
             FilterCubemapCommon(cmd, source, target, m_faceWorldToViewMatrixMatrices);
+        }
+
+        public void FilterPlanarTexture(CommandBuffer cmd, Texture source, RenderTexture target)
+        {
+            // TODO: planar convolution
+            cmd.CopyTexture(source, 0, 0, target, 0, 0);
         }
 
         // Filters MIP map levels (other than 0) with GGX using multiple importance sampling.

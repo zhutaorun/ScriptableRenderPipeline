@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Rendering;
@@ -47,6 +47,7 @@ namespace UnityEngine.Experimental.Rendering
 
         public const int editMenuPriority1 = 320;
         public const int editMenuPriority2 = 331;
+        public const int editMenuPriority3 = 342;
         public const int assetCreateMenuPriority1 = 230;
         public const int assetCreateMenuPriority2 = 241;
         public const int gameObjectMenuPriority = 10;
@@ -102,13 +103,33 @@ namespace UnityEngine.Experimental.Rendering
             }
         }
 
+        static RenderTexture m_EmptyUAV;
+        public static RenderTexture emptyUAV
+        {
+            get
+            {
+                if(m_EmptyUAV == null)
+                {
+                    m_EmptyUAV = new RenderTexture(1, 1, 0);
+                    m_EmptyUAV.enableRandomWrite = true;
+                    m_EmptyUAV.Create();
+                }
+
+                return m_EmptyUAV;
+            }
+        }
+
+        public static void ClearRenderTarget(CommandBuffer cmd, ClearFlag clearFlag, Color clearColor)
+        {
+            if (clearFlag != ClearFlag.None)
+                cmd.ClearRenderTarget((clearFlag & ClearFlag.Depth) != 0, (clearFlag & ClearFlag.Color) != 0, clearColor);
+        }
+
         // Render Target Management.
         public static void SetRenderTarget(CommandBuffer cmd, RenderTargetIdentifier buffer, ClearFlag clearFlag, Color clearColor, int miplevel = 0, CubemapFace cubemapFace = CubemapFace.Unknown, int depthSlice = 0)
         {
             cmd.SetRenderTarget(buffer, miplevel, cubemapFace, depthSlice);
-
-            if (clearFlag != ClearFlag.None)
-                cmd.ClearRenderTarget((clearFlag & ClearFlag.Depth) != 0, (clearFlag & ClearFlag.Color) != 0, clearColor);
+            ClearRenderTarget(cmd, clearFlag, clearColor);
         }
 
         public static void SetRenderTarget(CommandBuffer cmd, RenderTargetIdentifier buffer, ClearFlag clearFlag = ClearFlag.None, int miplevel = 0, CubemapFace cubemapFace = CubemapFace.Unknown, int depthSlice = 0)
@@ -129,9 +150,7 @@ namespace UnityEngine.Experimental.Rendering
         public static void SetRenderTarget(CommandBuffer cmd, RenderTargetIdentifier colorBuffer, RenderTargetIdentifier depthBuffer, ClearFlag clearFlag, Color clearColor, int miplevel = 0, CubemapFace cubemapFace = CubemapFace.Unknown, int depthSlice = 0)
         {
             cmd.SetRenderTarget(colorBuffer, depthBuffer, miplevel, cubemapFace, depthSlice);
-
-            if (clearFlag != ClearFlag.None)
-                cmd.ClearRenderTarget((clearFlag & ClearFlag.Depth) != 0, (clearFlag & ClearFlag.Color) != 0, clearColor);
+            ClearRenderTarget(cmd, clearFlag, clearColor);
         }
 
         public static void SetRenderTarget(CommandBuffer cmd, RenderTargetIdentifier[] colorBuffers, RenderTargetIdentifier depthBuffer)
@@ -147,46 +166,20 @@ namespace UnityEngine.Experimental.Rendering
         public static void SetRenderTarget(CommandBuffer cmd, RenderTargetIdentifier[] colorBuffers, RenderTargetIdentifier depthBuffer, ClearFlag clearFlag, Color clearColor)
         {
             cmd.SetRenderTarget(colorBuffers, depthBuffer);
-
-            if (clearFlag != ClearFlag.None)
-                cmd.ClearRenderTarget((clearFlag & ClearFlag.Depth) != 0, (clearFlag & ClearFlag.Color) != 0, clearColor);
+            ClearRenderTarget(cmd, clearFlag, clearColor);
         }
 
-        public static RenderTexture CreateRenderTexture(RenderTextureDescriptor baseDesc, int depthBufferBits, RenderTextureFormat format,
-                                                        RenderTextureReadWrite readWrite = RenderTextureReadWrite.Default)
+        public static string GetRenderTargetAutoName(int width, int height, RenderTextureFormat format, string name = "", bool mips = false, bool enableMSAA = false, MSAASamples msaaSamples = MSAASamples.None)
         {
-            baseDesc.depthBufferBits = depthBufferBits;
-            baseDesc.colorFormat = format;
-            baseDesc.sRGB = (readWrite != RenderTextureReadWrite.Linear);
-            // TODO: Explicit MSAA support will come in later
+            string temp;
+            if (enableMSAA)
+                temp = string.Format("{0}x{1}_{2}{3}_{4}", width, height, format, mips ? "_Mips"  : "", msaaSamples.ToString());
+            else
+                temp = string.Format("{0}x{1}_{2}{3}", width, height, format, mips ? "_Mips" : "");
 
-            return new RenderTexture(baseDesc);
-        }
+            temp = String.Format("{0}_{1}", name == "" ? "RenderTarget" : name, temp);
 
-        public static void CreateCmdTemporaryRT(CommandBuffer cmd, int nameID, RenderTextureDescriptor baseDesc,
-            int depthBufferBits, FilterMode filter, RenderTextureFormat format,
-            RenderTextureReadWrite readWrite = RenderTextureReadWrite.Default, int msaaSamples = 1, bool enableRandomWrite = false)
-        {
-            UpdateRenderTextureDescriptor(ref baseDesc, depthBufferBits, format, readWrite, msaaSamples, enableRandomWrite);
-
-            cmd.GetTemporaryRT(nameID, baseDesc, filter);
-        }
-
-        public static void UpdateRenderTextureDescriptor(ref RenderTextureDescriptor baseDesc, int depthBufferBits, RenderTextureFormat format, RenderTextureReadWrite readWrite, int msaaSamples, bool enableRandomWrite)
-        {
-            baseDesc.depthBufferBits = depthBufferBits;
-            baseDesc.colorFormat = format;
-            baseDesc.sRGB = (readWrite != RenderTextureReadWrite.Linear);
-            baseDesc.msaaSamples = msaaSamples;
-            baseDesc.enableRandomWrite = enableRandomWrite;
-        }
-
-        public static void ClearCubemap(CommandBuffer cmd, RenderTargetIdentifier buffer, Color clearColor)
-        {
-            // We should have the option to clear mip maps here, but since RenderTargetIdentifier, we can't know the number to clear...
-            // So for now, we won't do it.
-            for (int i = 0; i < 6; ++i)
-                SetRenderTarget(cmd, buffer, ClearFlag.Color, clearColor, 0, (CubemapFace)i);
+            return temp;
         }
 
         public static void ClearCubemap(CommandBuffer cmd, RenderTexture renderTexture, Color clearColor, bool clearMips = false)
@@ -342,20 +335,27 @@ namespace UnityEngine.Experimental.Rendering
             }
         }
 
+        static IEnumerable<Type> m_AssemblyTypes;
+
         public static IEnumerable<Type> GetAllAssemblyTypes()
         {
-            return AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(t =>
-                {
-                    // Ugly hack to handle mis-versioned dlls
-                    var innerTypes = new Type[0];
-                    try
+            if (m_AssemblyTypes == null)
+            {
+                m_AssemblyTypes = AppDomain.CurrentDomain.GetAssemblies()
+                    .SelectMany(t =>
                     {
-                        innerTypes = t.GetTypes();
-                    }
-                    catch { }
-                    return innerTypes;
-                });
+                        // Ugly hack to handle mis-versioned dlls
+                        var innerTypes = new Type[0];
+                        try
+                        {
+                            innerTypes = t.GetTypes();
+                        }
+                        catch { }
+                        return innerTypes;
+                    });
+            }
+
+            return m_AssemblyTypes;
         }
 
         public static void Destroy(params UnityObject[] objs)

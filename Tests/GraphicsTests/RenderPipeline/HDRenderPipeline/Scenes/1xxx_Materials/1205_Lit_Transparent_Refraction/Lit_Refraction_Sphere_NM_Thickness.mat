@@ -19,10 +19,10 @@ Material:
     RenderType: Transparent
   disabledShaderPasses:
   - DistortionVectors
+  - TransparentBackfaceDebugDisplay
   - TransparentDepthPrepass
   - TransparentDepthPostpass
   - TransparentBackface
-  - TransparentBackfaceDebugDisplay
   - MOTIONVECTORS
   m_SavedProperties:
     serializedVersion: 3
@@ -43,6 +43,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _CoatMaskMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _DetailMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -56,6 +60,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _HeightMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _IridescenceMaskMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -99,6 +107,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: 97eb49db6c0a4b349a3c5149a117e79b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _ThicknessMapIridescence:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _TransmittanceColorMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -116,7 +128,7 @@ Material:
     - _BlendMode: 0
     - _CoatCoverage: 1
     - _CoatIOR: 0.5
-    - _CoatMask: 1
+    - _CoatMask: 0
     - _CullMode: 2
     - _CullModeForward: 2
     - _Cutoff: 0.5
@@ -153,6 +165,7 @@ Material:
     - _EnableMotionVectorForVertexAnimation: 0
     - _EnableSpecularOcclusion: 0
     - _EnableWind: 0
+    - _EnergyConservingSpecularColor: 1
     - _HeightAmplitude: 0.099999994
     - _HeightCenter: 0.5
     - _HeightMapParametrization: 1
@@ -165,6 +178,8 @@ Material:
     - _IOR: 1.5
     - _InitialBend: 1
     - _InvTilingScale: 0.33333334
+    - _Ior: 1.5
+    - _IridescenceMask: 1
     - _LinkDetailsWithBase: 1
     - _MaterialID: 1
     - _Metallic: 0
@@ -177,6 +192,7 @@ Material:
     - _PPDPrimitiveWidth: 1
     - _PreRefractionPass: 0
     - _RefractionMode: 2
+    - _SSSAndTransmissionType: 0
     - _ShiverDirectionality: 0.5
     - _ShiverDrag: 0.2
     - _Smoothness: 1
@@ -191,18 +207,24 @@ Material:
     - _SubsurfaceMask: 1
     - _SubsurfaceProfile: 0
     - _SubsurfaceRadius: 1
+    - _SupportDBuffer: 1
     - _SurfaceType: 1
     - _TexWorldScale: 1
     - _TexWorldScaleEmissive: 1
     - _Thickness: 1
+    - _ThicknessIridescence: 1
     - _ThicknessMultiplier: 2
+    - _TransmissionEnable: 1
     - _TransparentBackfaceEnable: 0
     - _TransparentDepthPostpassEnable: 0
     - _TransparentDepthPrepassEnable: 0
+    - _TransparentSortPriority: 0
     - _UVBase: 0
     - _UVDetail: 0
     - _UVEmissive: 0
+    - _ZTestDepthEqualForOpaque: 4
     - _ZTestMode: 8
+    - _ZTestModeDistortion: 8
     - _ZWrite: 0
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 0}
@@ -213,6 +235,7 @@ Material:
     - _InvPrimScale: {r: 1, g: 1, b: 0, a: 0}
     - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
     - _ThicknessRemap: {r: 0, g: 1, b: 0, a: 0}
+    - _ThicknessRemapIridescence: {r: 0, g: 1, b: 0, a: 0}
     - _TransmittanceColor: {r: 1, g: 1, b: 1, a: 1}
     - _UVDetailsMappingMask: {r: 1, g: 0, b: 0, a: 0}
     - _UVMappingMask: {r: 1, g: 0, b: 0, a: 0}

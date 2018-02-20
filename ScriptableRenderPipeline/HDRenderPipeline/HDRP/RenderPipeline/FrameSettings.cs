@@ -73,6 +73,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public bool enableTransparentObjects = true;
 
         public bool enableMSAA = false;
+        public MSAASamples msaaSampleCount { get; private set; }
 
         public bool enableShadowMask = false;
 
@@ -105,7 +106,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             frameSettings.enablePostprocess = this.enablePostprocess;
 
             frameSettings.enableStereo = this.enableStereo;
-            frameSettings.enableForwardRenderingOnly = this.enableForwardRenderingOnly;
 
             frameSettings.enableOpaqueObjects = this.enableOpaqueObjects;
             frameSettings.enableTransparentObjects = this.enableTransparentObjects;
@@ -147,13 +147,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // We have to fall back to forward-only rendering when scene view is using wireframe rendering mode
             // as rendering everything in wireframe + deferred do not play well together
-            aggregate.enableForwardRenderingOnly = srcFrameSettings.enableForwardRenderingOnly || GL.wireframe;
+            aggregate.enableForwardRenderingOnly = srcFrameSettings.enableForwardRenderingOnly || GL.wireframe || renderPipelineSettings.supportForwardOnly;
             aggregate.enableDepthPrepassWithDeferredRendering = srcFrameSettings.enableDepthPrepassWithDeferredRendering;
             aggregate.enableAlphaTestOnlyInDeferredPrepass = srcFrameSettings.enableAlphaTestOnlyInDeferredPrepass;
 
             aggregate.enableTransparentPrepass = srcFrameSettings.enableTransparentPrepass;
-            aggregate.enableMotionVectors = camera.cameraType != CameraType.Reflection && srcFrameSettings.enableMotionVectors;
-            aggregate.enableObjectMotionVectors = camera.cameraType != CameraType.Reflection && srcFrameSettings.enableObjectMotionVectors;
+            aggregate.enableMotionVectors = camera.cameraType != CameraType.Reflection && srcFrameSettings.enableMotionVectors && renderPipelineSettings.supportMotionVectors;
+            aggregate.enableObjectMotionVectors = camera.cameraType != CameraType.Reflection && srcFrameSettings.enableObjectMotionVectors && renderPipelineSettings.supportMotionVectors;
             aggregate.enableDBuffer = srcFrameSettings.enableDBuffer && renderPipelineSettings.supportDBuffer;
             aggregate.enableAtmosphericScattering = srcFrameSettings.enableAtmosphericScattering;
             aggregate.enableRoughRefraction = srcFrameSettings.enableRoughRefraction;
@@ -163,9 +163,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Planar and real time cubemap doesn't need post process and render in FP16
             aggregate.enablePostprocess = camera.cameraType != CameraType.Reflection && srcFrameSettings.enablePostprocess;
 
-            aggregate.enableStereo = camera.cameraType != CameraType.Reflection && srcFrameSettings.enableStereo && XRSettings.isDeviceActive && (camera.stereoTargetEye == StereoTargetEyeMask.Both);
-            // Force forward if we request stereo. TODO: We should not enforce that, users should be able to chose deferred
-            aggregate.enableForwardRenderingOnly = aggregate.enableForwardRenderingOnly || aggregate.enableStereo;
+            aggregate.enableStereo = camera.cameraType != CameraType.Reflection && srcFrameSettings.enableStereo && XRSettings.isDeviceActive && (camera.stereoTargetEye == StereoTargetEyeMask.Both) && renderPipelineSettings.supportStereo;
 
             aggregate.enableAsyncCompute = srcFrameSettings.enableAsyncCompute && SystemInfo.supportsAsyncCompute;
 
@@ -176,7 +174,75 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             aggregate.enableShadowMask = srcFrameSettings.enableShadowMask && renderPipelineSettings.supportShadowMask;
 
+            aggregate.ConfigureMSAADependentSettings();
+            aggregate.ConfigureStereoDependentSettings();
+
+            if (camera.cameraType == CameraType.Preview)
+            {
+                // remove undesired feature in preview
+                aggregate.enableShadow = false;
+                aggregate.enableContactShadows = false;
+                aggregate.enableSSR = false;
+                aggregate.enableSSAO = false;
+                aggregate.enableTransparentPrepass = false;
+                aggregate.enableMotionVectors = false;
+                aggregate.enableObjectMotionVectors = false;
+                aggregate.enableDBuffer = false;
+                aggregate.enableAtmosphericScattering = false;
+                aggregate.enableTransparentPostpass = false;
+                aggregate.enableDistortion = false;
+                aggregate.enablePostprocess = false;
+                aggregate.enableStereo = false;
+                aggregate.enableShadowMask = false;
+            }
+
             LightLoopSettings.InitializeLightLoopSettings(camera, aggregate, renderPipelineSettings, srcFrameSettings, ref aggregate.lightLoopSettings);
+        }
+
+        public void ConfigureMSAADependentSettings()
+        {
+            if (enableMSAA)
+            {
+                // Initially, MSAA will only support forward
+                enableForwardRenderingOnly = true;
+
+                // TODO: Should we disable enableFptlForForwardOpaque in here, instead of in InitializeLightLoopSettings?
+                // We'd have to move this method to after InitializeLightLoopSettings if we did.  It would be nice to centralize
+                // all MSAA-dependent settings in this method.
+
+                // Assuming MSAA is being used, TAA, and therefore, motion vectors are not needed
+                enableMotionVectors = false;
+
+                // TODO: The work will be implemented piecemeal to support all passes
+                enableDBuffer = false; // no decals
+                enableDistortion = false; // no gaussian final color
+                enablePostprocess = false;
+                enableRoughRefraction = false; // no gaussian pre-refraction
+                enableSSAO = false;
+                enableSSR = false;
+                enableSubsurfaceScattering = false;
+                enableTransparentObjects = false; // waiting on depth pyramid generation
+            }
+        }
+
+        public void ConfigureStereoDependentSettings()
+        {
+            if (enableStereo)
+            {
+                // Force forward if we request stereo. TODO: We should not enforce that, users should be able to chose deferred
+                enableForwardRenderingOnly = true;
+
+                // TODO: The work will be implemented piecemeal to support all passes
+                enableMotionVectors = false;
+                enableDBuffer = false; 
+                enableDistortion = false; 
+                enablePostprocess = false;
+                enableRoughRefraction = false; 
+                enableSSAO = false;
+                enableSSR = false;
+                enableSubsurfaceScattering = false;
+                enableTransparentObjects = false;
+            }
         }
 
         static public void RegisterDebug(String menuName, FrameSettings frameSettings)
@@ -219,14 +285,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             // Register the camera into the debug menu
             DebugMenuManager.instance.RemoveDebugItem(menuName, kEnableShadow);
+            DebugMenuManager.instance.RemoveDebugItem(menuName, kEnableContactShadows);
             DebugMenuManager.instance.RemoveDebugItem(menuName, kEnableSSR);
             DebugMenuManager.instance.RemoveDebugItem(menuName, kEnableSSAO);
             DebugMenuManager.instance.RemoveDebugItem(menuName, kEnableSubsurfaceScattering);
             DebugMenuManager.instance.RemoveDebugItem(menuName, kEnableTransmission);
 
             DebugMenuManager.instance.RemoveDebugItem(menuName, kForwardOnly);
+            DebugMenuManager.instance.RemoveDebugItem(menuName, kDeferredDepthPrepass);
             DebugMenuManager.instance.RemoveDebugItem(menuName, kDeferredDepthPrepassATestOnly);
-            DebugMenuManager.instance.RemoveDebugItem(menuName, KEnableTransparentPrepass);
 
             DebugMenuManager.instance.RemoveDebugItem(menuName, KEnableTransparentPrepass);
             DebugMenuManager.instance.RemoveDebugItem(menuName, kEnableMotionVectors);

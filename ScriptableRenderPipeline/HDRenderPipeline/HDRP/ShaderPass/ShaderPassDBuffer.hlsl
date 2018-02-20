@@ -17,10 +17,9 @@ void Frag(  PackedVaryingsToPS packedInput,
             )
 {
     FragInputs input = UnpackVaryingsMeshToFragInputs(packedInput.vmesh);
-    PositionInputs posInput = GetPositionInput(input.positionSS.xy, _ScreenSize.zw);
 
-	float depth = LOAD_TEXTURE2D(_MainDepthTexture, posInput.positionSS).x;
-	UpdatePositionInput(depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_VP, posInput);
+    float depth = LOAD_TEXTURE2D(_MainDepthTexture, input.positionSS.xy).x;
+    PositionInputs posInput = GetPositionInput(input.positionSS.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_VP);
 
     // Transform from world space to decal space (DS) to clip the decal.
     // For this we must use absolute position.
@@ -32,8 +31,15 @@ void Frag(  PackedVaryingsToPS packedInput,
 	clip(1.0 - positionDS); // Clip value above one
 
     DecalSurfaceData surfaceData;
-	float3x3 decalToWorld = (float3x3)UNITY_ACCESS_INSTANCED_PROP(matrix, normalToWorld);
+	float4x4 decalToWorld = UNITY_ACCESS_INSTANCED_PROP(matrix, normalToWorld);
     GetSurfaceData(positionDS.xz, decalToWorld, surfaceData);
 
+	// have to do explicit test since compiler behavior is not defined for RW resources and discard instructions
+	if((all(positionDS.xyz > 0.0f) && all(1.0f - positionDS.xyz > 0.0f)))
+	{
+		uint oldVal = UnpackByte(_DecalHTile[posInput.positionSS.xy / 8]);
+		oldVal |= surfaceData.HTileMask;
+		_DecalHTile[posInput.positionSS.xy / 8] = PackByte(oldVal);
+	}
 	ENCODE_INTO_DBUFFER(surfaceData, outDBuffer);
 }

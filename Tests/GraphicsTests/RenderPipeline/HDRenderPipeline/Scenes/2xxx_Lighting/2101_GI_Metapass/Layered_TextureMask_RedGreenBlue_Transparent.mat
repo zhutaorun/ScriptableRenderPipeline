@@ -441,6 +441,7 @@ Material:
     - _PPDPrimitiveWidth: 1
     - _PreRefractionPass: 0
     - _RefractionMode: 0
+    - _SSSAndTransmissionType: 0
     - _ShiverDirectionality: 0.5
     - _ShiverDrag: 0.2
     - _ShowLayer0: 1
@@ -483,6 +484,7 @@ Material:
     - _SubsurfaceRadius1: 1
     - _SubsurfaceRadius2: 1
     - _SubsurfaceRadius3: 1
+    - _SupportDBuffer: 1
     - _SurfaceType: 1
     - _TexWorldScale: 1
     - _TexWorldScale0: 1
@@ -497,7 +499,9 @@ Material:
     - _Thickness2: 1
     - _Thickness3: 1
     - _ThicknessMultiplier: 1
+    - _TransmissionEnable: 1
     - _TransparentBackfaceEnable: 0
+    - _TransparentSortPriority: 0
     - _UVBase: 0
     - _UVBase0: 0
     - _UVBase1: 0
@@ -514,6 +518,7 @@ Material:
     - _UseHeightBasedBlend: 0
     - _UseMainLayerInfluence: 0
     - _VertexColorMode: 0
+    - _ZTestDepthEqualForOpaque: 4
     - _ZTestMode: 4
     - _ZWrite: 0
     m_Colors:

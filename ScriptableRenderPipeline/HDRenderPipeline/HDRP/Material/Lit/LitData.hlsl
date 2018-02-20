@@ -151,7 +151,7 @@ void GetLayerTexCoord(float2 texCoord0, float2 texCoord1, float2 texCoord2, floa
 #endif
 
     // Be sure that the compiler is aware that we don't use UV1 to UV3 for main layer so it can optimize code
-    ComputeLayerTexCoord(   texCoord0, texCoord1, texCoord2, texCoord3, float4(1.0, 0.0, 0.0, 0.0), _UVDetailsMappingMask,
+    ComputeLayerTexCoord(   texCoord0, texCoord1, texCoord2, texCoord3, _UVMappingMask, _UVDetailsMappingMask,
                             _BaseColorMap_ST.xy, _BaseColorMap_ST.zw, _DetailMap_ST.xy, _DetailMap_ST.zw, 1.0, _LinkDetailsWithBase,
                             positionWS, _TexWorldScale,
                             mappingType, layerTexCoord);
@@ -198,10 +198,6 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     float alpha = GetSurfaceData(input, layerTexCoord, surfaceData, normalTS, bentNormalTS);
     GetNormalWS(input, V, normalTS, surfaceData.normalWS);
 
-    // Ensure that the normal is front-facing.
-    float NdotV;
-    surfaceData.normalWS = GetViewReflectedNormal(surfaceData.normalWS, V, NdotV);
-
     // Use bent normal to sample GI if available
 #ifdef _BENTNORMALMAP
     GetNormalWS(input, V, bentNormalTS, bentNormalWS);
@@ -215,7 +211,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     // If we have bent normal and ambient occlusion, process a specular occlusion
     surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData);
 #elif defined(_MASKMAP)
-    surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(NdotV, surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
+    surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
 #else
     surfaceData.specularOcclusion = 1.0;
 #endif

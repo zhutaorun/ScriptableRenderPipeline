@@ -18,10 +18,10 @@ Material:
     RenderType: Transparent
   disabledShaderPasses:
   - DistortionVectors
+  - TransparentBackfaceDebugDisplay
   - TransparentDepthPrepass
   - TransparentDepthPostpass
   - TransparentBackface
-  - TransparentBackfaceDebugDisplay
   - MOTIONVECTORS
   m_SavedProperties:
     serializedVersion: 3
@@ -43,6 +43,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CoatMaskMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -160,7 +164,7 @@ Material:
     - _BumpScale: 1
     - _CoatCoverage: 1
     - _CoatIOR: 0.5
-    - _CoatMask: 1
+    - _CoatMask: 0
     - _CullMode: 2
     - _CullModeForward: 2
     - _Cutoff: 0.5
@@ -203,6 +207,7 @@ Material:
     - _EnableSpecularOcclusion: 0
     - _EnableVertexDisplacement: 0
     - _EnableWind: 0
+    - _EnergyConservingSpecularColor: 1
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
@@ -243,6 +248,7 @@ Material:
     - _RefractionEnable: 0
     - _RefractionMode: 3
     - _RoughRefractionEnable: 1
+    - _SSSAndTransmissionType: 0
     - _ShiverDirectionality: 0.5
     - _ShiverDrag: 0.2
     - _Smoothness: 1
@@ -260,14 +266,17 @@ Material:
     - _SubsurfaceMask: 1
     - _SubsurfaceProfile: 0
     - _SubsurfaceRadius: 1
+    - _SupportDBuffer: 1
     - _SurfaceType: 1
     - _TexWorldScale: 1
     - _TexWorldScaleEmissive: 1
     - _Thickness: 0.747
     - _ThicknessMultiplier: 1
+    - _TransmissionEnable: 1
     - _TransparentBackfaceEnable: 0
     - _TransparentDepthPostpassEnable: 0
     - _TransparentDepthPrepassEnable: 0
+    - _TransparentSortPriority: 0
     - _UVBase: 0
     - _UVDetail: 0
     - _UVEmissive: 0
@@ -275,7 +284,9 @@ Material:
     - _UVSec: 0
     - _VertexDisplacementObjectScale: 1
     - _VertexDisplacementTilingScale: 1
+    - _ZTestDepthEqualForOpaque: 4
     - _ZTestMode: 8
+    - _ZTestModeDistortion: 8
     - _ZWrite: 0
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 0.078431375}

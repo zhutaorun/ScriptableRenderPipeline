@@ -47,6 +47,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             public static GUIContent transparentPrepassText = new GUIContent("Pre Refraction Pass", "Render objects before the refraction pass");
 
+            public static GUIContent enableMotionVectorForVertexAnimationText = new GUIContent("Enable MotionVector For Vertex Animation", "This will enable an object motion vector pass for this material. Useful if wind animation is enabled or if displacement map is animated");
+
             public static string advancedText = "Advanced Options";
         }
 
@@ -120,6 +122,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected MaterialProperty enableBlendModePreserveSpecularLighting = null;
         protected const string kEnableBlendModePreserveSpecularLighting = "_EnableBlendModePreserveSpecularLighting";
 
+        protected MaterialProperty enableMotionVectorForVertexAnimation = null;
+        protected const string kEnableMotionVectorForVertexAnimation = "_EnableMotionVectorForVertexAnimation";
+
+        protected const string kZTestDepthEqualForOpaque = "_ZTestDepthEqualForOpaque";
+        protected const string kZTestModeDistortion = "_ZTestModeDistortion";
 
         // See comment in LitProperties.hlsl
         const string kEmissionColor = "_EmissionColor";
@@ -132,6 +139,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected abstract void FindMaterialProperties(MaterialProperty[] props);
         protected abstract void SetupMaterialKeywordsAndPassInternal(Material material);
         protected abstract void MaterialPropertiesGUI(Material material);
+        protected abstract void MaterialPropertiesAdvanceGUI(Material material);
         protected abstract void VertexAnimationPropertiesGUI();
         protected abstract void FpsModePropertiesGUI();
         // This function will say if emissive is used or not regarding enlighten/PVR
@@ -172,6 +180,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             enableFogOnTransparent = FindProperty(kEnableFogOnTransparent, props, false);
             enableBlendModePreserveSpecularLighting = FindProperty(kEnableBlendModePreserveSpecularLighting, props, false);
+
+            enableMotionVectorForVertexAnimation = FindProperty(kEnableMotionVectorForVertexAnimation, props, false);
         }
 
         void SurfaceTypePopup()
@@ -346,6 +356,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             CoreUtils.SetKeyword(material, "_BLENDMODE_ADD", false);
             CoreUtils.SetKeyword(material, "_BLENDMODE_PRE_MULTIPLY", false);
 
+            // If the material use the kZTestDepthEqualForOpaque it mean it require depth equal test for opaque but transparent are not affected
+            if (material.HasProperty(kZTestDepthEqualForOpaque))
+            {
+                if (surfaceType == SurfaceType.Opaque)
+                    material.SetInt(kZTestDepthEqualForOpaque, (int)UnityEngine.Rendering.CompareFunction.Equal);
+                else
+                    material.SetInt(kZTestDepthEqualForOpaque, (int)UnityEngine.Rendering.CompareFunction.LessEqual);
+            }
+
             if (surfaceType == SurfaceType.Opaque)
             {
                 material.SetOverrideTag("RenderType", alphaTestEnable ? "TransparentCutout" : "");
@@ -404,13 +423,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (material.HasProperty(kDistortionEnable))
             {
                 bool distortionDepthTest = material.GetFloat(kDistortionDepthTest) > 0.0f;
-                if (distortionDepthTest)
+                if (material.HasProperty(kZTestModeDistortion))
                 {
-                    material.SetInt("_ZTestMode", (int)UnityEngine.Rendering.CompareFunction.LessEqual);
-                }
-                else
-                {
-                    material.SetInt("_ZTestMode", (int)UnityEngine.Rendering.CompareFunction.Always);
+                    if (distortionDepthTest)
+                    {
+                        material.SetInt(kZTestModeDistortion, (int)UnityEngine.Rendering.CompareFunction.LessEqual);
+                    }
+                    else
+                    {
+                        material.SetInt(kZTestModeDistortion, (int)UnityEngine.Rendering.CompareFunction.Always);
+                    }
                 }
 
                 var distortionBlendMode = material.GetInt(kDistortionBlendMode);
@@ -512,19 +534,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 // Disable all passes except distortion
                 // Distortion is setup in code above
                 material.SetShaderPassEnabled(HDShaderPassNames.s_ForwardStr, enablePass);
-                material.SetShaderPassEnabled(HDShaderPassNames.s_ForwardDebugDisplayStr, true);
                 material.SetShaderPassEnabled(HDShaderPassNames.s_DepthOnlyStr, enablePass);
                 material.SetShaderPassEnabled(HDShaderPassNames.s_DepthForwardOnlyStr, enablePass);
                 material.SetShaderPassEnabled(HDShaderPassNames.s_ForwardOnlyStr, enablePass);
-                material.SetShaderPassEnabled(HDShaderPassNames.s_ForwardOnlyDebugDisplayStr, true);
                 material.SetShaderPassEnabled(HDShaderPassNames.s_GBufferStr, enablePass);
                 material.SetShaderPassEnabled(HDShaderPassNames.s_GBufferWithPrepassStr, enablePass);
-                material.SetShaderPassEnabled(HDShaderPassNames.s_GBufferDebugDisplayStr, true);
                 material.SetShaderPassEnabled(HDShaderPassNames.s_MotionVectorsStr, enablePass);
                 material.SetShaderPassEnabled(HDShaderPassNames.s_DistortionVectorsStr, distortionEnable); // note: use distortionEnable
                 material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentDepthPrepassStr, enablePass);
                 material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentBackfaceStr, enablePass);
-                material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentBackfaceDebugDisplayStr, enablePass);
                 material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentDepthPostpassStr, enablePass);
                 material.SetShaderPassEnabled(HDShaderPassNames.s_MetaStr, enablePass);
                 material.SetShaderPassEnabled(HDShaderPassNames.s_ShadowCasterStr, enablePass);
@@ -562,16 +580,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 if (backFaceEnable)
                 {
                     material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentBackfaceStr, true);
-                    material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentBackfaceDebugDisplayStr, true);
                 }
                 else
                 {
                     material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentBackfaceStr, false);
-                    material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentBackfaceDebugDisplayStr, false);
                 }
             }
 
-
+            if (material.HasProperty(kEnableMotionVectorForVertexAnimation))
+            {
+                material.SetShaderPassEnabled(HDShaderPassNames.s_MotionVectorsStr, material.GetFloat(kEnableMotionVectorForVertexAnimation) > 0.0f);
+            }
         }
 
         // Dedicated to emissive - for emissive Enlighten/PVR
@@ -615,6 +634,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 // NB RenderQueue editor is not shown on purpose: we want to override it based on blend mode
                 EditorGUI.indentLevel++;
                 m_MaterialEditor.EnableInstancingField();
+                MaterialPropertiesAdvanceGUI(material);
                 EditorGUI.indentLevel--;
             }
 

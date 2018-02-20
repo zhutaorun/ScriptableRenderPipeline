@@ -183,9 +183,11 @@ Material:
     - _TexWorldScale: 1
     - _Thickness: 1
     - _ThicknessMultiplier: 1
+    - _TransparentSortPriority: 0
     - _UVBase: 0
     - _UVDetail: 0
     - _ZTestMode: 4
+    - _ZTestModeDistortion: 4
     - _ZWrite: 0
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
