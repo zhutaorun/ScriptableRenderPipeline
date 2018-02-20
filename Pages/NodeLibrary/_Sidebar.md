@@ -87,7 +87,21 @@
 </details>
 </details>
 
-<details><summary>Procedural</summary></details>
+<details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Procedural-Nodes">Procedural</a></summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Checkerboard-Node">Checkerboard</a><br>
+<details><summary>Noise</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Gradient-Noise-Node">Gradient Noise</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Simple-Noise-Node">Simple Noise</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Voronoi-Node">Voronoi</a><br>
+</details>
+<details><summary>Shape</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Ellipse-Node">Ellipse</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Polygon-Node">Polygon</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Rectangle-Node">Rectangle</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Rounded-Rectangle-Node">Rounded Rectangle</a><br>
+</details>
+</details>
+
 <details><summary>Utility</summary></details>
 
 <details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/UV-Nodes">UV</a></summary>
