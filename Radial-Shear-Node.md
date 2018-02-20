@@ -1,6 +1,6 @@
 ## Description
 
-Under Construction...
+Applies a radial shear warping effect similar to a wave to the value of input **UV**. The center reference point of the warping effect is defined by input **Center** and the overall strength of the effect is defined by the value of input **Strength**. Input **Offset** can be used to offset the individual channels of the result.
 
 ## Ports
 
