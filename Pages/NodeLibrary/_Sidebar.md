@@ -86,6 +86,17 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Transform-Node">Transform</a><br>
 </details>
 </details>
+
 <details><summary>Procedural</summary></details>
 <details><summary>Utility</summary></details>
-<details><summary>UV</summary></details>
+
+<details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/UV-Nodes">UV</a></summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Flipbook-Node">Flipbook</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Polar-Coordinates-Node">Polar Coordinates</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Radial-Shear-Node">Radial Shear</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Rotate-Node">Rotate</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Spherize-Node">Spherize</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Tiling-And-Offset-Node">Tiling And Offset</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Triplanar-Node">Triplanar</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Twirl-Node">Twirl</a><br>
+</details>
