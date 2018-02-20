@@ -1,6 +1,6 @@
 ## Description
 
-Returns a flipbook, or texture sheet animation, of the UVs supplied to input **In**. The amount of tiles on the sheet are defined by the values of the inputs **Width** and **Height**. The index of the current tile is defined by the value of the input **Tile**.
+Returns a flipbook, or texture sheet animation, of the UVs supplied to input **UV**. The amount of tiles on the sheet are defined by the values of the inputs **Width** and **Height**. The index of the current tile is defined by the value of the input **Tile**.
 
 This node can be used to create a texture animation functionality, commonly used for particle effects and sprites, by supplying [Time](https://github.com/Unity-Technologies/ShaderGraph/wiki/Time-Node) to the input **Tile** and outputting to the UV input slot of a [Texture Sampler](https://github.com/Unity-Technologies/ShaderGraph/wiki/Sample-Texture-2D-Node).
 
