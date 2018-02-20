@@ -8,13 +8,13 @@ UV data is typically in the range of 0 to 1 starting from the bottom left of UV 
 
 ## Ports
 
-| Name        | Direction           | Type  | Description |
-|:------------ |:-------------|:-----|:---|
-| UV      | Input | Vector 2 (Binding: UV) | Input UV value |
-| Width      | Input | Vector 1 | Amount of horizontal tiles |
-| Height      | Input | Vector 1 | Amount of vertical tiles |
-| Tile      | Input | Vector 1 | Current tile index |
-| Out | Output      |    Vector 2 | Output UV value |
+| Name        | Direction           | Type  | Binding | Description |
+|:------------ |:-------------|:-----|:---|:---|
+| UV      | Input | Vector 2 | UV | Input UV value |
+| Width      | Input | Vector 1 | None | Amount of horizontal tiles |
+| Height      | Input | Vector 1 | None | Amount of vertical tiles |
+| Tile      | Input | Vector 1 | None | Current tile index |
+| Out | Output      |    Vector 2 | None | Output UV value |
 
 ## Parameters
 
