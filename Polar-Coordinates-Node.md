@@ -1,6 +1,6 @@
 ## Description
 
-Returns the result of the value of input **UV** converted to polar coordinates. In mathematics, the polar coordinate system is a two-dimensional coordinate system in which each point on a plane is determined by a distance from a reference point and an angle from a reference direction.
+Converts the value of input **UV** to polar coordinates. In mathematics, the polar coordinate system is a two-dimensional coordinate system in which each point on a plane is determined by a distance from a reference point and an angle from a reference direction.
 
 The resulting effect is that the x channel of the input to **UV** is converted to a distance value from the point specified by the value of input **Center** and the y channel of same input is converted to the value of an angle of rotation around that point.
 
