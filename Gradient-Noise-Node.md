@@ -7,10 +7,8 @@ Generates a gradient, or [Perlin](https://en.wikipedia.org/wiki/Perlin_noise), n
 | Name        | Direction           | Type  | Binding | Description |
 |:------------ |:-------------|:-----|:---|:---|
 | UV      | Input | Vector 2 | UV | Input UV value |
-| Color A      | Input | Color RGB | None | First checker color |
-| Color B      | Input | Color RGB | None | Second checker color |
-| Frequency      | Input | Vector 2 | None | Scale of checkerboard per axis |
-| Out | Output      |    Vector 2 | None | Output UV value |
+| Scale      | Input | Vector 1 | None | Noise scale |
+| Out | Output      |    Vector 1 | None | Output value |
 
 ## Shader Function
 
