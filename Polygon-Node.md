@@ -1,6 +1,6 @@
 ## Description
 
-Generates a regular polygon shape based on input **UV** at the size specified by inputs **Width** and **Height**. The polygon's amount of sides is determined by input **Sides** The generated shape can be offset or tiled by connecting a [Tiling And Offset Node](https://github.com/Unity-Technologies/ShaderGraph/wiki/Tiling-And-Offset-Node). Note that in order to preserve the ability to offset the shape within the UV space the shape will not automatically repeat if tiled. To achieve a repeating polygon effect first connect your input through a [Fraction Node](https://github.com/Unity-Technologies/ShaderGraph/wiki/Fraction-Node).
+Generates a regular polygon shape based on input **UV** at the size specified by inputs **Width** and **Height**. The polygon's amount of sides is determined by input **Sides**. The generated shape can be offset or tiled by connecting a [Tiling And Offset Node](https://github.com/Unity-Technologies/ShaderGraph/wiki/Tiling-And-Offset-Node). Note that in order to preserve the ability to offset the shape within the UV space the shape will not automatically repeat if tiled. To achieve a repeating polygon effect first connect your input through a [Fraction Node](https://github.com/Unity-Technologies/ShaderGraph/wiki/Fraction-Node).
 
 ## Ports
 
