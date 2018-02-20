@@ -1,6 +1,6 @@
 ## Description
 
-Returns the value of input **UV** rotated around a reference point defined by input **Center** by the amount of input **Rotation**. The unit for rotation angle can be selected by the parameter **Unit**.
+Rotates value of input **UV** around a reference point defined by input **Center** by the amount of input **Rotation**. The unit for rotation angle can be selected by the parameter **Unit**.
 
 ## Ports
 
