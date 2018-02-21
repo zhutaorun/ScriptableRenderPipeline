@@ -4,7 +4,7 @@
 <p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Preview-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/PreviewNodeThumb.png" alt="Preview Node" height="350" width="350"></a></p>
 <p align="left">Provides a preview window and passes the input value through without modification.</p></td>
         <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sub-graph-Node">Sub-graph</a></b></p>
-<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sub-graph-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/Sub-graphNodeThumb.png" alt="Sub-graph Node" height="350" width="350"></a></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sub-graph-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/SubgraphNodeThumb.png" alt="Sub-graph Node" height="350" width="350"></a></p>
 <p align="left">Provides a reference to a Sub-graph asset.</p></td>
     </tr>
 </table>
