@@ -102,7 +102,22 @@
 </details>
 </details>
 
-<details><summary>Utility</summary></details>
+<details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Utility-Nodes">Utility</a></summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Preview-Node">Preview</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Subgraph-Node">Subgraph</a><br>
+<details><summary>Logic</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/All-Node">All</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/And-Node">And</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Any-Node">Any</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Branch-Node">Branch</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Comparison-Node">Comparison</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Is-Infinite-Node">Is Infinite</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Is-NaN-Node">Is NaN</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Nand-Node">Nand</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Not-Node">Not</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Or-Node">Or</a><br>
+</details>
+</details>
 
 <details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/UV-Nodes">UV</a></summary>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Flipbook-Node">Flipbook</a><br>
