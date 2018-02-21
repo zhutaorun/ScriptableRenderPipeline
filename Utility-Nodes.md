@@ -34,7 +34,7 @@
 <p align="left">Compares the two input values A and B based on the condition selected on the dropdown.</p></td>
         <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Is-Infinite-Node">Is Infinite</a></b></p>
 <p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Is-Infinite-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/IsInfiniteNodeThumb.png" alt="Is Infinite Node" height="350" width="350"></a></p>
-<p align="left">Returns true if any of the components of the input **In** is an infinite value.</p></td>
+<p align="left">Returns true if any of the components of the input In is an infinite value.</p></td>
     </tr>
     <tr><tr valign="top">
         <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Is-NaN-Node">Is NaN</a></b></p>
@@ -42,14 +42,14 @@
 <p align="left">Returns true if any of the components of the input In is not a number (NaN).</p></td>
         <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Nand-Node">Nand</a></b></p>
 <p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Nand-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/NandNodeThumb.png" alt="Nand Node" height="350" width="350"></a></p>
-<p align="left">Returns the result of input A minus input B.</p></td>
+<p align="left">Returns true if both the inputs A and B are false.</p></td>
     </tr>
     <tr><tr valign="top">
         <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Not-Node">Not</a></b></p>
 <p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Not-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/NotNodeThumb.png" alt="Not Node" height="350" width="350"></a></p>
-<p align="left">Returns the result of input A minus input B.</p></td>
+<p align="left">Returns the opposite of input In. If In is true the output will be false, otherwise it will be true.</p></td>
         <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Or-Node">Or</a></b></p>
 <p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Or-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/OrNodeThumb.png" alt="Or Node" height="350" width="350"></a></p>
-<p align="left">Returns the result of input A minus input B.</p></td>
+<p align="left">Returns true if either of the inputs A and B are true.</p></td>
     </tr>
 </table>
