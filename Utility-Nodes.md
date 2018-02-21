@@ -3,8 +3,8 @@
         <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Preview-Node">Preview</a></b></p>
 <p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Preview-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/PreviewNodeThumb.png" alt="Preview Node" height="350" width="350"></a></p>
 <p align="left">Returns the sum of the two input values.</p></td>
-        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Subgraph-Node">Subgraph</a></b></p>
-<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Subgraph-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/SubgraphNodeThumb.png" alt="Subgraph Node" height="350" width="350"></a></p>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sub-graph-Node">Sub-graph</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sub-graph-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/Sub-graphNodeThumb.png" alt="Sub-graph Node" height="350" width="350"></a></p>
 <p align="left">Returns the result of input A divided by input B.</p></td>
     </tr>
 </table>
