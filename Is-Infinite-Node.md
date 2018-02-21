@@ -1,6 +1,6 @@
 ## Description
 
-Returns true if the input **In** is an infinite value. This is useful for [Branching](https://github.com/Unity-Technologies/ShaderGraph/wiki/Branch-Node).
+Returns true if any of the components of the input **In** is an infinite value. This is useful for [Branching](https://github.com/Unity-Technologies/ShaderGraph/wiki/Branch-Node).
 
 ## Ports
 
