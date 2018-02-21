@@ -104,7 +104,7 @@
 
 <details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Utility-Nodes">Utility</a></summary>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Preview-Node">Preview</a><br>
-<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Subgraph-Node">Subgraph</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sub-graph-Node">Sub-graph</a><br>
 <details><summary>Logic</summary>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/All-Node">All</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/And-Node">And</a><br>
