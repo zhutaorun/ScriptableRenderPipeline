@@ -12,7 +12,7 @@
         <td width="288"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Procedural-Nodes">Procedural</a></b></p></td>
     </tr>
     <tr>
-        <td width="288"><p align="center"><b>Utility</b></p></td>
+        <td width="288"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Utility-Nodes">Utility</a></b></p></td>
         <td width="288"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/UV-Nodes">UV</a></b></p></td>
     </tr>
 </table>
