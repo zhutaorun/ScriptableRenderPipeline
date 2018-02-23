@@ -15,14 +15,8 @@ Generates a rounded rectangle shape based on input **UV** at the size specified 
 ## Shader Function
 
 ```
-Radius = min(abs(Radius), 0.5 * min(abs(Width), abs(Height)));
-float2 XMinAndMax = {precision}2(0.5 - abs(Width) / 2, 0.5 + abs(Width) / 2);
-float2 YMinAndMax = {precision}2(0.5 - abs(Height) / 2, 0.5 + abs(Height) / 2);
-float wide = (step( XMinAndMax.x, UV.x ) - step( XMinAndMax.y, UV.x )) * (step( YMinAndMax.x + Radius, UV.y ) - step( YMinAndMax.y - Radius, UV.y ));
-float tall = (step( XMinAndMax.x + Radius, UV.x ) - step( XMinAndMax.y - Radius, UV.x )) * (step( YMinAndMax.x, UV.y ) - step( YMinAndMax.y, UV.y ));
-float sw = step(length(UV - {precision}2(XMinAndMax.x + Radius, YMinAndMax.x + Radius)), Radius);
-float se = step(length(UV - {precision}2(XMinAndMax.y - Radius, YMinAndMax.x + Radius)), Radius);
-float nw = step(length(UV - {precision}2(XMinAndMax.x + Radius, YMinAndMax.y - Radius)), Radius);
-float ne = step(length(UV - {precision}2(XMinAndMax.y - Radius, YMinAndMax.y - Radius)), Radius);
-Out = saturate(wide + tall + sw + se + nw + ne);
+Radius = max(min(min(abs(Radius * 2), abs(Width)), abs(Height)), 1e-5);
+float2 uv = abs(UV * 2 - 1) - float2(Width, Height) + Radius;
+float d = length(max(0, uv)) / Radius;
+Out = saturate((1 - d) / fwidth(d));
 ```
