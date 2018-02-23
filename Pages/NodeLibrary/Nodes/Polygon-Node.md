@@ -21,6 +21,5 @@ uv.y *= -1;
 float pCoord = atan2(uv.x, uv.y);
 float r = tau / Sides;
 float distance = cos(floor(0.5 + pCoord / r) * r - pCoord) * length(uv);
-float value = 1 - step(1, smoothstep(0, 1, distance));
-Out = value;
+Out = saturate((1 - distance) / fwidth(distance));
 ```
