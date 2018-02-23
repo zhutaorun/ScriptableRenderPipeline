@@ -14,9 +14,7 @@ Generates a rectangle shape based on input **UV** at the size specified by input
 ## Shader Function
 
 ```
-float2 XMinAndMax = float2(0.5 - Width / 2, 0.5 + Width / 2);
-float2 YMinAndMax = float2(0.5 - Height / 2, 0.5 + Height / 2);
-float x = step( XMinAndMax.x, UV.x ) - step( XMinAndMax.y, UV.x );
-float y = step( YMinAndMax.x, UV.y ) - step( YMinAndMax.y, UV.y );
-Out = x * y;
+float2 d = abs(UV * 2 - 1) - float2(Width, Height);
+d = 1 - d / fwidth(d);
+Out = saturate(min(d.x, d.y));
 ```
