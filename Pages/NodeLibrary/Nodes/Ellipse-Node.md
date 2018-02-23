@@ -14,7 +14,6 @@ Generates an ellipse shape based on input **UV** at the size specified by inputs
 ## Shader Function
 
 ```
-UV = (UV * 2.0 - 1.0);
-UV = UV / float2(Width, Height);
-Out = step(length(UV), 1);
+float d = length((UV * 2 - 1) / float2(Width, Height));
+Out = saturate((1 - d) / fwidth(d));
 ```
