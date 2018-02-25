@@ -181,6 +181,22 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         private CopyTextureSupport m_CopyTextureSupport;
 
+        public struct LightweightSettings
+        {
+            public FrameRenderingConfiguration configuration;
+            public RenderTargetIdentifier colorBuffer;
+            public RenderTargetIdentifier depthBuffer;
+
+            public int rtWidth;
+            public int rtHeight;
+        }
+
+        // Callbacks
+        public static event Action<CullResults, ScriptableRenderContext, LightweightSettings> afterOpaqueBeforeOpaquePost;
+        public static event Action<CullResults, ScriptableRenderContext, LightweightSettings> beforeTransparentAfterOpaquePost;
+        public static event Action<CullResults, ScriptableRenderContext, LightweightSettings> afterTransparentBeforeTransparentPost;
+        public static event Action<CullResults, ScriptableRenderContext, LightweightSettings> afterEverything;
+
         public LightweightPipeline(LightweightPipelineAsset asset)
         {
             m_Asset = asset;
@@ -451,17 +467,41 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             context.DrawRenderers(m_CullResults.visibleRenderers, ref opaqueDrawSettings, opaqueFilterSettings);
         }
 
+        private void DoCallback(Action<CullResults, ScriptableRenderContext, LightweightSettings> callback, CullResults cullResults, ScriptableRenderContext context, LightweightSettings settings)
+        {
+            if (callback == null)
+                return;
+
+            callback(cullResults, context, settings);
+            CommandBuffer cmd = CommandBufferPool.Get("Restore State");
+            cmd.SetRenderTarget(settings.colorBuffer, settings.depthBuffer);
+            context.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
+        }
+
         private void ForwardPass(List<VisibleLight> visibleLights, FrameRenderingConfiguration frameRenderingConfiguration, ref ScriptableRenderContext context, ref LightData lightData, bool stereoEnabled)
         {
             SetupShaderConstants(visibleLights, ref context, ref lightData);
 
             RendererConfiguration rendererSettings = GetRendererSettings(ref lightData);
 
-            BeginForwardRendering(ref context, frameRenderingConfiguration);
+            var settings = BeginForwardRendering(ref context, frameRenderingConfiguration);
             RenderOpaques(ref context, rendererSettings);
+
+            DoCallback(afterOpaqueBeforeOpaquePost, m_CullResults, context, settings);
+
             AfterOpaque(ref context, frameRenderingConfiguration);
+
+            DoCallback(beforeTransparentAfterOpaquePost, m_CullResults, context, settings);
+
             RenderTransparents(ref context, rendererSettings);
+
+            DoCallback(afterTransparentBeforeTransparentPost, m_CullResults, context, settings);
+
             AfterTransparent(ref context, frameRenderingConfiguration);
+
+            DoCallback(afterEverything, m_CullResults, context, settings);
+            
             EndForwardRendering(ref context, frameRenderingConfiguration);
         }
 
@@ -1295,7 +1335,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             return resolution;
         }
 
-        private void BeginForwardRendering(ref ScriptableRenderContext context, FrameRenderingConfiguration renderingConfig)
+        private LightweightSettings BeginForwardRendering(ref ScriptableRenderContext context, FrameRenderingConfiguration renderingConfig)
         {
             RenderTargetIdentifier colorRT = BuiltinRenderTextureType.CameraTarget;
             RenderTargetIdentifier depthRT = BuiltinRenderTextureType.None;
@@ -1304,8 +1344,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 context.StartMultiEye(m_CurrCamera);
 
             CommandBuffer cmd = CommandBufferPool.Get("SetCameraRenderTarget");
-            bool intermeaditeTexture = LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.IntermediateTexture);
-            if (intermeaditeTexture)
+            bool intermediateTexture = LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.IntermediateTexture);
+            if (intermediateTexture)
             {
                 if (!m_IsOffscreenCamera)
                     colorRT = m_CurrCameraColorRT;
@@ -1334,11 +1374,24 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             // If rendering to an intermediate RT we resolve viewport on blit due to offset not being supported
             // while rendering to a RT.
-            if (!intermeaditeTexture && !LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.DefaultViewport))
+            if (!intermediateTexture && !LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.DefaultViewport))
                 cmd.SetViewport(m_CurrCamera.pixelRect);
 
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
+
+            float renderScale = (m_CurrCamera.cameraType == CameraType.Game) ? m_Asset.RenderScale : 1.0f;
+            int rtWidth = (int)((float)m_CurrCamera.pixelWidth * renderScale);
+            int rtHeight = (int)((float)m_CurrCamera.pixelHeight * renderScale);
+
+            return new LightweightSettings()
+            {
+                colorBuffer = colorRT,
+                depthBuffer = depthRT,
+                configuration = renderingConfig,
+                rtWidth = rtWidth,
+                rtHeight = rtHeight
+            };
         }
 
         private void EndForwardRendering(ref ScriptableRenderContext context, FrameRenderingConfiguration renderingConfig)
