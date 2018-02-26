@@ -84,12 +84,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public static void UnregisterProbe(ReflectionProbe reflectionProbe)
         {
-            s_Instance.RegisterProbe(reflectionProbe);
+            s_Instance.UnregisterProbe(reflectionProbe);
         }
 
         public static void RegisterProbe(ReflectionProbe reflectionProbe)
         {
-            s_Instance.UnregisterProbe(reflectionProbe);
+            s_Instance.RegisterProbe(reflectionProbe);
         }
 
         public static void CalculateCaptureCameraViewProj(PlanarReflectionProbe probe, out Matrix4x4 worldToCamera, out Matrix4x4 projection, out Vector3 capturePosition, out Quaternion captureRotation, Camera viewerCamera = null)

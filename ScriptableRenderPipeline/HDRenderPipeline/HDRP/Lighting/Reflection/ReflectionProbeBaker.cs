@@ -10,11 +10,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Internal
         public void Render(ReflectionProbe probe, RenderTexture target)
         {
             var renderCamera = GetRenderHDCamera(probe);
-            renderCamera.camera.targetTexture = target;
 
             SetupCameraForRender(renderCamera.camera, probe);
-            renderCamera.camera.RenderToCubemap(probe.realtimeTexture, -1);
-            renderCamera.camera.targetTexture = null;
+            renderCamera.camera.RenderToCubemap(target, -1);
             target.IncrementUpdateCount();
         }
 

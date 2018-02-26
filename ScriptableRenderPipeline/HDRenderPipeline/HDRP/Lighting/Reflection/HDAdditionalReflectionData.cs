@@ -2,6 +2,7 @@
 
 namespace UnityEngine.Experimental.Rendering
 {
+    [ExecuteInEditMode]
     [RequireComponent(typeof(ReflectionProbe), typeof(MeshFilter), typeof(MeshRenderer))]
     public class HDAdditionalReflectionData : MonoBehaviour
     {
