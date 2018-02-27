@@ -3,7 +3,14 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Node-Library">Node Library Home</a>
 
 <details><summary>Artistic</summary></details>
-<details><summary>Channel</summary></details>
+
+<details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Channel-Nodes">Channel</a></summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Combine-Node">Combine</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Flip-Node">Flip</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Split-Node">Split</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Swizzle-Node">Swizzle</a><br>
+</details>
+
 <details><summary>Input</summary></details>
 <details><summary>Master</summary></details>
 
