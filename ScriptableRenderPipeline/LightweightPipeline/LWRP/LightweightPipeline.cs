@@ -429,12 +429,25 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 desc.depthBufferBits = 0;
                 desc.colorFormat = RenderTextureFormat.R8;
                 cmd.GetTemporaryRT(m_ScreenSpaceShadowMapRTID, desc, FilterMode.Bilinear);
+
+                cmd.SetRenderTarget(m_ScreenSpaceShadowMapRTID, 0, CubemapFace.Unknown, 0);
+                cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
+                cmd.SetViewport(m_CurrCamera.pixelRect);
+                cmd.SetGlobalInt("unity_StereoEyeIndex", 0);
+                cmd.DrawMesh(blitQuad, Matrix4x4.identity, m_ScreenSpaceShadowsMaterial);
+
+                cmd.SetRenderTarget(m_ScreenSpaceShadowMapRTID, 0, CubemapFace.Unknown, 1);
+                cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
+                cmd.SetViewport(m_CurrCamera.pixelRect);
+                cmd.SetGlobalInt("unity_StereoEyeIndex", 1);
+                cmd.DrawMesh(blitQuad, Matrix4x4.identity, m_ScreenSpaceShadowsMaterial);
             }
             else
             {
                 cmd.GetTemporaryRT(m_ScreenSpaceShadowMapRTID, m_CurrCamera.pixelWidth, m_CurrCamera.pixelHeight, 0, FilterMode.Bilinear, RenderTextureFormat.R8);
+                cmd.Blit(Texture2D.whiteTexture, m_ScreenSpaceShadowMapRT, m_ScreenSpaceShadowsMaterial);
             }
-            cmd.Blit(null, m_ScreenSpaceShadowMapRT, m_ScreenSpaceShadowsMaterial);
+
 
             if (LightweightUtils.HasFlag(frameRenderingConfiguration, FrameRenderingConfiguration.Stereo))
                 context.StartMultiEye(m_CurrCamera);
@@ -1473,6 +1486,19 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             return (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer);
         }
 
+        Mesh blitQuad
+        {
+            get
+            {
+                if (m_BlitQuad == null)
+                {
+                    if (m_BlitQuad == null)
+                        m_BlitQuad = LightweightUtils.CreateQuadMesh(false);
+                }
+                return m_BlitQuad;
+            }
+        }
+
         private void Blit(CommandBuffer cmd, FrameRenderingConfiguration renderingConfig, RenderTargetIdentifier sourceRT, RenderTargetIdentifier destRT, Material material = null)
         {
             cmd.SetGlobalTexture(m_BlitTexID, sourceRT);
@@ -1482,13 +1508,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             }
             else
             {
-                if (m_BlitQuad == null)
-                    m_BlitQuad = LightweightUtils.CreateQuadMesh(false);
-
                 SetRenderTarget(cmd, destRT);
                 cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
                 cmd.SetViewport(m_CurrCamera.pixelRect);
-                cmd.DrawMesh(m_BlitQuad, Matrix4x4.identity, material);
+                cmd.DrawMesh(blitQuad, Matrix4x4.identity, material);
             }
         }
 

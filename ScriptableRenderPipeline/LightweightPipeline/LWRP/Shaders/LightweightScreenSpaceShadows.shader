@@ -25,25 +25,19 @@ Shader "Hidden/LightweightPipeline/ScreenSpaceShadows"
         {
             float4 vertex   : POSITION;
             float2 texcoord : TEXCOORD0;
-            UNITY_VERTEX_INPUT_INSTANCE_ID
         };
 
         struct Interpolators
         {
             half4  pos      : SV_POSITION;
             half4  texcoord : TEXCOORD0;
-            UNITY_VERTEX_INPUT_INSTANCE_ID
-            UNITY_VERTEX_OUTPUT_STEREO
         };
 
         Interpolators Vertex(VertexInput i)
         {
             Interpolators o;
-            UNITY_SETUP_INSTANCE_ID(i);
-            UNITY_TRANSFER_INSTANCE_ID(i, o);
-            UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-            o.pos = TransformObjectToHClip(i.vertex.xyz);
+            o.pos = i.vertex.xyzw;
 
             float4 projPos = o.pos * 0.5;
             projPos.xy = projPos.xy + projPos.w;
@@ -57,13 +51,6 @@ Shader "Hidden/LightweightPipeline/ScreenSpaceShadows"
 
         half Fragment(Interpolators i) : SV_Target
         {
-            UNITY_SETUP_INSTANCE_ID(i);
-            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
-
-            // TODO
-            // declare texture correctly as tex2darray
-            // pass in stereo eye index in correctly so it can sample texture
-            // Fix up sampling from a depth texture array
 #if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
             float deviceDepth = SAMPLE_TEXTURE2D_ARRAY(_CameraDepthTexture, sampler_CameraDepthTexture, i.texcoord.xy, unity_StereoEyeIndex).r;
 #else
@@ -93,6 +80,7 @@ Shader "Hidden/LightweightPipeline/ScreenSpaceShadows"
             Cull Off
 
             HLSLPROGRAM
+            #pragma enable_d3d11_debug_symbols
             #pragma multi_compile _ _SHADOWS_SOFT
             #pragma multi_compile _ _SHADOWS_CASCADE
             
