@@ -108,6 +108,18 @@
 
 #endif // #ifndef real
 
+// Target in compute shader are supported in 2018.2, for now define ours
+// (Note only 45 and above support compute shader)
+#ifdef  SHADER_STAGE_COMPUTE
+#   ifndef SHADER_TARGET
+#       if defined(SHADER_API_METAL) || defined(SHADER_API_VULKAN)
+#       define SHADER_TARGET 45
+#       else
+#       define SHADER_TARGET 50
+#       endif
+#   endif
+#endif
+
 // Include language header
 #if defined(SHADER_API_D3D11)
 #include "API/D3D11.hlsl"
@@ -349,7 +361,7 @@ real FastATanPos(real x)
 #if (SHADER_TARGET >= 45)
 uint FastLog2(uint x)
 {
-    return firstbithigh(x) - 1u;
+    return firstbithigh(x);
 }
 #endif
 
@@ -622,7 +634,7 @@ float4 ComputeClipSpacePosition(float3 position, float4x4 clipSpaceTransform = k
 // (position = positionCS) => (clipSpaceTransform = use default)
 // (position = positionVS) => (clipSpaceTransform = UNITY_MATRIX_P)
 // (position = positionWS) => (clipSpaceTransform = UNITY_MATRIX_VP)
-float2 ComputeNormalizedDeviceCoordinates(float3 position, float4x4 clipSpaceTransform = k_identity4x4)
+float3 ComputeNormalizedDeviceCoordinatesWithZ(float3 position, float4x4 clipSpaceTransform = k_identity4x4)
 {
     float4 positionCS = ComputeClipSpacePosition(position, clipSpaceTransform);
 
@@ -634,7 +646,19 @@ float2 ComputeNormalizedDeviceCoordinates(float3 position, float4x4 clipSpaceTra
     positionCS.y = -positionCS.y;
 #endif
 
-    return positionCS.xy * (rcp(positionCS.w) * 0.5) + 0.5;
+    positionCS *= rcp(positionCS.w);
+    positionCS.xy = positionCS.xy * 0.5 + 0.5;
+
+    return positionCS.xyz;
+}
+
+// Use case examples:
+// (position = positionCS) => (clipSpaceTransform = use default)
+// (position = positionVS) => (clipSpaceTransform = UNITY_MATRIX_P)
+// (position = positionWS) => (clipSpaceTransform = UNITY_MATRIX_VP)
+float2 ComputeNormalizedDeviceCoordinates(float3 position, float4x4 clipSpaceTransform = k_identity4x4)
+{
+    return ComputeNormalizedDeviceCoordinatesWithZ(position, clipSpaceTransform).xy;
 }
 
 float3 ComputeViewSpacePosition(float2 positionNDC, float deviceDepth, float4x4 invProjMatrix)

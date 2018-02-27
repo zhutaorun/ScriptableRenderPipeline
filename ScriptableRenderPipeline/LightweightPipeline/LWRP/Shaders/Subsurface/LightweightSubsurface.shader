@@ -1,4 +1,4 @@
-﻿Shader "LightweightPipeline/LightweightSubsurface"
+Shader "LightweightPipeline/LightweightSubsurface"
 {
     Properties
     {
@@ -49,10 +49,13 @@
         [Enum(UV0,0,UV1,1)] _UVSec("UV Set for secondary textures", Float) = 0
 
         // Blending state
-        [HideInInspector] _Mode("__mode", Float) = 0.0
+        [HideInInspector] _Surface("__surface", Float) = 0.0
+        [HideInInspector] _Blend("__blend", Float) = 0.0
+        [HideInInspector] _AlphaClip("__clip", Float) = 0.0
         [HideInInspector] _SrcBlend("__src", Float) = 1.0
         [HideInInspector] _DstBlend("__dst", Float) = 0.0
         [HideInInspector] _ZWrite("__zw", Float) = 1.0
+        [HideInInspector] _Cull("__cull", Float) = 2.0
     }
 
     SubShader
@@ -73,6 +76,7 @@
 
             Blend[_SrcBlend][_DstBlend]
             ZWrite[_ZWrite]
+            Cull[_Cull]
 
             HLSLPROGRAM
             // Required to compile gles 2.0 with standard SRP library
@@ -83,7 +87,8 @@
             // -------------------------------------
             // Material Keywords
             #pragma shader_feature _NORMALMAP
-            #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON _ALPHAPREMULTIPLY_ON
+            #pragma shader_feature _ALPHATEST_ON 
+            #pragma shader_feature _ALPHAPREMULTIPLY_ON
             #pragma shader_feature _EMISSION
             #pragma shader_feature _METALLICSPECGLOSSMAP
             #pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
@@ -95,9 +100,6 @@
 
             // -------------------------------------
             // Lightweight Pipeline keywords
-            #pragma multi_compile _MAIN_LIGHT_DIRECTIONAL _MAIN_LIGHT_SPOT
-            #pragma multi_compile _ _SHADOWS_ENABLED
-            #pragma multi_compile _ _MAIN_LIGHT_COOKIE
             #pragma multi_compile _ _ADDITIONAL_LIGHTS
             #pragma multi_compile _ _VERTEX_LIGHTS
             #pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
@@ -105,18 +107,12 @@
 
             // -------------------------------------
             // Unity defined keywords
-            #pragma multi_compile _ UNITY_SINGLE_PASS_STEREO STEREO_INSTANCING_ON STEREO_MULTIVIEW_ON
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED LIGHTMAP_ON
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile _ LIGHTMAP_ON
 
             //--------------------------------------
             // GPU Instancing
             #pragma multi_compile_instancing
-
-            // LW doesn't support dynamic GI. So we save 30% shader variants if we assume
-            // LIGHTMAP_ON when DIRLIGHTMAP_COMBINED is set
-            #ifdef DIRLIGHTMAP_COMBINED
-            #define LIGHTMAP_ON
-            #endif
 
             #define SUBSURFACE_SCATTERING
 
@@ -131,19 +127,35 @@
         {
             Tags{"LightMode" = "ShadowCaster"}
 
-            ZWrite On ZTest LEqual
+            ZWrite On
+            ZTest LEqual
+            Cull[_Cull]
 
             HLSLPROGRAM
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
             #pragma target 2.0
+            
+            // -------------------------------------
+            // Material Keywords
+            #pragma shader_feature _NORMALMAP
+            #pragma shader_feature _ALPHATEST_ON 
+            #pragma shader_feature _ALPHAPREMULTIPLY_ON
+            #pragma shader_feature _EMISSION
+            #pragma shader_feature _METALLICSPECGLOSSMAP
+            #pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+            #pragma shader_feature _OCCLUSIONMAP
+
+            #pragma shader_feature _SPECULARHIGHLIGHTS_OFF
+            #pragma shader_feature _GLOSSYREFLECTIONS_OFF
+            #pragma shader_feature _SPECULAR_SETUP
 
             //--------------------------------------
             // GPU Instancing
             #pragma multi_compile_instancing
 
             #pragma vertex ShadowPassVertex
-            #pragma fragment ShadowPassFragment
+            #pragma fragment LitPassFragmentNull
 
             #include "LWRP/ShaderLibrary/LightweightPassShadow.hlsl"
             ENDHLSL
@@ -160,20 +172,29 @@
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
             #pragma target 2.0
-            #pragma vertex vert
-            #pragma fragment frag
+            
+            // -------------------------------------
+            // Material Keywords
+            #pragma shader_feature _NORMALMAP
+            #pragma shader_feature _ALPHATEST_ON 
+            #pragma shader_feature _ALPHAPREMULTIPLY_ON
+            #pragma shader_feature _EMISSION
+            #pragma shader_feature _METALLICSPECGLOSSMAP
+            #pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+            #pragma shader_feature _OCCLUSIONMAP
 
-            #include "LWRP/ShaderLibrary/Core.hlsl"
+            #pragma shader_feature _SPECULARHIGHLIGHTS_OFF
+            #pragma shader_feature _GLOSSYREFLECTIONS_OFF
+            #pragma shader_feature _SPECULAR_SETUP
 
-            float4 vert(float4 pos : POSITION) : SV_POSITION
-            {
-                return TransformObjectToHClip(pos.xyz);
-            }
+            //--------------------------------------
+            // GPU Instancing
+            #pragma multi_compile_instancing
 
-            half4 frag() : SV_TARGET
-            {
-                return 0;
-            }
+            #pragma vertex LitPassVertex
+            #pragma fragment LitPassFragmentNull
+
+            #include "LWRP/ShaderLibrary/LightweightPassLit.hlsl"
             ENDHLSL
         }
 

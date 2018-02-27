@@ -327,6 +327,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         public override void Render(ScriptableRenderContext context, Camera[] cameras)
         {
             base.Render(context, cameras);
+            RenderPipeline.BeginFrameRendering(cameras);
 
             GraphicsSettings.lightsUseLinearIntensity = true;
             SetupPerFrameShaderConstants();
@@ -335,10 +336,17 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             Array.Sort(cameras, m_CameraComparer);
             foreach (Camera camera in cameras)
             {
+                RenderPipeline.BeginCameraRendering(camera);
+
                 bool sceneViewCamera = camera.cameraType == CameraType.SceneView;
                 bool stereoEnabled = XRSettings.isDeviceActive && !sceneViewCamera;
                 m_CurrCamera = camera;
                 m_IsOffscreenCamera = m_CurrCamera.targetTexture != null && m_CurrCamera.cameraType != CameraType.SceneView;
+
+                var cmd = CommandBufferPool.Get("");
+                cmd.BeginSample("LightweightPipeline.Render");
+                context.ExecuteCommandBuffer(cmd);
+                cmd.Clear();
 
                 ScriptableCullingParameters cullingParameters;
                 if (!CullResults.GetCullingParameters(m_CurrCamera, stereoEnabled, out cullingParameters))
@@ -362,7 +370,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 bool shadows = ShadowPass(visibleLights, ref context, ref lightData);
 
                 FrameRenderingConfiguration frameRenderingConfiguration;
-                SetupFrameRenderingConfiguration(out frameRenderingConfiguration, shadows, stereoEnabled);
+                SetupFrameRenderingConfiguration(out frameRenderingConfiguration, shadows, stereoEnabled, sceneViewCamera);
                 SetupIntermediateResources(frameRenderingConfiguration, ref context);
 
                 // SetupCameraProperties does the following:
@@ -385,15 +393,31 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                         ShadowCollectPass(visibleLights, ref context, ref lightData);
                 }
 
+                if (!shadows)
+                {
+                    var setRT = CommandBufferPool.Get("Generate Small Shadow Buffer");
+                    setRT.GetTemporaryRT(m_ScreenSpaceShadowMapRTID, 4, 4, 0, FilterMode.Bilinear, RenderTextureFormat.R8);
+                    setRT.Blit(Texture2D.whiteTexture, m_ScreenSpaceShadowMapRT);
+                    context.ExecuteCommandBuffer(setRT);
+                }
+
                 ForwardPass(visibleLights, frameRenderingConfiguration, ref context, ref lightData, stereoEnabled);
 
-                var cmd = CommandBufferPool.Get("After Camera Render");
+
+                cmd.name = "After Camera Render";
+#if UNITY_EDITOR
+                if (sceneViewCamera)
+                    CopyTexture(cmd, CameraRenderTargetID.depth, BuiltinRenderTextureType.CameraTarget, m_CopyDepthMaterial, true);
+#endif
                 cmd.ReleaseTemporaryRT(m_ShadowMapRTID);
                 cmd.ReleaseTemporaryRT(m_ScreenSpaceShadowMapRTID);
                 cmd.ReleaseTemporaryRT(CameraRenderTargetID.depthCopy);
                 cmd.ReleaseTemporaryRT(CameraRenderTargetID.depth);
                 cmd.ReleaseTemporaryRT(CameraRenderTargetID.color);
                 cmd.ReleaseTemporaryRT(CameraRenderTargetID.copyColor);
+
+                cmd.EndSample("LightweightPipeline.Render");
+
                 context.ExecuteCommandBuffer(cmd);
                 CommandBufferPool.Release(cmd);
 
@@ -446,8 +470,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                     // There's no way to map shadow light indices. We need to pass in the original unsorted index.
                     // If no additional lights then no light sorting is performed and the indices match.
                     int shadowOriginalIndex = (lightData.totalAdditionalLightsCount > 0) ? GetLightUnsortedIndex(lightData.mainLightIndex) : lightData.mainLightIndex;
-                    bool shadowsRendered = RenderShadows(ref m_CullResults, ref mainLight,
-                            shadowOriginalIndex, ref context);
+                    bool shadowsRendered = RenderShadows(ref m_CullResults, ref mainLight, shadowOriginalIndex, ref context);
                     if (shadowsRendered)
                     {
                         lightData.shadowMapSampleType = (m_Asset.ShadowSetting != ShadowType.SOFT_SHADOWS)
@@ -649,7 +672,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             }
         }
 
-        private void SetupFrameRenderingConfiguration(out FrameRenderingConfiguration configuration, bool shadows, bool stereoEnabled)
+        private void SetupFrameRenderingConfiguration(out FrameRenderingConfiguration configuration, bool shadows, bool stereoEnabled, bool sceneViewCamera)
         {
             configuration = (stereoEnabled) ? FrameRenderingConfiguration.Stereo : FrameRenderingConfiguration.None;
             if (stereoEnabled && XRSettings.eyeTextureDesc.dimension == TextureDimension.Tex2DArray)
@@ -684,6 +707,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                         m_RequireCopyColor = true;
                 }
             }
+
+            if (sceneViewCamera)
+                m_RequireDepthTexture = true;
 
             if (shadows)
             {
@@ -945,8 +971,15 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 // SdotL * invAngleRange + (-cosOuterAngle * invAngleRange)
                 // If we precompute the terms in a MAD instruction
                 float cosOuterAngle = Mathf.Cos(Mathf.Deg2Rad * lightData.spotAngle * 0.5f);
-                float cosInneAngle = Mathf.Cos(LightmapperUtils.ExtractInnerCone(lightData.light) * 0.5f);
-                float smoothAngleRange = Mathf.Max(0.001f, cosInneAngle - cosOuterAngle);
+                // We neeed to do a null check for particle lights
+                // This should be changed in the future
+                // Particle lights will use an inline function
+                float cosInnerAngle;
+                if (lightData.light != null)
+                    cosInnerAngle = Mathf.Cos(LightmapperUtils.ExtractInnerCone(lightData.light) * 0.5f);
+                else
+                    cosInnerAngle = Mathf.Cos((2.0f * Mathf.Atan(Mathf.Tan(lightData.spotAngle * 0.5f * Mathf.Deg2Rad) * (64.0f - 18.0f) / 64.0f)) * 0.5f);
+                float smoothAngleRange = Mathf.Max(0.001f, cosInnerAngle - cosOuterAngle);
                 float invAngleRange = 1.0f / smoothAngleRange;
                 float add = -cosOuterAngle * invAngleRange;
                 lightSpotAttenuation = new Vector4(invAngleRange, add, 0.0f);
@@ -1162,10 +1195,17 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             int vertexLightsCount = lightData.totalAdditionalLightsCount - lightData.pixelAdditionalLightsCount;
 
             int mainLightIndex = lightData.mainLightIndex;
+            //TIM: Not used in shader for V1 to reduce keywords
             CoreUtils.SetKeyword(cmd, "_MAIN_LIGHT_DIRECTIONAL", mainLightIndex == -1 || visibleLights[mainLightIndex].lightType == LightType.Directional);
+            //TIM: Not used in shader for V1 to reduce keywords
             CoreUtils.SetKeyword(cmd, "_MAIN_LIGHT_SPOT", mainLightIndex != -1 && visibleLights[mainLightIndex].lightType == LightType.Spot);
+
+            //TIM: Not used in shader for V1 to reduce keywords
             CoreUtils.SetKeyword(cmd, "_SHADOWS_ENABLED", lightData.shadowMapSampleType != LightShadows.None);
+
+            //TIM: Not used in shader for V1 to reduce keywords
             CoreUtils.SetKeyword(cmd, "_MAIN_LIGHT_COOKIE", mainLightIndex != -1 && LightweightUtils.IsSupportedCookieType(visibleLights[mainLightIndex].lightType) && visibleLights[mainLightIndex].light.cookie != null);
+
             CoreUtils.SetKeyword(cmd, "_ADDITIONAL_LIGHTS", lightData.totalAdditionalLightsCount > 0);
             CoreUtils.SetKeyword(cmd, "_MIXED_LIGHTING_SUBTRACTIVE", m_MixedLightingSetup == MixedLightingSetup.Subtractive);
             CoreUtils.SetKeyword(cmd, "_VERTEX_LIGHTS", vertexLightsCount > 0);
@@ -1495,9 +1535,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             }
         }
 
-        private void CopyTexture(CommandBuffer cmd, RenderTargetIdentifier sourceRT, RenderTargetIdentifier destRT, Material copyMaterial)
+        private void CopyTexture(CommandBuffer cmd, RenderTargetIdentifier sourceRT, RenderTargetIdentifier destRT, Material copyMaterial, bool forceBlit = false)
         {
-            if (m_CopyTextureSupport != CopyTextureSupport.None)
+            if (m_CopyTextureSupport != CopyTextureSupport.None && !forceBlit)
                 cmd.CopyTexture(sourceRT, destRT);
             else
                 cmd.Blit(sourceRT, destRT, copyMaterial);

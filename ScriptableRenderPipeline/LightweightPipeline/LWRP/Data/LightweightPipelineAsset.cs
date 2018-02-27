@@ -48,7 +48,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
     {
         private const int PACKAGE_MANAGER_PATH_INDEX = 1;
         private Shader m_DefaultShader;
-        public static readonly string[] m_SearchPaths = {"Assets", "Packages/com.unity.render-pipelines.lightweight"};
+        public static readonly string m_SearchPathProject = "Assets";
+        public static readonly string m_SearchPathPackage = "Packages/com.unity.render-pipelines.lightweight";
 
         // Default values set when a new LightweightPipeline asset is created
         [SerializeField] private int kAssetVersion = 2;
@@ -76,7 +77,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         [NonSerialized]
         private LightweightPipelineEditorResources m_EditorResourcesAsset;
 
-        [MenuItem("Assets/Create/Graphics/Lightweight Pipeline Asset", priority = CoreUtils.assetCreateMenuPriority1)]
+        [MenuItem("Assets/Create/Rendering/Lightweight Pipeline Asset", priority = CoreUtils.assetCreateMenuPriority1)]
         static void CreateLightweightPipeline()
         {
             ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, CreateInstance<CreateLightweightPipelineAsset>(),
@@ -84,14 +85,14 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         }
 
 
-        //[MenuItem("Assets/Create/Graphics/Lightweight Pipeline Resources", priority = CoreUtils.assetCreateMenuPriority1)]
+        //[MenuItem("Assets/Create/Rendering/Lightweight Pipeline Resources", priority = CoreUtils.assetCreateMenuPriority1)]
         static void CreateLightweightPipelineResources()
         {
             var instance = CreateInstance<LightweightPipelineResources>();
             AssetDatabase.CreateAsset(instance, string.Format("Assets/{0}.asset", typeof(LightweightPipelineResources).Name));
         }
 
-        //[MenuItem("Assets/Create/Graphics/Lightweight Pipeline Editor Resources", priority = CoreUtils.assetCreateMenuPriority1)]
+        //[MenuItem("Assets/Create/Rendering/Lightweight Pipeline Editor Resources", priority = CoreUtils.assetCreateMenuPriority1)]
         static void CreateLightweightPipelineEditorResources()
         {
             var instance = CreateInstance<LightweightPipelineEditorResources>();
@@ -113,7 +114,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private static T LoadResourceFile<T>() where T : ScriptableObject
         {
             T resourceAsset = null;
-            var guids = AssetDatabase.FindAssets(typeof(T).Name + " t:scriptableobject", m_SearchPaths);
+            var guids = AssetDatabase.FindAssets(typeof(T).Name + " t:scriptableobject", new []{m_SearchPathProject});
             foreach (string guid in guids)
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
@@ -125,7 +126,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             // There's currently an issue that prevents FindAssets from find resources withing the package folder.
             if (resourceAsset == null)
             {
-                string path = m_SearchPaths[PACKAGE_MANAGER_PATH_INDEX] + "/LWRP/Data/" + typeof(T).Name + ".asset";
+                string path = m_SearchPathPackage + "/LWRP/Data/" + typeof(T).Name + ".asset";
                 resourceAsset = AssetDatabase.LoadAssetAtPath<T>(path);
             }
             return resourceAsset;
@@ -157,11 +158,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         protected override IRenderPipeline InternalCreatePipeline()
         {
             return new LightweightPipeline(this);
-        }
-
-        void OnValidate()
-        {
-            DestroyCreatedInstances();
         }
 
         private Material GetMaterial(DefaultMaterialType materialType)

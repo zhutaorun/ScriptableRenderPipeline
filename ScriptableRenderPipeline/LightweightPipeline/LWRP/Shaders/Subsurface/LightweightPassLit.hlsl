@@ -135,6 +135,13 @@ half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
     return half4(color.rgb, 1);
 }
 
+// Used for Standard shader
+half4 LitPassFragmentNull(LightweightVertexOutput IN) : SV_Target
+{
+    LitPassFragment(IN);
+    return 0;
+}
+
 // Used for StandardSimpleLighting shader
 half4 LitPassFragmentSimple(LightweightVertexOutput IN) : SV_Target
 {
@@ -144,13 +151,11 @@ half4 LitPassFragmentSimple(LightweightVertexOutput IN) : SV_Target
     half4 diffuseAlpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv);
     half3 diffuse = diffuseAlpha.rgb * _Color.rgb;
 
-#ifdef _GLOSSINESS_FROM_BASE_ALPHA
-    half alpha = _Color.a;
-#else
     half alpha = diffuseAlpha.a * _Color.a;
-#endif
-
     AlphaDiscard(alpha, _Cutoff);
+#ifdef _ALPHAPREMULTIPLY_ON
+    diffuse *= alpha;
+#endif
 
 #ifdef _NORMALMAP
     half3 normalTS = Normal(uv);
@@ -167,5 +172,12 @@ half4 LitPassFragmentSimple(LightweightVertexOutput IN) : SV_Target
 
     return LightweightFragmentBlinnPhong(inputData, diffuse, specularGloss, shininess, emission, alpha);
 };
+
+// Used for StandardSimpleLighting shader
+half4 LitPassFragmentSimpleNull(LightweightVertexOutput IN) : SV_Target
+{
+    half4 result = LitPassFragmentSimple(IN);
+    return result.a;
+}
 
 #endif

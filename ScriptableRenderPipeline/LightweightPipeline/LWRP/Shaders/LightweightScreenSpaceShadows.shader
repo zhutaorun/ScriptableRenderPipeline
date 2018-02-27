@@ -6,6 +6,7 @@ Shader "Hidden/LightweightPipeline/ScreenSpaceShadows"
 
         HLSLINCLUDE
 
+        #pragma prefer_hlslcc gles
         //Keep compiler quiet about Shadows.hlsl. 
         #include "CoreRP/ShaderLibrary/Common.hlsl"
         #include "CoreRP/ShaderLibrary/EntityLighting.hlsl"
@@ -62,7 +63,7 @@ Shader "Hidden/LightweightPipeline/ScreenSpaceShadows"
             float3 wpos = mul(unity_CameraToWorld, float4(vpos, 1)).xyz;
             
             //Fetch shadow coordinates for cascade.
-            float4 coords  = ComputeShadowCoord(wpos);
+            float4 coords  = ComputeScreenSpaceShadowCoords(wpos);
 
             return SampleShadowmap(coords);
         }
@@ -70,8 +71,10 @@ Shader "Hidden/LightweightPipeline/ScreenSpaceShadows"
         ENDHLSL
 
         Pass
-        {
-            ZTest Always ZWrite Off
+        {           
+            ZTest Always
+            ZWrite Off
+            Cull Off
 
             HLSLPROGRAM
             #pragma multi_compile _ _SHADOWS_SOFT
