@@ -1,7 +1,7 @@
 <table align="center">
     <tr><tr valign="top">
-        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Channel-Node">Channel</a></b></p>
-<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Channel-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ChannelNodeThumb.png" alt="Channel Node" height="350" width="350"></a></p>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Combine-Node">Combine</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Combine-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/CombineNodeThumb.png" alt="Combine Node" height="350" width="350"></a></p>
 <p align="left">Creates new vectors from the four inputs R, G, B and A.</p></td>
         <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Flip-Node">Flip</a></b></p>
 <p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Flip-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/FlipNodeThumb.png" alt="Flip Node" height="350" width="350"></a></p>
