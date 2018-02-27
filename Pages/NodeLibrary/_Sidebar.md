@@ -12,7 +12,11 @@
 </details>
 
 <details><summary>Input</summary></details>
-<details><summary>Master</summary></details>
+
+<details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Master-Nodes">Master</a></summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/PBR-Master-Node">PBR</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Unlit-Master-Node">Unlit</a><br>
+</details>
 
 <details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Math-Nodes">Math</a></summary>
 <details><summary>Basic</summary>
