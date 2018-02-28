@@ -63,9 +63,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             // Iridescence
             public static GUIContent iridescenceMaskText = new GUIContent("Iridescence Mask", "Control intensity of the iridescence");
-            public static GUIContent iridescenceThicknessText = new GUIContent("Iridescence Thickness");
-            public static GUIContent iridescenceThicknessMapText = new GUIContent("Iridescence Thickness map");
-            public static GUIContent iridescenceThicknessRemapText = new GUIContent("Iridescence Thickness remap");
+            public static GUIContent iridescenceThicknessText = new GUIContent("Iridescence Layer Thickness");
+            public static GUIContent iridescenceThicknessMapText = new GUIContent("Iridescence Layer Thickness map");
+            public static GUIContent iridescenceThicknessRemapText = new GUIContent("Iridescence Layer Thickness remap");
 
             // Clear Coat
             public static GUIContent coatMaskText = new GUIContent("Coat Mask", "Attenuate the coating effect (similar to change to IOR of 1");
@@ -416,6 +416,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected void ShaderSSSAndTransmissionInputGUI(Material material, int layerIndex)
         {
             var hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
+
+            if (hdPipeline == null)
+                return;
+
             var diffusionProfileSettings = hdPipeline.diffusionProfileSettings;
 
             if (hdPipeline.IsInternalDiffusionProfile(diffusionProfileSettings))

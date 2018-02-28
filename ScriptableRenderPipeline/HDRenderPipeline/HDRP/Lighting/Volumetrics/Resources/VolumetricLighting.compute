@@ -48,6 +48,8 @@
 #include "../../Lighting.hlsl" // Includes Material.hlsl
 #include "../../LightEvaluation.hlsl"
 
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal
+
 //--------------------------------------------------------------------------------------------------
 // Inputs & outputs
 //--------------------------------------------------------------------------------------------------
@@ -564,7 +566,7 @@ void VolumetricLighting(uint2 groupId       : SV_GroupID,
         tileCoord = WaveReadFirstLane(tileCoord);
     }
 
-    [branch] if (voxelCoord.x >= (uint)_VBufferResolution.x ||
+    UNITY_BRANCH if (voxelCoord.x >= (uint)_VBufferResolution.x ||
                  voxelCoord.y >= (uint)_VBufferResolution.y)
     {
         return;
