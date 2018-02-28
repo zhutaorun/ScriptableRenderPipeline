@@ -225,7 +225,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             InitializeDebugMaterials();
 
-
             m_MaterialList.ForEach(material => material.Build(asset));
 
             m_IBLFilterGGX = new IBLFilterGGX(asset.renderPipelineResources);
@@ -327,6 +326,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void SetRenderingFeatures()
         {
+            // Set subshader pipeline tag
+            Shader.globalRenderPipeline = "HDRenderPipeline";
+
             // HD use specific GraphicsSettings
             GraphicsSettings.lightsUseLinearIntensity = true;
             GraphicsSettings.lightsUseColorTemperature = true;
@@ -354,6 +356,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 Debug.LogError("High Definition Render Pipeline doesn't support Gamma mode, change to Linear mode");
             }
 #endif
+        }
+
+        void UnsetRenderingFeatures()
+        {
+            Shader.globalRenderPipeline = "";
+
+            SupportedRenderingFeatures.active = new SupportedRenderingFeatures();
+
+            Lightmapping.ResetDelegate();
         }
 
         void InitializeDebugMaterials()
@@ -424,9 +435,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             DestroyRenderTextures();
 
-            SupportedRenderingFeatures.active = new SupportedRenderingFeatures();
-
-            Lightmapping.ResetDelegate();
+            UnsetRenderingFeatures();
 
 #if UNITY_EDITOR
             SceneViewDrawMode.ResetDrawMode();

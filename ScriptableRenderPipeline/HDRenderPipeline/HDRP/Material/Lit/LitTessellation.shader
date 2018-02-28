@@ -317,7 +317,7 @@ Shader "HDRenderPipeline/LitTessellation"
     SubShader
     {
         // This tags allow to use the shader replacement features
-        Tags{ "RenderType" = "HDLitShader" }
+        Tags{ "RenderPipeline" = "HDRenderPipeline" "RenderType" = "HDLitShader" }
 
         // Caution: The outline selection in the editor use the vertex shader/hull/domain shader of the first pass declare. So it should not bethe  meta pass.
         Pass
