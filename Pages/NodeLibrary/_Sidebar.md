@@ -2,7 +2,17 @@
 
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Node-Library">Node Library Home</a>
 
-<details><summary>Artistic</summary></details>
+<details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Artistic-Nodes">Artistic</a></summary>
+<details><summary>Adjustment</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Channel-Mixer-Node">Channel Mixer</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Contrast-Node">Contrast</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Hue-Node">Hue</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Invert-Colors-Node">Invert Colors</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Replace-Color-Node">Replace Color</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Saturation-Node">Saturation</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/White-Balance-Node">White Balance</a><br>
+</details>
+</details>
 
 <details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Channel-Nodes">Channel</a></summary>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Combine-Node">Combine</a><br>
