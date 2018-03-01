@@ -274,6 +274,12 @@ Shader "HDRenderPipeline/LitTessellation"
     //enable GPU instancing support
     #pragma multi_compile_instancing
 
+// sample-game begin: hard link DIRLIGHTMAP_COMBINED to LIGHTMAP_ON to avoid a multicompile
+    #ifdef LIGHTMAP_ON
+        #define DIRLIGHTMAP_COMBINED
+    #endif
+// sample-game end
+
     //-------------------------------------------------------------------------------------
     // Define
     //-------------------------------------------------------------------------------------
@@ -340,11 +346,15 @@ Shader "HDRenderPipeline/LitTessellation"
             #pragma hull Hull
             #pragma domain Domain
 
-            #pragma multi_compile _ DEBUG_DISPLAY
+// sample-game begin: limit to what we use
+            //#pragma multi_compile _ DEBUG_DISPLAY
+            #pragma shader_feature DEBUG_DISPLAY
             #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
-            #pragma multi_compile _ SHADOWS_SHADOWMASK
+            //#pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            //#pragma multi_compile _ DYNAMICLIGHTMAP_ON
+            //#pragma multi_compile _ SHADOWS_SHADOWMASK
+            #pragma multi_compile SHADOWS_SHADOWMASK
+// sample-game end
 
             #define SHADERPASS SHADERPASS_GBUFFER
             #include "../../ShaderVariables.hlsl"
@@ -381,11 +391,15 @@ Shader "HDRenderPipeline/LitTessellation"
             #pragma hull Hull
             #pragma domain Domain
 
-            #pragma multi_compile _ DEBUG_DISPLAY
+// sample-game begin: limit to what we use
+            //#pragma multi_compile _ DEBUG_DISPLAY
+            #pragma shader_feature DEBUG_DISPLAY
             #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
-            #pragma multi_compile _ SHADOWS_SHADOWMASK
+            //#pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            //#pragma multi_compile _ DYNAMICLIGHTMAP_ON
+            //#pragma multi_compile _ SHADOWS_SHADOWMASK
+            #pragma multi_compile SHADOWS_SHADOWMASK
+// sample-game end
 
             #define SHADERPASS SHADERPASS_GBUFFER
             #define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST // This define allow to not perform the alpha test (alpha test is done during depth prepass)
@@ -584,14 +598,20 @@ Shader "HDRenderPipeline/LitTessellation"
             #pragma hull Hull
             #pragma domain Domain
 
-            #pragma multi_compile _ DEBUG_DISPLAY
+// sample-game begin: limit to what we use
+            //#pragma multi_compile _ DEBUG_DISPLAY
+            #pragma shader_feature DEBUG_DISPLAY
             #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
-            #pragma multi_compile _ SHADOWS_SHADOWMASK
+            //#pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            //#pragma multi_compile _ DYNAMICLIGHTMAP_ON
+            //#pragma multi_compile _ SHADOWS_SHADOWMASK
+            #pragma multi_compile SHADOWS_SHADOWMASK
             // #include "../../Lighting/Forward.hlsl"
-            #pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
-            #pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST
+            //#pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
+            #pragma multi_compile LIGHTLOOP_TILE_PASS
+            //#pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST
+            #pragma multi_compile USE_CLUSTERED_LIGHTLIST
+// sample-game end
 
             #define SHADERPASS SHADERPASS_FORWARD
             #include "../../ShaderVariables.hlsl"
@@ -630,14 +650,20 @@ Shader "HDRenderPipeline/LitTessellation"
             #pragma hull Hull
             #pragma domain Domain
 
-            #pragma multi_compile _ DEBUG_DISPLAY
+// sample-game begin: limit to what we use
+            //#pragma multi_compile _ DEBUG_DISPLAY
+            #pragma shader_feature DEBUG_DISPLAY
             #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
-            #pragma multi_compile _ SHADOWS_SHADOWMASK
+            //#pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            //#pragma multi_compile _ DYNAMICLIGHTMAP_ON
+            //#pragma multi_compile _ SHADOWS_SHADOWMASK
+            #pragma multi_compile SHADOWS_SHADOWMASK
             // #include "../../Lighting/Forward.hlsl"
-            #pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
-            #pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST
+            //#pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
+            #pragma multi_compile LIGHTLOOP_TILE_PASS
+            //#pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST
+            #pragma multi_compile USE_CLUSTERED_LIGHTLIST
+// sample-game end
 
             #define SHADERPASS SHADERPASS_FORWARD
             // In case of opaque we don't want to perform the alpha test, it is done in depth prepass and we use depth equal for ztest (setup from UI)

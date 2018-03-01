@@ -64,8 +64,11 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
         float fade = saturate(posInput.linearDepth * lightData.fadeDistanceScaleAndBias.x + lightData.fadeDistanceScaleAndBias.y);
 
         // See comment in EvaluateBSDF_Punctual
-        shadow = lightData.dynamicShadowCasterOnly ? min(shadowMask, shadow) : shadow;
-        shadow = lerp(shadow, shadowMask, fade); // Caution to lerp parameter: fade is the reverse of shadowDimmer
+// sample-game begin: fix holes in the shadowMask locally for us
+        //shadow = lightData.dynamicShadowCasterOnly ? min(shadowMask, shadow) : shadow;
+        //shadow = lerp(shadow, shadowMask, fade); // Caution to lerp parameter: fade is the reverse of shadowDimmer
+		shadow = min(shadowMask, shadow);
+// sample-game end
 
         // Note: There is no shadowDimmer when there is no shadow mask
 #endif
