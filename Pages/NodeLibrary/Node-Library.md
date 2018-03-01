@@ -1,6 +1,6 @@
 <table align="center">
     <tr>
-        <td width="288"><p align="center"><b>Artistic</b></p></td>
+        <td width="288"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Artistic-Nodes">Artistic</a></b></p></td>
         <td width="288"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Channel-Nodes">Channel</a></b></p></td>
     </tr>
     <tr>
