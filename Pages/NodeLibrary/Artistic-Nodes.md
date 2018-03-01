@@ -31,3 +31,67 @@
 <p align="left">Adjusts the temperature and tint of input In by the amount of inputs Temperature and Tint respectively.</p></td>
     </tr>
 </table>
+
+## Blend
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Blend-Node">Blend</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Blend-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/BlendNodeThumb.png" alt="Blend Node" height="350" width="350"></a></p>
+<p align="left">Blends the value of input Blend onto input Base using the blending mode defined by parameter Mode.</p></td>
+    </tr>
+</table>
+
+## Filter
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Dither-Node">Dither</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Dither-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/DitherNodeThumb.png" alt="Dither Node" height="350" width="350"></a></p>
+<p align="left">Dither is an intentional form of noise used to randomize quantization error. It is used to prevent large-scale patterns such as color banding in images.</p></td>
+    </tr>
+</table>
+
+## Mask
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Channel-Mask-Node">Channel Mask</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Channel-Mask-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ChannelMaskNodeThumb.png" alt="Channel Mask Node" height="350" width="350"></a></p>
+<p align="left">Masks values of input In on channels selected in dropdown Channels.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Color-Mask-Node">Color Mask</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Color-Mask-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ColorMaskNodeThumb.png" alt="Color Mask Node" height="350" width="350"></a></p>
+<p align="left">Creates a mask from values in input In equal to input Mask Color.</p></td>
+    </tr>
+</table>
+
+## Normal
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Normal-Blend-Node">Normal Blend</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Normal-Blend-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/NormalBlendNodeThumb.png" alt="Normal Blend Node" height="350" width="350"></a></p>
+<p align="left">Blends two normal maps defined by inputs A and B together.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Normal-Create-Node">Normal Create</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Normal-Create-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/NormalCreateNodeThumb.png" alt="Normal Create Node" height="350" width="350"></a></p>
+<p align="left">Creates a normal map from a height map defined by input Texture.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Normal-Strength-Node">Normal Strength</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Normal-Strength-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/NormalStrengthNodeThumb.png" alt="Normal Strength Node" height="350" width="350"></a></p>
+<p align="left">Adjusts the strength of the normal map defined by input In by the amount of input Strength.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Normal-Unpack-Node">Normal Unpack</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Normal-Unpack-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/NormalUnpackNodeThumb.png" alt="Normal Unpack Node" height="350" width="350"></a></p>
+<p align="left">Unpacks a normal map defined by input In.</p></td>
+    </tr>
+</table>
+
+## Utility
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Colorspace-Conversion-Node">Colorspace Conversion</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Colorspace-Conversion-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ColorspaceConversionNodeThumb.png" alt="Colorspace Conversion Node" height="350" width="350"></a></p>
+<p align="left">Returns the result of converting the value of input In from one colorspace space to another.</p></td>
+    </tr>
+</table>
