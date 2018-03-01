@@ -12,6 +12,25 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Saturation-Node">Saturation</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/White-Balance-Node">White Balance</a><br>
 </details>
+<details><summary>Blend</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Blend-Node">Blend</a><br>
+</details>
+<details><summary>Filter</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Dither-Node">Dither</a><br>
+</details>
+<details><summary>Mask</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Channel-Mask-Node">Channel Mask</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Color-Mask-Node">Color Mask</a><br>
+</details>
+<details><summary>Normal</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Normal-Blend-Node">Normal Blend</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Normal-Create-Node">Normal Create</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Normal-Strength-Node">Normal Strength</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Normal-Unpack-Node">Normal Unpack</a><br>
+</details>
+<details><summary>Utility</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Colorspace-Conversion-Node">Colorspace Conversion</a><br>
+</details>
 </details>
 
 <details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Channel-Nodes">Channel</a></summary>
