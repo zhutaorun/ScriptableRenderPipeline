@@ -62,7 +62,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public static void BakeCustomReflectionProbe(PlanarReflectionProbe probe, bool usePreviousAssetPath)
         {
             string path;
-            if (!GetCustomBakePath(probe.name, probe.customTexture, true, usePreviousAssetPath, out path))
+            if (!GetCustomBakePath(probe, probe.customTexture, true, usePreviousAssetPath, out path))
                 return;
 
             PlanarReflectionProbe collidingProbe;
@@ -137,7 +137,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public static void BakeCustomReflectionProbe(ReflectionProbe probe, bool usePreviousAssetPath)
         {
             string path;
-            if (!GetCustomBakePath(probe.name, probe.customBakedTexture, probe.hdr, usePreviousAssetPath, out path))
+            if (!GetCustomBakePath(probe, probe.customBakedTexture, probe.hdr, usePreviousAssetPath, out path))
                 return;
 
             ReflectionProbe collidingProbe;
@@ -167,10 +167,73 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
         }
 
-        static MethodInfo k_Lightmapping_BakeReflectionProbeSnapshot = typeof(UnityEditor.Lightmapping).GetMethod("BakeReflectionProbeSnapshot", BindingFlags.Static | BindingFlags.NonPublic);
         public static bool BakeReflectionProbeSnapshot(ReflectionProbe probe)
         {
-            return (bool)k_Lightmapping_BakeReflectionProbeSnapshot.Invoke(null, new object[] { probe });
+            // 2. Probe rendering
+            var target = s_ReflectionProbeBaker.NewRenderTarget(
+                probe,
+                ReflectionSystem.parameters.reflectionProbeSize
+            );
+            s_ReflectionProbeBaker.Render(probe, target);
+
+            var bakedTexture = probe.bakedTexture;
+
+            // 3. Get asset path and importer
+            var assetPath = string.Empty;
+            if (bakedTexture != null)
+                assetPath = AssetDatabase.GetAssetPath(bakedTexture);
+            if (string.IsNullOrEmpty(assetPath))
+            {
+                assetPath = GetBakePath(probe);
+                bakedTexture = AssetDatabase.LoadAssetAtPath<Cubemap>(assetPath);
+            }
+
+            Assert.IsFalse(string.IsNullOrEmpty(assetPath));
+
+            if (bakedTexture == null)
+            {
+                // Import a small texture to get the TextureImporter quickly
+                bakedTexture = new Cubemap(4, GraphicsFormat.R16G16B16A16_SFloat, TextureCreationFlags.None);
+                AssetDatabase.CreateAsset(bakedTexture, assetPath);
+            }
+
+            // 4. Setup importer
+            var textureImporter = (TextureImporter)AssetImporter.GetAtPath(assetPath);
+            textureImporter.alphaSource = TextureImporterAlphaSource.None;
+            textureImporter.sRGBTexture = false;
+            textureImporter.mipmapEnabled = false;
+            textureImporter.textureShape = TextureImporterShape.TextureCube;
+            var hdrp = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
+            if (hdrp != null)
+            {
+                textureImporter.textureCompression = hdrp.renderPipelineSettings.lightLoopSettings.reflectionCacheCompressed
+                    ? TextureImporterCompression.Compressed
+                    : TextureImporterCompression.Uncompressed;
+            }
+
+            // 5. Write texture into asset file and import
+            var tex2D = CoreUtils.CopyCubemapToTexture2D(target);
+            target.Release();
+            var bytes = tex2D.EncodeToEXR(Texture2D.EXRFlags.CompressZIP);
+            CoreUtils.Destroy(tex2D);
+            File.WriteAllBytes(assetPath, bytes);
+            textureImporter.SaveAndReimport();
+            bakedTexture = AssetDatabase.LoadAssetAtPath<Cubemap>(assetPath);
+
+            // 6. Assign texture
+            probe.bakedTexture = bakedTexture;
+            EditorUtility.SetDirty(probe);
+
+            // 7. Register baking information
+            var id = EditorUtility.GetSceneObjectIdentifierFor(probe);
+            var asset = GetOrCreateLightingDataAssetForScene(probe.gameObject.scene);
+            if (id != SceneObjectIdentifier.Null && asset != null)
+            {
+                asset.SetBakedTexture(id, bakedTexture);
+                EditorUtility.SetDirty(asset);
+            }
+
+            return true;
         }
 
         public static bool BakeReflectionProbeSnapshot(PlanarReflectionProbe probe)
@@ -209,8 +272,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return (bool)k_Lightmapping_BakeAllReflectionProbesSnapshots.Invoke(null, new object[0]);
         }
 
-        static bool GetCustomBakePath(string probeName, Texture customBakedTexture, bool hdr, bool usePreviousAssetPath, out string path)
+        static bool GetCustomBakePath(Component probe, Texture customBakedTexture, bool hdr, bool usePreviousAssetPath, out string path)
         {
+            var id = EditorUtility.GetSceneObjectIdentifierFor(probe);
+            if (id == SceneObjectIdentifier.Null)
+            {
+                path = string.Empty;
+                return false;
+            }
+
             path = "";
             if (usePreviousAssetPath)
                 path = AssetDatabase.GetAssetPath(customBakedTexture);
@@ -223,7 +293,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 if (Directory.Exists(targetPath) == false)
                     Directory.CreateDirectory(targetPath);
 
-                var fileName = probeName + (hdr ? "-reflectionHDR" : "-reflection") + "." + targetExtension;
+                var fileName = string.Format("Probe {0}.exr", id);
                 fileName = Path.GetFileNameWithoutExtension(AssetDatabase.GenerateUniqueAssetPath(Path.Combine(targetPath, fileName)));
 
                 path = EditorUtility.SaveFilePanelInProject("Save reflection probe's cubemap.", fileName, targetExtension, "", targetPath);
@@ -505,70 +575,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 job.request.Progress = ((float)Stage.BakeReflectionProbe + stageProgress) / (float)Stage.Completed;
                 job.request.ProgressMessage = string.Format("Reflection Probes ({0}/{1})", job.m_StageIndex + 1, job.reflectionProbesToBake.Count);
 
-                // 2. Probe rendering
-                var probe = job.reflectionProbesToBake[job.m_StageIndex];
-                var target = s_ReflectionProbeBaker.NewRenderTarget(
-                    probe, 
-                    ReflectionSystem.parameters.reflectionProbeSize
-                );
-                s_ReflectionProbeBaker.Render(probe, target);
-
-                var bakedTexture = probe.bakedTexture;
-
-                // 3. Get asset path and importer
-                var assetPath = string.Empty;
-                if (bakedTexture != null)
-                    assetPath = AssetDatabase.GetAssetPath(bakedTexture);
-                if (string.IsNullOrEmpty(assetPath))
-                {
-                    assetPath = GetBakePath(probe);
-                    bakedTexture = AssetDatabase.LoadAssetAtPath<Cubemap>(assetPath);
-                }
-
-                Assert.IsFalse(string.IsNullOrEmpty(assetPath));
-
-                if (bakedTexture == null)
-                {
-                    // Import a small texture to get the TextureImporter quickly
-                    bakedTexture = new Cubemap(4, GraphicsFormat.R16G16B16A16_SFloat, TextureCreationFlags.None);
-                    AssetDatabase.CreateAsset(bakedTexture, assetPath);
-                }
-
-                // 4. Setup importer
-                var textureImporter = (TextureImporter)AssetImporter.GetAtPath(assetPath);
-                textureImporter.alphaSource = TextureImporterAlphaSource.None;
-                textureImporter.sRGBTexture = false;
-                textureImporter.mipmapEnabled = false;
-                textureImporter.textureShape = TextureImporterShape.TextureCube;
-                var hdrp = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
-                if (hdrp != null)
-                {
-                    textureImporter.textureCompression = hdrp.renderPipelineSettings.lightLoopSettings.reflectionCacheCompressed
-                        ? TextureImporterCompression.Compressed
-                        : TextureImporterCompression.Uncompressed;
-                }
-
-                // 5. Write texture into asset file and import
-                var tex2D = CoreUtils.CopyCubemapToTexture2D(target);
-                target.Release();
-                var bytes = tex2D.EncodeToEXR(Texture2D.EXRFlags.CompressZIP);
-                CoreUtils.Destroy(tex2D);
-                File.WriteAllBytes(assetPath, bytes);
-                textureImporter.SaveAndReimport();
-                bakedTexture = AssetDatabase.LoadAssetAtPath<Cubemap>(assetPath);
-
-                // 6. Assign texture
-                probe.bakedTexture = bakedTexture;
-                EditorUtility.SetDirty(probe);
-
-                // 7. Register baking information
-                var id = EditorUtility.GetSceneObjectIdentifierFor(probe);
-                var asset = GetOrCreateLightingDataAssetForScene(probe.gameObject.scene);
-                if (id != SceneObjectIdentifier.Null && asset != null)
-                {
-                    asset.SetBakedTexture(id, bakedTexture);
-                    EditorUtility.SetDirty(asset);
-                }
+                BakeReflectionProbeSnapshot(job.reflectionProbesToBake[job.m_StageIndex]);
 
                 ++job.m_StageIndex;
             }
