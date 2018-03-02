@@ -17,7 +17,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         // Lighting resources
         public Shader deferredShader;
-        public ComputeShader gaussianPyramidCS;
+        public ComputeShader colorPyramidCS;
         public ComputeShader depthPyramidCS;
         public ComputeShader copyChannelCS;
         public ComputeShader applyDistortionCS;
@@ -53,7 +53,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public Shader skyboxCubemap;
 
-        // Utilities
+        // Utilities / Core
         public ComputeShader encodeBC6HCS;
+        public Shader cubeToPanoShader;
+        public Shader blitCubeTextureFace;
+
+        // Shadow
+        public Shader shadowClearShader;
+        public ComputeShader shadowBlurMoments;
+        public Shader debugShadowMapShader;
     }
 }

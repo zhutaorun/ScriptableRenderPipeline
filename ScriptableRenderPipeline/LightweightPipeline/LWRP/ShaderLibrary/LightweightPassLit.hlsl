@@ -30,12 +30,11 @@ struct LightweightVertexOutput
     half3 viewDir                   : TEXCOORD6;
     half4 fogFactorAndVertexLight   : TEXCOORD7; // x: fogFactor, yzw: vertex light
 
-#ifdef _SHADOWS_ENABLED
     float4 shadowCoord               : TEXCOORD8;
-#endif
 
     float4 clipPos                  : SV_POSITION;
     UNITY_VERTEX_INPUT_INSTANCE_ID
+    UNITY_VERTEX_OUTPUT_STEREO
 };
 
 void InitializeInputData(LightweightVertexOutput IN, half3 normalTS, out InputData inputData)
@@ -55,11 +54,7 @@ void InitializeInputData(LightweightVertexOutput IN, half3 normalTS, out InputDa
     inputData.viewDirectionWS = normalize(IN.viewDir);
 #endif
 
-#ifdef _SHADOWS_ENABLED
     inputData.shadowCoord = IN.shadowCoord;
-#else
-    inputData.shadowCoord = float4(0, 0, 0, 0);
-#endif
 
     inputData.fogCoord = IN.fogFactorAndVertexLight.x;
     inputData.vertexLighting = IN.fogFactorAndVertexLight.yzw;
@@ -77,6 +72,7 @@ LightweightVertexOutput LitPassVertex(LightweightVertexInput v)
 
     UNITY_SETUP_INSTANCE_ID(v);
     UNITY_TRANSFER_INSTANCE_ID(v, o);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
     o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
 
@@ -96,10 +92,7 @@ LightweightVertexOutput LitPassVertex(LightweightVertexInput v)
     half3 vertexLight = VertexLighting(o.posWS, o.normal);
     half fogFactor = ComputeFogFactor(o.clipPos.z);
     o.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
-
-#ifdef _SHADOWS_ENABLED
-    o.shadowCoord = ComputeScreenPos(o.clipPos);
-#endif
+    o.shadowCoord = ComputeShadowCoord(o.clipPos);
 
     return o;
 }
@@ -121,6 +114,13 @@ half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
     return color;
 }
 
+// Used for Standard shader
+half4 LitPassFragmentNull(LightweightVertexOutput IN) : SV_Target
+{
+    LitPassFragment(IN);
+    return 0;
+}
+
 // Used for StandardSimpleLighting shader
 half4 LitPassFragmentSimple(LightweightVertexOutput IN) : SV_Target
 {
@@ -130,13 +130,11 @@ half4 LitPassFragmentSimple(LightweightVertexOutput IN) : SV_Target
     half4 diffuseAlpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv);
     half3 diffuse = diffuseAlpha.rgb * _Color.rgb;
 
-#ifdef _GLOSSINESS_FROM_BASE_ALPHA
-    half alpha = _Color.a;
-#else
     half alpha = diffuseAlpha.a * _Color.a;
-#endif
-
     AlphaDiscard(alpha, _Cutoff);
+#ifdef _ALPHAPREMULTIPLY_ON
+    diffuse *= alpha;
+#endif
 
 #ifdef _NORMALMAP
     half3 normalTS = Normal(uv);
@@ -153,5 +151,13 @@ half4 LitPassFragmentSimple(LightweightVertexOutput IN) : SV_Target
 
     return LightweightFragmentBlinnPhong(inputData, diffuse, specularGloss, shininess, emission, alpha);
 };
+
+
+// Used for StandardSimpleLighting shader
+half4 LitPassFragmentSimpleNull(LightweightVertexOutput IN) : SV_Target
+{
+    half4 result = LitPassFragmentSimple(IN);
+    return result.a;
+}
 
 #endif
