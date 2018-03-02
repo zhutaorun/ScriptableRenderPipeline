@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using UnityEditor.Callbacks;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
@@ -341,7 +342,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             RenderSettings.enableLegacyReflectionProbeSystem = false;
             Lightmapping.BakeReflectionProbeRequest += LightmappingOnBakeReflectionProbeRequest;
-            Lightmapping.BakeReflectionProbeRequestCancelled += LightmappingOnBakeReflectionProbeRequestCancelled;
             EditorApplication.update += Update;
         }
 
@@ -360,6 +360,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static void LightmappingOnBakeReflectionProbeRequest(BakeReflectionProbeRequest request)
         {
+            if (request.completed)
+                return;
+
             // Custom probe hashes should be handled here by the user
             // var customProbeHash = CalculateCustomProbeHashes()
             // dependencyHash = CombineHashes(dependencyHash, customProbeHash);
@@ -372,16 +375,20 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 s_CurrentBakeJob.Dispose();
                 s_CurrentBakeJob = null;
             }
+            Debug.Log(request.requestHash.ToString()); 
 
-            var job = new ReflectionBakeJob();
+            var job = new ReflectionBakeJob(request);
             ReflectionSystem.QueryReflectionProbes(job.reflectionProbesToBake, mode: ReflectionProbeMode.Baked);
             ReflectionSystem.QueryPlanarProbes(job.planarReflectionProbesToBake, mode: ReflectionProbeMode.Baked);
             s_CurrentBakeJob = job;
+
+            request.Cancelled += LightmappingOnBakeReflectionProbeRequestCancelled;
         }
 
         static void LightmappingOnBakeReflectionProbeRequestCancelled(BakeReflectionProbeRequest request)
         {
             Debug.Log("Cancel: " + request.requestHash);
+            request.Cancelled -= LightmappingOnBakeReflectionProbeRequestCancelled;
             if (s_CurrentBakeJob != null && s_CurrentBakeJob.request == request)
             {
                 s_CurrentBakeJob.Dispose();
@@ -414,6 +421,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public List<ReflectionProbe> reflectionProbesToBake = new List<ReflectionProbe>();
             public List<PlanarReflectionProbe> planarReflectionProbesToBake = new List<PlanarReflectionProbe>();
 
+            public ReflectionBakeJob(BakeReflectionProbeRequest request)
+            {
+                this.request = request;
+            }
 
             public void Tick()
             {
@@ -425,7 +436,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                 if (m_CurrentStage == Stage.Completed)
                 {
-                    request.progress = 1;
+                    request.progress = 1; 
                     return;
                 }
 
@@ -441,16 +452,20 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             static void StageBakeReflectionProbe(ReflectionBakeJob job)
             {
-                if (m_StageIndex >= job.reflectionProbesToBake.Count)
+                if (job.m_StageIndex >= job.reflectionProbesToBake.Count)
                 {
-                    m_StageIndex = -1;
+                    job.m_StageIndex = -1;
                     return;
                 }
 
-                job.request.progress = (float)Stage.BakeReflectionProbe / (float)Stage.Completed;
-                job.request.progressMessage = string.Format("Reflection Probes ({0}/{1})", m_StageIndex + 1, job.reflectionProbesToBake.Count);
+                var stageProgress = job.reflectionProbesToBake.Count > 0
+                    ? 1f - job.m_StageIndex / (float)job.reflectionProbesToBake.Count
+                    : 1f;
 
-                var probe = job.reflectionProbesToBake[m_StageIndex];
+                job.request.progress = ((float)Stage.BakeReflectionProbe + stageProgress) / (float)Stage.Completed;
+                job.request.progressMessage = string.Format("Reflection Probes ({0}/{1})", job.m_StageIndex + 1, job.reflectionProbesToBake.Count);
+
+                var probe = job.reflectionProbesToBake[job.m_StageIndex];
 
                 var target = s_ReflectionProbeBaker.NewRenderTarget(
                     probe, 
@@ -523,26 +538,30 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                     importer.SaveAndReimport();
                 }
-                ++m_StageIndex;
+                ++job.m_StageIndex;
             }
 
             static void StageBakePlanarProbe(ReflectionBakeJob job)
             {
-                if (m_StageIndex >= job.planarReflectionProbesToBake.Count)
+                if (job.m_StageIndex >= job.planarReflectionProbesToBake.Count)
                 {
-                    m_StageIndex = -1;
+                    job.m_StageIndex = -1;
                     return;
                 }
 
-                job.request.progress = (float)Stage.BakePlanarProbe / (float)Stage.Completed;
-                job.request.progressMessage = string.Format("Reflection Probes ({0}/{1})", m_StageIndex + 1, job.planarReflectionProbesToBake.Count);
+                var stageProgress = job.planarReflectionProbesToBake.Count > 0
+                    ? 1f - job.m_StageIndex / (float)job.planarReflectionProbesToBake.Count
+                    : 1f;
 
-                var probe = job.planarReflectionProbesToBake[m_StageIndex];
+                job.request.progress = ((float)Stage.BakePlanarProbe + stageProgress) / (float)Stage.Completed;
+                job.request.progressMessage = string.Format("Reflection Probes ({0}/{1})", job.m_StageIndex + 1, job.planarReflectionProbesToBake.Count);
+
+                var probe = job.planarReflectionProbesToBake[job.m_StageIndex];
                 var target = s_PlanarReflectionProbeBaker.NewRenderTarget(
                     probe,
                     ReflectionSystem.parameters.planarReflectionProbeSize
                 );
-                s_PlanarReflectionProbeBaker.Render(target, target);
+                s_PlanarReflectionProbeBaker.Render(probe, target);
 
                 var bakedTexture = probe.bakedTexture;
 
@@ -587,7 +606,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                     importer.SaveAndReimport();
                 }
-                ++m_StageIndex;
+                ++job.m_StageIndex;
             }
         }
     }
