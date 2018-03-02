@@ -56,5 +56,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             for (var i = 0; i < m_ObjectList.Count; i++)
                 m_IndexByID.Add(m_ObjectList[i].ID, m_ObjectList[i]);
         }
+
+        public Texture GetBakedTextureFor(SceneObjectIdentifier id)
+        {
+            ProbeInformation result;
+            return m_IndexByID.TryGetValue(id, out result)
+                ? result.BakedTexture
+                : null;
+        }
     }
 }
