@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using UnityEditor.Callbacks;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -335,7 +334,34 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             RenderSettings.enableLegacyReflectionProbeSystem = false;
             Lightmapping.BakeReflectionProbeRequest += LightmappingOnBakeReflectionProbeRequest;
             Lightmapping.ClearBakedReflectionProbeRequest += LightmappingOnClearBakedReflectionProbeRequest;
+            EditorSceneManager.sceneOpened += EditorSceneManagerOnSceneOpened;
             EditorApplication.update += Update;
+        }
+
+        static void EditorSceneManagerOnSceneOpened(Scene scene, OpenSceneMode mode)
+        {
+            var asset = GetLightingDataAssetForScene(scene);
+            if (asset == null)
+                return;
+
+            var roots = scene.GetRootGameObjects();
+            var probes = new List<ReflectionProbe>();
+            for (var i = 0; i < roots.Length; i++)
+            {
+                var root = roots[i];
+                root.GetComponentsInChildren(probes);
+                for (var j = 0; j < probes.Count; j++)
+                {
+                    var probe = probes[j];
+                    var id = EditorUtility.GetSceneObjectIdentifierFor(probe);
+                    if (id == SceneObjectIdentifier.Null)
+                        continue;
+                    var bakedTexture = asset.GetBakedTextureFor(id);
+                    if (bakedTexture == null)
+                        continue;
+                    probe.bakedTexture = bakedTexture;
+                }
+            }
         }
 
         static void LightmappingOnClearBakedReflectionProbeRequest()
