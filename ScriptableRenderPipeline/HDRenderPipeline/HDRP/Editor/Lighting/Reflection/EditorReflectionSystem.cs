@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEditor.Callbacks;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Experimental.Rendering;
@@ -246,7 +247,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 Directory.CreateDirectory(targetPath);
 
             var fileName = string.Format("Probe {0}.exr", id);
-            return AssetDatabase.GenerateUniqueAssetPath(Path.Combine(targetPath, fileName));
+            return Path.Combine(targetPath, fileName);
         }
 
         static string GetSceneBakeDirectoryPath(Scene scene)
@@ -260,7 +261,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return targetPath;
         }
 
-        static HDLightingDataAsset GetLightingDataAssetForScene(Scene scene)
+        static HDLightingDataAsset GetOrCreateLightingDataAssetForScene(Scene scene)
         {
             var filePath = GetLightingDataAssetPathForScene(scene);
             var filePathInfo = new FileInfo(filePath);
@@ -273,6 +274,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 asset = ScriptableObject.CreateInstance<HDLightingDataAsset>();
                 AssetDatabase.CreateAsset(asset, filePath);
             }
+
+            return asset;
+        }
+
+        static HDLightingDataAsset GetLightingDataAssetForScene(Scene scene)
+        {
+            var filePath = GetLightingDataAssetPathForScene(scene);
+            var asset = AssetDatabase.LoadAssetAtPath<HDLightingDataAsset>(filePath);
 
             return asset;
         }
@@ -325,7 +334,29 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             RenderSettings.enableLegacyReflectionProbeSystem = false;
             Lightmapping.BakeReflectionProbeRequest += LightmappingOnBakeReflectionProbeRequest;
+            Lightmapping.ClearBakedReflectionProbeRequest += LightmappingOnClearBakedReflectionProbeRequest;
             EditorApplication.update += Update;
+        }
+
+        static void LightmappingOnClearBakedReflectionProbeRequest()
+        {
+            for (int i = 0, c = SceneManager.sceneCount; i < c; ++i)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                if (!scene.IsValid() || !scene.isLoaded)
+                    continue;
+
+                var asset = GetLightingDataAssetForScene(scene);
+                if (asset == null)
+                    continue;
+
+                asset.DeleteAssets();
+
+                var path = AssetDatabase.GetAssetPath(asset);
+                Assert.IsFalse(string.IsNullOrEmpty(path));
+
+                AssetDatabase.DeleteAsset(path);
+            }
         }
 
         static void Update()
@@ -463,7 +494,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 if (bakedTexture != null)
                     assetPath = AssetDatabase.GetAssetPath(bakedTexture);
                 if (string.IsNullOrEmpty(assetPath))
+                {
                     assetPath = GetBakePath(probe);
+                    bakedTexture = AssetDatabase.LoadAssetAtPath<Cubemap>(assetPath);
+                }
 
                 Assert.IsFalse(string.IsNullOrEmpty(assetPath));
 
@@ -490,16 +524,25 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                 // 5. Write texture into asset file and import
                 var tex2D = CoreUtils.CopyCubemapToTexture2D(target);
+                target.Release();
                 var bytes = tex2D.EncodeToEXR(Texture2D.EXRFlags.CompressZIP);
                 CoreUtils.Destroy(tex2D);
                 File.WriteAllBytes(assetPath, bytes);
                 textureImporter.SaveAndReimport();
-                AssetDatabase.ImportAsset(assetPath);
-                target.Release();
+                bakedTexture = AssetDatabase.LoadAssetAtPath<Cubemap>(assetPath);
 
                 // 6. Assign texture
                 probe.bakedTexture = bakedTexture;
                 EditorUtility.SetDirty(probe);
+
+                // 7. Register baking information
+                var id = EditorUtility.GetSceneObjectIdentifierFor(probe);
+                var asset = GetOrCreateLightingDataAssetForScene(probe.gameObject.scene);
+                if (id != SceneObjectIdentifier.Null && asset != null)
+                {
+                    asset.SetBakedTexture(id, bakedTexture);
+                    EditorUtility.SetDirty(asset);
+                }
 
                 ++job.m_StageIndex;
             }
@@ -535,7 +578,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 if (bakedTexture != null)
                     assetPath = AssetDatabase.GetAssetPath(bakedTexture);
                 if (string.IsNullOrEmpty(assetPath))
+                {
                     assetPath = GetBakePath(probe);
+                    bakedTexture = AssetDatabase.LoadAssetAtPath<Cubemap>(assetPath);
+                }
 
                 Assert.IsFalse(string.IsNullOrEmpty(assetPath));
 
@@ -571,6 +617,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 // 6. Assign texture
                 probe.bakedTexture = bakedTexture;
                 EditorUtility.SetDirty(probe);
+
+                // 7. Register baking information
+                var id = EditorUtility.GetSceneObjectIdentifierFor(probe);
+                var asset = GetOrCreateLightingDataAssetForScene(probe.gameObject.scene);
+                if (id != SceneObjectIdentifier.Null && asset != null)
+                {
+                    asset.SetBakedTexture(id, bakedTexture);
+                    EditorUtility.SetDirty(asset);
+                }
 
                 ++job.m_StageIndex;
             }

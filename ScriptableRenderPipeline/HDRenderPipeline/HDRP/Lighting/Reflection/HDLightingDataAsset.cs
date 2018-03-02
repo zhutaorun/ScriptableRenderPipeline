@@ -1,67 +1,60 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
+using UnityEngine.Assertions;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     public class HDLightingDataAsset : ScriptableObject, ISerializationCallbackReceiver
     {
         [Serializable]
-        class ObjectIDPair
+        class ProbeInformation
         {
-            public SceneObjectIdentifier Key;
-            public Object Value;
+            public SerializableSceneObjectIdentifier ID;
+            public Texture BakedTexture;
         }
 
         [SerializeField]
-        List<ObjectIDPair> m_ObjectList = new List<ObjectIDPair>();
+        List<ProbeInformation> m_ObjectList = new List<ProbeInformation>();
 
-        Dictionary<Object, SceneObjectIdentifier> m_ObjectIndex = new Dictionary<Object, SceneObjectIdentifier>();
-        Dictionary<SceneObjectIdentifier, Object> m_IDIndex = new Dictionary<SceneObjectIdentifier, Object>();
+        Dictionary<SceneObjectIdentifier, ProbeInformation> m_IndexByID = new Dictionary<SceneObjectIdentifier, ProbeInformation>();
 
-        public SceneObjectIdentifier GetIdFor(Object probe)
+        public void SetBakedTexture(SceneObjectIdentifier id, Texture bakedTexture)
         {
-            if (m_ObjectIndex.ContainsKey(probe))
-                return m_ObjectIndex[probe];
+            Assert.AreNotEqual(SceneObjectIdentifier.Null, id);
 
-            var id = EditorUtility.GetSceneObjectIdentifierFor(probe);
-            if (id == SceneObjectIdentifier.Null)
+            if (!m_IndexByID.ContainsKey(id))
+                m_IndexByID[id] = new ProbeInformation { ID = id };
+
+            m_IndexByID[id].BakedTexture = bakedTexture;
+        }
+
+        public void DeleteAssets()
+        {
+            foreach (var probeInformation in m_IndexByID)
             {
-                Debug.LogWarningFormat("Could not get the scene object id for {0}", probe);
-                return SceneObjectIdentifier.Null;
+                if (probeInformation.Value.BakedTexture == null)
+                    continue;
+
+                var path = AssetDatabase.GetAssetPath(probeInformation.Value.BakedTexture);
+                if (string.IsNullOrEmpty(path))
+                    continue;
+
+                AssetDatabase.DeleteAsset(path);
             }
-
-            m_ObjectList.Add(new ObjectIDPair
-            {
-                Key = id,
-                Value = probe
-            });
-
-            m_ObjectIndex[probe] = id;
-            m_IDIndex[id] = probe;
-
-            return id;
         }
 
         public void OnBeforeSerialize()
         {
-            for (var i = m_ObjectList.Count - 1; i >= 0; --i)
-            {
-                if (m_ObjectList[i].Value == null)
-                    m_ObjectList.RemoveAt(i);
-            }
+            m_ObjectList.Clear();
+            m_ObjectList.AddRange(m_IndexByID.Select(s => s.Value));
         }
 
         public void OnAfterDeserialize()
         {
             for (var i = 0; i < m_ObjectList.Count; i++)
-            {
-                if (m_IDIndex.ContainsKey(m_ObjectList[i].Key))
-                    Debug.LogErrorFormat(this, "ID {0} is a duplicated in ReflectionSystemSceneDictionary ({1}) for {2}", m_ObjectList[i].Key, this, m_ObjectList[i].Value);
-
-                m_ObjectIndex[m_ObjectList[i].Value] = m_ObjectList[i].Key;
-                m_IDIndex[m_ObjectList[i].Key] = m_ObjectList[i].Value;
-            }
+                m_IndexByID.Add(m_ObjectList[i].ID, m_ObjectList[i]);
         }
     }
 }
