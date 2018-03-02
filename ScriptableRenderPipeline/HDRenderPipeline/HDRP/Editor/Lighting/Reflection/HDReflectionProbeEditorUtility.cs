@@ -93,10 +93,11 @@ namespace UnityEditor.Experimental.Rendering
                 || material.shader != s_PreviewMaterial.shader)
             {
                 material = Object.Instantiate(s_PreviewMaterial);
-                material.SetTexture(_Cubemap, p.texture);
                 material.hideFlags = HideFlags.HideAndDontSave;
                 meshRenderer.material = material;
             }
+
+            material.SetTexture(_Cubemap, p.texture);
 
             meshRenderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
             meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;

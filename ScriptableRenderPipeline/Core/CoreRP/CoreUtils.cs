@@ -461,11 +461,19 @@ namespace UnityEngine.Experimental.Rendering
         public static Texture2D CopyCubemapToTexture2D(RenderTexture source)
         {
             Assert.AreEqual(TextureDimension.Cube, source.dimension);
-            Assert.AreEqual(RenderTextureFormat.ARGBFloat, source.format);
+            TextureFormat format = TextureFormat.RGBAFloat;
+            switch (source.format)
+            {
+                case RenderTextureFormat.ARGBFloat: format = TextureFormat.RGBAFloat; break;
+                case RenderTextureFormat.ARGBHalf: format = TextureFormat.RGBAHalf; break;
+                default:
+                    Assert.IsFalse(true, "Unmanaged format");
+                    break;
+            }
 
             var resolution = source.width;
 
-            var result = new Texture2D(resolution * 6, resolution, TextureFormat.RGBAFloat, false);
+            var result = new Texture2D(resolution * 6, resolution, format, false);
 
             var offset = 0;
             for (var i = 0; i < 6; ++i)
@@ -475,6 +483,7 @@ namespace UnityEngine.Experimental.Rendering
                 result.Apply();
                 offset += resolution;
             }
+            Graphics.SetRenderTarget(null);
 
             return result;
         }

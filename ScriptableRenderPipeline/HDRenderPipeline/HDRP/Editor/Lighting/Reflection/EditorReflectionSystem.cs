@@ -18,7 +18,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     public static class EditorReflectionSystem
     {
         static int _Cubemap = Shader.PropertyToID("_Cubemap");
-        const HideFlags k_ReflectionSystemDictionaryHideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector | HideFlags.DontSaveInBuild;
         static PlanarReflectionProbeBaker s_PlanarReflectionProbeBaker = new PlanarReflectionProbeBaker();
         static ReflectionProbeBaker s_ReflectionProbeBaker = new ReflectionProbeBaker();
 
@@ -236,8 +235,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static string GetBakePath(Component probe)
         {
-            var id = GetComponentPersistentID(probe);
-            if (id == -1)
+            var id = EditorUtility.GetSceneObjectIdentifierFor(probe);
+            if (id == SceneObjectIdentifier.Null)
                 return string.Empty;
 
             var scene = probe.gameObject.scene;
@@ -246,7 +245,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (!Directory.Exists(targetPath))
                 Directory.CreateDirectory(targetPath);
 
-            var fileName = probe.name + "-reflectionHDR.exr";
+            var fileName = string.Format("Probe {0}.exr", id);
             return AssetDatabase.GenerateUniqueAssetPath(Path.Combine(targetPath, fileName));
         }
 
@@ -261,44 +260,27 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return targetPath;
         }
 
-        static int GetComponentPersistentID(Component probe)
+        static HDLightingDataAsset GetLightingDataAssetForScene(Scene scene)
         {
-            var scene = probe.gameObject.scene;
-            if (!scene.IsValid())
-                return -1;
+            var filePath = GetLightingDataAssetPathForScene(scene);
+            var filePathInfo = new FileInfo(filePath);
+            if (!filePathInfo.Directory.Exists)
+                filePathInfo.Directory.Create();
 
-            var reflectionDictionary = GetReflectionDictionaryFor(scene);
-            return reflectionDictionary.GetIdFor(probe);
+            var asset = AssetDatabase.LoadAssetAtPath<HDLightingDataAsset>(filePath);
+            if (asset == null)
+            {
+                asset = ScriptableObject.CreateInstance<HDLightingDataAsset>();
+                AssetDatabase.CreateAsset(asset, filePath);
+            }
+
+            return asset;
         }
 
-        static ReflectionSystemSceneDictionary GetReflectionDictionaryFor(Scene scene)
+        static string GetLightingDataAssetPathForScene(Scene scene)
         {
-            ReflectionSystemSceneDictionary result = null;
-
-            var roots = new List<GameObject>();
-            scene.GetRootGameObjects(roots);
-            for (var i = 0; i < roots.Count; i++)
-            {
-                result = roots[i].GetComponent<ReflectionSystemSceneDictionary>();
-                if (result != null)
-                    break;
-            }
-
-            if (result == null)
-            {
-                result = EditorUtility.CreateGameObjectWithHideFlags(
-                    "Reflection System Dictionary",
-                    k_ReflectionSystemDictionaryHideFlags,
-                    typeof(ReflectionSystemSceneDictionary))
-                    .GetComponent<ReflectionSystemSceneDictionary>();
-
-                SceneManager.MoveGameObjectToScene(result.gameObject, scene);
-                result.gameObject.SetActive(false);
-            }
-
-            result.gameObject.hideFlags = k_ReflectionSystemDictionaryHideFlags;
-
-            return result;
+            var parentFolder = Path.GetFileNameWithoutExtension(scene.path);
+            return Path.Combine(Path.GetDirectoryName(scene.path), Path.Combine(parentFolder, "HDLightingData.asset"));
         }
 
         static bool WriteAndImportTexture(string path, Texture2D target)
@@ -512,6 +494,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 CoreUtils.Destroy(tex2D);
                 File.WriteAllBytes(assetPath, bytes);
                 textureImporter.SaveAndReimport();
+                AssetDatabase.ImportAsset(assetPath);
                 target.Release();
 
                 // 6. Assign texture
@@ -582,6 +565,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 var bytes = ((Texture2D)bakedTexture).EncodeToEXR(Texture2D.EXRFlags.CompressZIP);
                 File.WriteAllBytes(assetPath, bytes);
                 textureImporter.SaveAndReimport();
+                AssetDatabase.ImportAsset(assetPath);
                 target.Release();
 
                 // 6. Assign texture
