@@ -341,45 +341,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             RenderTexture skyCubemap = m_SkyRenderingContext.cubemapRT;
 
-            int resolution = skyCubemap.width;
-
-            var tempRT = new RenderTexture(resolution * 6, resolution, 0, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear)
-            {
-                dimension = TextureDimension.Tex2D,
-                useMipMap = false,
-                autoGenerateMips = false,
-                filterMode = FilterMode.Trilinear
-            };
-            tempRT.Create();
-
-            var temp = new Texture2D(resolution * 6, resolution, TextureFormat.RGBAFloat, false);
-            var result = new Texture2D(resolution * 6, resolution, TextureFormat.RGBAFloat, false);
+            var skyTex2DFlipped = CoreUtils.CopyCubemapToTexture2D(skyCubemap);
 
             // Note: We need to invert in Y the cubemap faces because the current sky cubemap is inverted (because it's a RT)
             // So to invert it again so that it's a proper cubemap image we need to do it in several steps because ReadPixels does not have scale parameters:
             // - Convert the cubemap into a 2D texture
             // - Blit and invert it to a temporary target.
             // - Read this target again into the result texture.
-            int offset = 0;
-            for (int i = 0; i < 6; ++i)
-            {
-                UnityEngine.Graphics.SetRenderTarget(skyCubemap, 0, (CubemapFace)i);
-                temp.ReadPixels(new Rect(0, 0, resolution, resolution), offset, 0);
-                temp.Apply();
-                offset += resolution;
-            }
+            var skyTex2D = CoreUtils.FlipY(skyTex2DFlipped);
 
-            // Flip texture.
-            UnityEngine.Graphics.Blit(temp, tempRT, new Vector2(1.0f, -1.0f), new Vector2(0.0f, 0.0f));
+            CoreUtils.Destroy(skyTex2DFlipped);
 
-            result.ReadPixels(new Rect(0, 0, resolution * 6, resolution), 0, 0);
-            result.Apply();
-
-            UnityEngine.Graphics.SetRenderTarget(null);
-            CoreUtils.Destroy(temp);
-            CoreUtils.Destroy(tempRT);
-
-            return result;
+            return skyTex2D;
         }
     }
 }
