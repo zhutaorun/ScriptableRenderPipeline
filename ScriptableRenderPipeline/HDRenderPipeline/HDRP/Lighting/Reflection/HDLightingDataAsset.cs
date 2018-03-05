@@ -11,7 +11,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [Serializable]
         class ProbeInformation
         {
-            public SerializableSceneObjectIdentifier ID;
+            public SceneObjectIdentifier ID;
             public Texture BakedTexture;
         }
 
@@ -22,7 +22,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void SetBakedTexture(SceneObjectIdentifier id, Texture bakedTexture)
         {
-            Assert.AreNotEqual(SceneObjectIdentifier.Null, id);
+            Assert.AreNotEqual(SceneObjectIdentifier.Invalid, id);
 
             if (!m_IndexByID.ContainsKey(id))
                 m_IndexByID[id] = new ProbeInformation { ID = id };

@@ -225,9 +225,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             EditorUtility.SetDirty(probe);
 
             // 7. Register baking information
-            var id = EditorUtility.GetSceneObjectIdentifierFor(probe);
+            var id = SceneObjectIdentifierUtils.GetSceneObjectIdentifierFor(probe);
             var asset = GetOrCreateLightingDataAssetForScene(probe.gameObject.scene);
-            if (id != SceneObjectIdentifier.Null && asset != null)
+            if (id != SceneObjectIdentifier.Invalid && asset != null)
             {
                 asset.SetBakedTexture(id, bakedTexture);
                 EditorUtility.SetDirty(asset);
@@ -274,8 +274,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static bool GetCustomBakePath(Component probe, Texture customBakedTexture, bool hdr, bool usePreviousAssetPath, out string path)
         {
-            var id = EditorUtility.GetSceneObjectIdentifierFor(probe);
-            if (id == SceneObjectIdentifier.Null)
+            var id = SceneObjectIdentifierUtils.GetSceneObjectIdentifierFor(probe);
+            if (id == SceneObjectIdentifier.Invalid)
             {
                 path = string.Empty;
                 return false;
@@ -305,8 +305,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static string GetBakePath(Component probe)
         {
-            var id = EditorUtility.GetSceneObjectIdentifierFor(probe);
-            if (id == SceneObjectIdentifier.Null)
+            var id = SceneObjectIdentifierUtils.GetSceneObjectIdentifierFor(probe);
+            if (id == SceneObjectIdentifier.Invalid)
                 return string.Empty;
 
             var scene = probe.gameObject.scene;
@@ -423,8 +423,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 for (var j = 0; j < probes.Count; j++)
                 {
                     var probe = probes[j];
-                    var id = EditorUtility.GetSceneObjectIdentifierFor(probe);
-                    if (id == SceneObjectIdentifier.Null)
+                    var id = SceneObjectIdentifierUtils.GetSceneObjectIdentifierFor(probe);
+                    if (id == SceneObjectIdentifier.Invalid)
                         continue;
                     var bakedTexture = asset.GetBakedTextureFor(id);
                     if (bakedTexture == null)
@@ -652,9 +652,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 EditorUtility.SetDirty(probe);
 
                 // 7. Register baking information
-                var id = EditorUtility.GetSceneObjectIdentifierFor(probe);
+                var id = SceneObjectIdentifierUtils.GetSceneObjectIdentifierFor(probe);
                 var asset = GetOrCreateLightingDataAssetForScene(probe.gameObject.scene);
-                if (id != SceneObjectIdentifier.Null && asset != null)
+                if (id != SceneObjectIdentifier.Invalid && asset != null)
                 {
                     asset.SetBakedTexture(id, bakedTexture);
                     EditorUtility.SetDirty(asset);
