@@ -14,7 +14,11 @@ Shader "Hidden/LightweightPipeline/ScreenSpaceShadows"
         #include "LWRP/ShaderLibrary/Core.hlsl"
         #include "LWRP/ShaderLibrary/Shadows.hlsl"
 
-        SCREENSPACE_TEXTURE(_CameraDepthTexture);
+        //NOTE: For now we defer to the TEXTURE2D macro until stereo macro is fixed on 2018.1
+        //      Currently botches depth precision + breaks shadows otherwise.
+        TEXTURE2D(_CameraDepthTexture);
+        //SCREENSPACE_TEXTURE(_CameraDepthTexture);
+
         SAMPLER(sampler_CameraDepthTexture);
 
         struct VertexInput
