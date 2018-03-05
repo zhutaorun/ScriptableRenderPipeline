@@ -385,8 +385,12 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
                 if (LightweightUtils.HasFlag(frameRenderingConfiguration, FrameRenderingConfiguration.DepthPrePass))
                 {
-                    DepthPass(ref context, frameRenderingConfiguration);
+<<<<<<< HEAD
+                    DepthPass(ref context);
                     RenderMSVO(ref context);
+=======
+                    DepthPass(ref context, frameRenderingConfiguration);
+>>>>>>> 2018.1
 
                     // Only screen space shadowmap mode is supported.
                     if (shadows)
