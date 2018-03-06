@@ -2,9 +2,9 @@
 
 A **Port** defines an input or output on a [Node](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node). Connecting [Edges](https://github.com/Unity-Technologies/ShaderGraph/wiki/Edge) to a **Port** allows data to flow through the [Shader Graph](https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph) node network.
 
-Each **Port** has a [Data Type](https://github.com/Unity-Technologies/ShaderGraph/wiki/Data-Types) which defines what edges can be connected to it. Each [Data Type](https://github.com/Unity-Technologies/ShaderGraph/wiki/Data-Types) has an associated color for identifying its type.
+Each **Port** has a [Data Type](https://github.com/Unity-Technologies/ShaderGraph/wiki/Data-Types) which defines what [Edges](https://github.com/Unity-Technologies/ShaderGraph/wiki/Edge) can be connected to it. Each [Data Type](https://github.com/Unity-Technologies/ShaderGraph/wiki/Data-Types) has an associated color for identifying its type.
 
-You can open a contextual [Create Node Menu](https://github.com/Unity-Technologies/ShaderGraph/wiki/Create-Node-Menu) by dragging an [Edge](https://github.com/Unity-Technologies/ShaderGraph/wiki/Edge) from a **Port** with left mouse button.
+You can open a contextual [Create Node Menu](https://github.com/Unity-Technologies/ShaderGraph/wiki/Create-Node-Menu) by dragging an [Edge](https://github.com/Unity-Technologies/ShaderGraph/wiki/Edge) from a **Port** with left mouse button and releasing it in an empty area of the workspace.
 
 ### Default Inputs
 
