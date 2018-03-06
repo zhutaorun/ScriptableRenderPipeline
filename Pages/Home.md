@@ -1,3 +1,5 @@
+## Description
+
 A Shader Graph enables you to build your shaders visually. Instead of hand writing code you create and connect nodes in a graph network. You can do things like:
 
 * Procedurally alter your surface appearance
