@@ -12,6 +12,21 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph-Asset">Shader Graph Asset</a><br>
 </details>
 
+[//]: # (SUB-GRAPH)
+
+<details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sub-graph">Sub-graph</a>
+</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sub-graph-Asset">Sub-graph Asset</a><br>
+</details>
+
+[//]: # (NODE)
+
+<details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Node">Node</a>
+</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Port">Port</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Edge">Edge</a><br>
+</details>
+
 [//]: # (DATA)
 
 <details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Data">Data</a>
