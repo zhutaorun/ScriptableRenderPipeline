@@ -26,6 +26,7 @@ You can hold left mouse button and drag to select multiple [Nodes](https://githu
 | Copy | Ctrl + C | Command + C | Copies selected [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) to the clipboard
 | Paste | Ctrl + V | Command + V | Pastes [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) in the clipboard
 | Focus | F | F | Focus the workspace on all or selected [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node)
+| Create Node | Spacebar | Spacebar | Opens the [Create Node Menu](https://github.com/Unity-Technologies/ShaderGraph/wiki/Create-Node-Menu)
 
 ## Context Menu
 
