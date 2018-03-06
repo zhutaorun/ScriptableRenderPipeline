@@ -9,6 +9,7 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph-Window">Shader Graph Window</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Blackboard">Blackboard</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Master-Preview">Master Preview</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph-Asset">Shader Graph Asset</a><br>
 </details>
 
 [//]: # (DATA)
