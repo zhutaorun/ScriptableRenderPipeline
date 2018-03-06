@@ -28,6 +28,7 @@ namespace UnityEngine.Experimental.Rendering
         public Vector3 blendNormalDistanceNegative = Vector3.zero;
         public Vector3 boxSideFadePositive = Vector3.one;
         public Vector3 boxSideFadeNegative = Vector3.one;
+        public Cubemap bakedTexture;
 
         public ReflectionProxyVolumeComponent proxyVolumeComponent;
 
@@ -62,7 +63,9 @@ namespace UnityEngine.Experimental.Rendering
 
         void OnEnable()
         {
-            ReflectionSystem.RegisterProbe(GetComponent<ReflectionProbe>());
+            var probe = GetComponent<ReflectionProbe>();
+            ReflectionSystem.RegisterProbe(probe);
+            probe.bakedTexture = bakedTexture;
         }
 
         void OnDisable()

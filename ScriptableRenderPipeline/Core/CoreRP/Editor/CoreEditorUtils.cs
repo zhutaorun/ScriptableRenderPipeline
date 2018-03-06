@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -12,6 +13,13 @@ namespace UnityEditor.Experimental.Rendering
     {
         // GUIContent cache utilities
         static Dictionary<string, GUIContent> s_GUIContentCache = new Dictionary<string, GUIContent>();
+
+        public static bool IsPathInProject(string path)
+        {
+            var fullPath = Path.GetFullPath(path);
+            var sanitizedPath = fullPath.Replace("\\", "/");
+            return sanitizedPath.StartsWith(Application.dataPath);
+        }
 
         public static GUIContent GetContent(string textAndTooltip)
         {
