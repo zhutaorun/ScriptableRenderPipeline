@@ -2,7 +2,7 @@
 
 The **Master Preview** displays a representation of the shader on the active **Render Pipeline**. It updates in real-time and automatically updates to display any changes you make in the **Graph**. The title bar of the **Master Preview** displays the name of the current shader.
 
-The **Master Preview** can be moved to anywhere in the [Shader Graph](https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph) window and will automatically move with the nearest corner of that window.
+The **Master Preview** can be moved to anywhere in the [Shader Graph Window](https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph-Window) and will automatically move with the nearest corner of that window.
 
 ### Preview Mesh
 
