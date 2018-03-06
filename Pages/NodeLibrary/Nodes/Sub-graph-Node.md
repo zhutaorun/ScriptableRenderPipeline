@@ -1,6 +1,6 @@
 ## Description
 
-Provides a reference to a [Sub-graph](https://github.com/Unity-Technologies/ShaderGraph/wiki/Sub-graph) asset. All ports on the reference node are defined by the properties and outputs defined in the [Sub-graph](https://github.com/Unity-Technologies/ShaderGraph/wiki/Sub-graph) asset. This is useful for sharing functionality between graphs or duplicating the same functionality within a graph.
+Provides a reference to a [Sub-graph Asset](https://github.com/Unity-Technologies/ShaderGraph/wiki/Sub-graph-Asset). All ports on the reference node are defined by the properties and outputs defined in the [Sub-graph Asset](https://github.com/Unity-Technologies/ShaderGraph/wiki/Sub-graph-Asset). This is useful for sharing functionality between graphs or duplicating the same functionality within a graph.
 
 ## Parameters
 
