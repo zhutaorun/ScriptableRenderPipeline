@@ -13,6 +13,20 @@ The title bar at the top of the **Shader Graph Window** contains actions that ca
 | Save Asset | Saves the graph to update the [Shader Graph Asset](https://github.com/Unity-Technologies/ShaderGraph/wiki/Home) |
 | Show In Project | Hightlights the [Shader Graph Asset](https://github.com/Unity-Technologies/ShaderGraph/wiki/Home) in the [Project Window](https://docs.unity3d.com/Manual/ProjectView.html) |
 
+## Workspace
+
+The workspace is where you create [Node](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) networks. 
+You can navigate the workspace by holding Alt and left mouse button to pan and zoom with the scroll wheel.
+
+You can hold left mouse button and drag to select multiple [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) with a marquee. There are also various shortcut keys to use for better workflow.
+
+| Hotkey      | Windows     | OSX         | Description |
+|:------------|:------------|:------------|:------------|
+| Cut | Ctrl + X | Command + X | Cuts selected [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) to the clipboard
+| Copy | Ctrl + C | Command + C | Copies selected [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) to the clipboard
+| Paste | Ctrl + V | Command + V | Pastes [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) in the clipboard
+| Focus | F | F | Focus the workspace on all or selected [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node)
+
 ## Context Menu
 
 Right clicking within the workspace will open a context menu. Note that right clicking on an item within the workspace, such as a [Node](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node), will open the context menu for that item and not the workspace.
