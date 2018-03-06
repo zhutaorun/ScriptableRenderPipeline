@@ -5,3 +5,4 @@ This section outlines the underlying data of the **Shader Graph** system. For an
 ## Contents
 * [Property Types](https://github.com/Unity-Technologies/ShaderGraph/wiki/Property-Types)
 * [Data Types](https://github.com/Unity-Technologies/ShaderGraph/wiki/Data-Types)
+* [Port Bindings](https://github.com/Unity-Technologies/ShaderGraph/wiki/Port-Bindings)
