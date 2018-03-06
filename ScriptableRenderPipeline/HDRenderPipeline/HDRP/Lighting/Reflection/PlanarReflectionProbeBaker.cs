@@ -1,4 +1,6 @@
-﻿using UnityEngine.Rendering;
+using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
+using System.Linq;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline.Internal
 {
@@ -120,7 +122,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Internal
         {
             if (m_RenderCamera == null)
             {
-                var go = GameObject.Find("__Probe Render Camera") ?? new GameObject("__Probe Render Camera");
+                GameObject go = null;
+                for (int i = 0, c = SceneManager.sceneCount; i < c; ++i)
+                {
+                    go = SceneManager.GetSceneAt(i).GetRootGameObjects().FirstOrDefault(g => g.name == "__Probe Render Camera");
+                    if (go != null)
+                        break;
+                }
+                go = go ?? new GameObject("__Probe Render Camera");
                 go.hideFlags = HideFlags.HideAndDontSave;
 
                 m_RenderCamera = go.GetComponent<Camera>();
