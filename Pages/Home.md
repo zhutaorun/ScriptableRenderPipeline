@@ -1,16 +1,9 @@
 ## Description
 
-A Shader Graph enables you to build your shaders visually. Instead of hand writing code you create and connect nodes in a graph network. You can do things like:
+A Shader Graph enables you to build shaders visually. Instead of hand writing code you create and connect nodes in a graph network. The graph framework gives instant feedback on the changes, and it’s simple enough that new users can become involved in shader creation.
 
-* Procedurally alter your surface appearance
-* Warp and animate UVs
-* Modify the look of your objects using familiar image adjustment operations
-* Change your object’s surface based on useful information about it, its world location, normals, distance from camera, etc.
-* Expose to the material inspector what you think is important to edit for your shader
-* Share node networks between multiple graphs and users by creating subgraphs
-* Create your own custom shader graph nodes through C# and HLSL
-
-The graph framework gives instant feedback on the changes, and it’s simple enough that new users can become involved in shader creation.
+## Disclaimer
+This repository and its documentation is under active development. Everything is subject to change.
 
 ## Contents
 * [Shader Graph](https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph)
