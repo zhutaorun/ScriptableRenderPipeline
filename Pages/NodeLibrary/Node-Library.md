@@ -1,3 +1,5 @@
+The **Node Library** contains documentation for all the individual [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) in [Shader Graph](https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph); including descriptions, ports, parameters, shader code and example images. The [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) are organised in the same categories as found in the [Create Node Menu](https://github.com/Unity-Technologies/ShaderGraph/wiki/Create-Node-Menu) for convenience.
+
 <table align="center">
     <tr>
         <td width="288"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Artistic-Nodes">Artistic</a></b></p></td>
