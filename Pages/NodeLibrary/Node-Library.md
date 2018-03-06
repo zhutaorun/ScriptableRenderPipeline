@@ -1,4 +1,8 @@
+## Description
+
 The **Node Library** contains documentation for all the individual [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) in [Shader Graph](https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph); including descriptions, ports, parameters, shader code and example images. The [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) are organised in the same categories as found in the [Create Node Menu](https://github.com/Unity-Technologies/ShaderGraph/wiki/Create-Node-Menu) for convenience.
+
+## Categories
 
 <table align="center">
     <tr>
