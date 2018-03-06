@@ -17,6 +17,7 @@ The graph framework gives instant feedback on the changes, and it’s simple eno
    * [Shader Graph Window](https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph-Window)
    * [Blackboard](https://github.com/Unity-Technologies/ShaderGraph/wiki/Blackboard)
    * [Master Preview](https://github.com/Unity-Technologies/ShaderGraph/wiki/Master-Preview)
+   * [Create Node Menu](https://github.com/Unity-Technologies/ShaderGraph/wiki/Create-Node-Menu)
    * [Shader Graph Asset](https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph-Asset)
 * [Data](https://github.com/Unity-Technologies/ShaderGraph/wiki/Data)
    * [Property Types](https://github.com/Unity-Technologies/ShaderGraph/wiki/Property-Types)
