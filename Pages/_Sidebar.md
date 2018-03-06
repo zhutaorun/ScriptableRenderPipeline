@@ -33,6 +33,7 @@
 </summary>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Property-Types">Property Types</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Data-Types">Data Types</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Port-Bindings">Port Bindings</a><br>
 </details>
 
 [//]: # (NODE LIBRARY)
