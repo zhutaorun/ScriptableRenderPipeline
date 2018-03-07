@@ -1,8 +1,7 @@
 ## Contents
 
-<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Home">Home</a>
-
-
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Home">Home</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Getting-Started">Getting Started</a>
 
 [//]: # (SHADER GRAPH)
 
