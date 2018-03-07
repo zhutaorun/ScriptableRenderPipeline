@@ -9,6 +9,7 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph-Window">Shader Graph Window</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Blackboard">Blackboard</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Master-Preview">Master Preview</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Create-Node-Menu">Create Node Menu</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph-Asset">Shader Graph Asset</a><br>
 </details>
 
@@ -25,6 +26,7 @@
 </summary>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Port">Port</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Edge">Edge</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Master-Node">Master Node</a><br>
 </details>
 
 [//]: # (DATA)
