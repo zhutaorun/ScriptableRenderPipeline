@@ -38,7 +38,7 @@ Right clicking within the workspace will open a context menu. Note that right cl
 | Cut | Cuts selected [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) to the clipboard |
 | Copy | Copies selected [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) to the clipboard |
 | Paste | Pastes [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) in the clipboard |
-| Delete | Deletes selected nodes |
-| Duplicate | Duplicates selected nodes |
+| Delete | Deletes selected [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) |
+| Duplicate | Duplicates selected [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) |
 | Collapse Previews | Collapses previews on all [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) |
 | Expand Previews | Expands previews on all [Nodes](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node) |
