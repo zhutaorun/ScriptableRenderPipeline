@@ -52,6 +52,8 @@ It is recommended for users to access the [Shader Graph](https://github.com/Unit
 
 If you wish to download via **Github** we recommend using [Shader Graph](https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph) through the [SRP repository](https://github.com/Unity-Technologies/ScriptableRenderPipeline), which has the [Shader Graph](https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph) repository setup as a submodule. Otherwise you will not have any [Master Node](https://github.com/Unity-Technologies/ShaderGraph/wiki/Master-Node) backends available and thus your shaders will be pink. This also ensure that you get a compatible set of render pipeline and [Shader Graph](https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph) versions. Otherwise, carry on with the following instructions.
 
+- Create a new project (or use an existing)
+- Clone branch `2018.1` into the **Assets** folder of your project, such that the repository is contained in a sub-folder of the **Assets** folder
 
 ##  What are the requirements for using Shader Graph
 
