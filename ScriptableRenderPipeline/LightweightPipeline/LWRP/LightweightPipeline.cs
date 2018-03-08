@@ -68,17 +68,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         Subtractive,
     };
 
-    public static class AdvancedFeatureIDs
-    {
-
-    //SSAO
-    //############################################
-    public static readonly int _AmbientOcclusionTexture = Shader.PropertyToID("_AmbientOcclusionTexture");
-    public static readonly int _AmbientOcclusionParam   = Shader.PropertyToID("_AmbientOcclusionParam");
-    //############################################
-
-    }
-
     public static class CameraRenderTargetID
     {
         // Camera color target. Not used when camera is rendering to backbuffer or camera
@@ -155,10 +144,12 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private int m_ShadowCasterCascadesCount;
         private int m_ShadowMapRTID;
         private int m_ScreenSpaceShadowMapRTID;
+        private int m_DebugViewRTID;
         private Matrix4x4[] m_ShadowMatrices = new Matrix4x4[kMaxCascades + 1];
         private RenderTargetIdentifier m_CurrCameraColorRT;
         private RenderTargetIdentifier m_ShadowMapRT;
         private RenderTargetIdentifier m_ScreenSpaceShadowMapRT;
+        private RenderTargetIdentifier m_DebugViewRT;
         private RenderTargetIdentifier m_ColorRT;
         private RenderTargetIdentifier m_CopyColorRT;
         private RenderTargetIdentifier m_DepthRT;
@@ -260,7 +251,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             m_ShadowMapRTID = Shader.PropertyToID("_ShadowMap");
             m_ScreenSpaceShadowMapRTID = Shader.PropertyToID("_ScreenSpaceShadowMap");
-
+            m_DebugViewRTID = Shader.PropertyToID("_DebugViewRT");
             CameraRenderTargetID.color = Shader.PropertyToID("_CameraColorRT");
             CameraRenderTargetID.copyColor = Shader.PropertyToID("_CameraCopyColorRT");
             CameraRenderTargetID.depth = Shader.PropertyToID("_CameraDepthTexture");
@@ -268,7 +259,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             m_ShadowMapRT = new RenderTargetIdentifier(m_ShadowMapRTID);
             m_ScreenSpaceShadowMapRT = new RenderTargetIdentifier(m_ScreenSpaceShadowMapRTID);
-
+            m_DebugViewRT = new RenderTargetIdentifier(m_DebugViewRTID);
             m_ColorRT = new RenderTargetIdentifier(CameraRenderTargetID.color);
             m_CopyColorRT = new RenderTargetIdentifier(CameraRenderTargetID.copyColor);
             m_DepthRT = new RenderTargetIdentifier(CameraRenderTargetID.depth);
@@ -403,7 +394,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 }
 
                 //TODO: Editor only?
-                if(m_Asset.DebugView == DebugViewMode.None)
+                if(!LightweightUtils.HasFlag(frameRenderingConfiguration, FrameRenderingConfiguration.DebugView))
                     ForwardPass(visibleLights, frameRenderingConfiguration, ref context, ref lightData, stereoEnabled);
                 else
                     DebugViewPass(frameRenderingConfiguration, ref context, stereoEnabled);
@@ -528,8 +519,33 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private void DebugViewPass(FrameRenderingConfiguration frameRenderingConfiguration, ref ScriptableRenderContext context, bool stereoEnabled)
         {
             //Set up buffers.
-            
-            
+            //CommandBuffer cmd = CommandBufferPool.Get("Debug View");
+            //cmd.GetTemporaryRT(m_DebugViewRTID, m_CurrCamera.pixelWidth, m_CurrCamera.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.ARGB32);
+            //SetRenderTarget(cmd, m_DebugViewRT, ClearFlag.Color);
+            //context.ExecuteCommandBuffer(cmd);    
+            BeginForwardRendering(ref context, frameRenderingConfiguration);
+
+
+            CommandBuffer cmd = CommandBufferPool.Get("Debug View Mode");
+            LightweightShaderUtils.ResetDebugModes(cmd);
+            switch(m_Asset.DebugView)
+            {
+                case DebugViewMode.Albedo:
+                    LightweightShaderUtils.SetDebugMode(cmd, DebugViewKeyword.ALBEDO);
+                    break;
+                case DebugViewMode.Metallness:
+                    LightweightShaderUtils.SetDebugMode(cmd, DebugViewKeyword.METALNESS);
+                    break;
+                case DebugViewMode.Normals:
+                    LightweightShaderUtils.SetDebugMode(cmd, DebugViewKeyword.NORMALS);
+                    break;
+                case DebugViewMode.Roughness:
+                    LightweightShaderUtils.SetDebugMode(cmd, DebugViewKeyword.ROUGHNESS);
+                    break;
+            }
+            context.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
+
             //Draw
             var debugViewDrawSettings = new DrawRendererSettings(m_CurrCamera, m_DebugViewPass);
             debugViewDrawSettings.sorting.flags = SortFlags.CommonOpaque;
@@ -540,7 +556,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             };
 
             context.DrawRenderers(m_CullResults.visibleRenderers, ref debugViewDrawSettings, debugViewFilterSettings);
-            
+
+            EndForwardRendering(ref context, frameRenderingConfiguration);   
         }
 
         private void ForwardPass(List<VisibleLight> visibleLights, FrameRenderingConfiguration frameRenderingConfiguration, ref ScriptableRenderContext context, ref LightData lightData, bool stereoEnabled)
@@ -777,6 +794,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             if (intermediateTexture)
                 configuration |= FrameRenderingConfiguration.IntermediateTexture;
+
+            if(m_Asset.DebugView != DebugViewMode.None)
+                configuration |= FrameRenderingConfiguration.DebugView;
         }
 
         private void SetupIntermediateResources(FrameRenderingConfiguration renderingConfig, ref ScriptableRenderContext context)
@@ -1464,7 +1484,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                     blitMaterial = null;
 
                 // If PostProcessing is enabled, it is already blit to CameraTarget.
-                if (!LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.PostProcess))
+                if (LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.DebugView) || !LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.PostProcess))
                     Blit(cmd, renderingConfig, m_CurrCameraColorRT, BuiltinRenderTextureType.CameraTarget, blitMaterial);
             }
 

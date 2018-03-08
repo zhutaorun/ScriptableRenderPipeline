@@ -167,4 +167,27 @@ half4 LitPassFragmentSimpleNull(LightweightVertexOutput IN) : SV_Target
     return result.a;
 }
 
+half4 DebugPassFragment(LightweightVertexOutput IN) : SV_Target
+{
+    UNITY_SETUP_INSTANCE_ID(IN);
+
+    SurfaceData surfaceData;
+    InitializeStandardLitSurfaceData(IN.uv, surfaceData);
+
+    InputData inputData;
+    InitializeInputData(IN, surfaceData.normalTS, inputData);
+
+    half3 debug = half3(0, 0, 0);
+#if defined(_DEBUG_ALBEDO)
+    debug = surfaceData.albedo;
+#elif defined(_DEBUG_METALNESS)
+    debug = surfaceData.metallic;
+#elif defined(_DEBUG_NORMALS)
+    debug = inputData.normalWS;
+#elif defined(_DEBUG_ROUGHNESS)
+    debug = 1.0 - surfaceData.smoothness;
+#endif
+    return half4(debug, 1);
+}
+
 #endif

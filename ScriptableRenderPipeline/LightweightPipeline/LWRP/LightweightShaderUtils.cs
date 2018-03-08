@@ -1,3 +1,5 @@
+using UnityEngine.Rendering;
+
 namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 {
     public enum ShaderPathID
@@ -15,6 +17,16 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         SHADER_PATH_COUNT
     }
 
+    public enum DebugViewKeyword
+    {
+        ALBEDO,
+        METALNESS,
+        NORMALS,
+        ROUGHNESS,
+
+        NUM_VIEWS
+    }
+
     public static class LightweightShaderUtils
     {
         private static readonly string[] m_ShaderPaths  =
@@ -29,6 +41,14 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             "Hidden/LightweightPipeline/CopyDepth"
         };
 
+        private static readonly string[] m_DebugViewKeywords =
+        {
+            "_DEBUG_ALBEDO",
+            "_DEBUG_METALNESS",
+            "_DEBUG_NORMALS",
+            "_DEBUG_ROUGHNESS"
+        };
+
         public static string GetShaderPath(ShaderPathID id)
         {
             int index = (int)id;
@@ -39,6 +59,25 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             }
 
             return m_ShaderPaths[index];
+        }
+
+        public static void ResetDebugModes(CommandBuffer cmd)
+        {
+            for(int i = 0; i < (int)DebugViewKeyword.NUM_VIEWS; i++)
+            {
+                cmd.DisableShaderKeyword(m_DebugViewKeywords[i]);
+            }
+        }
+
+        public static void SetDebugMode(CommandBuffer cmd, DebugViewKeyword mode)
+        {
+            int m = (int)mode;
+            if(m < 0 && m >= (int)DebugViewKeyword.NUM_VIEWS)
+            {
+                Debug.LogError("Debug view does not exist.");
+            }
+
+            cmd.EnableShaderKeyword(m_DebugViewKeywords[m]);
         }
     }
 }

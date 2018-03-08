@@ -102,7 +102,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         DepthPrePass = (1 << 4),
         DepthCopy = (1 << 5),
         DefaultViewport = (1 << 6),
-        IntermediateTexture = (1 << 7)
+        IntermediateTexture = (1 << 7),
+        DebugView = (1 << 8)
     }
 
     public static class LightweightUtils
