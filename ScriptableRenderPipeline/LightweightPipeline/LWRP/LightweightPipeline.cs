@@ -144,12 +144,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private int m_ShadowCasterCascadesCount;
         private int m_ShadowMapRTID;
         private int m_ScreenSpaceShadowMapRTID;
-        private int m_DebugViewRTID;
         private Matrix4x4[] m_ShadowMatrices = new Matrix4x4[kMaxCascades + 1];
         private RenderTargetIdentifier m_CurrCameraColorRT;
         private RenderTargetIdentifier m_ShadowMapRT;
         private RenderTargetIdentifier m_ScreenSpaceShadowMapRT;
-        private RenderTargetIdentifier m_DebugViewRT;
         private RenderTargetIdentifier m_ColorRT;
         private RenderTargetIdentifier m_CopyColorRT;
         private RenderTargetIdentifier m_DepthRT;
@@ -251,7 +249,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             m_ShadowMapRTID = Shader.PropertyToID("_ShadowMap");
             m_ScreenSpaceShadowMapRTID = Shader.PropertyToID("_ScreenSpaceShadowMap");
-            m_DebugViewRTID = Shader.PropertyToID("_DebugViewRT");
+
             CameraRenderTargetID.color = Shader.PropertyToID("_CameraColorRT");
             CameraRenderTargetID.copyColor = Shader.PropertyToID("_CameraCopyColorRT");
             CameraRenderTargetID.depth = Shader.PropertyToID("_CameraDepthTexture");
@@ -259,7 +257,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             m_ShadowMapRT = new RenderTargetIdentifier(m_ShadowMapRTID);
             m_ScreenSpaceShadowMapRT = new RenderTargetIdentifier(m_ScreenSpaceShadowMapRTID);
-            m_DebugViewRT = new RenderTargetIdentifier(m_DebugViewRTID);
+            
             m_ColorRT = new RenderTargetIdentifier(CameraRenderTargetID.color);
             m_CopyColorRT = new RenderTargetIdentifier(CameraRenderTargetID.copyColor);
             m_DepthRT = new RenderTargetIdentifier(CameraRenderTargetID.depth);
@@ -517,14 +515,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         }
 
         private void DebugViewPass(FrameRenderingConfiguration frameRenderingConfiguration, ref ScriptableRenderContext context, bool stereoEnabled)
-        {
-            //Set up buffers.
-            //CommandBuffer cmd = CommandBufferPool.Get("Debug View");
-            //cmd.GetTemporaryRT(m_DebugViewRTID, m_CurrCamera.pixelWidth, m_CurrCamera.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.ARGB32);
-            //SetRenderTarget(cmd, m_DebugViewRT, ClearFlag.Color);
-            //context.ExecuteCommandBuffer(cmd);    
+        {    
             BeginForwardRendering(ref context, frameRenderingConfiguration);
-
 
             CommandBuffer cmd = CommandBufferPool.Get("Debug View Mode");
             LightweightShaderUtils.ResetDebugModes(cmd);
@@ -546,7 +538,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
 
-            //Draw
             var debugViewDrawSettings = new DrawRendererSettings(m_CurrCamera, m_DebugViewPass);
             debugViewDrawSettings.sorting.flags = SortFlags.CommonOpaque;
 
