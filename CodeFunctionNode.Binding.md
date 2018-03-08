@@ -1,3 +1,5 @@
+`enum`
+
 ## Description
 
 When using `CodeFunctionNode` you are able to define [Ports](https://github.com/Unity-Technologies/ShaderGraph/wiki/Port) with any **Bindings** that available in [Shader Graph](https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph). For a full list of available **Bindings** see [Port Bindings](https://github.com/Unity-Technologies/ShaderGraph/wiki/Port-Bindings). When using `CodeFunctionNode` **Bindings** are defined using [SlotAttribute](https://github.com/Unity-Technologies/ShaderGraph/wiki/SlotAttribute).
