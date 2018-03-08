@@ -10,7 +10,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 	[GenerateHLSL]
 	public class DiffusionProfileConstants
 	{
-		public const int DIFFUSION_PROFILE_COUNT 	  =  5;
+		public const int DIFFUSION_PROFILE_COUNT 	  =  9;
 		public const int DIFFUSION_PROFILE_NEUTRAL_ID =  0;
 		public const int SSS_N_SAMPLES     	 	      = 11;
 		public const int SSS_DISTANCE_SCALE 	 	  =  3;
