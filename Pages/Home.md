@@ -1,6 +1,6 @@
 ## Description
 
-A Shader Graph enables you to build shaders visually. Instead of hand writing code you create and connect nodes in a graph network. The graph framework gives instant feedback on the changes, and it’s simple enough that new users can become involved in shader creation.
+A **Shader Graph** enables you to build shaders visually. Instead of hand writing code you create and connect nodes in a graph network. The graph framework gives instant feedback on the changes, and it’s simple enough that new users can become involved in shader creation.
 
 For an introduction to **Shader Graph** see [Getting Started](https://github.com/Unity-Technologies/ShaderGraph/wiki/Getting-Started/).
 
