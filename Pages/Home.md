@@ -32,5 +32,5 @@ This repository and its documentation is under active development. Everything is
       * [Port Types](https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode-Port-Types)
       * [SlotAttribute](https://github.com/Unity-Technologies/ShaderGraph/wiki/SlotAttribute)
       * [Binding](https://github.com/Unity-Technologies/ShaderGraph/wiki/Binding)
-      * [GenerateNodeFunction](https://github.com/Unity-Technologies/ShaderGraph/wiki/GenerateNodeFunction)
-      * [hasPreview](https://github.com/Unity-Technologies/ShaderGraph/wiki/hasPreview)
+      * [GetFunctionToConvert](https://github.com/Unity-Technologies/ShaderGraph/wiki/Binding)
+      * [GenerateNodeFunction](https://github.com/Unity-Technologies/ShaderGraph/wiki/GetFunctionToConvert)
