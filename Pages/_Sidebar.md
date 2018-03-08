@@ -6,7 +6,7 @@
 
 <details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Getting-Started">Getting Started</a>
 </summary>
-<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Custom-Nodes-With-CodeFunctionNode">Custom Nodes with CodeFunctionNode Graph Window</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Custom-Nodes-With-CodeFunctionNode">Custom Nodes with CodeFunctionNode</a><br>
 </details>
 
 [//]: # (SHADER GRAPH)
