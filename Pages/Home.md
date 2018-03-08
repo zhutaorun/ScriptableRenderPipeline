@@ -9,6 +9,7 @@ This repository and its documentation is under active development. Everything is
 
 ## Contents
 * [Getting Started](https://github.com/Unity-Technologies/ShaderGraph/wiki/Getting-Started)
+   * [Custom Nodes with CodeFunctionNode](https://github.com/Unity-Technologies/ShaderGraph/wiki/Custom-Nodes-With-CodeFunctionNode)
 * [Shader Graph](https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph)
    * [Shader Graph Window](https://github.com/Unity-Technologies/ShaderGraph/wiki/Shader-Graph-Window)
    * [Blackboard](https://github.com/Unity-Technologies/ShaderGraph/wiki/Blackboard)
