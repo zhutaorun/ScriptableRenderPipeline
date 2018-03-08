@@ -183,6 +183,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private static readonly ShaderPassName m_DepthPrepass = new ShaderPassName("DepthOnly");
         private static readonly ShaderPassName m_LitPassName = new ShaderPassName("LightweightForward");
         private static readonly ShaderPassName m_UnlitPassName = new ShaderPassName("SRPDefaultUnlit"); // Renders all shaders without a lightmode tag
+        private static readonly ShaderPassName m_DebugViewPass = new ShaderPassName("DebugView");
 
         // Legacy pass names
         public static readonly ShaderPassName s_AlwaysName = new ShaderPassName("Always");
@@ -555,7 +556,20 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         private void DebugViewPass(FrameRenderingConfiguration frameRenderingConfiguration, ref ScriptableRenderContext context, bool stereoEnabled)
         {
+            //Set up buffers.
+            
+            
+            //Draw
+            var debugViewDrawSettings = new DrawRendererSettings(m_CurrCamera, m_DebugViewPass);
+            debugViewDrawSettings.sorting.flags = SortFlags.CommonOpaque;
 
+            var debugViewFilterSettings = new FilterRenderersSettings(true)
+            {
+                renderQueueRange = RenderQueueRange.opaque
+            };
+
+            context.DrawRenderers(m_CullResults.visibleRenderers, ref debugViewDrawSettings, debugViewFilterSettings);
+            
         }
 
         private void ForwardPass(List<VisibleLight> visibleLights, FrameRenderingConfiguration frameRenderingConfiguration, ref ScriptableRenderContext context, ref LightData lightData, bool stereoEnabled)
