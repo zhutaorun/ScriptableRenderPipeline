@@ -183,7 +183,7 @@ half4 DebugPassFragment(LightweightVertexOutput IN) : SV_Target
 #elif defined(_DEBUG_METALNESS)
     debug = surfaceData.metallic;
 #elif defined(_DEBUG_NORMALS)
-    debug = sqrt(surfaceData.normalTS);
+    debug = sqrt(inputData.normalWS);
 #elif defined(_DEBUG_SMOOTHNESS)
     debug = surfaceData.smoothness;
 #endif
