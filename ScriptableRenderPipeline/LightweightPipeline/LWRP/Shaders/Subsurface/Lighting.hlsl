@@ -607,10 +607,8 @@ half4 LightweightFragmentPBR(InputData inputData, half3 albedo, half metallic, h
 
     Light mainLight = GetMainLight(inputData.positionWS);
     
-#ifdef _SHADOWS_ENABLED
     half shadow = RealtimeShadowAttenuation(inputData.shadowCoord);
     mainLight.attenuation *= ShadowScattering(shadow, dot(mainLight.direction, inputData.normalWS));
-#endif
 
     MixRealtimeAndBakedGI(mainLight, inputData.normalWS, inputData.bakedGI, half4(0, 0, 0, 0));
     
@@ -630,6 +628,7 @@ half4 LightweightFragmentPBR(InputData inputData, half3 albedo, half metallic, h
 
     color += inputData.vertexLighting * brdfData.diffuse;
     color += emission;
+
     return half4(color, alpha);
 }
 
