@@ -402,8 +402,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                     context.ExecuteCommandBuffer(setRT);
                 }
 
-                ForwardPass(visibleLights, frameRenderingConfiguration, ref context, ref lightData, stereoEnabled);
-
+                //TODO: Editor only?
+                if(m_Asset.DebugView == DebugViewMode.None)
+                    ForwardPass(visibleLights, frameRenderingConfiguration, ref context, ref lightData, stereoEnabled);
+                else
+                    DebugViewPass(frameRenderingConfiguration, ref context, stereoEnabled);
 
                 cmd.name = "After Camera Render";
 #if UNITY_EDITOR
@@ -548,6 +551,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             context.DrawRenderers(m_CullResults.visibleRenderers, ref opaqueDrawSettings, opaqueFilterSettings);
 
             StopStereoRendering(ref context, frameRenderingConfiguration);
+        }
+
+        private void DebugViewPass(FrameRenderingConfiguration frameRenderingConfiguration, ref ScriptableRenderContext context, bool stereoEnabled)
+        {
+
         }
 
         private void ForwardPass(List<VisibleLight> visibleLights, FrameRenderingConfiguration frameRenderingConfiguration, ref ScriptableRenderContext context, ref LightData lightData, bool stereoEnabled)
