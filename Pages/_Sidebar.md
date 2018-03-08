@@ -213,3 +213,17 @@
 </details>
 
 </details>
+
+[//]: # (SCRIPTING API)
+
+<details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Scripting-API">Scripting API</a>
+</summary>
+<details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode">CodeFunctionNode</a>
+</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode-Port-Types">Port Types</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/SlotAttribute">SlotAttribute</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Binding">Binding</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/GenerateNodeFunction">GenerateNodeFunction</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/hasPreview">hasPreview</a><br>
+</details>
+</details>
