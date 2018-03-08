@@ -7,7 +7,6 @@ For more information on how to create [Nodes](https://github.com/Unity-Technolog
 ## Contents
 
 * [Port Types](https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode-Port-Types)
-* [SlotAttribute](https://github.com/Unity-Technologies/ShaderGraph/wiki/SlotAttribute)
-* [Binding](https://github.com/Unity-Technologies/ShaderGraph/wiki/Binding)
-* [GenerateNodeFunction](https://github.com/Unity-Technologies/ShaderGraph/wiki/GenerateNodeFunction)
-* [hasPreview](https://github.com/Unity-Technologies/ShaderGraph/wiki/hasPreview)
+* [SlotAttribute](https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode.SlotAttribute)
+* [Binding](https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode.Binding)
+* [GetFunctionToConvert](https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode.GetFunctionToConvert)
