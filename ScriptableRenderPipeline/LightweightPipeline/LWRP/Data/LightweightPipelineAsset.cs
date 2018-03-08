@@ -44,6 +44,16 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         UnityBuiltinDefault
     }
 
+    public enum DebugViewMode
+    {
+        None = 0,
+        Albedo,
+        Normals,
+        Metallness,
+        Roughness,
+        All
+    };
+
     public class LightweightPipelineAsset : RenderPipelineAsset
     {
         private const int PACKAGE_MANAGER_PATH_INDEX = 1;
@@ -68,6 +78,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         [SerializeField] private float m_Cascade2Split = 0.25f;
         [SerializeField] private Vector3 m_Cascade4Split = new Vector3(0.067f, 0.2f, 0.467f);
         [SerializeField] private DiffusionProfileSettings m_DiffusionProfileSettings;
+        [SerializeField] private DebugViewMode m_DebugViewMode;
 
         [SerializeField]
         private LightweightPipelineResources m_ResourcesAsset;
@@ -287,6 +298,12 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         {
             get { return m_DiffusionProfileSettings; }
             private set { m_DiffusionProfileSettings = value; }
+        }
+
+        public DebugViewMode DebugView
+        {
+            get { return m_DebugViewMode; }
+            private set { m_DebugViewMode = value; }
         }
 
         public override Material GetDefaultMaterial()

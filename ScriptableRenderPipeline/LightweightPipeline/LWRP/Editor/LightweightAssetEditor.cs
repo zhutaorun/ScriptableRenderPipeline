@@ -48,7 +48,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             public static string[] shadowTypeOptions = {"No Shadows", "Hard Shadows", "Hard and Soft Shadows"};
             public static string[] shadowCascadeOptions = {"No Cascades", "Two Cascades", "Four Cascades"};
 
+            //TLS
             public static GUIContent diffusionProfileSettings = new GUIContent("Diffusion Profile Settings", "");
+            public static GUIContent debugViewMode = new GUIContent("Debug View Mode");
         }
 
         AnimBool m_ShowSoftParticles = new AnimBool();
@@ -69,6 +71,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private SerializedProperty m_ShadowCascade2SplitProp;
         private SerializedProperty m_ShadowCascade4SplitProp;
         private SerializedProperty m_DiffusionProfileSettingsProp;
+        private SerializedProperty m_DebugViewModeProp;
 
         private SerializedProperty m_HDR;
         private SerializedProperty m_MSAA;
@@ -88,6 +91,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             m_ShadowCascade2SplitProp = serializedObject.FindProperty("m_Cascade2Split");
             m_ShadowCascade4SplitProp = serializedObject.FindProperty("m_Cascade4Split");
             m_DiffusionProfileSettingsProp = serializedObject.FindProperty("m_DiffusionProfileSettings");
+            m_DebugViewModeProp = serializedObject.FindProperty("m_DebugViewMode");
 
             m_HDR = serializedObject.FindProperty("m_SupportsHDR");
             m_MSAA = serializedObject.FindProperty("m_MSAA");
@@ -135,6 +139,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             EditorGUILayout.PropertyField(m_HDR, Styles.hdrContent);
             EditorGUILayout.PropertyField(m_MSAA, Styles.msaaContent);
             EditorGUILayout.PropertyField(m_DiffusionProfileSettingsProp, Styles.diffusionProfileSettings);
+            EditorGUILayout.PropertyField(m_DebugViewModeProp, Styles.debugViewMode);
 
             EditorGUI.indentLevel--;
             EditorGUILayout.Space();
