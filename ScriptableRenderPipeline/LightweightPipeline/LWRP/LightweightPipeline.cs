@@ -391,7 +391,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                     context.ExecuteCommandBuffer(setRT);
                 }
 
-                //TODO: Editor only?
                 if(!LightweightUtils.HasFlag(frameRenderingConfiguration, FrameRenderingConfiguration.DebugView))
                     ForwardPass(visibleLights, frameRenderingConfiguration, ref context, ref lightData, stereoEnabled);
                 else
@@ -531,8 +530,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 case DebugViewMode.Normals:
                     LightweightShaderUtils.SetDebugMode(cmd, DebugViewKeyword.NORMALS);
                     break;
-                case DebugViewMode.Roughness:
-                    LightweightShaderUtils.SetDebugMode(cmd, DebugViewKeyword.ROUGHNESS);
+                case DebugViewMode.Smoothness:
+                    LightweightShaderUtils.SetDebugMode(cmd, DebugViewKeyword.SMOOTHNESS);
                     break;
             }
             context.ExecuteCommandBuffer(cmd);

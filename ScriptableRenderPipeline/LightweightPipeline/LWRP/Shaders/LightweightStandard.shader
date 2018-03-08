@@ -244,7 +244,7 @@ Shader "LightweightPipeline/Standard (Physically Based)"
             // GPU Instancing
             #pragma multi_compile_instancing
 
-            #pragma multi_compile _ _DEBUG_ALBEDO _DEBUG_METALNESS _DEBUG_NORMALS _DEBUG_ROUGHNESS
+            #pragma multi_compile _ _DEBUG_ALBEDO _DEBUG_METALNESS _DEBUG_NORMALS _DEBUG_SMOOTHNESS
 
             #pragma vertex   LitPassVertex
             #pragma fragment DebugPassFragment

@@ -50,8 +50,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         Albedo,
         Normals,
         Metallness,
-        Roughness,
-        All
+        Smoothness
     };
 
     public class LightweightPipelineAsset : RenderPipelineAsset

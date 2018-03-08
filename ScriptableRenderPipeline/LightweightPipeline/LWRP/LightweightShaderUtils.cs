@@ -22,7 +22,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         ALBEDO,
         METALNESS,
         NORMALS,
-        ROUGHNESS,
+        SMOOTHNESS,
 
         NUM_VIEWS
     }
@@ -46,7 +46,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             "_DEBUG_ALBEDO",
             "_DEBUG_METALNESS",
             "_DEBUG_NORMALS",
-            "_DEBUG_ROUGHNESS"
+            "_DEBUG_SMOOTHNESS"
         };
 
         public static string GetShaderPath(ShaderPathID id)
