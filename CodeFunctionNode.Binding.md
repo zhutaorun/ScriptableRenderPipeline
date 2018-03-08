@@ -1,4 +1,4 @@
-`enum`
+#### `Enumeration`
 
 ## Description
 
@@ -8,7 +8,7 @@ For more information on how to create [Nodes](https://github.com/Unity-Technolog
 
 Below is a full list including the [Port Bindings](https://github.com/Unity-Technologies/ShaderGraph/wiki/Port-Bindings) they map to.
 
-## Bindings
+## Properties
 
 | SlotAttribute Binding | Port Binding |
 |:-------------|:------|
