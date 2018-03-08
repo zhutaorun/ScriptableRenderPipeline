@@ -388,7 +388,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 if (LightweightUtils.HasFlag(frameRenderingConfiguration, FrameRenderingConfiguration.DepthPrePass))
                 {
                     DepthPass(ref context, frameRenderingConfiguration);
-                    RenderMSVO(ref context);
 
                     // Only screen space shadowmap mode is supported.
                     if (shadows)
@@ -428,34 +427,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
                 context.Submit();
             }
-        }
-
-        private void RenderMSVO(ref ScriptableRenderContext context)
-        {
-            if(m_CameraPostProcessLayer == null) return;
-
-            CommandBuffer cmd = CommandBufferPool.Get("MSVO");
-            var settings = m_CameraPostProcessLayer.GetSettings<AmbientOcclusion>();
-
-            if(settings.IsEnabledAndSupported(null))
-            {
-                cmd.GetTemporaryRT(AdvancedFeatureIDs._AmbientOcclusionTexture, new RenderTextureDescriptor(m_CurrCamera.pixelWidth, m_CurrCamera.pixelHeight, RenderTextureFormat.R8, 0)
-                {
-                    sRGB = false,
-                    enableRandomWrite = true
-                }, FilterMode.Bilinear);
-
-                m_CameraPostProcessLayer.BakeMSVOMap(cmd, m_CurrCamera, AdvancedFeatureIDs._AmbientOcclusionTexture, m_DepthRT, true);
-                cmd.SetGlobalVector(AdvancedFeatureIDs._AmbientOcclusionParam, new Vector4(settings.color.value.r, settings.color.value.g, settings.color.value.b, settings.directLightingStrength.value));
-            }
-            else 
-            {
-                cmd.SetGlobalTexture(AdvancedFeatureIDs._AmbientOcclusionTexture, RuntimeUtilities.blackTexture); // Neutral is black, see the comment in the shaders
-                cmd.SetGlobalVector(AdvancedFeatureIDs._AmbientOcclusionParam, Vector4.zero);
-            }
-
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
         }
 
         private bool ShadowPass(List<VisibleLight> visibleLights, ref ScriptableRenderContext context, ref LightData lightData)
