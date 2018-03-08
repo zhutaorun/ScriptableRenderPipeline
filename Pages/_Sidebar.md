@@ -1,7 +1,13 @@
 ## Contents
 
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Home">Home</a><br>
-<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Getting-Started">Getting Started</a>
+
+[//]: # (GETTING STARTED)
+
+<details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Getting-Started">Getting Started</a>
+</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Custom-Nodes-With-CodeFunctionNode">Custom Nodes with CodeFunctionNode Graph Window</a><br>
+</details>
 
 [//]: # (SHADER GRAPH)
 
