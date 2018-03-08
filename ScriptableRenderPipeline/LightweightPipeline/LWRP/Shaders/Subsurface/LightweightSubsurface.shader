@@ -224,6 +224,43 @@ Shader "LightweightPipeline/LightweightSubsurface"
             ENDHLSL
         }
 
+        Pass
+        {
+            Tags{"LightMode" = "DebugView"}
+
+            ZWrite On
+            Cull[_Cull]
+
+            HLSLPROGRAM
+            // Required to compile gles 2.0 with standard SRP library
+            // All shaders must be compiled with HLSLcc and currently only gles is not using HLSLcc by default
+            #pragma prefer_hlslcc gles
+            #pragma target 3.0
+
+            // -------------------------------------
+            // Material Keywords
+            #pragma shader_feature _NORMALMAP
+            #pragma shader_feature _ALPHATEST_ON 
+            #pragma shader_feature _ALPHAPREMULTIPLY_ON
+            #pragma shader_feature _EMISSION
+            #pragma shader_feature _METALLICSPECGLOSSMAP
+            #pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+            #pragma shader_feature _OCCLUSIONMAP
+
+            //--------------------------------------
+            // GPU Instancing
+            #pragma multi_compile_instancing
+
+            #pragma multi_compile _ _DEBUG_ALBEDO _DEBUG_METALNESS _DEBUG_NORMALS _DEBUG_ROUGHNESS
+
+            #pragma vertex   LitPassVertex
+            #pragma fragment DebugPassFragment
+
+            //#include "LWRP/ShaderLibrary/LightweightPassDebug.hlsl"
+            #include "LWRP/ShaderLibrary/LightweightPassLit.hlsl"
+            ENDHLSL
+        }
+
     }
     FallBack "Hidden/InternalErrorShader"
     CustomEditor "LightweightSubsurfaceGUI"
