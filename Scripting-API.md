@@ -8,6 +8,6 @@ The scripting reference is organised according to the classes available to scrip
 
 * [CodeFunctionNode](https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode)
    * [Port Types](https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode-Port-Types)
-   * [SlotAttribute](https://github.com/Unity-Technologies/ShaderGraph/wiki/SlotAttribute)
-   * [Binding](https://github.com/Unity-Technologies/ShaderGraph/wiki/Binding)
-   * [GetFunctionToConvert](https://github.com/Unity-Technologies/ShaderGraph/wiki/GetFunctionToConvert)
+   * [SlotAttribute](https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode.SlotAttribute)
+   * [Binding](https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode.Binding)
+   * [GetFunctionToConvert](https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode.GetFunctionToConvert)
