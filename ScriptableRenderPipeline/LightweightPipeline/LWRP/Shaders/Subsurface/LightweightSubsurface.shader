@@ -1,4 +1,4 @@
-Shader "LightweightPipeline/LightweightSubsurface"
+Shader "LightweightPipeline/Subsurface Scattering"
 {
     Properties
     {
