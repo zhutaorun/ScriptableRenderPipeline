@@ -128,7 +128,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         private Vector4 kDefaultLightPosition = new Vector4(0.0f, 0.0f, 1.0f, 0.0f);
         private Vector4 kDefaultLightColor = Color.black;
-        private Vector4 kDefaultLightAttenuation = new Vector4(0.0f, 1.0f, 0.0f, 1.0f);
+
+        //TLS Note: We need to hijack alpha to easily know when we are at a spot light for some features.
+        private Vector4 kDefaultLightAttenuation = new Vector4(0.0f, 1.0f, 0.0f, 0.0f);
+        
         private Vector4 kDefaultLightSpotDirection = new Vector4(0.0f, 0.0f, 1.0f, 0.0f);
         private Vector4 kDefaultLightSpotAttenuation = new Vector4(0.0f, 1.0f, 0.0f, 0.0f);
 
@@ -1012,7 +1015,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 float smoothAngleRange = Mathf.Max(0.001f, cosInnerAngle - cosOuterAngle);
                 float invAngleRange = 1.0f / smoothAngleRange;
                 float add = -cosOuterAngle * invAngleRange;
-                lightSpotAttenuation = new Vector4(invAngleRange, add, 0.0f);
+                lightSpotAttenuation = new Vector4(invAngleRange, add, 0.0f, 1f);
             }
 
             Light light = lightData.light;
