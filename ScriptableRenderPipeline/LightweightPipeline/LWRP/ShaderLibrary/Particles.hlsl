@@ -212,12 +212,12 @@ void InitializeInputData(VertexOutputLit IN, half3 normalTS, out InputData input
     input.positionWS = IN.posWS.xyz;
 
 #if _NORMALMAP
-    input.normalWS = TangentToWorldNormal(normalTS, IN.tangent, IN.binormal, IN.normal);
+    input.normal = TangentToWorldNormal(normalTS, IN.tangent, IN.binormal, IN.normal);
 #else
-    input.normalWS = normalize(IN.normal);
+    input.normal = normalize(IN.normal);
 #endif
 
-    input.viewDirectionWS = SafeNormalize(GetCameraPositionWS() - input.positionWS);
+    input.viewDirection = SafeNormalize(GetCameraPositionWS() - input.positionWS);
     input.shadowCoord = float4(0, 0, 0, 0);
     input.fogCoord = IN.posWS.w;
     input.vertexLighting = half3(0, 0, 0);

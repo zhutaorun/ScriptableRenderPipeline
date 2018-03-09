@@ -47,7 +47,7 @@ Shader "LightweightPipeline/Standard Terrain"
             #pragma multi_compile _ _VERTEX_LIGHTS
             #pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
             #pragma multi_compile _ FOG_LINEAR FOG_EXP2
-            
+
             // -------------------------------------
             // Unity defined keywords
             #pragma multi_compile _ DIRLIGHTMAP_COMBINED
@@ -111,12 +111,12 @@ Shader "LightweightPipeline/Standard Terrain"
                 input.positionWS = IN.positionWS;
 
 #ifdef _TERRAIN_NORMAL_MAP
-                input.normalWS = TangentToWorldNormal(normalTS, IN.tangent, IN.binormal, IN.normal);
+                input.normal = TangentToWorldNormal(normalTS, IN.tangent, IN.binormal, IN.normal);
 #else
-                input.normalWS = normalize(IN.normal);
+                input.normal = normalize(IN.normal);
 #endif
 
-                input.viewDirectionWS = SafeNormalize(GetCameraPositionWS() - IN.positionWS);
+                input.viewDirection = SafeNormalize(GetCameraPositionWS() - IN.positionWS);
                 input.shadowCoord = IN.shadowCoord;
 
                 input.fogCoord = IN.fogFactorAndVertexLight.x;

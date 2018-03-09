@@ -6,8 +6,8 @@
 struct InputData
 {
     float3  positionWS;
-    half3   normalWS;
-    half3   viewDirectionWS;
+    half3   normal;
+    half3   viewDirection;
     float4  shadowCoord;
     half    fogCoord;
     half3   vertexLighting;

@@ -527,16 +527,16 @@ half4 LightweightFragmentPBR(InputData inputData, half3 albedo, half metallic, h
 
     mainLight.attenuation *= RealtimeShadowAttenuation(inputData.shadowCoord);
 
-    MixRealtimeAndBakedGI(mainLight, inputData.normalWS, inputData.bakedGI, half4(0, 0, 0, 0));
-    half3 color = GlobalIllumination(brdfData, inputData.bakedGI, occlusion, inputData.normalWS, inputData.viewDirectionWS);
-    color += LightingPhysicallyBased(brdfData, mainLight, inputData.normalWS, inputData.viewDirectionWS);
+    MixRealtimeAndBakedGI(mainLight, inputData.normal, inputData.bakedGI, half4(0, 0, 0, 0));
+    half3 color = GlobalIllumination(brdfData, inputData.bakedGI, occlusion, inputData.normal, inputData.viewDirection);
+    color += LightingPhysicallyBased(brdfData, mainLight, inputData.normal, inputData.viewDirection);
 
 #ifdef _ADDITIONAL_LIGHTS
     int pixelLightCount = GetPixelLightCount();
     for (int i = 0; i < pixelLightCount; ++i)
     {
         Light light = GetLight(i, inputData.positionWS);
-        color += LightingPhysicallyBased(brdfData, light, inputData.normalWS, inputData.viewDirectionWS);
+        color += LightingPhysicallyBased(brdfData, light, inputData.normal, inputData.viewDirection);
     }
 #endif
 
@@ -549,11 +549,11 @@ half4 LightweightFragmentBlinnPhong(InputData inputData, half3 diffuse, half4 sp
 {
     Light mainLight = GetMainLight(inputData.positionWS);
     mainLight.attenuation *= RealtimeShadowAttenuation(inputData.shadowCoord);
-    MixRealtimeAndBakedGI(mainLight, inputData.normalWS, inputData.bakedGI, half4(0, 0, 0, 0));
+    MixRealtimeAndBakedGI(mainLight, inputData.normal, inputData.bakedGI, half4(0, 0, 0, 0));
 
     half3 attenuatedLightColor = mainLight.color * mainLight.attenuation;
-    half3 diffuseColor = inputData.bakedGI + LightingLambert(attenuatedLightColor, mainLight.direction, inputData.normalWS);
-    half3 specularColor = LightingSpecular(attenuatedLightColor, mainLight.direction, inputData.normalWS, inputData.viewDirectionWS, specularGloss, shininess);
+    half3 diffuseColor = inputData.bakedGI + LightingLambert(attenuatedLightColor, mainLight.direction, inputData.normal);
+    half3 specularColor = LightingSpecular(attenuatedLightColor, mainLight.direction, inputData.normal, inputData.viewDirection, specularGloss, shininess);
 
 #ifdef _ADDITIONAL_LIGHTS
     int pixelLightCount = GetPixelLightCount();
@@ -561,16 +561,16 @@ half4 LightweightFragmentBlinnPhong(InputData inputData, half3 diffuse, half4 sp
     {
         Light light = GetLight(i, inputData.positionWS);
         half3 attenuatedLightColor = light.color * light.attenuation;
-        diffuseColor += LightingLambert(attenuatedLightColor, light.direction, inputData.normalWS);
-        specularColor += LightingSpecular(attenuatedLightColor, light.direction, inputData.normalWS, inputData.viewDirectionWS, specularGloss, shininess);
+        diffuseColor += LightingLambert(attenuatedLightColor, light.direction, inputData.normal);
+        specularColor += LightingSpecular(attenuatedLightColor, light.direction, inputData.normal, inputData.viewDirection, specularGloss, shininess);
     }
 #endif
 
     half3 finalColor = diffuseColor * diffuse + emission;
     finalColor += inputData.vertexLighting * diffuse;
-    
+
 #if defined(_SPECGLOSSMAP) || defined(_SPECULAR_COLOR)
-    finalColor += specularColor;
+    finalColor = specularColor;
 #endif
 
     ApplyFog(finalColor, inputData.fogCoord);
