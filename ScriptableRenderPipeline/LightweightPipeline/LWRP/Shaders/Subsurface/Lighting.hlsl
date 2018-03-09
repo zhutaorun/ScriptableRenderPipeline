@@ -52,7 +52,6 @@ struct Light
     half3   color;
     half3   attenuation; //NOTE: RGB attenuation for shadow scatter.
     half    subtractiveModeAttenuation;
-    int     isSpot;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -152,7 +151,6 @@ Light GetMainLight(float3 positionWS)
     light.attenuation = directionAndRealtimeAttenuation.w;
     light.subtractiveModeAttenuation = lightInput.distanceAttenuation.w;
     light.color = lightInput.color;
-    light.isSpot = lightInput.spotAttenuation.w;
 
     return light;
 }
@@ -176,7 +174,6 @@ Light GetLight(int i, float3 positionWS)
     light.attenuation = directionAndRealtimeAttenuation.w;
     light.subtractiveModeAttenuation = lightInput.distanceAttenuation.w;
     light.color = lightInput.color;
-    light.isSpot = lightInput.spotAttenuation.w;
 
     return light;
 }
@@ -335,12 +332,10 @@ float3 ComputeTransmittanceJimenez(float3 halfRcpVariance1, float lerpWeight1,
     return volumeAlbedo * (exp(-t2 * halfRcpVariance1) * lerpWeight1 + exp(-t2 * halfRcpVariance2) * lerpWeight2);
 }
 
-half3 DiffuseScattering(BRDFData brdfData, half3 normalHighWS, half3 lightDirectionWS, half Attenuation, int isSpot)
+half3 DiffuseScattering(BRDFData brdfData, half3 normalHighWS, half3 lightDirectionWS, half Attenuation)
 {
     float NdotL = dot(normalHighWS, lightDirectionWS);
-
-    //NOTE: We need to account for spot light attenuation here.
-    float lookup = (0.5 * NdotL + 0.5) * lerp(1, 0.5 * Attenuation + 0.5, isSpot); //Scale lookup to 0..1
+    float lookup = (0.5 * NdotL + 0.5); //Scale lookup to 0..1
 
     //Sample the preintegrated subsurface scattering.
     //NOTE: We only do broad-form scattering, too expensive on mobile to sample 3x for high detail normals.
@@ -569,16 +564,16 @@ half3 LightingSpecular(half3 lightColor, half3 lightDir, half3 normal, half3 vie
     return lightColor * specularReflection;
 }
 
-half3 LightingPhysicallyBased(BRDFData brdfData, half3 lightColor, half3 lightDirectionWS, half3 lightAttenuation, int isSpot, half3 normalWS, half3 viewDirectionWS)
+half3 LightingPhysicallyBased(BRDFData brdfData, half3 lightColor, half3 lightDirectionWS, half3 lightAttenuation, half3 normalWS, half3 viewDirectionWS)
 {
-    half3 NdotL = DiffuseScattering(brdfData, normalWS, lightDirectionWS, lightAttenuation, isSpot);
+    half3 NdotL = DiffuseScattering(brdfData, normalWS, lightDirectionWS, lightAttenuation);
     half3 radiance = lightColor * (lightAttenuation * NdotL);
     return DirectBDRF(brdfData, normalWS, lightDirectionWS, viewDirectionWS) * radiance;
 }
 
 half3 LightingPhysicallyBased(BRDFData brdfData, Light light, half3 normalWS, half3 viewDirectionWS)
 {
-    return LightingPhysicallyBased(brdfData, light.color, light.direction, light.attenuation, light.isSpot, normalWS, viewDirectionWS);
+    return LightingPhysicallyBased(brdfData, light.color, light.direction, light.attenuation, normalWS, viewDirectionWS);
 }
 
 half3 VertexLighting(float3 positionWS, half3 normalWS)
@@ -625,7 +620,6 @@ half4 LightweightFragmentPBR(InputData inputData, half3 albedo, half metallic, h
     int pixelLightCount = GetPixelLightCount();
     for (int i = 0; i < pixelLightCount; ++i)
     {
-        //TODO: DICE Approximation
         Light light = GetLight(i, inputData.positionWS);
         color += LightingPhysicallyBased(brdfData, light, inputData.normalWS, inputData.viewDirectionWS);
     }
