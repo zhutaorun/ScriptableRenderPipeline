@@ -197,6 +197,7 @@ float3 EstimateRaycast(float3 V, PositionInputs posInputs, float3 positionWS, fl
     uint2 depthSize = uint2(_PyramidDepthMipSize.xy);
 
     // Get the depth of the approximated back plane
+    // XRTODO: Correct for stereo? I don't think we correct NDC or SS anywhere
     float pyramidDepth = LOAD_TEXTURE2D_LOD(_PyramidDepthTexture, posInputs.positionNDC * (depthSize >> 2), 2).r;
     float depth = LinearEyeDepth(pyramidDepth, _ZBufferParams);
 
@@ -1818,6 +1819,7 @@ IndirectLighting EvaluateBSDF_SSLighting(LightLoopContext lightLoopContext,
             // Calculate screen space coordinates of refracted point in back plane
             float2 refractedBackPointNDC = ComputeNormalizedDeviceCoordinates(refractedBackPointWS, UNITY_MATRIX_VP);
             uint2 depthSize = uint2(_PyramidDepthMipSize.xy);
+            // XRTODO: Fix this coordinate for stereo
             float refractedBackPointDepth = LinearEyeDepth(LOAD_TEXTURE2D_LOD(_PyramidDepthTexture, refractedBackPointNDC * depthSize, 0).r, _ZBufferParams);
 
             // Exit if texel is out of color buffer

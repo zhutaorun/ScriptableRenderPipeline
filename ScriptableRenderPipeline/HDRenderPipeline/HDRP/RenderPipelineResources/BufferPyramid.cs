@@ -87,6 +87,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Instead of using the screen size, we round up to the next power of 2 because currently some platforms don't support NPOT Render Texture with mip maps (PS4 for example)
             // Then we render in a Screen Sized viewport.
             // Note that even if PS4 supported POT Mips, the buffers would be padded to the next power of 2 anyway (TODO: check with other platforms...)
+            // XRTODO: XR can double the width just fine, still POT
             int pyramidSize = (int)Mathf.NextPowerOfTwo(Mathf.Max(size.x, size.y));
             return new Vector2Int((int)(pyramidSize * GetXRscale()), pyramidSize);
         }
@@ -98,6 +99,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 for (int i = currentLodCount; i < lodCount; ++i)
                 {
+                    // XRTODO: CalculatePyramidMipSize is passed in as the lambda to Alloc, and then Alloc
+                    // provides the size to CalculatePyramidMipSize.  CalculatePyramidMipSize is also stashed 
+                    // as the scaler method
                     int mipIndexCopy = i + 1; // Don't remove this copy! It's important for the value to be correctly captured by the lambda.
                     RTHandle newMip = RTHandle.Alloc(size => CalculatePyramidMipSize(CalculatePyramidSize(size), mipIndexCopy), colorFormat: format, sRGB: false, enableRandomWrite: true, useMipMap: false, filterMode: FilterMode.Bilinear, name: string.Format("PyramidMip{0}", i));
                     mipList.Add(newMip);
@@ -107,7 +111,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public Vector2 GetPyramidToScreenScale(HDCamera camera)
         {
-            return new Vector2((float)camera.actualWidth / m_DepthPyramidBuffer.rt.width, (float)camera.actualHeight / m_DepthPyramidBuffer.rt.height);
+            //return new Vector2((float)camera.actualWidth / m_DepthPyramidBuffer.rt.width, (float)camera.actualHeight / m_DepthPyramidBuffer.rt.height);
+            return new Vector2((float)camera.screenSize.x / m_DepthPyramidBuffer.rt.width, (float)camera.screenSize.y / m_DepthPyramidBuffer.rt.height);
         }
 
         public void RenderDepthPyramid(
@@ -117,12 +122,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RTHandle depthTexture)
         {
             int lodCount = GetPyramidLodCount(hdCamera);
+            // XRINFO: Allocate list of handles for mip levels
             UpdatePyramidMips(hdCamera, m_DepthPyramidBuffer.rt.format, m_DepthPyramidMips, lodCount);
 
-            cmd.SetGlobalVector(HDShaderIDs._DepthPyramidMipSize, new Vector4(hdCamera.actualWidth, hdCamera.actualHeight, lodCount, 0.0f));
+            // XRTODO: Use actual or screen size?
+            // used in lighting too!
+            // This should probably be set to the single-eye...?
+            //cmd.SetGlobalVector(HDShaderIDs._DepthPyramidMipSize, new Vector4(hdCamera.actualWidth, hdCamera.actualHeight, lodCount, 0.0f));
+            cmd.SetGlobalVector(HDShaderIDs._DepthPyramidMipSize, new Vector4(hdCamera.screenSize.x, hdCamera.screenSize.y, lodCount, 0.0f));
 
+            // XRTODO: Since this is an unfiltered load copy, might not need to stereo-ize for double-wide.
+            // Texture array will need to be fixed up though.  Maybe do it per slice?
             m_GPUCopy.SampleCopyChannel_xyzw2x(cmd, depthTexture, m_DepthPyramidBuffer, new Vector2(hdCamera.actualWidth, hdCamera.actualHeight));
 
+            // XRINFO: I don't know if this is right scale to set up...
+            // I think it should be single eye screen against entire texture
             Vector2 scale = GetPyramidToScreenScale(hdCamera);
 
             RTHandle src = m_DepthPyramidBuffer;
@@ -130,8 +144,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 RTHandle dest = m_DepthPyramidMips[i];
 
-                var srcMipWidth = hdCamera.actualWidth >> i;
-                var srcMipHeight = hdCamera.actualHeight >> i;
+                //var srcMipWidth = hdCamera.actualWidth >> i;
+                //var srcMipHeight = hdCamera.actualHeight >> i;
+                // XRTODO: Fix for stereo
+                var srcMipWidth = ((int)hdCamera.screenSize.x) >> i;
+                var srcMipHeight = ((int)hdCamera.screenSize.y) >> i;
                 var dstMipWidth = srcMipWidth >> 1;
                 var dstMipHeight = srcMipHeight >> 1;
 
@@ -148,18 +165,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cmd.SetComputeTextureParam(m_DepthPyramidCS, kernel, _Result, dest);
                 cmd.SetComputeVectorParam(m_DepthPyramidCS, _SrcSize, new Vector4(srcMipWidth, srcMipHeight, (1.0f / srcMipWidth) * scale.x, (1.0f / srcMipHeight) * scale.y));
 
+                // XRTODO: This might actually need to be stereo-ized properly, because it does some manual filtering on the downsample
+                // We don't want to have incorrect calculations at the middle eye boundary
+
+                // XRTODO: Get framesettings, I am cheating
+                var stereoEnabled = (m_DepthPyramidBuffer.rt.descriptor.vrUsage == VRTextureUsage.TwoEyes);
+                var tgZ = stereoEnabled ? 2 : 1;
                 cmd.DispatchCompute(
                     m_DepthPyramidCS,
                     kernel,
                     Mathf.CeilToInt(dstMipWidth / kernelBlockSize),
                     Mathf.CeilToInt(dstMipHeight / kernelBlockSize),
-                    1);
+                    tgZ);
+                    //1);
 
-                // If we could bind texture mips as UAV we could avoid this copy...(which moreover copies more than the needed viewport if not fullscreen)
-                cmd.CopyTexture(m_DepthPyramidMips[i], 0, 0, 0, 0, dstMipWidth, dstMipHeight, m_DepthPyramidBuffer, 0, i + 1, 0, 0);
+            // XRNOTE: This just works for double-wide
+            // If we could bind texture mips as UAV we could avoid this copy...(which moreover copies more than the needed viewport if not fullscreen)
+            cmd.CopyTexture(m_DepthPyramidMips[i], 0, 0, 0, 0, dstMipWidth, dstMipHeight, m_DepthPyramidBuffer, 0, i + 1, 0, 0);
                 src = dest;
             }
 
+            // XRTODO: where does depth pyramid size get set?
             cmd.SetGlobalTexture(HDShaderIDs._PyramidDepthTexture, m_DepthPyramidBuffer);
         }
 

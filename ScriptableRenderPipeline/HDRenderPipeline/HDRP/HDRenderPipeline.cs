@@ -1472,8 +1472,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void RenderPyramidDepth(HDCamera hdCamera, CommandBuffer cmd, ScriptableRenderContext renderContext, FullScreenDebugMode debugMode)
         {
-            if (!m_FrameSettings.enableRoughRefraction)
-                return;
+            //if (!m_FrameSettings.enableRoughRefraction)
+            //    return;
 
             using (new ProfilingSample(cmd, "Pyramid Depth", CustomSamplerId.PyramidDepth.GetSampler()))
                 m_BufferPyramid.RenderDepthPyramid(hdCamera, cmd, renderContext, GetDepthTexture());
