@@ -61,4 +61,20 @@
 <p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Screen-Position-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ScreenPositionNodeThumb.png" alt="Screen Position Node" height="350" width="350"></a></p>
 <p align="left">Provides access to the mesh vertex or fragment's Screen Position.</p></td>
     </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Tangent-Vector-Node">Tangent Vector</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Tangent-Vector-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/TangentVectorNodeThumb.png" alt="Tangent Vector Node" height="350" width="350"></a></p>
+<p align="left">Provides access to the mesh vertex or fragment's Tangent Vector.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/UV-Node">UV</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/UV-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/UVNodeThumb.png" alt="UV Node" height="350" width="350"></a></p>
+<p align="left">Provides access to the mesh vertex or fragment's UV coordinates.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Vertex-Color-Node">Vertex Color</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Vertex-Color-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/VertexColorNodeThumb.png" alt="Vertex Color Node" height="350" width="350"></a></p>
+<p align="left">Provides access to the mesh vertex or fragment's Vertex Color value.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/View-Direction-Node">View Direction</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/View-Direction-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ViewDirectionNodeThumb.png" alt="View Direction Node" height="350" width="350"></a></p>
+<p align="left">Provides access to the mesh vertex or fragment's View Direction vector.</p></td>
+    </tr>
 </table>
