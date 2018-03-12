@@ -121,6 +121,22 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Dielectric-Specular-Node">Dielectric Specular</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Metal-Reflectance-Node">Metal Reflectance</a><br>
 </details>
+<details><summary>Scene</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Ambient-Node">Ambient</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Camera-Node">Camera</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Fog-Node">Fog</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Light-Probe-Node">Light Probe</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Object-Node">Object</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Reflection-Probe-Node">Reflection Probe</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Screen-Node">Screen</a><br>
+</details>
+<details><summary>Texture</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Cubemap-Asset-Node">Cubemap Asset</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sample-Cubemap-Node">Sample Cubemap</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sample-Texture-2D-Node">Sample Texture 2D</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sampler-State-Node">Sampler State</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Texture-2D-Asset-Node">Texture 2D Asset</a><br>
+</details>
 </details>
 
 <details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Master-Nodes">Master</a></summary>
