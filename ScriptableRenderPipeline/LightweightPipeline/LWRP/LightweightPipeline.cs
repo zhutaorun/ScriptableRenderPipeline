@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+#if UNITY_EDITOR
+using UnityEditor.Experimental.Rendering.LightweightPipeline;
+#endif
 using UnityEngine.Experimental.GlobalIllumination;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.PostProcessing;
@@ -297,6 +300,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             CoreUtils.Destroy(m_ErrorMaterial);
             CoreUtils.Destroy(m_CopyDepthMaterial);
             CoreUtils.Destroy(m_BlitMaterial);
+
+#if UNITY_EDITOR
+            SceneViewDrawMode.ResetDrawMode();
+#endif
         }
 
         private void SetRenderingFeatures()
@@ -314,6 +321,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 rendererSupportsReceiveShadows = true,
                 rendererSupportsReflectionProbes = true
             };
+            SceneViewDrawMode.SetupDrawMode();
 #endif
         }
 
