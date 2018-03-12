@@ -8,10 +8,10 @@ Defines a **Vector 2** value in the shader. If [Ports](https://github.com/Unity-
 |:------------ |:-------------|:-----|:---|:---|
 | X      | Input | Vector 1 | None | Input x component value |
 | Y      | Input | Vector 1 | None | Input y component value |
-| Out | Output      |    Vector 1 | None | Output value |
+| Out | Output      |    Vector 2 | None | Output value |
 
 ## Shader Code
 
 ```
-float Out = float2(X, Y);
+float2 Out = float2(X, Y);
 ```
