@@ -110,10 +110,10 @@ half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
 
     SurfaceData surfaceData;
     InitializeStandardLitSurfaceData(IN.uv, surfaceData);
+    ApplySSAO(surfaceData.occlusion, IN.shadowCoord); //The shadowcoord is the screen space position.
 
     InputData inputData;
     InitializeInputData(IN, surfaceData.normalTS, inputData);
-
 
     half4 color = LightweightFragmentPBR(inputData, surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.occlusion, surfaceData.emission, surfaceData.alpha);
 

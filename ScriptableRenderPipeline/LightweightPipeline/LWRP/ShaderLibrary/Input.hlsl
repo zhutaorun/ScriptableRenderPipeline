@@ -37,7 +37,12 @@ half4 _AdditionalLightColor[MAX_VISIBLE_LIGHTS];
 half4 _AdditionalLightDistanceAttenuation[MAX_VISIBLE_LIGHTS];
 half4 _AdditionalLightSpotDir[MAX_VISIBLE_LIGHTS];
 half4 _AdditionalLightSpotAttenuation[MAX_VISIBLE_LIGHTS];
+
+half4 _AmbientOcclusionParam;
 CBUFFER_END
+
+TEXTURE2D(_AmbientOcclusion);
+SAMPLER(sampler_AmbientOcclusion);
 
 #define UNITY_MATRIX_M     unity_ObjectToWorld
 #define UNITY_MATRIX_I_M   unity_WorldToObject
