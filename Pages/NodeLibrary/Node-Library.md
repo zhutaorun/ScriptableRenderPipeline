@@ -10,7 +10,7 @@ The **Node Library** contains documentation for all the individual [Nodes](https
         <td width="288"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Channel-Nodes">Channel</a></b></p></td>
     </tr>
     <tr>
-        <td width="288"><p align="center"><b>Input</b></p></td>
+        <td width="288"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Input-Nodes">Input</a></b></p></td>
         <td width="288"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Master-Nodes">Master</a></b></p></td>
     </tr>
     <tr>
