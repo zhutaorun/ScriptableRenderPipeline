@@ -28,8 +28,3 @@ This repository and its documentation is under active development. Everything is
    * [Port Bindings](https://github.com/Unity-Technologies/ShaderGraph/wiki/Port-Bindings)
 * [Node Library](https://github.com/Unity-Technologies/ShaderGraph/wiki/Node-Library)
 * [Scripting API](https://github.com/Unity-Technologies/ShaderGraph/wiki/Scripting-API)
-   * [CodeFunctionNode](https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode)
-      * [Port Types](https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode-Port-Types)
-      * [SlotAttribute](https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode.SlotAttribute)
-      * [Binding](https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode.Binding)
-      * [GetFunctionToConvert](https://github.com/Unity-Technologies/ShaderGraph/wiki/CodeFunctionNode.GetFunctionToConvert)
