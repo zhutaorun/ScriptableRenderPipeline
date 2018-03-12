@@ -112,3 +112,63 @@
 <p align="left">Returns a Metal Reflectance value for a physically based material.</p></td>
     </tr>
 </table>
+
+## Scene
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Ambient-Node">Ambient</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Ambient-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/AmbientNodeThumb.png" alt="Ambient Node" height="350" width="350"></a></p>
+<p align="left">Provides access to the Scene's Ambient color values.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Camera-Node">Camera</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Camera-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/CameraNodeThumb.png" alt="Camera Node" height="350" width="350"></a></p>
+<p align="left">Provides access to various parameters of the current Camera.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Fog-Node">Fog</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Fog-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/FogNodeThumb.png" alt="Fog Node" height="350" width="350"></a></p>
+<p align="left">Provides access to the Scene's Fog parameters.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Light-Probe-Node">Light Probe</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Light-Probe-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/LightProbeNodeThumb.png" alt="Light Probe Node" height="350" width="350"></a></p>
+<p align="left">Provides access to the Light Probe parameters at the object's position.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Object-Node">Object</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Object-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ObjectNodeThumb.png" alt="Object Node" height="350" width="350"></a></p>
+<p align="left">Provides access to various parameters of the Object.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Reflection-Probe-Node">Reflection Probe</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Reflection-Probe-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ReflectionProbeNodeThumb.png" alt="Reflection Probe Node" height="350" width="350"></a></p>
+<p align="left">Provides access to the nearest Reflection Probe to the object.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Screen-Node">Screen</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Screen-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ScreenNodeThumb.png" alt="Screen Node" height="350" width="350"></a></p>
+<p align="left">Provides access to parameters of the screen.</p></td>
+    </tr>
+</table>
+
+## Texture
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Cubemap-Asset-Node">Cubemap Asset</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Cubemap-Asset-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/CubemapAssetNodeThumb.png" alt="Cubemap Asset Node" height="350" width="350"></a></p>
+<p align="left">Defines a constant Cubemap Asset for use in the shader.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sample-Cubemap-Node">Sample Cubemap</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sample-Cubemap-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/SampleCubemapNodeThumb.png" alt="Sample Cubemap Node" height="350" width="350"></a></p>
+<p align="left">Samples a Cubemap and returns a Vector 4 color value for use in the shader.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sample-Texture-2D-Node">Sample Texture 2D</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sample-Texture-2D-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/SampleTexture2DNodeThumb.png" alt="Sample Texture 2D Node" height="350" width="350"></a></p>
+<p align="left">Samples a Texture 2D and returns a Vector 4 color value for use in the shader.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sampler-State-Node">Sampler State</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Sampler-State-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/SamplerStateNodeThumb.png" alt="Sampler State Node" height="350" width="350"></a></p>
+<p align="left">Defines a Sampler State for sampling textures.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Texture-2D-Asset-Node">Texture 2D Asset</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Texture-2D-Asset-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/Texture2DAssetNodeThumb.png" alt="Texture 2D Asset Node" height="350" width="350"></a></p>
+<p align="left">Defines a constant Texture 2D Asset for use in the shader.</p></td>
+    </tr>
+</table>
