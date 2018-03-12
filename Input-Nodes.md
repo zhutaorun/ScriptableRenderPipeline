@@ -42,3 +42,23 @@
 <p align="left">Defines a Vector 4 value in the shader.</p></td>
     </tr>
 </table>
+
+## Geometry
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Bitangent-Vector-Node">Bitangent Vector</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Bitangent-Vector-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/BitangentVectorNodeThumb.png" alt="Bitangent Vector Node" height="350" width="350"></a></p>
+<p align="left">Provides access to the mesh vertex or fragment's Bitangent Vector.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Normal-Vector-Node">Normal Vector</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Normal-Vector-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/NormalVectorNodeThumb.png" alt="Normal Vector Node" height="350" width="350"></a></p>
+<p align="left">Provides access to the mesh vertex or fragment's Normal Vector.</p></td>
+    </tr>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Position-Node">Position</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Position-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/PositionNodeThumb.png" alt="Position Node" height="350" width="350"></a></p>
+<p align="left">Provides access to the mesh vertex or fragment's Position.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Screen-Position-Node">Screen Position</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Screen-Position-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/ScreenPositionNodeThumb.png" alt="Screen Position Node" height="350" width="350"></a></p>
+<p align="left">Provides access to the mesh vertex or fragment's Screen Position.</p></td>
+    </tr>
+</table>
