@@ -111,6 +111,12 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Vertex-Color-Node">Vertex Color</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/View-Direction-Node">View Direction</a><br>
 </details>
+<details><summary>Matrix</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-2x2-Node">Matrix 2x2</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-3x3-Node">Matrix 3x3</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-4x4-Node">Matrix 4x4</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Transformation-Matrix-Node">Transformation Matrix</a><br>
+</details>
 </details>
 
 <details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Master-Nodes">Master</a></summary>
