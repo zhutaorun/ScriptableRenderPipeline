@@ -99,3 +99,16 @@
 <p align="left">Defines a constant Matrix 4x4 value for a default Unity Transformation Matrix in the shader.</p></td>
     </tr>
 </table>
+
+## PBR
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Dielectric-Specular-Node">Dielectric Specular</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Dielectric-Specular-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/DielectricSpecularNodeThumb.png" alt="Dielectric Specular Node" height="350" width="350"></a></p>
+<p align="left">Returns a Dielectric Specular F0 value for a physically based material.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Metal-Reflectance-Node">Metal Reflectance</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Metal-Reflectance-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/MetalReflectanceNodeThumb.png" alt="Metal Reflectance Node" height="350" width="350"></a></p>
+<p align="left">Returns a Metal Reflectance value for a physically based material.</p></td>
+    </tr>
+</table>
