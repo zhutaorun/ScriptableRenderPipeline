@@ -117,6 +117,10 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-4x4-Node">Matrix 4x4</a><br>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Transformation-Matrix-Node">Transformation Matrix</a><br>
 </details>
+<details><summary>PBR</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Dielectric-Specular-Node">Dielectric Specular</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Metal-Reflectance-Node">Metal Reflectance</a><br>
+</details>
 </details>
 
 <details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Master-Nodes">Master</a></summary>
