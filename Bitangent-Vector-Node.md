@@ -6,7 +6,7 @@ Provides access to the mesh's **Bitangent Vector**. The coordinate space of the 
 
 | Name        | Direction           | Type  | Binding | Description |
 |:------------ |:-------------|:-----|:---|:---|
-| Out | Output      |    Vector 3 | None | Output value |
+| Out | Output      |    Vector 3 | None | Mesh's **Bitangent Vector**. |
 
 ## Parameters
 
