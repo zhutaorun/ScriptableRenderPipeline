@@ -154,6 +154,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private RenderTargetIdentifier m_CurrCameraColorRT;
         private RenderTargetIdentifier m_ShadowMapRT;
         private RenderTargetIdentifier m_ScreenSpaceShadowMapRT;
+        private RenderTargetIdentifier m_AmbientOcclusionRT;
         private RenderTargetIdentifier m_ColorRT;
         private RenderTargetIdentifier m_CopyColorRT;
         private RenderTargetIdentifier m_DepthRT;
@@ -242,6 +243,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             PerCameraBuffer._AdditionalLightDistanceAttenuation = Shader.PropertyToID("_AdditionalLightDistanceAttenuation");
             PerCameraBuffer._AdditionalLightSpotDir = Shader.PropertyToID("_AdditionalLightSpotDir");
             PerCameraBuffer._AdditionalLightSpotAttenuation = Shader.PropertyToID("_AdditionalLightSpotAttenuation");
+            PerCameraBuffer._AmbientOcclusionBuffer = Shader.PropertyToID("_AmbientOcclusion");
+            PerCameraBuffer._AmbientOcclusionParam = Shader.PropertyToID("_AmbientOcclusionParam");
 
             ShadowConstantBuffer._WorldToShadow = Shader.PropertyToID("_WorldToShadow");
             ShadowConstantBuffer._ShadowData = Shader.PropertyToID("_ShadowData");
@@ -269,6 +272,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             m_DepthRT = new RenderTargetIdentifier(CameraRenderTargetID.depth);
             m_CopyDepth = new RenderTargetIdentifier(CameraRenderTargetID.depthCopy);
             m_PostProcessRenderContext = new PostProcessRenderContext();
+
+            m_AmbientOcclusionRT = new RenderTargetIdentifier(PerCameraBuffer._AmbientOcclusionBuffer);
 
             m_CopyTextureSupport = SystemInfo.copyTextureSupport;
 
@@ -388,6 +393,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 if (LightweightUtils.HasFlag(frameRenderingConfiguration, FrameRenderingConfiguration.DepthPrePass))
                 {
                     DepthPass(ref context, frameRenderingConfiguration);
+
+                    RenderSSAO(m_CurrCamera, context, m_CameraPostProcessLayer);
 
                     // Only screen space shadowmap mode is supported.
                     if (shadows)
@@ -559,6 +566,40 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             context.DrawRenderers(m_CullResults.visibleRenderers, ref debugViewDrawSettings, debugViewFilterSettings);
 
             EndForwardRendering(ref context, frameRenderingConfiguration);   
+        }
+
+        private void RenderSSAO(Camera camera, ScriptableRenderContext context, PostProcessLayer postProcessLayer)
+        {
+            CommandBuffer cmd = CommandBufferPool.Get("Render SSAO");
+
+            if(postProcessLayer != null && postProcessLayer.enabled)
+            {
+                var settings = postProcessLayer.GetSettings<AmbientOcclusion>();
+                if(settings.IsEnabledAndSupported(null))
+                {
+                    cmd.GetTemporaryRT(PerCameraBuffer._AmbientOcclusionBuffer, 
+                                       camera.pixelWidth, camera.pixelHeight, 0, 
+                                       FilterMode.Bilinear, RenderTextureFormat.R8);
+
+                    postProcessLayer.BakeMSVOMap(cmd, camera, m_AmbientOcclusionRT, m_DepthRT, true);
+
+                    cmd.SetGlobalTexture(PerCameraBuffer._AmbientOcclusionBuffer, m_AmbientOcclusionRT);
+                    cmd.SetGlobalVector(PerCameraBuffer._AmbientOcclusionParam, new Vector4(settings.color.value.r, 
+                                                                                            settings.color.value.g, 
+                                                                                            settings.color.value.b, 
+                                                                                            settings.directLightingStrength.value));
+
+                    context.ExecuteCommandBuffer(cmd);
+                    CommandBufferPool.Release(cmd);
+                    return;
+                }
+            }
+
+            cmd.SetGlobalTexture(PerCameraBuffer._AmbientOcclusionBuffer, RuntimeUtilities.blackTexture);
+            cmd.SetGlobalVector(PerCameraBuffer._AmbientOcclusionParam, Vector4.zero);
+
+            context.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
         }
 
         private void ForwardPass(List<VisibleLight> visibleLights, FrameRenderingConfiguration frameRenderingConfiguration, ref ScriptableRenderContext context, ref LightData lightData, bool stereoEnabled)

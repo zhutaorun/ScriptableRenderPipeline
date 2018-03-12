@@ -24,6 +24,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         public static int _AdditionalLightDistanceAttenuation;
         public static int _AdditionalLightSpotDir;
         public static int _AdditionalLightSpotAttenuation;
+
+        public static int _AmbientOcclusionBuffer;
+        public static int _AmbientOcclusionParam;
     }
 
     public static class ShadowConstantBuffer
