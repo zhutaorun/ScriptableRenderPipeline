@@ -78,3 +78,24 @@
 <p align="left">Provides access to the mesh vertex or fragment's View Direction vector.</p></td>
     </tr>
 </table>
+
+## Matrix
+
+<table align="center">
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-2x2-Node">Matrix 2x2</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-2x2-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/Matrix2x2NodeThumb.png" alt="Matrix 2x2 Node" height="350" width="350"></a></p>
+<p align="left">Defines a constant Matrix 2x2 value in the shader.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-3x3-Node">Matrix 3x3</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-3x3-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/Matrix3x3NodeThumb.png" alt="Matrix 3x3 Node" height="350" width="350"></a></p>
+<p align="left">Defines a constant Matrix 3x3 value in the shader.</p></td>
+    </tr>
+    <tr><tr valign="top">
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-4x4-Node">Matrix 4x4</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Matrix-4x4-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/Matrix4x4NodeThumb.png" alt="Matrix 4x4 Node" height="350" width="350"></a></p>
+<p align="left">Defines a constant Matrix 4x4 value in the shader.</p></td>
+        <td width="354"><p align="center"><b><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Transformation-Matrix-Node">Transformation Matrix</a></b></p>
+<p align="center"><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Transformation-Matrix-Node"><img src="https://github.com/Unity-Technologies/ShaderGraph/wiki/Images/NodeLibrary/Nodes/Thumbnails/TransformationMatrixNodeThumb.png" alt="Transformation Matrix Node" height="350" width="350"></a></p>
+<p align="left">Defines a constant Matrix 4x4 value for a default Unity Transformation Matrix in the shader.</p></td>
+    </tr>
+</table>
