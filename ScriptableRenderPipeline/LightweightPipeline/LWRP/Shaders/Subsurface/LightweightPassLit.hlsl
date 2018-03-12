@@ -102,10 +102,11 @@ half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
 
     SurfaceData surfaceData;
     InitializeStandardLitSurfaceData(IN.uv, surfaceData);
+    ApplySSAO(surfaceData.occlusion, IN.shadowCoord);
 
     InputData inputData;
     InitializeInputData(IN, surfaceData.normalTS, inputData);
-    
+
     half3 normalLowWS = UnpackNormalScale(SAMPLE_TEXTURE2D_LOD(_BumpMap, sampler_BumpMap, IN.uv, 3), _BumpScale); 
 #ifdef _NORMALMAP
     normalLowWS = TangentToWorldNormal(normalLowWS, IN.tangent, IN.binormal, IN.normal);
