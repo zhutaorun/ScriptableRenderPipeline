@@ -1,6 +1,6 @@
 ## Description
 
-Provides access to the mesh's **Normal Vector**. The coordinate space of the output value can be selected with the **Space** dropdown parameter.
+Provides access to the mesh vertex or fragment's **Normal Vector**. The coordinate space of the output value can be selected with the **Space** dropdown parameter.
 
 ## Ports
 
