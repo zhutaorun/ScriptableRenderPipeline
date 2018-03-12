@@ -88,7 +88,30 @@
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Swizzle-Node">Swizzle</a><br>
 </details>
 
-<details><summary>Input</summary></details>
+<details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Input-Nodes">Input</a></summary>
+<details><summary>Basic</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Boolean-Node">Boolean</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Color-Node">Color</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Constant-Node">Constant</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Integer-Node">Integer</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Slider-Node">Slider</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Time-Node">Time</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Vector-1-Node">Vector 1</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Vector-2-Node">Vector 2</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Vector-3-Node">Vector 3</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Vector-4-Node">Vector 4</a><br>
+</details>
+<details><summary>Geometry</summary>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Bitangent-Vector-Node">Bitangent Vector</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Normal-Vector-Node">Normal Vector</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Position-Node">Position</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Screen-Position-Node">Screen Position</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Tangent-Vector-Node">Tangent Vector</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/UV-Node">UV</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Vertex-Color-Node">Vertex Color</a><br>
+<a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/View-Direction-Node">View Direction</a><br>
+</details>
+</details>
 
 <details><summary><a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/Master-Nodes">Master</a></summary>
 <a href="https://github.com/Unity-Technologies/ShaderGraph/wiki/PBR-Master-Node">PBR</a><br>
