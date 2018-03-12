@@ -186,6 +186,9 @@ half4 DebugPassFragment(LightweightVertexOutput IN) : SV_Target
     debug = sqrt(inputData.normalWS);
 #elif defined(_DEBUG_SMOOTHNESS)
     debug = surfaceData.smoothness;
+#elif defined(_DEBUG_OCCLUSION)
+    ApplySSAO(surfaceData.occlusion, IN.shadowCoord);
+    debug = surfaceData.occlusion;
 #endif
     return half4(debug, 1);
 }

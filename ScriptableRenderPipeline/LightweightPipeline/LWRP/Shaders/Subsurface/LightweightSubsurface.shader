@@ -251,7 +251,7 @@ Shader "LightweightPipeline/Subsurface Scattering"
             // GPU Instancing
             #pragma multi_compile_instancing
 
-            #pragma multi_compile _ _DEBUG_ALBEDO _DEBUG_METALNESS _DEBUG_NORMALS _DEBUG_SMOOTHNESS
+            #pragma multi_compile _ _DEBUG_ALBEDO _DEBUG_METALNESS _DEBUG_NORMALS _DEBUG_SMOOTHNESS _DEBUG_OCCLUSION
 
             #pragma vertex   LitPassVertex
             #pragma fragment DebugPassFragment

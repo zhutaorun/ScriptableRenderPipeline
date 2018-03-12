@@ -551,6 +551,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 case DebugViewMode.Smoothness:
                     LightweightShaderUtils.SetDebugMode(cmd, DebugViewKeyword.SMOOTHNESS);
                     break;
+                case DebugViewMode.Occlusion:
+                    LightweightShaderUtils.SetDebugMode(cmd, DebugViewKeyword.OCCLUSION);
+                    break;
             }
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
