@@ -42,7 +42,7 @@ struct SurfaceData
     half  smoothness;
     half3 normalTS;
     half3 emission;
-    half  occlusion;
+    half3  occlusion; //TLS: Colored AO.
     half  alpha;
 };
 

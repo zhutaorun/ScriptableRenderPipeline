@@ -120,7 +120,7 @@ void ApplyFog(inout half3 color, half fogFactor)
     ApplyFogColor(color, unity_FogColor.rgb, fogFactor);
 }
 
-void ApplySSAO(inout half occlusion, float4 texcoord)
+void ApplySSAO(inout half3 occlusion, float4 texcoord)
 {
     half ssao = 1.0 - SAMPLE_TEXTURE2D(_AmbientOcclusion, sampler_AmbientOcclusion, texcoord.xy / texcoord.w);
     

@@ -472,7 +472,7 @@ half3 SampleGI(float4 sampleData, half3 normalWS)
     return SampleSHPixel(sampleData.xyz, normalWS);
 }
 
-half3 GlossyEnvironmentReflection(half3 reflectVector, half perceptualRoughness, half occlusion)
+half3 GlossyEnvironmentReflection(half3 reflectVector, half perceptualRoughness, half3 occlusion)
 {
 #if !defined(_GLOSSYREFLECTIONS_OFF)
     half mip = PerceptualRoughnessToMipmapLevel(perceptualRoughness);
@@ -518,7 +518,7 @@ half3 SubtractDirectMainLightFromLightmap(Light mainLight, half3 normalWS, half3
     return min(bakedGI, realtimeShadow);
 }
 
-half3 GlobalIllumination(BRDFData brdfData, half3 bakedGI, half occlusion, half3 normalWS, half3 viewDirectionWS)
+half3 GlobalIllumination(BRDFData brdfData, half3 bakedGI, half3 occlusion, half3 normalWS, half3 viewDirectionWS)
 {
     half3 reflectVector = reflect(-viewDirectionWS, normalWS);
     half fresnelTerm = Pow4(1.0 - saturate(dot(normalWS, viewDirectionWS)));
@@ -600,7 +600,7 @@ half3 VertexLighting(float3 positionWS, half3 normalWS)
 //       Used by ShaderGraph and others builtin renderers                    //
 ///////////////////////////////////////////////////////////////////////////////
 half4 LightweightFragmentPBR(InputData inputData, half3 albedo, half metallic, half3 specular,
-    half smoothness, half occlusion, half3 emission, half alpha, half curvature)
+    half smoothness, half3 occlusion, half3 emission, half alpha, half curvature)
 {
     BRDFData brdfData;
     InitializeBRDFData(albedo, metallic, specular, smoothness, alpha, curvature, brdfData);
