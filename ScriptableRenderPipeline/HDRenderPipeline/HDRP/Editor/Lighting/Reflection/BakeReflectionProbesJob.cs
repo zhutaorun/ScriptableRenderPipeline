@@ -26,14 +26,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         int m_StageIndex;
 
         public bool isComplete { get { return m_CurrentStage == Stage.Completed; } }
-        public BakeReflectionProbeRequest request;
+        //public BakeReflectionProbeRequest request;
         public List<ReflectionProbe> reflectionProbesToBake = new List<ReflectionProbe>();
         public List<PlanarReflectionProbe> planarReflectionProbesToBake = new List<PlanarReflectionProbe>();
 
-        public ReflectionBakeJob(BakeReflectionProbeRequest request)
-        {
-            this.request = request;
-        }
+        //public ReflectionBakeJob(BakeReflectionProbeRequest request)
+        //{
+        //    this.request = request;
+        //}
 
         public void Tick()
         {
@@ -45,7 +45,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             if (m_CurrentStage == Stage.Completed)
             {
-                request.Progress = 1;
+                //request.Progress = 1;
                 return;
             }
 
@@ -54,7 +54,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public void Dispose()
         {
-            request.Progress = 1;
+            //request.Progress = 1;
             m_CurrentStage = Stage.Completed;
             m_StageIndex = 0;
         }
@@ -72,8 +72,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 ? 1f - job.m_StageIndex / (float)job.reflectionProbesToBake.Count
                 : 1f;
 
-            job.request.Progress = ((float)Stage.BakeReflectionProbe + stageProgress) / (float)Stage.Completed;
-            job.request.ProgressMessage = string.Format("Reflection Probes ({0}/{1})", job.m_StageIndex + 1, job.reflectionProbesToBake.Count);
+            //job.request.Progress = ((float)Stage.BakeReflectionProbe + stageProgress) / (float)Stage.Completed;
+            //job.request.ProgressMessage = string.Format("Reflection Probes ({0}/{1})", job.m_StageIndex + 1, job.reflectionProbesToBake.Count);
 
             EditorReflectionSystem.BakeReflectionProbeSnapshot(job.reflectionProbesToBake[job.m_StageIndex]);
 
@@ -93,8 +93,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 ? 1f - job.m_StageIndex / (float)job.planarReflectionProbesToBake.Count
                 : 1f;
 
-            job.request.Progress = ((float)Stage.BakePlanarProbe + stageProgress) / (float)Stage.Completed;
-            job.request.ProgressMessage = string.Format("Reflection Probes ({0}/{1})", job.m_StageIndex + 1, job.planarReflectionProbesToBake.Count);
+            //job.request.Progress = ((float)Stage.BakePlanarProbe + stageProgress) / (float)Stage.Completed;
+            //job.request.ProgressMessage = string.Format("Reflection Probes ({0}/{1})", job.m_StageIndex + 1, job.planarReflectionProbesToBake.Count);
 
             EditorReflectionSystem.BakeReflectionProbeSnapshot(job.planarReflectionProbesToBake[job.m_StageIndex]);
 

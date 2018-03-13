@@ -64,21 +64,21 @@ namespace UnityEngine.Experimental.Rendering
         void OnEnable()
         {
             var probe = GetComponent<ReflectionProbe>();
-            ReflectionSystem.RegisterProbe(probe);
+            HDPipeline.ReflectionSystem.RegisterProbe(probe);
             probe.bakedTexture = bakedTexture;
         }
 
         void OnDisable()
         {
-            ReflectionSystem.UnregisterProbe(GetComponent<ReflectionProbe>());
+            HDPipeline.ReflectionSystem.UnregisterProbe(GetComponent<ReflectionProbe>());
         }
 
         void OnValidate()
         {
-            ReflectionSystem.UnregisterProbe(GetComponent<ReflectionProbe>());
+            HDPipeline.ReflectionSystem.UnregisterProbe(GetComponent<ReflectionProbe>());
 
             if (isActiveAndEnabled)
-                ReflectionSystem.RegisterProbe(GetComponent<ReflectionProbe>());
+                HDPipeline.ReflectionSystem.RegisterProbe(GetComponent<ReflectionProbe>());
         }
     }
 }

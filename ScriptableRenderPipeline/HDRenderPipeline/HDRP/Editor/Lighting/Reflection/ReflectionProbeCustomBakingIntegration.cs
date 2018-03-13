@@ -16,11 +16,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         [InitializeOnLoadMethod]
         static void Initialize()
         {
-            GraphicsSettings.useBuiltinReflectionProbeSystem = false;
-            Lightmapping.BakeReflectionProbeRequest += LightmappingOnBakeReflectionProbeRequest;
-            Lightmapping.ClearBakedReflectionProbeRequest += LightmappingOnClearBakedReflectionProbeRequest;
+            //GraphicsSettings.useBuiltinReflectionProbeSystem = false;
+            //Lightmapping.BakeReflectionProbeRequest += LightmappingOnBakeReflectionProbeRequest;
+            //Lightmapping.ClearBakedReflectionProbeRequest += LightmappingOnClearBakedReflectionProbeRequest;
             EditorSceneManager.sceneOpened += EditorSceneManagerOnSceneOpened;
             EditorApplication.update += Update;
+
+            Debug.Log("InitializeOnLoad"); 
         }
 
         static void EditorSceneManagerOnSceneOpened(Scene scene, OpenSceneMode mode)
@@ -83,41 +85,41 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        static void LightmappingOnBakeReflectionProbeRequest(BakeReflectionProbeRequest request)
-        {
-            if (request.IsCompleted)
-                return;
+        //static void LightmappingOnBakeReflectionProbeRequest(BakeReflectionProbeRequest request)
+        //{
+        //    if (request.IsCompleted)
+        //        return;
 
-            // Custom probe hashes should be handled here by the user
-            // var customProbeHash = CalculateCustomProbeHashes()
-            // dependencyHash = CombineHashes(dependencyHash, customProbeHash);
+        //    // Custom probe hashes should be handled here by the user
+        //    // var customProbeHash = CalculateCustomProbeHashes()
+        //    // dependencyHash = CombineHashes(dependencyHash, customProbeHash);
 
-            // Currently only one bounce is handled
-            // TODO: Use  UnityEngine.RenderSettings.reflectionBounces and handle bounces
+        //    // Currently only one bounce is handled
+        //    // TODO: Use  UnityEngine.RenderSettings.reflectionBounces and handle bounces
 
-            if (s_CurrentBakeJob != null)
-            {
-                s_CurrentBakeJob.Dispose();
-                s_CurrentBakeJob = null;
-            }
+        //    if (s_CurrentBakeJob != null)
+        //    {
+        //        s_CurrentBakeJob.Dispose();
+        //        s_CurrentBakeJob = null;
+        //    }
 
-            var job = new ReflectionBakeJob(request);
-            ReflectionSystem.QueryReflectionProbes(job.reflectionProbesToBake, mode: ReflectionProbeMode.Baked);
-            ReflectionSystem.QueryPlanarProbes(job.planarReflectionProbesToBake, mode: ReflectionProbeMode.Baked);
-            s_CurrentBakeJob = job;
+        //    var job = new ReflectionBakeJob(request);
+        //    ReflectionSystem.QueryReflectionProbes(job.reflectionProbesToBake, mode: ReflectionProbeMode.Baked);
+        //    ReflectionSystem.QueryPlanarProbes(job.planarReflectionProbesToBake, mode: ReflectionProbeMode.Baked);
+        //    s_CurrentBakeJob = job;
 
-            request.Cancelled += LightmappingOnBakeReflectionProbeRequestCancelled;
-        }
+        //    request.Cancelled += LightmappingOnBakeReflectionProbeRequestCancelled;
+        //}
 
-        static void LightmappingOnBakeReflectionProbeRequestCancelled(BakeReflectionProbeRequest request)
-        {
-            Debug.Log("Cancel: " + request.RequestHash);
-            request.Cancelled -= LightmappingOnBakeReflectionProbeRequestCancelled;
-            if (s_CurrentBakeJob != null && s_CurrentBakeJob.request == request)
-            {
-                s_CurrentBakeJob.Dispose();
-                s_CurrentBakeJob = null;
-            }
-        }
+        //static void LightmappingOnBakeReflectionProbeRequestCancelled(BakeReflectionProbeRequest request)
+        //{
+        //    Debug.Log("Cancel: " + request.RequestHash);
+        //    request.Cancelled -= LightmappingOnBakeReflectionProbeRequestCancelled;
+        //    if (s_CurrentBakeJob != null && s_CurrentBakeJob.request == request)
+        //    {
+        //        s_CurrentBakeJob.Dispose();
+        //        s_CurrentBakeJob = null;
+        //    }
+        //}
     }
 }
