@@ -154,12 +154,13 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private RenderTargetIdentifier m_CurrCameraColorRT;
         private RenderTargetIdentifier m_ShadowMapRT;
         private RenderTargetIdentifier m_ScreenSpaceShadowMapRT;
-        private RenderTargetIdentifier m_AmbientOcclusionRT;
         private RenderTargetIdentifier m_ColorRT;
         private RenderTargetIdentifier m_CopyColorRT;
         private RenderTargetIdentifier m_DepthRT;
         private RenderTargetIdentifier m_CopyDepth;
         private RenderTargetIdentifier m_Color;
+
+        private RTHandle m_AmbientOcclusionBuffer;
 
         private bool m_IntermediateTextureArray;
         private bool m_RequireDepthTexture;
@@ -273,7 +274,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             m_CopyDepth = new RenderTargetIdentifier(CameraRenderTargetID.depthCopy);
             m_PostProcessRenderContext = new PostProcessRenderContext();
 
-            m_AmbientOcclusionRT = new RenderTargetIdentifier(PerCameraBuffer._AmbientOcclusionBuffer);
+            RTHandle.Initialize(Screen.width, Screen.height, false, (MSAASamples)m_Asset.MSAASampleCount);
+            m_AmbientOcclusionBuffer = RTHandle.Alloc(Vector2.one, filterMode: FilterMode.Bilinear, colorFormat: RenderTextureFormat.R8, sRGB: false, enableRandomWrite: true, name: "AmbientOcclusion");
 
             m_CopyTextureSupport = SystemInfo.copyTextureSupport;
 
@@ -299,6 +301,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         {
             base.Dispose();
             Shader.globalRenderPipeline = "";
+
+            RTHandle.Release(m_AmbientOcclusionBuffer);
 
             SupportedRenderingFeatures.active = new SupportedRenderingFeatures();
 
@@ -541,14 +545,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 var settings = postProcessLayer.GetSettings<AmbientOcclusion>();
                 if(settings.IsEnabledAndSupported(null))
                 {
-                    cmd.GetTemporaryRT(PerCameraBuffer._AmbientOcclusionBuffer, 
-                                       camera.pixelWidth, camera.pixelHeight, 0, 
-                                       FilterMode.Bilinear, RenderTextureFormat.R8);
-
                     //Bake the AO from depth.
-                    postProcessLayer.BakeMSVOMap(cmd, camera, m_AmbientOcclusionRT, m_DepthRT, true);
+                    postProcessLayer.BakeMSVOMap(cmd, camera, m_AmbientOcclusionBuffer, m_DepthRT, true);
 
-                    cmd.SetGlobalTexture(PerCameraBuffer._AmbientOcclusionBuffer, m_AmbientOcclusionRT);
+                    cmd.SetGlobalTexture(PerCameraBuffer._AmbientOcclusionBuffer, m_AmbientOcclusionBuffer);
                     cmd.SetGlobalVector(PerCameraBuffer._AmbientOcclusionParam, new Vector4(settings.color.value.r, 
                                                                                             settings.color.value.g, 
                                                                                             settings.color.value.b, 
