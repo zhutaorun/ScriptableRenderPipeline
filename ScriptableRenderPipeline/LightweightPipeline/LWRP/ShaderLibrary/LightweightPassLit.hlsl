@@ -12,7 +12,6 @@ struct LightweightVertexInput
     float2 texcoord : TEXCOORD0;
     float2 lightmapUV : TEXCOORD1;
     UNITY_VERTEX_INPUT_INSTANCE_ID
-
 };
 
 struct LightweightVertexOutput
@@ -158,7 +157,6 @@ half4 LitPassFragmentSimple(LightweightVertexOutput IN) : SV_Target
 
     return LightweightFragmentBlinnPhong(inputData, diffuse, specularGloss, shininess, emission, alpha);
 };
-
 
 // Used for StandardSimpleLighting shader
 half4 LitPassFragmentSimpleNull(LightweightVertexOutput IN) : SV_Target

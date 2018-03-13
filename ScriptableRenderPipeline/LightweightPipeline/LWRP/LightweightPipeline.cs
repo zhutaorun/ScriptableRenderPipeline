@@ -394,7 +394,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 {
                     DepthPass(ref context, frameRenderingConfiguration);
 
-                    RenderSSAO(m_CurrCamera, context, m_CameraPostProcessLayer);
+                    RenderSSAO(m_CurrCamera, context, m_CameraPostProcessLayer, frameRenderingConfiguration);
 
                     // Only screen space shadowmap mode is supported.
                     if (shadows)
@@ -412,7 +412,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 if(!LightweightUtils.HasFlag(frameRenderingConfiguration, FrameRenderingConfiguration.DebugView))
                     ForwardPass(visibleLights, frameRenderingConfiguration, ref context, ref lightData, stereoEnabled);
                 else
-                    DebugViewPass(frameRenderingConfiguration, ref context, stereoEnabled);
+                    DebugViewPass(visibleLights, frameRenderingConfiguration, ref context, ref lightData, stereoEnabled);
 
                 cmd.name = "After Camera Render";
 #if UNITY_EDITOR
@@ -421,6 +421,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 #endif
                 cmd.ReleaseTemporaryRT(m_ShadowMapRTID);
                 cmd.ReleaseTemporaryRT(m_ScreenSpaceShadowMapRTID);
+                cmd.ReleaseTemporaryRT(PerCameraBuffer._AmbientOcclusionBuffer);
                 cmd.ReleaseTemporaryRT(CameraRenderTargetID.depthCopy);
                 cmd.ReleaseTemporaryRT(CameraRenderTargetID.depth);
                 cmd.ReleaseTemporaryRT(CameraRenderTargetID.color);
@@ -531,8 +532,44 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             StopStereoRendering(ref context, frameRenderingConfiguration);
         }
 
-        private void DebugViewPass(FrameRenderingConfiguration frameRenderingConfiguration, ref ScriptableRenderContext context, bool stereoEnabled)
+        private void RenderSSAO(Camera camera, ScriptableRenderContext context, PostProcessLayer postProcessLayer, FrameRenderingConfiguration config)
+        {
+            CommandBuffer cmd = CommandBufferPool.Get("Render SSAO");
+
+            if(postProcessLayer != null && postProcessLayer.enabled)
+            {
+                var settings = postProcessLayer.GetSettings<AmbientOcclusion>();
+                if(settings.IsEnabledAndSupported(null))
+                {
+                    cmd.GetTemporaryRT(PerCameraBuffer._AmbientOcclusionBuffer, 
+                                       camera.pixelWidth, camera.pixelHeight, 0, 
+                                       FilterMode.Bilinear, RenderTextureFormat.R8);
+
+                    //Bake the AO from depth.
+                    postProcessLayer.BakeMSVOMap(cmd, camera, m_AmbientOcclusionRT, m_DepthRT, true);
+
+                    cmd.SetGlobalTexture(PerCameraBuffer._AmbientOcclusionBuffer, m_AmbientOcclusionRT);
+                    cmd.SetGlobalVector(PerCameraBuffer._AmbientOcclusionParam, new Vector4(settings.color.value.r, 
+                                                                                            settings.color.value.g, 
+                                                                                            settings.color.value.b, 
+                                                                                            settings.directLightingStrength.value));
+
+                    context.ExecuteCommandBuffer(cmd);
+                    CommandBufferPool.Release(cmd);
+                    return;
+                }
+            }
+
+            cmd.SetGlobalTexture(PerCameraBuffer._AmbientOcclusionBuffer, RuntimeUtilities.blackTexture);
+            cmd.SetGlobalVector(PerCameraBuffer._AmbientOcclusionParam, Vector4.zero);
+
+            context.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
+        }
+
+        private void DebugViewPass(List<VisibleLight> visibleLights, FrameRenderingConfiguration frameRenderingConfiguration, ref ScriptableRenderContext context, ref LightData lightData, bool stereoEnabled)
         {    
+            SetupShaderConstants(visibleLights, ref context, ref lightData);
             BeginForwardRendering(ref context, frameRenderingConfiguration);
 
             CommandBuffer cmd = CommandBufferPool.Get("Debug View Mode");
@@ -568,41 +605,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             context.DrawRenderers(m_CullResults.visibleRenderers, ref debugViewDrawSettings, debugViewFilterSettings);
 
+
+            AfterOpaque(ref context, frameRenderingConfiguration);
+            AfterTransparent(ref context, frameRenderingConfiguration);
             EndForwardRendering(ref context, frameRenderingConfiguration);   
-        }
-
-        private void RenderSSAO(Camera camera, ScriptableRenderContext context, PostProcessLayer postProcessLayer)
-        {
-            CommandBuffer cmd = CommandBufferPool.Get("Render SSAO");
-
-            if(postProcessLayer != null && postProcessLayer.enabled)
-            {
-                var settings = postProcessLayer.GetSettings<AmbientOcclusion>();
-                if(settings.IsEnabledAndSupported(null))
-                {
-                    cmd.GetTemporaryRT(PerCameraBuffer._AmbientOcclusionBuffer, 
-                                       camera.pixelWidth, camera.pixelHeight, 0, 
-                                       FilterMode.Bilinear, RenderTextureFormat.R8);
-
-                    postProcessLayer.BakeMSVOMap(cmd, camera, m_AmbientOcclusionRT, m_DepthRT, true);
-
-                    cmd.SetGlobalTexture(PerCameraBuffer._AmbientOcclusionBuffer, m_AmbientOcclusionRT);
-                    cmd.SetGlobalVector(PerCameraBuffer._AmbientOcclusionParam, new Vector4(settings.color.value.r, 
-                                                                                            settings.color.value.g, 
-                                                                                            settings.color.value.b, 
-                                                                                            settings.directLightingStrength.value));
-
-                    context.ExecuteCommandBuffer(cmd);
-                    CommandBufferPool.Release(cmd);
-                    return;
-                }
-            }
-
-            cmd.SetGlobalTexture(PerCameraBuffer._AmbientOcclusionBuffer, RuntimeUtilities.blackTexture);
-            cmd.SetGlobalVector(PerCameraBuffer._AmbientOcclusionParam, Vector4.zero);
-
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
         }
 
         private void ForwardPass(List<VisibleLight> visibleLights, FrameRenderingConfiguration frameRenderingConfiguration, ref ScriptableRenderContext context, ref LightData lightData, bool stereoEnabled)
