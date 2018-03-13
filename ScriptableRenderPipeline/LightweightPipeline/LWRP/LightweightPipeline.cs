@@ -150,17 +150,17 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private int m_ShadowCasterCascadesCount;
         private int m_ShadowMapRTID;
         private int m_ScreenSpaceShadowMapRTID;
+        private int m_AmbientOcclusionRTID;
         private Matrix4x4[] m_ShadowMatrices = new Matrix4x4[kMaxCascades + 1];
         private RenderTargetIdentifier m_CurrCameraColorRT;
         private RenderTargetIdentifier m_ShadowMapRT;
         private RenderTargetIdentifier m_ScreenSpaceShadowMapRT;
+        private RenderTargetIdentifier m_AmbientOcclusionRT;
         private RenderTargetIdentifier m_ColorRT;
         private RenderTargetIdentifier m_CopyColorRT;
         private RenderTargetIdentifier m_DepthRT;
         private RenderTargetIdentifier m_CopyDepth;
         private RenderTargetIdentifier m_Color;
-
-        private RTHandle m_AmbientOcclusionBuffer;
 
         private bool m_IntermediateTextureArray;
         private bool m_RequireDepthTexture;
@@ -244,7 +244,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             PerCameraBuffer._AdditionalLightDistanceAttenuation = Shader.PropertyToID("_AdditionalLightDistanceAttenuation");
             PerCameraBuffer._AdditionalLightSpotDir = Shader.PropertyToID("_AdditionalLightSpotDir");
             PerCameraBuffer._AdditionalLightSpotAttenuation = Shader.PropertyToID("_AdditionalLightSpotAttenuation");
-            PerCameraBuffer._AmbientOcclusionBuffer = Shader.PropertyToID("_AmbientOcclusion");
             PerCameraBuffer._AmbientOcclusionParam = Shader.PropertyToID("_AmbientOcclusionParam");
 
             ShadowConstantBuffer._WorldToShadow = Shader.PropertyToID("_WorldToShadow");
@@ -259,6 +258,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             m_ShadowMapRTID = Shader.PropertyToID("_ShadowMap");
             m_ScreenSpaceShadowMapRTID = Shader.PropertyToID("_ScreenSpaceShadowMap");
+            m_AmbientOcclusionRTID = Shader.PropertyToID("_AmbientOcclusion");
 
             CameraRenderTargetID.color = Shader.PropertyToID("_CameraColorRT");
             CameraRenderTargetID.copyColor = Shader.PropertyToID("_CameraCopyColorRT");
@@ -267,15 +267,13 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             m_ShadowMapRT = new RenderTargetIdentifier(m_ShadowMapRTID);
             m_ScreenSpaceShadowMapRT = new RenderTargetIdentifier(m_ScreenSpaceShadowMapRTID);
+            m_AmbientOcclusionRT = new RenderTargetIdentifier(m_AmbientOcclusionRTID);
             
             m_ColorRT = new RenderTargetIdentifier(CameraRenderTargetID.color);
             m_CopyColorRT = new RenderTargetIdentifier(CameraRenderTargetID.copyColor);
             m_DepthRT = new RenderTargetIdentifier(CameraRenderTargetID.depth);
             m_CopyDepth = new RenderTargetIdentifier(CameraRenderTargetID.depthCopy);
             m_PostProcessRenderContext = new PostProcessRenderContext();
-
-            RTHandle.Initialize(Screen.width, Screen.height, false, (MSAASamples)m_Asset.MSAASampleCount);
-            m_AmbientOcclusionBuffer = RTHandle.Alloc(Vector2.one, filterMode: FilterMode.Bilinear, colorFormat: RenderTextureFormat.R8, sRGB: false, enableRandomWrite: true, name: "AmbientOcclusion");
 
             m_CopyTextureSupport = SystemInfo.copyTextureSupport;
 
@@ -301,8 +299,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         {
             base.Dispose();
             Shader.globalRenderPipeline = "";
-
-            RTHandle.Release(m_AmbientOcclusionBuffer);
 
             SupportedRenderingFeatures.active = new SupportedRenderingFeatures();
 
@@ -425,7 +421,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 #endif
                 cmd.ReleaseTemporaryRT(m_ShadowMapRTID);
                 cmd.ReleaseTemporaryRT(m_ScreenSpaceShadowMapRTID);
-                cmd.ReleaseTemporaryRT(PerCameraBuffer._AmbientOcclusionBuffer);
+                cmd.ReleaseTemporaryRT(m_AmbientOcclusionRTID);
                 cmd.ReleaseTemporaryRT(CameraRenderTargetID.depthCopy);
                 cmd.ReleaseTemporaryRT(CameraRenderTargetID.depth);
                 cmd.ReleaseTemporaryRT(CameraRenderTargetID.color);
@@ -545,10 +541,13 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 var settings = postProcessLayer.GetSettings<AmbientOcclusion>();
                 if(settings.IsEnabledAndSupported(null))
                 {
-                    //Bake the AO from depth.
-                    postProcessLayer.BakeMSVOMap(cmd, camera, m_AmbientOcclusionBuffer, m_DepthRT, true);
+                    //NOTE: On DX11, need to manually specify random read write for the compute UAV.
+                    cmd.GetTemporaryRT(m_AmbientOcclusionRTID, m_CurrCamera.pixelWidth, m_CurrCamera.pixelHeight, 0, FilterMode.Bilinear, RenderTextureFormat.R8, RenderTextureReadWrite.Linear, 1, true);
 
-                    cmd.SetGlobalTexture(PerCameraBuffer._AmbientOcclusionBuffer, m_AmbientOcclusionBuffer);
+                    //Bake the AO from depth.
+                    postProcessLayer.BakeMSVOMap(cmd, camera, m_AmbientOcclusionRT, m_DepthRT, true);
+
+                    cmd.SetGlobalTexture(m_AmbientOcclusionRTID, m_AmbientOcclusionRT);
                     cmd.SetGlobalVector(PerCameraBuffer._AmbientOcclusionParam, new Vector4(settings.color.value.r, 
                                                                                             settings.color.value.g, 
                                                                                             settings.color.value.b, 
@@ -560,7 +559,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 }
             }
 
-            cmd.SetGlobalTexture(PerCameraBuffer._AmbientOcclusionBuffer, RuntimeUtilities.blackTexture);
+            cmd.SetGlobalTexture(m_AmbientOcclusionRTID, RuntimeUtilities.blackTexture);
             cmd.SetGlobalVector(PerCameraBuffer._AmbientOcclusionParam, Vector4.zero);
 
             context.ExecuteCommandBuffer(cmd);
