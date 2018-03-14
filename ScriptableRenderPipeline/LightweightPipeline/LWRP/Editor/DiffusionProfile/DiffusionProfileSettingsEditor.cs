@@ -50,6 +50,8 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             internal SerializedProperty scatterDistance2;
             internal SerializedProperty lerpWeight;
 
+            internal SerializedProperty preintegratedLUT;
+
             // Render preview
             internal RenderTexture profileRT;
             internal RenderTexture transmittanceRT;
@@ -101,7 +103,8 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
                     thicknessRemap      = rp.Find(x => x.thicknessRemap),
                     scatterDistance1    = rp.Find(x => x.scatterDistance1),
                     scatterDistance2    = rp.Find(x => x.scatterDistance2),
-                    lerpWeight          = rp.Find(x => x.lerpWeight)
+                    lerpWeight          = rp.Find(x => x.lerpWeight),
+                    preintegratedLUT    = rp.Find(x => x.preintegratedLUT)
                 };
 
                 m_Profiles.Add(profile);
@@ -212,7 +215,7 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             m_ProfileMaterial.SetFloat (DiffusionProfileShaderIDs._LerpWeight, profile.lerpWeight.floatValue);
 
             // Draw the profile.
-            EditorGUI.DrawPreviewTexture(GUILayoutUtility.GetRect(128f, 128f), profile.profileRT, m_ProfileMaterial, ScaleMode.ScaleToFit, 1f);
+            EditorGUI.DrawTextureTransparent(GUILayoutUtility.GetRect(128f, 128f), (Texture2D)profile.preintegratedLUT.objectReferenceValue, ScaleMode.ScaleToFit, 1f);
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField(s_Styles.transmittancePreview0, s_Styles.centeredMiniBoldLabel);
