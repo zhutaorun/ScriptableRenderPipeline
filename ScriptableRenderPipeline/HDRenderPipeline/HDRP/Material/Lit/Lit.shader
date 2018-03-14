@@ -2,9 +2,6 @@ Shader "HDRenderPipeline/Lit"
 {
     Properties
     {
-        // Following set of parameters represent the parameters node inside the MaterialGraph.
-        // They are use to fill a SurfaceData. With a MaterialGraph this should not exist.
-
         // Reminder. Color here are in linear but the UI (color picker) do the conversion sRGB to linear
         _BaseColor("BaseColor", Color) = (1,1,1,1)
         _BaseColorMap("BaseColorMap", 2D) = "white" {}

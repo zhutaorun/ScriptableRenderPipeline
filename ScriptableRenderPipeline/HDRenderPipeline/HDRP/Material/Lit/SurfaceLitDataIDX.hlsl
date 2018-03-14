@@ -1,3 +1,5 @@
+
+
 void ADD_IDX(ComputeLayerTexCoord)( // Uv related parameters
                                     float2 texCoord0, float2 texCoord1, float2 texCoord2, float2 texCoord3, float4 uvMappingMask, float4 uvMappingMaskDetails,
                                     // scale and bias for base and detail + global tiling factor (for layered lit only)
@@ -385,36 +387,7 @@ float ADD_IDX(GetSurfaceData)(FragInputs input, LayerTexCoord layerTexCoord, out
 
 #endif // #if !defined(LAYERED_LIT_SHADER)
 
-    // Generated from UnityEngine.Experimental.Rendering.HDPipeline.Lit+SurfaceData
-    // PackingRules = Exact
-    /*
-    struct SurfaceData
-    {
-        uint materialFeatures;
-        float3 baseColor;
-        float specularOcclusion;
-        float3 normalWS;
-        float perceptualSmoothness;
-        float ambientOcclusion;
-        float metallic;
-        float coatMask;
-        float3 specularColor;
-        uint diffusionProfile;
-        float subsurfaceMask;
-        float thickness;
-        float3 tangentWS;
-        float anisotropy;
-        float iridescenceThickness;
-        float iridescenceMask;
-        float ior;
-        float3 transmittanceColor;
-        float atDistance;
-        float transmittanceMask;
-    };
-    */
-
-    surfaceData.baseColor = float3(1, 0, 0);
-    surfaceData.normalWS = float3(1, 0, 0);
+    
 
     return alpha;
 }

@@ -5,6 +5,8 @@
 #include "../MaterialUtilities.hlsl"
 #include "../Decal/DecalUtilities.hlsl"
 
+#include "SurfaceLitInclude.hlsl"
+
 // TODO: move this function to commonLighting.hlsl once validated it work correctly
 float GetSpecularOcclusionFromBentAO(float3 V, float3 bentNormalWS, SurfaceData surfaceData)
 {
@@ -230,6 +232,38 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
         surfaceData.metallic = 0;
     }
 #endif
+
+    // Generated from UnityEngine.Experimental.Rendering.HDPipeline.Lit+SurfaceData
+    // PackingRules = Exact
+    /*
+    struct SurfaceData
+    {
+    uint materialFeatures;
+    float3 baseColor;
+    float specularOcclusion;
+    float3 normalWS;
+    float perceptualSmoothness;
+    float ambientOcclusion;
+    float metallic;
+    float coatMask;
+    float3 specularColor;
+    uint diffusionProfile;
+    float subsurfaceMask;
+    float thickness;
+    float3 tangentWS;
+    float anisotropy;
+    float iridescenceThickness;
+    float iridescenceMask;
+    float ior;
+    float3 transmittanceColor;
+    float atDistance;
+    float transmittanceMask;
+    };
+    */
+
+    // surfaceData = GetSurfaceLitData();
+    // surfaceData.baseColor = float3(1, 0, 0);
+    ModSurfaceLitData(surfaceData);
 
     // Caution: surfaceData must be fully initialize before calling GetBuiltinData
     GetBuiltinData(input, surfaceData, alpha, bentNormalWS, depthOffset, builtinData);
