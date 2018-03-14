@@ -28,10 +28,12 @@ struct LightweightVertexOutput
 
     half3 viewDir                   : TEXCOORD6;
     half4 fogFactorAndVertexLight   : TEXCOORD7; // x: fogFactor, yzw: vertex light
+
     float4 shadowCoord               : TEXCOORD8;
 
     float4 clipPos                  : SV_POSITION;
     UNITY_VERTEX_INPUT_INSTANCE_ID
+    UNITY_VERTEX_OUTPUT_STEREO
 };
 
 void InitializeInputData(LightweightVertexOutput IN, half3 normalTS, out InputData inputData)
@@ -44,14 +46,15 @@ void InitializeInputData(LightweightVertexOutput IN, half3 normalTS, out InputDa
     inputData.normalWS = normalize(IN.normal);
 #endif
 
-#ifdef SHADER_API_MOBILE
-    // viewDirection should be normalized here, but we avoid doing it as it's close enough and we save some ALU.
-    inputData.viewDirectionWS = IN.viewDir;
+#if SHADER_HINT_NICE_QUALITY
+    inputData.viewDirectionWS = SafeNormalize(IN.viewDir);
 #else
-    inputData.viewDirectionWS = normalize(IN.viewDir);
+    // View direction is already normalize in vertex. Small acceptable error to save ALU.
+    inputData.viewDirectionWS = IN.viewDir;
 #endif
 
     inputData.shadowCoord = IN.shadowCoord;
+
     inputData.fogCoord = IN.fogFactorAndVertexLight.x;
     inputData.vertexLighting = IN.fogFactorAndVertexLight.yzw;
     inputData.bakedGI = SampleGI(IN.lightmapUVOrVertexSH, inputData.normalWS);
@@ -68,12 +71,19 @@ LightweightVertexOutput LitPassVertex(LightweightVertexInput v)
 
     UNITY_SETUP_INSTANCE_ID(v);
     UNITY_TRANSFER_INSTANCE_ID(v, o);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
     o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
 
     o.posWS = TransformObjectToWorld(v.vertex.xyz);
     o.clipPos = TransformWorldToHClip(o.posWS);
-    o.viewDir = SafeNormalize(GetCameraPositionWS() - o.posWS);
+
+    o.viewDir = GetCameraPositionWS() - o.posWS;
+
+#if !SHADER_HINT_NICE_QUALITY
+    // Normalize in vertex and avoid renormalizing it in frag to save ALU.
+    o.viewDir = SafeNormalize(o.viewDir);
+#endif
 
     // initializes o.normal and if _NORMALMAP also o.tangent and o.binormal
     OUTPUT_NORMAL(v, o);
@@ -87,7 +97,7 @@ LightweightVertexOutput LitPassVertex(LightweightVertexInput v)
     half3 vertexLight = VertexLighting(o.posWS, o.normal);
     half fogFactor = ComputeFogFactor(o.clipPos.z);
     o.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
-    o.shadowCoord = ComputeScreenPos(o.clipPos);
+    o.shadowCoord = ComputeShadowCoord(o.clipPos);
 
     return o;
 }
@@ -114,8 +124,7 @@ half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
     half4 color = LightweightFragmentPBR(inputData, surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.occlusion, surfaceData.emission, surfaceData.alpha, curvature);
 
     ApplyFog(color.rgb, inputData.fogCoord);
-
-    return half4(color.rgb, 1);
+    return color;
 }
 
 // Used for Standard shader

@@ -123,7 +123,7 @@ half4 GetLightDirectionAndAttenuation(LightInput lightInput, float3 positionWS)
 
 half4 GetMainLightDirectionAndAttenuation(LightInput lightInput, float3 positionWS)
 {
-	half4 directionAndAttenuation = lerp(half4(lightInput.position.xyz, 1.0), GetLightDirectionAndAttenuation(lightInput, positionWS), lightInput.position.w);
+    half4 directionAndAttenuation = GetLightDirectionAndAttenuation(lightInput, positionWS);
 
     // Cookies are only computed for main light
     directionAndAttenuation.w *= CookieAttenuation(positionWS);
@@ -502,11 +502,10 @@ half3 SubtractDirectMainLightFromLightmap(Light mainLight, half3 normalWS, half3
     // 3) Pick original lightmap value, if it is the darkest one.
 
     // 1) Gives good estimate of illumination as if light would've been shadowed during the bake.
-    //    Preserves bounce and other baked lights
-    //    No shadows on the geometry facing away from the light
+    // We only subtract the main direction light. This is accounted in the contribution term below.
     half shadowStrength = GetShadowStrength();
-    half NdotL = saturate(dot(mainLight.direction, normalWS));
-    half3 lambert = mainLight.color * NdotL;
+    half contributionTerm = saturate(dot(mainLight.direction, normalWS)) * (1.0 - _MainLightPosition.w);
+    half3 lambert = mainLight.color * contributionTerm;
     half3 estimatedLightContributionMaskedByInverseOfShadow = lambert * (1.0 - mainLight.attenuation);
     half3 subtractedLightmap = bakedGI - estimatedLightContributionMaskedByInverseOfShadow;
 
@@ -531,8 +530,8 @@ half3 GlobalIllumination(BRDFData brdfData, half3 bakedGI, half3 occlusion, half
 
 void MixRealtimeAndBakedGI(inout Light light, half3 normalWS, inout half3 bakedGI, half4 shadowMask)
 {
-#if defined(_MIXED_LIGHTING_SUBTRACTIVE) && defined(LIGHTMAP_ON) && defined(_SHADOWS_ENABLED)
-    bakedGI = lerp(SubtractDirectMainLightFromLightmap(light, normalWS, bakedGI), bakedGI, _MainLightPosition.w);
+#if defined(_MIXED_LIGHTING_SUBTRACTIVE) && defined(LIGHTMAP_ON)
+    bakedGI = SubtractDirectMainLightFromLightmap(light, normalWS, bakedGI);
 #endif
 
 #if defined(LIGHTMAP_ON)
@@ -627,7 +626,6 @@ half4 LightweightFragmentPBR(InputData inputData, half3 albedo, half metallic, h
 
     color += inputData.vertexLighting * brdfData.diffuse;
     color += emission;
-
     return half4(color, alpha);
 }
 
