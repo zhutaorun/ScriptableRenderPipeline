@@ -51,7 +51,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         Normals,
         Metallness,
         Smoothness,
-        Occlusion
+        Occlusion,
+        Shadows
     };
 
     public class LightweightPipelineAsset : RenderPipelineAsset

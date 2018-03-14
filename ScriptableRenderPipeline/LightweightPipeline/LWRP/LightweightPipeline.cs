@@ -590,6 +590,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 case DebugViewMode.Occlusion:
                     LightweightShaderUtils.SetDebugMode(cmd, DebugViewKeyword.OCCLUSION);
                     break;
+                case DebugViewMode.Shadows:
+                    LightweightShaderUtils.SetDebugMode(cmd, DebugViewKeyword.SHADOWS);
+                    break;
             }
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);

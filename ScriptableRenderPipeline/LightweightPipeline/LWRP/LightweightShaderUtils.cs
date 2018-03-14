@@ -24,6 +24,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         NORMALS,
         SMOOTHNESS,
         OCCLUSION,
+        SHADOWS,
 
         NUM_VIEWS
     }
@@ -48,7 +49,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             "_DEBUG_METALNESS",
             "_DEBUG_NORMALS",
             "_DEBUG_SMOOTHNESS",
-            "_DEBUG_OCCLUSION"
+            "_DEBUG_OCCLUSION",
+            "_DEBUG_SHADOWS"
         };
 
         public static string GetShaderPath(ShaderPathID id)

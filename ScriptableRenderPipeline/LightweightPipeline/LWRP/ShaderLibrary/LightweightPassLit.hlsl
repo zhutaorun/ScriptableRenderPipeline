@@ -187,6 +187,8 @@ half4 DebugPassFragment(LightweightVertexOutput IN) : SV_Target
 #elif defined(_DEBUG_OCCLUSION)
     ApplySSAO(surfaceData.occlusion, IN.shadowCoord);
     debug = surfaceData.occlusion;
+#elif defined(_DEBUG_SHADOWS)
+    debug = RealtimeShadowAttenuation(IN.shadowCoord);
 #endif
     return half4(debug, 1);
 }
