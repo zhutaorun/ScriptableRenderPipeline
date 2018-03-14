@@ -120,13 +120,10 @@ void ApplyFog(inout half3 color, half fogFactor)
     ApplyFogColor(color, unity_FogColor.rgb, fogFactor);
 }
 
-void ApplySSAO(inout half3 occlusion, float4 texcoord)
+half3 SSAO(float4 texcoord)
 {
     half ssao = 1.0 - SAMPLE_TEXTURE2D(_AmbientOcclusion, sampler_AmbientOcclusion, texcoord.xy / texcoord.w);
-    
-    //TODO: The occlusion term is only a half, breaking colored AO.
-    //TODO: Find better occlusion mix method.
-    occlusion *= lerp(_AmbientOcclusionParam.rgb, float3(1.0, 1.0, 1.0), ssao); 
+    return lerp(_AmbientOcclusionParam.rgb, float3(1.0, 1.0, 1.0), ssao); 
 }
 
 // Stereo-related bits

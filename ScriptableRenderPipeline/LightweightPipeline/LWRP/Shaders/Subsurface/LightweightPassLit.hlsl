@@ -111,7 +111,6 @@ half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
 
     SurfaceData surfaceData;
     InitializeStandardLitSurfaceData(IN.uv, surfaceData);
-    ApplySSAO(surfaceData.occlusion, IN.shadowCoord);
 
     InputData inputData;
     InitializeInputData(IN, surfaceData.normalTS, inputData);
@@ -124,7 +123,7 @@ half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
     half4 color = LightweightFragmentPBR(inputData, surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.occlusion, surfaceData.emission, surfaceData.alpha, curvature);
 
     ApplyFog(color.rgb, inputData.fogCoord);
-    return color;
+    return half4(color.rgb * SSAO(IN.shadowCoord), color.a);
 }
 
 // Used for Standard shader
