@@ -12,7 +12,6 @@ struct LightweightVertexInput
     float2 texcoord : TEXCOORD0;
     float2 lightmapUV : TEXCOORD1;
     UNITY_VERTEX_INPUT_INSTANCE_ID
-
 };
 
 struct LightweightVertexOutput
@@ -106,12 +105,6 @@ half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
 
     InputData inputData;
     InitializeInputData(IN, surfaceData.normalTS, inputData);
-
-    half3 normalLowWS = UnpackNormalScale(SAMPLE_TEXTURE2D_LOD(_BumpMap, sampler_BumpMap, IN.uv, 3), _BumpScale); 
-#ifdef _NORMALMAP
-    normalLowWS = TangentToWorldNormal(normalLowWS, IN.tangent, IN.binormal, IN.normal);
-#endif
-
 
     float curvature = ( (length(fwidth(IN.normal))) / 
                         (length(fwidth(inputData.positionWS))) * _Curvature );
