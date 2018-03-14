@@ -306,9 +306,9 @@ float _Thickness;
 
 //Diffusion Profile Constants
 int    _DiffusionProfile;
-float4 _ThicknessRemap[DIFFUSION_PROFILE_COUNT];
-float4 _TransmissionTint[DIFFUSION_PROFILE_COUNT];
-float4 _HalfRcpVariancesAndWeights[DIFFUSION_PROFILE_COUNT][2];
+float4 _ThicknessRemap[9];
+float4 _TransmissionTint[9];
+float4 _HalfRcpVariancesAndWeights[9][2];
 float4 _CascadeBiases[4];
 
 TEXTURE2D_ARRAY(_PreintegratedDiffuseScatteringTextures);
