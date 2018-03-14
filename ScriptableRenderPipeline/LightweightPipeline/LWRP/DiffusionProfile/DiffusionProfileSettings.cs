@@ -174,7 +174,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 		}
 
         public void BakeLUT()
-        {
+        {   
             CommandBuffer cmd = new CommandBuffer() { name = "BuildLUT" };
             Material preintegration = CoreUtils.CreateEngineMaterial("Hidden/LightweightPipeline/PreintegratedScatter");
             

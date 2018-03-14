@@ -291,7 +291,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             m_BlitMaterial = CoreUtils.CreateEngineMaterial(m_Asset.BlitShader);
             m_CopyDepthMaterial = CoreUtils.CreateEngineMaterial(m_Asset.CopyDepthShader);
             m_ScreenSpaceShadowsMaterial = CoreUtils.CreateEngineMaterial(m_Asset.ScreenSpaceShadowShader);
-            m_PreintegratedScatterMaterial = CoreUtils.CreateEngineMaterial(m_Asset.PreintegratedScatterShader);
             m_ErrorMaterial = CoreUtils.CreateEngineMaterial("Hidden/InternalErrorShader");
         }
 

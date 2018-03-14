@@ -20,11 +20,14 @@ Shader "Hidden/LightweightPipeline/PreintegratedScatter"
             // Include
             //-------------------------------------------------------------------------------------
 
-            #include "CoreRP/ShaderLibrary/Common.hlsl"
-            #define USE_LEGACY_UNITY_MATRIX_VARIABLES
-            #include "HDRP/ShaderVariables.hlsl"
-            
-            #include "LWRP/DiffusionProfile/DiffusionProfileSettings.cs.hlsl"
+            #define PI          3.14159265358979323846
+            #define TWO_PI      6.28318530717958647693
+            float4x4 unity_MatrixVP;
+
+            #define DIFFUSION_PROFILE_COUNT (4)
+            #define DIFFUSION_PROFILE_NEUTRAL_ID (0)
+            #define SSS_N_SAMPLES (11)
+            #define SSS_DISTANCE_SCALE (3)
 
             //-------------------------------------------------------------------------------------
             // Inputs & outputs
@@ -52,7 +55,7 @@ Shader "Hidden/LightweightPipeline/PreintegratedScatter"
             Varyings Vert(Attributes input)
             {
                 Varyings output;
-                output.vertex   = TransformWorldToHClip(input.vertex);
+                output.vertex   = mul(unity_MatrixVP, float4(input.vertex.xyz, 1)); //TransformWorldToHClip(input.vertex);
                 output.texcoord = input.texcoord.xy;
                 return output;
             }
