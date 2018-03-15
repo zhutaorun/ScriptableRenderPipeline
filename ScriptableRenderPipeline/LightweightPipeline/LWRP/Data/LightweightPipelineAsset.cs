@@ -368,5 +368,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         {
             get { return resources != null ? resources.ScreenSpaceShadowShader : null; }
         }
+
+        public Shader PreintegratedScatterShader
+        {
+            get { return resources != null ? resources.PreintegratedScatterShader : null; }
+        }
     }
 }
