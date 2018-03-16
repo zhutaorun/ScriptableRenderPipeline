@@ -114,7 +114,7 @@ half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
     half4 color = LightweightFragmentPBR(inputData, surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.occlusion, surfaceData.emission, surfaceData.alpha, -IN.binormal);
 
     ApplyFog(color.rgb, inputData.fogCoord);
-    return half4(color.rgb, 1);
+    return color;
 }
 
 // Used for Standard shader

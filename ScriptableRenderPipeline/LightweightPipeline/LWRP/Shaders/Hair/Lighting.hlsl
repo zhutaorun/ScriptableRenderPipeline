@@ -615,7 +615,7 @@ half3 Hair(BRDFData brdfData,
     float mtrt  = M(radians(BETA_TRT), ThetaH - radians(ALPHA_TRT));
     float3 ntrt = NTRT(CosPhi, CosHalfPhi, CosThetaD, brdfData.diffuse);
 
-    return brdfData.diffuse + (((mr * nr * 1) + (mtt * ntt * 1) + (mtrt * ntrt * 1)) / (CosThetaD * CosThetaD));
+    return brdfData.diffuse + (1.5 * ((mr * nr * 1) + (mtt * ntt * 1) + (mtrt * ntrt * 5)) / (CosThetaD * CosThetaD));
 }
 
 half3 HairGlobalIllumination(BRDFData brdfData, half3 bakedGI, half occlusion, half3 normalWS, half3 viewDirectionWS,
