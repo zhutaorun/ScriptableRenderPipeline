@@ -2,7 +2,7 @@
 #define LIGHTWEIGHT_PASS_LIT_INCLUDED
 
 #include "LWRP/ShaderLibrary/InputSurface.hlsl"
-#include "LWRP/ShaderLibrary/Lighting.hlsl"
+#include "Lighting.hlsl"
 
 struct LightweightVertexInput
 {
@@ -12,6 +12,7 @@ struct LightweightVertexInput
     float2 texcoord : TEXCOORD0;
     float2 lightmapUV : TEXCOORD1;
     UNITY_VERTEX_INPUT_INSTANCE_ID
+
 };
 
 struct LightweightVertexOutput
@@ -21,10 +22,9 @@ struct LightweightVertexOutput
     float3 posWS                    : TEXCOORD2;
     half3  normal                   : TEXCOORD3;
 
-#ifdef _NORMALMAP
+    //Force TBN output for hair.
     half3 tangent                   : TEXCOORD4;
     half3 binormal                  : TEXCOORD5;
-#endif
 
     half3 viewDir                   : TEXCOORD6;
     half4 fogFactorAndVertexLight   : TEXCOORD7; // x: fogFactor, yzw: vertex light
@@ -46,11 +46,11 @@ void InitializeInputData(LightweightVertexOutput IN, half3 normalTS, out InputDa
     inputData.normalWS = normalize(IN.normal);
 #endif
 
-#if SHADER_HINT_NICE_QUALITY
-    inputData.viewDirectionWS = SafeNormalize(IN.viewDir);
-#else
-    // View direction is already normalize in vertex. Small acceptable error to save ALU.
+#ifdef SHADER_API_MOBILE
+    // viewDirection should be normalized here, but we avoid doing it as it's close enough and we save some ALU.
     inputData.viewDirectionWS = IN.viewDir;
+#else
+    inputData.viewDirectionWS = normalize(IN.viewDir);
 #endif
 
     inputData.shadowCoord = IN.shadowCoord;
@@ -77,16 +77,13 @@ LightweightVertexOutput LitPassVertex(LightweightVertexInput v)
 
     o.posWS = TransformObjectToWorld(v.vertex.xyz);
     o.clipPos = TransformWorldToHClip(o.posWS);
-
-    o.viewDir = GetCameraPositionWS() - o.posWS;
-
-#if !SHADER_HINT_NICE_QUALITY
-    // Normalize in vertex and avoid renormalizing it in frag to save ALU.
-    o.viewDir = SafeNormalize(o.viewDir);
-#endif
+    o.viewDir = SafeNormalize(GetCameraPositionWS() - o.posWS);
 
     // initializes o.normal and if _NORMALMAP also o.tangent and o.binormal
-    OUTPUT_NORMAL(v, o);
+    //OUTPUT_NORMAL(v, o);
+
+    //Force TBN output for hair.
+    OutputTangentToWorld(v.tangent, v.normal, o.tangent, o.binormal, o.normal);
 
     // We either sample GI from lightmap or SH. lightmap UV and vertex SH coefficients
     // are packed in lightmapUVOrVertexSH to save interpolator.
@@ -113,10 +110,11 @@ half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
     InputData inputData;
     InitializeInputData(IN, surfaceData.normalTS, inputData);
 
-    half4 color = LightweightFragmentPBR(inputData, surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.occlusion, surfaceData.emission, surfaceData.alpha);
+
+    half4 color = LightweightFragmentPBR(inputData, surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.occlusion, surfaceData.emission, surfaceData.alpha, -IN.binormal);
 
     ApplyFog(color.rgb, inputData.fogCoord);
-    return half4(color.rgb * SSAO(IN.shadowCoord), color.a);
+    return half4(color.rgb, 1);
 }
 
 // Used for Standard shader
@@ -157,38 +155,12 @@ half4 LitPassFragmentSimple(LightweightVertexOutput IN) : SV_Target
     return LightweightFragmentBlinnPhong(inputData, diffuse, specularGloss, shininess, emission, alpha);
 };
 
+
 // Used for StandardSimpleLighting shader
 half4 LitPassFragmentSimpleNull(LightweightVertexOutput IN) : SV_Target
 {
     half4 result = LitPassFragmentSimple(IN);
     return result.a;
-}
-
-half4 DebugPassFragment(LightweightVertexOutput IN) : SV_Target
-{
-    UNITY_SETUP_INSTANCE_ID(IN);
-
-    SurfaceData surfaceData;
-    InitializeStandardLitSurfaceData(IN.uv, surfaceData);
-
-    InputData inputData;
-    InitializeInputData(IN, surfaceData.normalTS, inputData);
-
-    half3 debug = half3(0, 0, 0);
-#if defined(_DEBUG_ALBEDO)
-    debug = surfaceData.albedo;
-#elif defined(_DEBUG_METALNESS)
-    debug = surfaceData.metallic;
-#elif defined(_DEBUG_NORMALS)
-    debug = ( inputData.normalWS );
-#elif defined(_DEBUG_SMOOTHNESS)
-    debug = surfaceData.smoothness;
-#elif defined(_DEBUG_OCCLUSION)
-    debug = surfaceData.occlusion * SSAO(IN.shadowCoord);
-#elif defined(_DEBUG_SHADOWS)
-    debug = RealtimeShadowAttenuation(IN.shadowCoord);
-#endif
-    return half4(debug, 1);
 }
 
 #endif

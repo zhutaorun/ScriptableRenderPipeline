@@ -1,4 +1,4 @@
-Shader "LightweightPipeline/Subsurface Scattering"
+Shader "LightweightPipeline/Hair"
 {
     Properties
     {
@@ -40,12 +40,6 @@ Shader "LightweightPipeline/Subsurface Scattering"
         _DetailAlbedoMap("Detail Albedo x2", 2D) = "grey" {}
         _DetailNormalMapScale("Scale", Float) = 1.0
         _DetailNormalMap("Normal Map", 2D) = "bump" {}
-
-        //Subsurface
-        _DiffusionProfile("Diffusion Profile", Int) = 0
-        _Curvature("Curvature", Range(0.0, 1.0))  = 0.005
-        _ThicknessMap("Thickness Map", 2D) = "white" {}
-        _Thickness("Thickness", Range(0.0, 1.0)) = 20.0
 
         [Enum(UV0,0,UV1,1)] _UVSec("UV Set for secondary textures", Float) = 0
 
@@ -94,7 +88,6 @@ Shader "LightweightPipeline/Subsurface Scattering"
             #pragma shader_feature _METALLICSPECGLOSSMAP
             #pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
             #pragma shader_feature _OCCLUSIONMAP
-            #pragma shader_feature _THICKNESSMAP
 
             #pragma shader_feature _SPECULARHIGHLIGHTS_OFF
             #pragma shader_feature _GLOSSYREFLECTIONS_OFF
@@ -115,8 +108,6 @@ Shader "LightweightPipeline/Subsurface Scattering"
             //--------------------------------------
             // GPU Instancing
             #pragma multi_compile_instancing
-
-            #define SUBSURFACE_SCATTERING
 
             #pragma vertex LitPassVertex
             #pragma fragment LitPassFragment
@@ -168,6 +159,7 @@ Shader "LightweightPipeline/Subsurface Scattering"
             Tags{"LightMode" = "DepthOnly"}
 
             ZWrite On
+            Cull[_Cull]
             ColorMask 0
 
             HLSLPROGRAM
@@ -226,44 +218,7 @@ Shader "LightweightPipeline/Subsurface Scattering"
             ENDHLSL
         }
 
-        Pass
-        {
-            Tags{"LightMode" = "DebugView"}
-
-            ZWrite On
-            Cull[_Cull]
-
-            HLSLPROGRAM
-            // Required to compile gles 2.0 with standard SRP library
-            // All shaders must be compiled with HLSLcc and currently only gles is not using HLSLcc by default
-            #pragma prefer_hlslcc gles
-            #pragma target 3.0
-
-            // -------------------------------------
-            // Material Keywords
-            #pragma shader_feature _NORMALMAP
-            #pragma shader_feature _ALPHATEST_ON 
-            #pragma shader_feature _ALPHAPREMULTIPLY_ON
-            #pragma shader_feature _EMISSION
-            #pragma shader_feature _METALLICSPECGLOSSMAP
-            #pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-            #pragma shader_feature _OCCLUSIONMAP
-
-            //--------------------------------------
-            // GPU Instancing
-            #pragma multi_compile_instancing
-
-            #pragma multi_compile _ _DEBUG_ALBEDO _DEBUG_METALNESS _DEBUG_NORMALS _DEBUG_SMOOTHNESS _DEBUG_OCCLUSION _DEBUG_SHADOWS
-
-            #pragma vertex   LitPassVertex
-            #pragma fragment DebugPassFragment
-
-            //#include "LWRP/ShaderLibrary/LightweightPassDebug.hlsl"
-            #include "LWRP/ShaderLibrary/LightweightPassLit.hlsl"
-            ENDHLSL
-        }
-
     }
     FallBack "Hidden/InternalErrorShader"
-    CustomEditor "LightweightSubsurfaceGUI"
+    CustomEditor "LightweightStandardGUI"
 }

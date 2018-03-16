@@ -1,7 +1,7 @@
 #ifndef LIGHTWEIGHT_PASS_LIT_INCLUDED
 #define LIGHTWEIGHT_PASS_LIT_INCLUDED
 
-#include "LWRP/ShaderLibrary/InputSurface.hlsl"
+#include "InputSurface.hlsl"
 #include "Lighting.hlsl"
 
 struct LightweightVertexInput
@@ -102,8 +102,6 @@ LightweightVertexOutput LitPassVertex(LightweightVertexInput v)
     return o;
 }
 
-float _Curvature;
-
 // Used for Standard shader
 half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
 {
@@ -119,8 +117,7 @@ half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
                         (length(fwidth(inputData.positionWS))) * _Curvature );
 
     Light light = GetMainLight(inputData.positionWS);
-
-    half4 color = LightweightFragmentPBR(inputData, surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.occlusion, surfaceData.emission, surfaceData.alpha, curvature);
+    half4 color = LightweightFragmentPBR(inputData, surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.occlusion, surfaceData.emission, surfaceData.alpha, surfaceData.curvature, surfaceData.thickness);
 
     ApplyFog(color.rgb, inputData.fogCoord);
     return half4(color.rgb * SSAO(IN.shadowCoord), color.a);

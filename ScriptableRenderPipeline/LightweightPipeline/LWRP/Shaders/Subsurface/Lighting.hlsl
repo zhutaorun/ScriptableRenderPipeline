@@ -301,9 +301,6 @@ half3 DirectBDRF(BRDFData brdfData, half3 normalWS, half3 lightDirectionWS, half
 
 #include "LWRP/DiffusionProfile/DiffusionProfileSettings.cs.hlsl"
 
-//Surface Constants
-float _Thickness;
-
 //Diffusion Profile Constants
 int    _DiffusionProfile;
 float4 _ThicknessRemap[9];
@@ -384,6 +381,20 @@ half3 Transmittance(float3 positionWS, float3 normalWS, float3 albedo, Light lig
 
     float irradiance = max(0.3 + dot(-normalWS, light.direction), 0.0);
     return transmittance * irradiance * light.color * albedo;
+}
+
+half3 Transmittance_DataDriven(half thickness, half3 albedo, half3 normalWS, Light light)
+{
+    half T =  _ThicknessRemap[_DiffusionProfile].x + _ThicknessRemap[_DiffusionProfile].y * _Thickness;
+    float3 transmittance = ComputeTransmittanceJimenez(_HalfRcpVariancesAndWeights[_DiffusionProfile][0].rgb,
+                                                       _HalfRcpVariancesAndWeights[_DiffusionProfile][0].a,
+                                                       _HalfRcpVariancesAndWeights[_DiffusionProfile][1].rgb,
+                                                       _HalfRcpVariancesAndWeights[_DiffusionProfile][1].a,
+                                                       _TransmissionTint[_DiffusionProfile].rgb,
+                                                       T);
+                         
+    float irradiance = max(0.3 + dot(-normalWS, light.direction), 0.0);
+    return transmittance * irradiance * light.color * albedo;                              
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -599,7 +610,7 @@ half3 VertexLighting(float3 positionWS, half3 normalWS)
 //       Used by ShaderGraph and others builtin renderers                    //
 ///////////////////////////////////////////////////////////////////////////////
 half4 LightweightFragmentPBR(InputData inputData, half3 albedo, half metallic, half3 specular,
-    half smoothness, half3 occlusion, half3 emission, half alpha, half curvature)
+    half smoothness, half3 occlusion, half3 emission, half alpha, half curvature, half thickness)
 {
     BRDFData brdfData;
     InitializeBRDFData(albedo, metallic, specular, smoothness, alpha, curvature, brdfData);
@@ -613,7 +624,9 @@ half4 LightweightFragmentPBR(InputData inputData, half3 albedo, half metallic, h
     
     half3 color = GlobalIllumination      (brdfData, inputData.bakedGI, occlusion, inputData.normalWS, inputData.viewDirectionWS);
     color      += LightingPhysicallyBased (brdfData, mainLight, inputData.normalWS, inputData.viewDirectionWS);
-    color      += Transmittance           (inputData.positionWS, inputData.normalWS, albedo, mainLight);
+
+    //color      += Transmittance           (inputData.positionWS, inputData.normalWS, albedo, mainLight);
+    //color      += Transmittance_DataDriven(thickness, albedo, inputData.normalWS, mainLight);
 
 #ifdef _ADDITIONAL_LIGHTS
     int pixelLightCount = GetPixelLightCount();

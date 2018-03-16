@@ -42,6 +42,7 @@ namespace UnityEditor
             public static GUIContent subsurfaceAreaText = new GUIContent("Subsurface Scattering", "");
             public static GUIContent diffusionProfileText = new GUIContent("Diffusion profile", "A profile determines the shape of the SSS/transmission filter.");
             public static GUIContent curvatureText = new GUIContent("Curvature", "");
+            public static GUIContent thicknessMapText = new GUIContent("Thickness Map", "");
             public static GUIContent thicknessText = new GUIContent("Thickness", "");
 
             public static string primaryMapsText = "Main Maps";
@@ -89,6 +90,7 @@ namespace UnityEditor
         //Subsurface
         private MaterialProperty diffusionProfileID;
         private MaterialProperty curvature;
+        private MaterialProperty thicknessMap;
         private MaterialProperty thickness;
 
         public override void FindProperties(MaterialProperty[] properties)
@@ -123,6 +125,7 @@ namespace UnityEditor
             //Subsurface
             diffusionProfileID = FindProperty("_DiffusionProfile", properties);
             curvature = FindProperty("_Curvature", properties);
+            thicknessMap = FindProperty("_ThicknessMap", properties);
             thickness = FindProperty("_Thickness", properties);
         }
 
@@ -369,7 +372,7 @@ namespace UnityEditor
             }
 
             m_MaterialEditor.ShaderProperty(curvature, Styles.curvatureText);
-            m_MaterialEditor.ShaderProperty(thickness, Styles.thicknessText);
+            m_MaterialEditor.TexturePropertySingleLine(Styles.thicknessMapText, thicknessMap, thickness);
         }
 
         static SmoothnessMapChannel GetSmoothnessMapChannel(Material material)
@@ -406,6 +409,7 @@ namespace UnityEditor
             CoreUtils.SetKeyword(material, "_OCCLUSIONMAP", material.GetTexture("_OcclusionMap"));
             CoreUtils.SetKeyword(material, "_PARALLAXMAP", material.GetTexture("_ParallaxMap"));
             CoreUtils.SetKeyword(material, "_DETAIL_MULX2", material.GetTexture("_DetailAlbedoMap") || material.GetTexture("_DetailNormalMap"));
+            CoreUtils.SetKeyword(material, "_THICKNESSMAP", material.GetTexture("_ThicknessMap"));
 
             // A material's GI flag internally keeps track of whether emission is enabled at all, it's enabled but has no effect
             // or is enabled and may be modified at runtime. This state depends on the values of the current flag and emissive color.
