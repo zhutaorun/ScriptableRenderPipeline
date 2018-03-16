@@ -180,7 +180,7 @@ half4 DebugPassFragment(LightweightVertexOutput IN) : SV_Target
 #elif defined(_DEBUG_METALNESS)
     debug = surfaceData.metallic;
 #elif defined(_DEBUG_NORMALS)
-    debug = ( inputData.normalWS );
+    debug = (0.5 * inputData.normalWS + 0.5 );
 #elif defined(_DEBUG_SMOOTHNESS)
     debug = surfaceData.smoothness;
 #elif defined(_DEBUG_OCCLUSION)

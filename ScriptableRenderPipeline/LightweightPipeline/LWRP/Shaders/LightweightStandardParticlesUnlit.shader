@@ -78,8 +78,8 @@ Shader "LightweightPipeline/Particles/Standard Unlit"
 
                     // position ws is used to compute eye depth in vertFading
                     o.posWS.xyz = TransformObjectToWorld(v.vertex.xyz);
-                    o.posWS.w = ComputeFogFactor(o.clipPos.z);
                     o.clipPos = TransformWorldToHClip(o.posWS.xyz);
+                    o.posWS.w = ComputeFogFactor(o.clipPos.z);
                     o.color = v.color;
 
                     vertColor(o.color);
@@ -127,7 +127,7 @@ Shader "LightweightPipeline/Particles/Standard Unlit"
         #endif
 
                     half fogFactor = IN.posWS.w;
-                    ApplyFogColor(result.rgb, half3(0, 0, 0), fogFactor);
+                    ApplyFogColor(result.rgb, unity_FogColor.rgb, fogFactor);
                     return result;
                 }
                 ENDHLSL
