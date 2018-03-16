@@ -41,6 +41,9 @@ Shader "LightweightPipeline/Hair"
         _DetailNormalMapScale("Scale", Float) = 1.0
         _DetailNormalMap("Normal Map", 2D) = "bump" {}
 
+        //Hair Properties
+        [HideInInspector] _RecieveShadows("__rshadows", Float) = 0.0
+
         [Enum(UV0,0,UV1,1)] _UVSec("UV Set for secondary textures", Float) = 0
 
         // Blending state
@@ -92,6 +95,8 @@ Shader "LightweightPipeline/Hair"
             #pragma shader_feature _SPECULARHIGHLIGHTS_OFF
             #pragma shader_feature _GLOSSYREFLECTIONS_OFF
             #pragma shader_feature _SPECULAR_SETUP
+
+            #pragma shader_feature _HAIR_RECEIVE_SHADOWS
 
             // -------------------------------------
             // Lightweight Pipeline keywords
@@ -220,5 +225,5 @@ Shader "LightweightPipeline/Hair"
 
     }
     FallBack "Hidden/InternalErrorShader"
-    CustomEditor "LightweightStandardGUI"
+    CustomEditor "LightweightHairGUI"
 }

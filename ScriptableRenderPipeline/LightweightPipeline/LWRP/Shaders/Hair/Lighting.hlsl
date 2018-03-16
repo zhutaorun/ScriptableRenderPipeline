@@ -646,7 +646,11 @@ half4 LightweightFragmentPBR(InputData inputData, half3 albedo, half metallic, h
     InitializeBRDFData(albedo, metallic, specular, smoothness, alpha, brdfData);
 
     Light mainLight = GetMainLight(inputData.positionWS);
+
+    //This is a better alternative to adding a transparent depth prepass in LW.
+#ifdef _HAIR_RECEIVE_SHADOWS
     mainLight.attenuation *= RealtimeShadowAttenuation(inputData.shadowCoord);
+#endif
 
     float3 V = inputData.viewDirectionWS;
     float3 T = tangent;
