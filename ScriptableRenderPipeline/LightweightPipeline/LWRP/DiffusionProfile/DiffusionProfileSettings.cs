@@ -330,7 +330,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 filterKernels[n * i + j] = profiles[p].filterKernel[j];
             }
 
-            RTHandle preintegratedScatterRT = RTHandle.Alloc(128, 128, 1, DepthBits.None, RenderTextureFormat.ARGB32, FilterMode.Point, TextureWrapMode.Clamp, TextureDimension.Tex2D, false); 
+            RTHandle preintegratedScatterRT = RTHandle.Alloc(128, 128, 1, DepthBits.None, RenderTextureFormat.ARGB32, FilterMode.Point, TextureWrapMode.Clamp, TextureDimension.Tex2D, true); 
 
 
             preintegration.SetVector(DiffusionProfileShaderIDs._StdDev1,    stdDev1);
