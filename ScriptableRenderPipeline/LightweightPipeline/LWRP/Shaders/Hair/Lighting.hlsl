@@ -504,120 +504,6 @@ half3 VertexLighting(float3 positionWS, half3 normalWS)
     return vertexLightColor;
 }
 
-#define ALPHA_R   -5.0
-#define ALPHA_TT  ALPHA_R / 2.0
-#define ALPHA_TRT -3.0 * ALPHA_R / 2.0
-
-#define BETA_R    5.0
-#define BETA_TT   BETA_R / 2.0
-#define BETA_TRT  2.0 * BETA_R
-
-#define IOR 1.55
-
-float Fresnel(float ior, float x)
-{
-    float num = 1.0 - ior;
-    float den = 1.0 + ior;
-    float F0 = (num * num) / (den * den);
-
-    return F0 + (1.0 - F0) * pow(1.0 - x, 5);
-}
-
-//M Term is a simple gaussian distribution
-float M(float B, float Theta)
-{
-    float term0 = 1.0 / (B * sqrt(2.0 * PI));
-    float term1 = -( (Theta * Theta) / (2.0 * B * B) );
-    return term0 * exp(term1);
-}
-
-//NR Term
-float NR(float CosPhi, float CosHalfPhi)
-{
-    float Distribution = 0.25 * CosHalfPhi;
-    float Attenuation  = Fresnel(IOR, CosHalfPhi);
-    return Distribution * Attenuation;
-}
-
-//NTT Term
-float3 NTT(float CosPhi, float CosHalfPhi, float CosThetaD, float3 VolumeAlbedo)
-{
-    //Assumes Eta of 1.55 for human hair.
-    float EtaPrime = (1.19 / CosThetaD) + 0.36 * CosThetaD;
-
-    float a = 1.0 / EtaPrime;
-    float h = (1.0 + (a * (0.6 - (0.8 * CosPhi)))) * CosHalfPhi;
-
-    //Attenuation Term
-    float F = Fresnel(EtaPrime, CosThetaD * sqrt(1.0 - h*h));
-    float Fp = Fresnel(IOR, CosHalfPhi);
-
-    float Texp = (sqrt(1.0 - (h*h*a*a)) / (2.0 * CosThetaD));
-    float3 T = pow(VolumeAlbedo, Texp);
-
-    float3 A = pow(1 - F, 2) * Fp * T;
-
-    //Distribution Term
-    float D = exp((-3.65 * CosPhi) - 3.98);
-
-    return A * D;
-}
-
-//NTRT Term
-float3 NTRT(float CosPhi, float CosHalfPhi, float CosThetaD, float3 VolumeAlbedo)
-{
-    //Assumes Eta of 1.55 for human hair.
-    float EtaPrime = (1.19 / CosThetaD) + 0.36 * CosThetaD;
-
-    float h = sqrt(3) / 2.0;
-    float F = Fresnel(EtaPrime, CosThetaD * sqrt(1.0 - h*h));
-    float Fp = Fresnel(IOR, CosHalfPhi);
-    float3 T = pow(VolumeAlbedo, 0.8 / CosThetaD);
-
-    float3 A = pow(1 - F, 2) * Fp * T;
-    float D = exp((17.0 * CosPhi) - 16.78);
-
-    return A * D;
-}
-
-half3 Hair(BRDFData brdfData,
-           half3 Light, half3 View, half3 Normal, half3 Tangent)
-{
-    //Calculate Binormal to complete the onormal basis.
-    half3 Binormal = cross(Tangent, Normal); 
-
-    //Calculate cosines.
-    float TdotL = dot(Tangent,         Light);
-    float TdotV = dot(Tangent,         View);
-    float BdotL = dot(Binormal,        Light);
-    float BdotV = dot(Binormal,        View);
-    float LdotV = dot(Light, View);
-
-    //Azimuth projection.
-    float3 ProjLight = Light - TdotL * Tangent;
-    float3 ProjView  = View  - TdotV * Tangent;
-
-    float ThetaH = (TdotL + TdotV) / 2.0;
-
-    float CosPhi     = dot(ProjView, ProjLight) * pow(dot(ProjView, ProjView) * dot(ProjLight, ProjLight), -0.5);
-    float CosHalfPhi = sqrt(0.5 + 0.5 * CosPhi);
-    float CosThetaD  = cos( (acos(TdotV) - acos(TdotL)) / 2.0 );
-
-    //R Path
-    float mr    = M(radians(BETA_R),   ThetaH - radians(ALPHA_R));
-    float nr    = NR(CosPhi, CosHalfPhi);
-    
-    //TT Path
-    float mtt   = M(radians(BETA_TT),  ThetaH - radians(ALPHA_TT));
-    float3 ntt  = NTT(CosPhi, CosHalfPhi, CosThetaD, brdfData.diffuse);
-
-    //TRT Path
-    float mtrt  = M(radians(BETA_TRT), ThetaH - radians(ALPHA_TRT));
-    float3 ntrt = NTRT(CosPhi, CosHalfPhi, CosThetaD, brdfData.diffuse);
-
-    return brdfData.diffuse + (1.5 * ((mr * nr * 1) + (mtt * ntt * 1) + (mtrt * ntrt * 5)) / (CosThetaD * CosThetaD));
-}
-
 half3 HairGlobalIllumination(BRDFData brdfData, half3 bakedGI, half occlusion, half3 normalWS, half3 viewDirectionWS,
                              half3 tangent)
 {
@@ -627,12 +513,53 @@ half3 HairGlobalIllumination(BRDFData brdfData, half3 bakedGI, half occlusion, h
     half3 indirectDiffuse = bakedGI * occlusion;
     half3 indirectSpecular = GlossyEnvironmentReflection(reflectVector, brdfData.perceptualRoughness, occlusion);
     
-    float TdotL = dot(tangent, normalWS);
-    float TdotV = dot(tangent, viewDirectionWS);
-    float ThetaH = (TdotL + TdotV) / 1.0;
-    float mr    = M(radians(BETA_R),   ThetaH - radians(ALPHA_R));
-
     return EnvironmentBRDF(brdfData, indirectDiffuse, indirectSpecular, fresnelTerm);
+}
+
+//Kajiya-Kay Phenomenological Shading Model for Hair
+float HairDiffuseTerm(float3 N, float3 L)
+{
+    return saturate(0.75 * dot(N, L) + 0.25);
+}
+
+float HairSingleSpecularTerm(float3 T, float3 H, float exponent)
+{
+    float dotTH = dot(T, H);
+    float sinTH = sqrt(1.0 - dotTH * dotTH);
+    return  pow(sinTH, exponent);
+}
+
+float3 ShiftTangent(float3 T, float3 N, float shiftAmount)
+{
+    return normalize(T + shiftAmount * N);
+}  
+
+//Based of the Rendermonkey Hair shading demo.
+//Hair Data:
+//x: Mask
+//y: Base
+//z: Shift
+half3 Hair(BRDFData brdfData, half3 HairData,
+           Light L, half3 V, half3 N, half3 T, half Smoothness)
+{
+    float3 T1 = ShiftTangent(T, N, _SpecularShift0 + HairData.z);
+    float3 T2 = ShiftTangent(T, N, _SpecularShift1 + HairData.z);
+
+    L.color *= L.attenuation;
+    float3 Diffuse = brdfData.diffuse * L.color * HairDiffuseTerm(N, L.direction);
+
+    float3 H = normalize(L.direction + V);
+    float3 Specular1 = _SpecularTint0 * HairSingleSpecularTerm(T1, H, Smoothness * 256);
+    float3 Specular2 = _SpecularTint1 * HairSingleSpecularTerm(T2, H, Smoothness * 256);
+    Specular2 *= HairData.x;
+
+    float SpecularAttenuation = saturate(1.75 * dot(N, L.direction) + 0.25);
+    float3 Specular = (Specular1 + Specular2) * L.color * SpecularAttenuation;
+
+    half3 O;
+    O.rgb  = Diffuse  * HairData.y; 
+    O.rgb += Specular * HairData.y;
+    return O;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -640,7 +567,7 @@ half3 HairGlobalIllumination(BRDFData brdfData, half3 bakedGI, half occlusion, h
 //       Used by ShaderGraph and others builtin renderers                    //
 ///////////////////////////////////////////////////////////////////////////////
 half4 LightweightFragmentPBR(InputData inputData, half3 albedo, half metallic, half3 specular,
-    half smoothness, half occlusion, half3 emission, half alpha, half3 tangent)
+    half smoothness, half occlusion, half3 emission, half alpha, half3 hairData, half3 tangent)
 {
     BRDFData brdfData;
     InitializeBRDFData(albedo, metallic, specular, smoothness, alpha, brdfData);
@@ -660,23 +587,16 @@ half4 LightweightFragmentPBR(InputData inputData, half3 albedo, half metallic, h
     half3 color = HairGlobalIllumination(brdfData, inputData.bakedGI, occlusion, normalFake, inputData.viewDirectionWS, tangent);
     
     //Hair Shading.
-    half NdotL = saturate(dot(inputData.normalWS, mainLight.direction));
-    half3 radiance = mainLight.color * (mainLight.attenuation * NdotL);
-    color += Hair(brdfData, mainLight.direction, inputData.viewDirectionWS, inputData.normalWS, tangent) * radiance;
+    color += Hair(brdfData, hairData, mainLight, inputData.viewDirectionWS, inputData.normalWS, tangent, smoothness);
 
-    
 #ifdef _ADDITIONAL_LIGHTS
     int pixelLightCount = GetPixelLightCount();
     for (int i = 0; i < pixelLightCount; ++i)
     {
         Light light = GetLight(i, inputData.positionWS);
-
-        half NdotL = saturate(dot(inputData.normalWS, light.direction));
-        radiance = light.color * (light.attenuation * NdotL);
-        color += Hair(brdfData, light.direction, inputData.viewDirectionWS, inputData.normalWS, tangent) * radiance;
+        color += Hair(brdfData, hairData, light, inputData.viewDirectionWS, inputData.normalWS, tangent, smoothness);
     }
 #endif
-    
 
     color += inputData.vertexLighting * brdfData.diffuse;
     color += emission;

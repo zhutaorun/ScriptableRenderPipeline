@@ -1,7 +1,7 @@
 #ifndef LIGHTWEIGHT_PASS_LIT_INCLUDED
 #define LIGHTWEIGHT_PASS_LIT_INCLUDED
 
-#include "LWRP/ShaderLibrary/InputSurface.hlsl"
+#include "InputSurface.hlsl"
 #include "Lighting.hlsl"
 
 struct LightweightVertexInput
@@ -31,7 +31,13 @@ struct LightweightVertexOutput
 
     float4 shadowCoord               : TEXCOORD8;
 
+
     float4 clipPos                  : SV_POSITION;
+    
+#if SHADER_STAGE_FRAGMENT
+    FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };
@@ -44,6 +50,18 @@ void InitializeInputData(LightweightVertexOutput IN, half3 normalTS, out InputDa
     inputData.normalWS = TangentToWorldNormal(normalTS, IN.tangent, IN.binormal, IN.normal);
 #else
     inputData.normalWS = normalize(IN.normal);
+#endif
+
+    bool isFrontFace = true;
+#if SHADER_STAGE_FRAGMENT
+    isFrontFace = IS_FRONT_VFACE(IN.cullFace, true, false);
+#endif
+
+#ifdef _TWO_SIDED
+    if(!isFrontFace) 
+    {
+        inputData.normalWS = -inputData.normalWS;
+    }
 #endif
 
 #ifdef SHADER_API_MOBILE
@@ -109,12 +127,10 @@ half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
 
     InputData inputData;
     InitializeInputData(IN, surfaceData.normalTS, inputData);
-
-
-    half4 color = LightweightFragmentPBR(inputData, surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.occlusion, surfaceData.emission, surfaceData.alpha, -IN.binormal);
+    half4 color = LightweightFragmentPBR(inputData, surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.occlusion, surfaceData.emission, surfaceData.alpha, surfaceData.hairData, IN.binormal);
 
     ApplyFog(color.rgb, inputData.fogCoord);
-    return color;
+    return half4(color.rgb * SSAO(IN.shadowCoord), color.a);
 }
 
 // Used for Standard shader

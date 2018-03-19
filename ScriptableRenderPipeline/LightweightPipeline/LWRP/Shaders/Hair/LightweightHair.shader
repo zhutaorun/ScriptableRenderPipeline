@@ -43,6 +43,11 @@ Shader "LightweightPipeline/Hair"
 
         //Hair Properties
         [HideInInspector] _RecieveShadows("__rshadows", Float) = 0.0
+        _HairMap ("Hair Map", 2D) = "white" {}
+        _SpecularShift0  ("Specular Shift 0", Range(-1.0, 1.0)) = 0.5
+        _SpecularShift1  ("Specular Shift 1", Range(-1.0, 1.0)) = 0.5
+        _SpecularTint0   ("Specular Tint 0", Color) = (1, 1, 1, 1)
+        _SpecularTint1   ("Specular Tint 1", Color) = (1, 1, 1, 1)
 
         [Enum(UV0,0,UV1,1)] _UVSec("UV Set for secondary textures", Float) = 0
 
@@ -96,6 +101,7 @@ Shader "LightweightPipeline/Hair"
             #pragma shader_feature _GLOSSYREFLECTIONS_OFF
             #pragma shader_feature _SPECULAR_SETUP
 
+            #pragma shader_feature _TWO_SIDED
             #pragma shader_feature _HAIR_RECEIVE_SHADOWS
 
             // -------------------------------------

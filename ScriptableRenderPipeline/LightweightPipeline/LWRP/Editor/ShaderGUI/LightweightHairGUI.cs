@@ -40,6 +40,11 @@ namespace UnityEditor
             //Hair Properties
             public static GUIContent hairAreaText = new GUIContent("Hair", "");
             public static GUIContent hairShadows = new GUIContent("Shadows", "TODO");
+            public static GUIContent hairMapText = new GUIContent("Hair Map", "");
+            public static GUIContent specularShift0Text = new GUIContent("Specular Shift 0", "");
+            public static GUIContent specularShift1Text = new GUIContent("Specular Shift 1", "");
+            public static GUIContent specularTint0 = new GUIContent("Specular Tint 0", "");
+            public static GUIContent specularTint1 = new GUIContent("Specular Tint 1", "");
 
             public static string primaryMapsText = "Main Maps";
             public static string secondaryMapsText = "Secondary Maps";
@@ -85,6 +90,11 @@ namespace UnityEditor
 
         //Hair Properties
         private MaterialProperty recieveShadows;
+        private MaterialProperty hairMap;
+        private MaterialProperty specularShift0;
+        private MaterialProperty specularShift1;
+        private MaterialProperty specularTint0;
+        private MaterialProperty specularTint1;
 
         public override void FindProperties(MaterialProperty[] properties)
         {
@@ -117,6 +127,11 @@ namespace UnityEditor
 
             //Hair Properties
             recieveShadows = FindProperty("_RecieveShadows", properties);
+            hairMap = FindProperty("_HairMap",               properties);
+            specularShift0 = FindProperty("_SpecularShift0", properties);
+            specularShift1 = FindProperty("_SpecularShift1", properties);
+            specularTint0 = FindProperty("_SpecularTint0", properties);
+            specularTint1 = FindProperty("_SpecularTint1", properties);
         }
 
         public override void MaterialChanged(Material material)
@@ -320,6 +335,12 @@ namespace UnityEditor
             bool shadows = EditorGUILayout.Toggle(Styles.hairShadows, recieveShadows.floatValue == 1);
             if(EditorGUI.EndChangeCheck())
                 recieveShadows.floatValue = shadows ? 1 : 0;
+
+            m_MaterialEditor.TexturePropertySingleLine(Styles.hairMapText, hairMap);
+            m_MaterialEditor.ShaderProperty(specularShift0, Styles.specularShift0Text);
+            m_MaterialEditor.ShaderProperty(specularShift1, Styles.specularShift1Text);
+            m_MaterialEditor.ShaderProperty(specularTint0, Styles.specularTint0);
+            m_MaterialEditor.ShaderProperty(specularTint1, Styles.specularTint1);
         }
 
         static SmoothnessMapChannel GetSmoothnessMapChannel(Material material)
@@ -359,6 +380,7 @@ namespace UnityEditor
 
             //Hair Keywords
             CoreUtils.SetKeyword(material, "_HAIR_RECEIVE_SHADOWS", material.GetFloat("_RecieveShadows") == 1);
+            CoreUtils.SetKeyword(material, "_TWO_SIDED", material.GetFloat("_Cull") == 0);
 
             // A material's GI flag internally keeps track of whether emission is enabled at all, it's enabled but has no effect
             // or is enabled and may be modified at runtime. This state depends on the values of the current flag and emissive color.
