@@ -182,6 +182,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private static readonly ShaderPassName m_UnlitPassName = new ShaderPassName("SRPDefaultUnlit"); // Renders all shaders without a lightmode tag
         private static readonly ShaderPassName m_DebugViewPass = new ShaderPassName("DebugView");
 
+        //TLS pass names
+        private static readonly ShaderPassName m_TransparentBackfaceName  = new ShaderPassName("TransparentBackFace");
+        private static readonly ShaderPassName m_TransparentFrontfaceName = new ShaderPassName("TransparentFrontFace");
+
         // Legacy pass names
         public static readonly ShaderPassName s_AlwaysName = new ShaderPassName("Always");
         public static readonly ShaderPassName s_ForwardBaseName = new ShaderPassName("ForwardBase");
@@ -704,6 +708,36 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             };
 
             context.DrawRenderers(m_CullResults.visibleRenderers, ref transparentSettings, transparentFilterSettings);
+
+            //The Last Stand: Hair Transparency Sorting
+            //#############################################################################
+            //#############################################################################
+            
+            //Transparent backfacing hair cards.
+            var transparentBackFaceSettings = new DrawRendererSettings(m_CurrCamera, m_TransparentBackfaceName);
+            transparentBackFaceSettings.sorting.flags = SortFlags.CommonOpaque;
+            transparentBackFaceSettings.rendererConfiguration = config;
+            
+            var transparentBackFaceFilterSettings = new FilterRenderersSettings(true)
+            {
+                renderQueueRange = RenderQueueRange.opaque
+            };
+
+            context.DrawRenderers(m_CullResults.visibleRenderers, ref transparentBackFaceSettings, transparentBackFaceFilterSettings);
+
+            //Transparent frontfacing hair cards.
+             var transparentFrontFaceSettings = new DrawRendererSettings(m_CurrCamera, m_TransparentFrontfaceName);
+            transparentFrontFaceSettings.sorting.flags = SortFlags.CommonOpaque;
+            transparentFrontFaceSettings.rendererConfiguration = config;
+            
+            var transparentFrontFaceFilterSettings = new FilterRenderersSettings(true)
+            {
+                renderQueueRange = RenderQueueRange.opaque
+            };
+
+            context.DrawRenderers(m_CullResults.visibleRenderers, ref transparentFrontFaceSettings, transparentFrontFaceFilterSettings);
+            //#############################################################################
+            //#############################################################################
 
             // Render objects that did not match any shader pass with error shader
             RenderObjectsWithError(ref context, transparentFilterSettings, SortFlags.None);

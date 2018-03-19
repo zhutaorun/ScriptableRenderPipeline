@@ -78,7 +78,8 @@ Shader "LightweightPipeline/Hair"
             Tags{"LightMode" = "LightweightForward"}
 
             Blend[_SrcBlend][_DstBlend]
-            ZWrite[_ZWrite]
+            ZWrite On
+            ZTest Less
             Cull[_Cull]
 
             HLSLPROGRAM
@@ -226,6 +227,117 @@ Shader "LightweightPipeline/Hair"
             #pragma shader_feature _SPECGLOSSMAP
 
             #include "LWRP/ShaderLibrary/LightweightPassMeta.hlsl"
+            ENDHLSL
+        }
+
+        
+        Pass
+        {
+            Tags {"LightMode" = "TransparentBackFace"}
+
+            Blend SrcAlpha OneMinusSrcAlpha
+            ZWrite Off
+            ZTest Less
+            Cull Front
+
+            HLSLPROGRAM
+            // Required to compile gles 2.0 with standard SRP library
+            // All shaders must be compiled with HLSLcc and currently only gles is not using HLSLcc by default
+            #pragma prefer_hlslcc gles
+            #pragma target 3.0
+
+            // -------------------------------------
+            // Material Keywords
+            #pragma shader_feature _NORMALMAP
+            //#pragma shader_feature _ALPHATEST_ON 
+            #pragma shader_feature _ALPHAPREMULTIPLY_ON
+            #pragma shader_feature _EMISSION
+            #pragma shader_feature _METALLICSPECGLOSSMAP
+            #pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+            #pragma shader_feature _OCCLUSIONMAP
+
+            #pragma shader_feature _SPECULARHIGHLIGHTS_OFF
+            #pragma shader_feature _GLOSSYREFLECTIONS_OFF
+            #pragma shader_feature _SPECULAR_SETUP
+
+            #pragma shader_feature _TWO_SIDED
+            #pragma shader_feature _HAIR_RECEIVE_SHADOWS
+
+            // -------------------------------------
+            // Lightweight Pipeline keywords
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _VERTEX_LIGHTS
+            #pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
+            #pragma multi_compile _ FOG_LINEAR FOG_EXP2
+
+            // -------------------------------------
+            // Unity defined keywords
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile _ LIGHTMAP_ON
+
+            //--------------------------------------
+            // GPU Instancing
+            #pragma multi_compile_instancing
+
+            #pragma vertex LitPassVertex
+            #pragma fragment LitPassFragment
+
+            #include "LightweightPassLit.hlsl"
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Tags {"LightMode" = "TransparentFrontFace"}
+
+            Blend SrcAlpha OneMinusSrcAlpha
+            ZWrite On
+            ZTest Less
+            Cull Back
+
+            HLSLPROGRAM
+            // Required to compile gles 2.0 with standard SRP library
+            // All shaders must be compiled with HLSLcc and currently only gles is not using HLSLcc by default
+            #pragma prefer_hlslcc gles
+            #pragma target 3.0
+
+            // -------------------------------------
+            // Material Keywords
+            #pragma shader_feature _NORMALMAP
+            //#pragma shader_feature _ALPHATEST_ON 
+            #pragma shader_feature _ALPHAPREMULTIPLY_ON
+            #pragma shader_feature _EMISSION
+            #pragma shader_feature _METALLICSPECGLOSSMAP
+            #pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+            #pragma shader_feature _OCCLUSIONMAP
+
+            #pragma shader_feature _SPECULARHIGHLIGHTS_OFF
+            #pragma shader_feature _GLOSSYREFLECTIONS_OFF
+            #pragma shader_feature _SPECULAR_SETUP
+
+            #pragma shader_feature _TWO_SIDED
+            #pragma shader_feature _HAIR_RECEIVE_SHADOWS
+
+            // -------------------------------------
+            // Lightweight Pipeline keywords
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _VERTEX_LIGHTS
+            #pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
+            #pragma multi_compile _ FOG_LINEAR FOG_EXP2
+
+            // -------------------------------------
+            // Unity defined keywords
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile _ LIGHTMAP_ON
+
+            //--------------------------------------
+            // GPU Instancing
+            #pragma multi_compile_instancing
+
+            #pragma vertex LitPassVertex
+            #pragma fragment LitPassFragment
+
+            #include "LightweightPassLit.hlsl"
             ENDHLSL
         }
 
