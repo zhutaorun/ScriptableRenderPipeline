@@ -34,6 +34,7 @@ namespace UnityEditor
             public static GUIContent normalMapText = new GUIContent("Normal Map", "Normal Map");
             public static GUIContent occlusionText = new GUIContent("Occlusion", "Occlusion (G)");
             public static GUIContent emissionText = new GUIContent("Color", "Emission (RGB)");
+            public static GUIContent sampleSHText = new GUIContent("Sample SH", "Enable SH sampling");
             public static GUIContent bumpScaleNotSupported = new GUIContent("Bump scale is not supported on mobile platforms");
             public static GUIContent fixNow = new GUIContent("Fix now");
 
@@ -72,6 +73,8 @@ namespace UnityEditor
         private MaterialProperty highlights;
         private MaterialProperty reflections;
 
+        private MaterialProperty sampleSH;
+
         private MaterialProperty bumpScale;
         private MaterialProperty bumpMap;
         private MaterialProperty occlusionStrength;
@@ -100,6 +103,8 @@ namespace UnityEditor
             specGlossMap = FindProperty("_SpecGlossMap", properties);
             highlights = FindProperty("_SpecularHighlights", properties);
             reflections = FindProperty("_GlossyReflections", properties);
+
+            sampleSH = FindProperty("_SampleSH", properties);
 
             bumpScale = FindProperty("_BumpScale", properties);
             bumpMap = FindProperty("_BumpMap", properties);
@@ -157,6 +162,7 @@ namespace UnityEditor
 
                 m_MaterialEditor.ShaderProperty(highlights, Styles.highlightsText);
                 m_MaterialEditor.ShaderProperty(reflections, Styles.reflectionsText);
+                m_MaterialEditor.ShaderProperty(sampleSH, Styles.sampleSHText);
             }
             if (EditorGUI.EndChangeCheck())
             {
@@ -330,6 +336,8 @@ namespace UnityEditor
 
             CoreUtils.SetKeyword(material, "_SPECULARHIGHLIGHTS_OFF", material.GetFloat("_SpecularHighlights") == 0.0f);
             CoreUtils.SetKeyword(material, "_GLOSSYREFLECTIONS_OFF", material.GetFloat("_GlossyReflections") == 0.0f);
+
+            CoreUtils.SetKeyword(material, "_SAMPLE_SH", material.GetFloat("_SampleSH") > 0.0f);
 
             CoreUtils.SetKeyword(material, "_OCCLUSIONMAP", material.GetTexture("_OcclusionMap"));
             CoreUtils.SetKeyword(material, "_PARALLAXMAP", material.GetTexture("_ParallaxMap"));

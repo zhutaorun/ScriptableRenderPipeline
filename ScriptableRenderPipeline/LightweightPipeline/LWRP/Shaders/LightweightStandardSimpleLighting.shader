@@ -21,6 +21,7 @@ Shader "LightweightPipeline/Standard (Simple Lighting)"
         [HideInInspector] _GlossinessSource("Glossiness Source", Float) = 0.0
         [ToggleOff] _SpecularHighlights("Specular Highlights", Float) = 1.0
         [ToggleOff] _GlossyReflections("Glossy Reflections", Float) = 1.0
+        [ToggleOff] _SampleSH("Sample SH", Float) = 1.0
 
         [HideInInspector] _BumpScale("Scale", Float) = 1.0
         [NoScaleOffset] _BumpMap("Normal Map", 2D) = "bump" {}
@@ -76,6 +77,7 @@ Shader "LightweightPipeline/Standard (Simple Lighting)"
             #pragma shader_feature _GLOSSINESS_FROM_BASE_ALPHA
             #pragma shader_feature _NORMALMAP
             #pragma shader_feature _EMISSION
+            #pragma shader_feature _SAMPLE_SH
 
             // -------------------------------------
             // Lightweight Pipeline keywords

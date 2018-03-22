@@ -22,6 +22,7 @@ Shader "LightweightPipeline/Standard (Physically Based)"
 
         [ToggleOff] _SpecularHighlights("Specular Highlights", Float) = 1.0
         [ToggleOff] _GlossyReflections("Glossy Reflections", Float) = 1.0
+        [ToggleOff] _SampleSH("Sample SH", Float) = 1.0
 
         _BumpScale("Scale", Float) = 1.0
         _BumpMap("Normal Map", 2D) = "bump" {}
@@ -88,6 +89,7 @@ Shader "LightweightPipeline/Standard (Physically Based)"
             #pragma shader_feature _METALLICSPECGLOSSMAP
             #pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
             #pragma shader_feature _OCCLUSIONMAP
+            #pragma shader_feature _SAMPLE_SH
 
             #pragma shader_feature _SPECULARHIGHLIGHTS_OFF
             #pragma shader_feature _GLOSSYREFLECTIONS_OFF

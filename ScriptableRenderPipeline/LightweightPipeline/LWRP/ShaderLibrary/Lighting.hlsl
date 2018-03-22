@@ -319,6 +319,7 @@ half3 DirectBDRF(BRDFData brdfData, half3 normalWS, half3 lightDirectionWS, half
 // Samples SH L0, L1 and L2 terms
 half3 SampleSH(half3 normalWS)
 {
+#ifdef _SAMPLE_SH
     // LPPV is not supported in Ligthweight Pipeline
     real4 SHCoefficients[7];
     SHCoefficients[0] = unity_SHAr;
@@ -329,7 +330,10 @@ half3 SampleSH(half3 normalWS)
     SHCoefficients[5] = unity_SHBb;
     SHCoefficients[6] = unity_SHC;
 
-    return max(half3(0, 0, 0), SampleSH9(SHCoefficients, normalWS));
+    return max(half3(0.0h, 0.0h, 0.0h), SampleSH9(SHCoefficients, normalWS));
+#else
+    return half3(0.0h, 0.0h, 0.0h);
+#endif
 }
 
 // SH Vertex Evaluation. Depending on target SH sampling might be
@@ -338,14 +342,14 @@ half3 SampleSH(half3 normalWS)
 half3 SampleSHVertex(half3 normalWS)
 {
 #if defined(EVALUATE_SH_VERTEX)
-    return max(half3(0, 0, 0), SampleSH(normalWS));
+    return max(half3(0.0h, 0.0h, 0.0h), SampleSH(normalWS));
 #elif defined(EVALUATE_SH_MIXED)
     // no max since this is only L2 contribution
     return SHEvalLinearL2(normalWS, unity_SHBr, unity_SHBg, unity_SHBb, unity_SHC);
 #endif
 
     // Fully per-pixel. Nothing to compute.
-    return half3(0.0, 0.0, 0.0);
+    return half3(0.0h, 0.0h, 0.0h);
 }
 
 // SH Pixel Evaluation. Depending on target SH sampling might be done

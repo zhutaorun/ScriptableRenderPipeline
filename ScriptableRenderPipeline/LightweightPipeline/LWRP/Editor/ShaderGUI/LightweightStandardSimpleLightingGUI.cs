@@ -22,9 +22,11 @@ public class LightweightStandardSimpleLightingGUI : LightweightShaderGUI
     private MaterialProperty bumpMapProp;
     private MaterialProperty emissionMapProp;
     private MaterialProperty emissionColorProp;
+    private MaterialProperty sampleSHProp;
 
     private static class Styles
     {
+        public static GUIContent sampleSHText = new GUIContent("Sample SH", "Enable SH sampling");
         public static GUIContent twoSidedLabel = new GUIContent("Two Sided", "Render front and back faces");
         public static GUIContent alphaClipLabel = new GUIContent("Alpha Clip", "Enable Alpha Clip");
 
@@ -82,6 +84,8 @@ public class LightweightStandardSimpleLightingGUI : LightweightShaderGUI
         bumpMapProp = FindProperty("_BumpMap", properties);
         emissionMapProp = FindProperty("_EmissionMap", properties);
         emissionColorProp = FindProperty("_EmissionColor", properties);
+
+        sampleSHProp = FindProperty("_SampleSH", properties);
     }
 
     public override void ShaderPropertiesGUI(Material material)
@@ -101,6 +105,8 @@ public class LightweightStandardSimpleLightingGUI : LightweightShaderGUI
             m_MaterialEditor.TextureScaleOffsetProperty(albedoMapProp);
             if (EditorGUI.EndChangeCheck())
                 emissionMapProp.textureScaleAndOffset = albedoMapProp.textureScaleAndOffset; // Apply the main texture scale and offset to the emission texture as well, for Enlighten's sake
+
+            m_MaterialEditor.ShaderProperty(sampleSHProp, Styles.sampleSHText);
 
             GUILayout.Label(Styles.advancedText, EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
@@ -137,6 +143,8 @@ public class LightweightStandardSimpleLightingGUI : LightweightShaderGUI
         MaterialEditor.FixupEmissiveFlag(material);
         bool shouldEmissionBeEnabled = (material.globalIlluminationFlags & MaterialGlobalIlluminationFlags.EmissiveIsBlack) == 0;
         CoreUtils.SetKeyword(material, "_EMISSION", shouldEmissionBeEnabled);
+
+        CoreUtils.SetKeyword(material, "_SAMPLE_SH", material.GetFloat("_SampleSH") > 0.0f);
     }
 
     private void UpdateMaterialSpecularSource(Material material)
