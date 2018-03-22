@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -29,14 +30,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Overlay = UnityEngine.Rendering.RenderQueue.Overlay
         }
 
-        public static readonly RenderQueueRange k_RenderQueue_OpaqueNoAlphaTest = new RenderQueueRange { min = (int)Priority.Opaque, max = (int)Priority.OpaqueAlphaTest - 1 };
-        public static readonly RenderQueueRange k_RenderQueue_OpaqueAlphaTest = new RenderQueueRange { min = (int)Priority.OpaqueAlphaTest, max = (int)Priority.OpaqueLast };
-        public static readonly RenderQueueRange k_RenderQueue_AllOpaque = new RenderQueueRange { min = (int)Priority.Opaque, max = (int)Priority.OpaqueLast };
+        public static readonly RenderQueueRange k_RenderQueue_OpaqueNoAlphaTest = new RenderQueueRange((int)Priority.Opaque, (int)Priority.OpaqueAlphaTest - 1);
+        public static readonly RenderQueueRange k_RenderQueue_OpaqueAlphaTest = new RenderQueueRange((int)Priority.OpaqueAlphaTest, (int)Priority.OpaqueLast);
+        public static readonly RenderQueueRange k_RenderQueue_AllOpaque = new RenderQueueRange((int)Priority.Opaque, (int)Priority.OpaqueLast);
 
-        public static readonly RenderQueueRange k_RenderQueue_PreRefraction = new RenderQueueRange { min = (int)Priority.PreRefractionFirst, max = (int)Priority.PreRefractionLast };
-        public static readonly RenderQueueRange k_RenderQueue_Transparent = new RenderQueueRange { min = (int)Priority.TransparentFirst, max = (int)Priority.TransparentLast };
-        public static readonly RenderQueueRange k_RenderQueue_AllTransparent = new RenderQueueRange { min = (int)Priority.PreRefractionFirst, max = (int)Priority.TransparentLast };
+        public static readonly RenderQueueRange k_RenderQueue_PreRefraction = new RenderQueueRange((int)Priority.PreRefractionFirst, (int)Priority.PreRefractionLast);
+        public static readonly RenderQueueRange k_RenderQueue_Transparent = new RenderQueueRange((int)Priority.TransparentFirst, (int)Priority.TransparentLast);
+        public static readonly RenderQueueRange k_RenderQueue_AllTransparent = new RenderQueueRange((int)Priority.PreRefractionFirst, (int)Priority.TransparentLast);
 
-        public static readonly RenderQueueRange k_RenderQueue_All = new RenderQueueRange { min = 0, max = 5000 };
+        public static readonly RenderQueueRange k_RenderQueue_All = new RenderQueueRange(0, 5000);
     }
 }

@@ -2,6 +2,8 @@
 using System;
 using UnityEditor;
 using UnityEditor.ProjectWindowCallback;
+using UnityEngine.Rendering;
+
 #endif
 
 namespace UnityEngine.Experimental.Rendering.LightweightPipeline

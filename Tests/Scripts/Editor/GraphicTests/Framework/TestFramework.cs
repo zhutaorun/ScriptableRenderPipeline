@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEditor.SceneManagement;
 using Object = UnityEngine.Object;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
 using UnityEngine.TestTools;
 
 namespace UnityEditor.Experimental.Rendering

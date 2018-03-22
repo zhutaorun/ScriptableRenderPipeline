@@ -1,3 +1,5 @@
+using UnityEngine.Rendering;
+
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     public static class HDShaderPassNames
@@ -20,28 +22,28 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly string s_ShadowCasterStr = "ShadowCaster";
 
         // ShaderPass name
-        public static readonly ShaderPassName s_EmptyName = new ShaderPassName(s_EmptyStr);
-        public static readonly ShaderPassName s_ForwardName = new ShaderPassName(s_ForwardStr);
-        public static readonly ShaderPassName s_DepthOnlyName = new ShaderPassName(s_DepthOnlyStr);
-        public static readonly ShaderPassName s_DepthForwardOnlyName = new ShaderPassName(s_DepthForwardOnlyStr);
-        public static readonly ShaderPassName s_ForwardOnlyName = new ShaderPassName(s_ForwardOnlyStr);
-        public static readonly ShaderPassName s_GBufferName = new ShaderPassName(s_GBufferStr);
-        public static readonly ShaderPassName s_GBufferWithPrepassName = new ShaderPassName(s_GBufferWithPrepassStr);
-        public static readonly ShaderPassName s_SRPDefaultUnlitName = new ShaderPassName(s_SRPDefaultUnlitStr);
-        public static readonly ShaderPassName s_MotionVectorsName = new ShaderPassName(s_MotionVectorsStr);
-        public static readonly ShaderPassName s_DistortionVectorsName = new ShaderPassName(s_DistortionVectorsStr);
-        public static readonly ShaderPassName s_TransparentDepthPrepassName = new ShaderPassName(s_TransparentDepthPrepassStr);
-        public static readonly ShaderPassName s_TransparentBackfaceName = new ShaderPassName(s_TransparentBackfaceStr);
-        public static readonly ShaderPassName s_TransparentDepthPostpassName = new ShaderPassName(s_TransparentDepthPostpassStr);
+        public static readonly ShaderTag s_EmptyName = new ShaderTag(s_EmptyStr);
+        public static readonly ShaderTag s_ForwardName = new ShaderTag(s_ForwardStr);
+        public static readonly ShaderTag s_DepthOnlyName = new ShaderTag(s_DepthOnlyStr);
+        public static readonly ShaderTag s_DepthForwardOnlyName = new ShaderTag(s_DepthForwardOnlyStr);
+        public static readonly ShaderTag s_ForwardOnlyName = new ShaderTag(s_ForwardOnlyStr);
+        public static readonly ShaderTag s_GBufferName = new ShaderTag(s_GBufferStr);
+        public static readonly ShaderTag s_GBufferWithPrepassName = new ShaderTag(s_GBufferWithPrepassStr);
+        public static readonly ShaderTag s_SRPDefaultUnlitName = new ShaderTag(s_SRPDefaultUnlitStr);
+        public static readonly ShaderTag s_MotionVectorsName = new ShaderTag(s_MotionVectorsStr);
+        public static readonly ShaderTag s_DistortionVectorsName = new ShaderTag(s_DistortionVectorsStr);
+        public static readonly ShaderTag s_TransparentDepthPrepassName = new ShaderTag(s_TransparentDepthPrepassStr);
+        public static readonly ShaderTag s_TransparentBackfaceName = new ShaderTag(s_TransparentBackfaceStr);
+        public static readonly ShaderTag s_TransparentDepthPostpassName = new ShaderTag(s_TransparentDepthPostpassStr);
 
         // Legacy name
-        public static readonly ShaderPassName s_AlwaysName = new ShaderPassName("Always");
-        public static readonly ShaderPassName s_ForwardBaseName = new ShaderPassName("ForwardBase");
-        public static readonly ShaderPassName s_DeferredName = new ShaderPassName("Deferred");
-        public static readonly ShaderPassName s_PrepassBaseName = new ShaderPassName("PrepassBase");
-        public static readonly ShaderPassName s_VertexName = new ShaderPassName("Vertex");
-        public static readonly ShaderPassName s_VertexLMRGBMName = new ShaderPassName("VertexLMRGBM");
-        public static readonly ShaderPassName s_VertexLMName = new ShaderPassName("VertexLM");
+        public static readonly ShaderTag s_AlwaysName = new ShaderTag("Always");
+        public static readonly ShaderTag s_ForwardBaseName = new ShaderTag("ForwardBase");
+        public static readonly ShaderTag s_DeferredName = new ShaderTag("Deferred");
+        public static readonly ShaderTag s_PrepassBaseName = new ShaderTag("PrepassBase");
+        public static readonly ShaderTag s_VertexName = new ShaderTag("Vertex");
+        public static readonly ShaderTag s_VertexLMRGBMName = new ShaderTag("VertexLMRGBM");
+        public static readonly ShaderTag s_VertexLMName = new ShaderTag("VertexLM");
     }
 
     // Pre-hashed shader ids - naming conventions are a bit off in this file as we use the same

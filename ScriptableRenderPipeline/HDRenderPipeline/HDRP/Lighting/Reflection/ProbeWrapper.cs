@@ -140,7 +140,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 return additional.proxyVolumeComponent != null
                     ? additional.proxyVolumeComponent.proxyVolume.infiniteProjection
-                    : probe.boxProjection == 0;
+                    : !probe.boxProjection;
             }
         }
 

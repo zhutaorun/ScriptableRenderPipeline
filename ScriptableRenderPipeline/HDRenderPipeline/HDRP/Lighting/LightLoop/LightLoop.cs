@@ -1437,15 +1437,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 var stereoEnabled = m_FrameSettings.enableStereo;
 
                 // Note: Light with null intensity/Color are culled by the C++, no need to test it here
-                if (cullResults.visibleLights.Count != 0 || cullResults.visibleReflectionProbes.Count != 0)
+                if (cullResults.visibleLights.Length != 0 || cullResults.visibleReflectionProbes.Length != 0)
                 {
                     // 0. deal with shadows
                     {
                         m_FrameId.frameCount++;
                         // get the indices for all lights that want to have shadows
                         m_ShadowRequests.Clear();
-                        m_ShadowRequests.Capacity = cullResults.visibleLights.Count;
-                        int lcnt = cullResults.visibleLights.Count;
+                        m_ShadowRequests.Capacity = cullResults.visibleLights.Length;
+                        int lcnt = cullResults.visibleLights.Length;
                         for (int i = 0; i < lcnt; ++i)
                         {
                             VisibleLight vl = cullResults.visibleLights[i];
@@ -1491,11 +1491,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     int punctualLightcount = 0;
                     int areaLightCount = 0;
 
-                    int lightCount = Math.Min(cullResults.visibleLights.Count, k_MaxLightsOnScreen);
+                    int lightCount = Math.Min(cullResults.visibleLights.Length, k_MaxLightsOnScreen);
                     var sortKeys = new uint[lightCount];
                     int sortCount = 0;
 
-                    for (int lightIndex = 0, numLights = cullResults.visibleLights.Count; (lightIndex < numLights) && (sortCount < lightCount); ++lightIndex)
+                    for (int lightIndex = 0, numLights = cullResults.visibleLights.Length; (lightIndex < numLights) && (sortCount < lightCount); ++lightIndex)
                     {
                         var light = cullResults.visibleLights[lightIndex];
 
@@ -1693,14 +1693,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Redo everything but this time with envLights
                     int envLightCount = 0;
 
-                    var totalProbes = cullResults.visibleReflectionProbes.Count + reflectionProbeCullResults.visiblePlanarReflectionProbeCount;
+                    var totalProbes = cullResults.visibleReflectionProbes.Length + reflectionProbeCullResults.visiblePlanarReflectionProbeCount;
                     int probeCount = Math.Min(totalProbes, k_MaxEnvLightsOnScreen);
                     sortKeys = new uint[probeCount];
                     sortCount = 0;
 
                     for (int probeIndex = 0, numProbes = totalProbes; (probeIndex < numProbes) && (sortCount < probeCount); probeIndex++)
                     {
-                        if (probeIndex < cullResults.visibleReflectionProbes.Count)
+                        if (probeIndex < cullResults.visibleReflectionProbes.Length)
                     {
                         VisibleReflectionProbe probe = cullResults.visibleReflectionProbes[probeIndex];
                         HDAdditionalReflectionData additional = probe.probe.GetComponent<HDAdditionalReflectionData>();
@@ -1731,7 +1731,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         }
                         else
                         {
-                            var planarProbeIndex = probeIndex - cullResults.visibleReflectionProbes.Count;
+                            var planarProbeIndex = probeIndex - cullResults.visibleReflectionProbes.Length;
                             var probe = reflectionProbeCullResults.visiblePlanarReflectionProbes[planarProbeIndex];
 
                             // probe.texture can be null when we are adding a reflection probe in the editor
@@ -1818,7 +1818,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     m_lightList.bounds.AddRange(m_lightList.rightEyeBounds);
                     m_lightList.lightVolumes.AddRange(m_lightList.rightEyeLightVolumes);
                 }
-                
+
                 UpdateDataBuffers();
 
                 return m_enableBakeShadowMask;
@@ -1932,7 +1932,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // XRTODO: If possible, we could generate a non-oblique stereo projection
                 // matrix.  It's ok if it's not the exact same matrix, as long as it encompasses
                 // the same FOV as the original projection matrix (which would mean padding each half
-                // of the frustum with the max half-angle). We don't need the light information in 
+                // of the frustum with the max half-angle). We don't need the light information in
                 // real projection space.  We just use screen space to figure out what is proximal
                 // to a cluster or tile.
                 // Once we generate this non-oblique projection matrix, it can be shared across both eyes (un-array)
