@@ -18,6 +18,9 @@ Shader "LightweightPipeline/Particles/Standard Unlit"
         _CameraFarFadeDistance("Camera Far Fade", Float) = 2.0
 
         // Hidden properties
+        [HideInInspector] _BumpScale("Scale", Float) = 1.0
+        [HideInInspector] _BumpMap("Normal Map", 2D) = "bump" {}
+        
         [HideInInspector] _Mode("__mode", Float) = 0.0
         [HideInInspector] _ColorMode("__colormode", Float) = 0.0
         [HideInInspector] _FlipbookMode("__flipbookmode", Float) = 0.0
