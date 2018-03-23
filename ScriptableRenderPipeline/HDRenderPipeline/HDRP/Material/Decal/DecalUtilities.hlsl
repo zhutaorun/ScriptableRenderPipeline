@@ -14,10 +14,10 @@ DecalData FetchDecal(uint start, uint i)
 
 // Caution: We can't compute LOD inside a dynamic loop. The gradient are not accessible.
 // we need to find a way to calculate mips. For now just fetch first mip of the decals
-void ApplyBlendNormal(inout float4 dst, inout int matMask, float2 texCoords, int sliceIndex, int mapMask, float3x3 decalToWorld, float blend)
+void ApplyBlendNormal(inout float4 dst, inout int matMask, float2 texCoords, int sliceIndex, int mapMask, float3x3 decalToWorld, float blend, float lod)
 {
 	float4 src;
-	src.xyz =  mul(decalToWorld, UnpackNormalmapRGorAG(SAMPLE_TEXTURE2D_ARRAY_LOD(_DecalAtlas, sampler_DecalAtlas, texCoords, sliceIndex, 0 /* ComputeTextureLOD(texCoords) */))) * 0.5f + 0.5f;
+	src.xyz =  mul(decalToWorld, UnpackNormalmapRGorAG(SAMPLE_TEXTURE2D_ARRAY_LOD(_DecalAtlas, sampler_DecalAtlas, texCoords, sliceIndex, lod))) * 0.5f + 0.5f;
 	src.w = blend;
 	dst.xyz = src.xyz * src.w + dst.xyz * (1.0f - src.w);
 	dst.w = dst.w * (1.0f - src.w);
@@ -26,7 +26,7 @@ void ApplyBlendNormal(inout float4 dst, inout int matMask, float2 texCoords, int
 
 void ApplyBlendDiffuse(inout float4 dst, inout int matMask, float2 texCoords, int sliceIndex, int mapMask, inout float blend, float lod)
 {
-	float4 src = SAMPLE_TEXTURE2D_ARRAY_LOD(_DecalAtlas, sampler_DecalAtlas, texCoords, sliceIndex, 0 /* ComputeTextureLOD(texCoords) */);
+	float4 src = SAMPLE_TEXTURE2D_ARRAY_LOD(_DecalAtlas, sampler_DecalAtlas, texCoords, sliceIndex, lod);
 	src.w *= blend;
 	blend = src.w;	// diffuse texture alpha affects all other channels
 	dst.xyz = src.xyz * src.w + dst.xyz * (1.0f - src.w);
@@ -34,9 +34,9 @@ void ApplyBlendDiffuse(inout float4 dst, inout int matMask, float2 texCoords, in
 	matMask |= mapMask;
 }
 
-void ApplyBlendMask(inout float4 dst, inout int matMask, float2 texCoords, int sliceIndex, int mapMask, float blend)
+void ApplyBlendMask(inout float4 dst, inout int matMask, float2 texCoords, int sliceIndex, int mapMask, float blend, float lod)
 {
-	float4 src = SAMPLE_TEXTURE2D_ARRAY_LOD(_DecalAtlas, sampler_DecalAtlas, texCoords, sliceIndex, 0 /* ComputeTextureLOD(texCoords) */);
+	float4 src = SAMPLE_TEXTURE2D_ARRAY_LOD(_DecalAtlas, sampler_DecalAtlas, texCoords, sliceIndex, lod);
 	src.z = src.w;
 	src.w = blend;
 	dst.xyz = src.xyz * src.w + dst.xyz * (1.0f - src.w);
@@ -67,6 +67,7 @@ void AddDecalContribution(PositionInputs posInput, inout SurfaceData surfaceData
     #endif
 		float3 positionWS = GetAbsolutePositionWS(posInput.positionWS);
 		uint i = 0;
+		UNITY_LOOP
         for (i = 0; i < decalCount; i++)
         {
             DecalData decalData = FetchDecal(decalStart, i);
@@ -76,6 +77,7 @@ void AddDecalContribution(PositionInputs posInput, inout SurfaceData surfaceData
 			int diffuseIndex = decalData.normalToWorld[1][3];
 			int normalIndex = decalData.normalToWorld[2][3];
 			int maskIndex = decalData.normalToWorld[3][3];
+			float lod = ComputeTextureLOD(positionDS.xz);
 			if((all(positionDS.xyz > 0.0f) && all(1.0f - positionDS.xyz > 0.0f))) // clip to decal space
 			{
 				ApplyBlendDiffuse(DBuffer0, mask, positionDS.xz, diffuseIndex, DBUFFERHTILEBIT_DIFFUSE, decalBlend, lod);
@@ -84,12 +86,12 @@ void AddDecalContribution(PositionInputs posInput, inout SurfaceData surfaceData
 
 				if(normalIndex != -1)
 				{
-					ApplyBlendNormal(DBuffer1, mask, positionDS.xz, normalIndex, DBUFFERHTILEBIT_NORMAL, (float3x3)decalData.normalToWorld, decalBlend);
+					ApplyBlendNormal(DBuffer1, mask, positionDS.xz, normalIndex, DBUFFERHTILEBIT_NORMAL, (float3x3)decalData.normalToWorld, decalBlend, lod);
 				}
 
 				if(maskIndex != -1)
 				{
-					ApplyBlendMask(DBuffer2, mask, positionDS.xz, maskIndex, DBUFFERHTILEBIT_MASK, decalBlend);
+					ApplyBlendMask(DBuffer2, mask, positionDS.xz, maskIndex, DBUFFERHTILEBIT_MASK, decalBlend, lod);
 				}
 			}
 		}
