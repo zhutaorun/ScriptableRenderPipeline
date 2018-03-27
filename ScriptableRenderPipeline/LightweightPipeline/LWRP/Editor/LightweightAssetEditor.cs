@@ -45,6 +45,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             public static GUIContent hdrContent = new GUIContent("HDR", "Controls the global HDR settings.");
             public static GUIContent msaaContent = new GUIContent("Anti Aliasing (MSAA)", "Controls the global anti aliasing settings.");
 
+            public static GUIContent earlySubmitLabel = new GUIContent("Early Submit",
+                    "If enabled the pipeline will try to submit work to the render thread and GPU earlier. This can give performance benefits under some workloads.");
+
             public static string[] shadowTypeOptions = {"No Shadows", "Hard Shadows", "Hard and Soft Shadows"};
             public static string[] shadowCascadeOptions = {"No Cascades", "Two Cascades", "Four Cascades"};
         }
@@ -68,6 +71,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private SerializedProperty m_ShadowCascade4SplitProp;
         private SerializedProperty m_HDR;
         private SerializedProperty m_MSAA;
+        private SerializedProperty m_EarlySubmitProp;
 
         void OnEnable()
         {
@@ -85,6 +89,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             m_ShadowCascade4SplitProp = serializedObject.FindProperty("m_Cascade4Split");
             m_HDR = serializedObject.FindProperty("m_SupportsHDR");
             m_MSAA = serializedObject.FindProperty("m_MSAA");
+            m_EarlySubmitProp = serializedObject.FindProperty("m_EarlySubmit");
 
             m_ShowSoftParticles.valueChanged.AddListener(Repaint);
             m_ShowSoftParticles.value = m_RequireSoftParticlesProp.boolValue;
@@ -128,6 +133,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             DrawAnimatedProperty(m_RequireSoftParticlesProp, Styles.requireSoftParticles, m_ShowSoftParticles);
             EditorGUILayout.PropertyField(m_HDR, Styles.hdrContent);
             EditorGUILayout.PropertyField(m_MSAA, Styles.msaaContent);
+
+            EditorGUILayout.PropertyField(m_EarlySubmitProp, Styles.earlySubmitLabel);
 
             EditorGUI.indentLevel--;
             EditorGUILayout.Space();

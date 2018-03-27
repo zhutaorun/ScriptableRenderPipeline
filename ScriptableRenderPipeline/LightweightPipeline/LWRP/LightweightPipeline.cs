@@ -344,6 +344,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 InitializeLightData(visibleLights, out lightData);
 
                 bool shadows = ShadowPass(visibleLights, ref context, ref lightData);
+                if (shadows && m_Asset.EarlySubmit)
+                    context.Submit();
 
                 FrameRenderingConfiguration frameRenderingConfiguration;
                 SetupFrameRenderingConfiguration(out frameRenderingConfiguration, shadows, stereoEnabled, sceneViewCamera);
@@ -360,7 +362,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 context.SetupCameraProperties(m_CurrCamera, stereoEnabled);
 
                 if (LightweightUtils.HasFlag(frameRenderingConfiguration, FrameRenderingConfiguration.DepthPrePass))
+                {
                     DepthPass(ref context, frameRenderingConfiguration);
+                    if (m_Asset.EarlySubmit)
+                        context.Submit();
+                }
 
                 if (shadows && m_ShadowSettings.screenSpace)
                     ShadowCollectPass(visibleLights, ref context, ref lightData, frameRenderingConfiguration);
@@ -500,6 +506,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             BeginForwardRendering(ref context, frameRenderingConfiguration);
             RenderOpaques(ref context, rendererSettings);
             AfterOpaque(ref context, frameRenderingConfiguration);
+
+            if (m_Asset.EarlySubmit)
+                context.Submit();
+
             RenderTransparents(ref context, rendererSettings);
             AfterTransparent(ref context, frameRenderingConfiguration);
             EndForwardRendering(ref context, frameRenderingConfiguration);
