@@ -68,7 +68,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         [SerializeField] private float m_Cascade2Split = 0.25f;
         [SerializeField] private Vector3 m_Cascade4Split = new Vector3(0.067f, 0.2f, 0.467f);
 
-        [SerializeField] private bool m_EarlySubmit = false;
+        [SerializeField] private bool m_EarlySubmit = true;
 
         [SerializeField]
         private LightweightPipelineResources m_ResourcesAsset;
