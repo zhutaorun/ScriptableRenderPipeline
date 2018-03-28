@@ -36,6 +36,7 @@ Shader "LightweightPipeline/Standard Terrain"
             HLSLPROGRAM
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
+            #pragma exclude_renderers d3d11_9x
             #pragma target 3.0
 
             #pragma vertex SplatmapVert
@@ -47,7 +48,8 @@ Shader "LightweightPipeline/Standard Terrain"
             #pragma multi_compile _ _VERTEX_LIGHTS
             #pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
             #pragma multi_compile _ FOG_LINEAR FOG_EXP2
-            
+            #pragma multi_compile _ _SHADOWS_ENABLED
+
             // -------------------------------------
             // Unity defined keywords
             #pragma multi_compile _ DIRLIGHTMAP_COMBINED
@@ -221,6 +223,7 @@ Shader "LightweightPipeline/Standard Terrain"
             HLSLPROGRAM
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
+            #pragma exclude_renderers d3d11_9x
             #pragma target 2.0
             #pragma vertex vert
             #pragma fragment frag

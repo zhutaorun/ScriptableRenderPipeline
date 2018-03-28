@@ -66,6 +66,7 @@ Shader "LightweightPipeline/Standard (Simple Lighting)"
             HLSLPROGRAM
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
+            #pragma exclude_renderers d3d11_9x
             #pragma target 2.0
 
             // -------------------------------------
@@ -83,6 +84,7 @@ Shader "LightweightPipeline/Standard (Simple Lighting)"
             #pragma multi_compile _ _VERTEX_LIGHTS
             #pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
             #pragma multi_compile _ FOG_LINEAR FOG_EXP2
+            #pragma multi_compile _ _SHADOWS_ENABLED
 
             // -------------------------------------
             // Unity defined keywords
@@ -93,7 +95,7 @@ Shader "LightweightPipeline/Standard (Simple Lighting)"
             // GPU Instancing
             #pragma multi_compile_instancing
 
-            #pragma vertex LitPassVertex
+            #pragma vertex LitPassVertexSimple
             #pragma fragment LitPassFragmentSimple
             #define BUMP_SCALE_NOT_SUPPORTED 1
             #include "LWRP/ShaderLibrary/LightweightPassLit.hlsl"
@@ -111,6 +113,7 @@ Shader "LightweightPipeline/Standard (Simple Lighting)"
             HLSLPROGRAM
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
+            #pragma exclude_renderers d3d11_9x
             #pragma target 2.0
 
             // -------------------------------------
@@ -139,6 +142,7 @@ Shader "LightweightPipeline/Standard (Simple Lighting)"
             HLSLPROGRAM
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
+            #pragma exclude_renderers d3d11_9x
             #pragma target 2.0
 
             #pragma vertex DepthOnlyVertex
