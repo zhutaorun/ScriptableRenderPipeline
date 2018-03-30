@@ -24,10 +24,11 @@ void ApplyBlendNormal(inout float4 dst, inout int matMask, float2 texCoords, int
 	matMask |= mapMask;
 }
 
-void ApplyBlendDiffuse(inout float4 dst, inout int matMask, float2 texCoords, int sliceIndex, int mapMask, float blend)
+void ApplyBlendDiffuse(inout float4 dst, inout int matMask, float2 texCoords, int sliceIndex, int mapMask, inout float blend, float lod)
 {
 	float4 src = SAMPLE_TEXTURE2D_ARRAY_LOD(_DecalAtlas, sampler_DecalAtlas, texCoords, sliceIndex, 0 /* ComputeTextureLOD(texCoords) */);
 	src.w *= blend;
+	blend = src.w;	// diffuse texture alpha affects all other channels
 	dst.xyz = src.xyz * src.w + dst.xyz * (1.0f - src.w);
 	dst.w = dst.w * (1.0f - src.w);
 	matMask |= mapMask;
@@ -43,7 +44,7 @@ void ApplyBlendMask(inout float4 dst, inout int matMask, float2 texCoords, int s
 	matMask |= mapMask;
 }
 
-void AddDecalContribution(PositionInputs posInput, inout SurfaceData surfaceData)
+void AddDecalContribution(PositionInputs posInput, inout SurfaceData surfaceData, inout float alpha)
 {
 	if(_EnableDBuffer)
 	{
@@ -77,10 +78,9 @@ void AddDecalContribution(PositionInputs posInput, inout SurfaceData surfaceData
 			int maskIndex = decalData.normalToWorld[3][3];
 			if((all(positionDS.xyz > 0.0f) && all(1.0f - positionDS.xyz > 0.0f))) // clip to decal space
 			{
-				if(diffuseIndex != -1)
-				{
-					ApplyBlendDiffuse(DBuffer0, mask, positionDS.xz, diffuseIndex, DBUFFERHTILEBIT_DIFFUSE, decalBlend);
-				}
+				ApplyBlendDiffuse(DBuffer0, mask, positionDS.xz, diffuseIndex, DBUFFERHTILEBIT_DIFFUSE, decalBlend, lod);
+				alpha = alpha < decalBlend ? decalBlend : alpha;	// use decal alpha if it higher than transparent alpha
+			}
 
 				if(normalIndex != -1)
 				{
