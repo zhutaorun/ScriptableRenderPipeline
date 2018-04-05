@@ -117,8 +117,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             scInit.resourceBinder                    = binder;
 
             ShadowManager.ShadowBudgets budgets;
-            budgets.maxPointLights       = 6;
-            budgets.maxSpotLights        = 12;
+            budgets.maxPointLights       = 12;
+            budgets.maxSpotLights        = 24;
             budgets.maxDirectionalLights = 1;
 
             m_ShadowMgr = new ShadowManager(shadowSettings, ref scInit, ref budgets, m_Shadowmaps);
