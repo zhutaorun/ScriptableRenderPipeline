@@ -18,10 +18,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public override void OnInspectorGUI()
         {
-            var hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
-            if (hdPipeline == null)
-                return;
-
             var s = m_HDRenderPipelineUI;
             var d = m_SerializedHDRenderPipeline;
             var o = this;
