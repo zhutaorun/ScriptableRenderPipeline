@@ -7,8 +7,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     public class HDUtils
     {
-        public const RendererConfiguration k_RendererConfigurationBakedLighting = RendererConfiguration.PerObjectLightProbe | RendererConfiguration.PerObjectLightmaps | RendererConfiguration.PerObjectLightProbeProxyVolume;
-        public const RendererConfiguration k_RendererConfigurationBakedLightingWithShadowMask = k_RendererConfigurationBakedLighting | RendererConfiguration.PerObjectOcclusionProbe | RendererConfiguration.PerObjectOcclusionProbeProxyVolume | RendererConfiguration.PerObjectShadowMask;
+        public const RendererOptions k_RendererOptionsBakedLighting = RendererOptions.PerObjectLightProbe | RendererOptions.PerObjectLightmaps | RendererOptions.PerObjectLightProbeProxyVolume;
+        public const RendererOptions k_RendererOptionsBakedLightingWithShadowMask = k_RendererOptionsBakedLighting | RendererOptions.PerObjectOcclusionProbe | RendererOptions.PerObjectOcclusionProbeProxyVolume | RendererOptions.PerObjectShadowMask;
 
         static public HDAdditionalReflectionData s_DefaultHDAdditionalReflectionData { get { return ComponentSingleton<HDAdditionalReflectionData>.instance; } }
         static public HDAdditionalLightData s_DefaultHDAdditionalLightData { get { return ComponentSingleton<HDAdditionalLightData>.instance; } }

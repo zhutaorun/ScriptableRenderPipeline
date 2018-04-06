@@ -30,7 +30,7 @@ namespace UnityEditor.Experimental.Rendering
 
         public static Quaternion GetLocalSpaceRotation(ReflectionProbe probe)
         {
-            var supportsRotation = (SupportedRenderingFeatures.active.reflectionProbeSupportFlags & SupportedRenderingFeatures.ReflectionProbeSupportFlags.Rotation) != 0;
+            var supportsRotation = (SupportedRenderingFeatures.active.reflectionProbeSupportModes & SupportedRenderingFeatures.ReflectionProbeSupportModes.Rotation) != 0;
             return supportsRotation
                 ? probe.transform.rotation
                 : Quaternion.identity;

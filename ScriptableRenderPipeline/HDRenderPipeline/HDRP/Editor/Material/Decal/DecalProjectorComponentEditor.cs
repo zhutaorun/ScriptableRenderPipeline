@@ -62,7 +62,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 var hdrp = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
                 if (hdrp != null)
                 {
-                    isDefaultMaterial = m_DecalProjectorComponent.Mat == hdrp.GetDefaultDecalMaterial();
+                    isDefaultMaterial = m_DecalProjectorComponent.Mat == hdrp.defaultDecalMaterial;
                 }
                 using (new EditorGUI.DisabledGroupScope(isDefaultMaterial))
                 {

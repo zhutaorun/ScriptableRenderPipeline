@@ -67,7 +67,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         readonly SubsurfaceScatteringManager m_SSSBufferManager = new SubsurfaceScatteringManager();
 
         // Renderer Bake configuration can vary depends on if shadow mask is enabled or no
-        RendererConfiguration m_currentRendererConfigurationBakedLighting = HDUtils.k_RendererConfigurationBakedLighting;
+        RendererOptions m_currentRendererOptionsBakedLighting = HDUtils.k_RendererOptionsBakedLighting;
         Material m_CopyStencilForNoLighting;
         Material m_CopyDepth;
         GPUCopy m_GPUCopy;
@@ -333,9 +333,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             SupportedRenderingFeatures.active = new SupportedRenderingFeatures()
             {
-                reflectionProbeSupportFlags = SupportedRenderingFeatures.ReflectionProbeSupportFlags.Rotation,
-                defaultMixedLightingMode = SupportedRenderingFeatures.LightmapMixedBakeMode.IndirectOnly,
-                supportedMixedLightingModes = SupportedRenderingFeatures.LightmapMixedBakeMode.IndirectOnly | SupportedRenderingFeatures.LightmapMixedBakeMode.Shadowmask,
+                reflectionProbeSupportModes = SupportedRenderingFeatures.ReflectionProbeSupportModes.Rotation,
+                defaultMixedLightingMode = SupportedRenderingFeatures.LightmapMixedBakeModes.IndirectOnly,
+                supportedMixedLightingModes = SupportedRenderingFeatures.LightmapMixedBakeModes.IndirectOnly | SupportedRenderingFeatures.LightmapMixedBakeModes.Shadowmask,
                 supportedLightmapBakeTypes = LightmapBakeType.Baked | LightmapBakeType.Mixed | LightmapBakeType.Realtime,
                 supportedLightmapsModes = LightmapsMode.NonDirectional | LightmapsMode.CombinedDirectional,
                 rendererSupportsLightProbeProxyVolumes = true,
@@ -433,8 +433,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             m_DepthStateOpaque = new RenderStateBlock
             {
-                depthState = new DepthState(true, CompareFunction.LessEqual),
-                mask = RenderStateMask.Depth
+                depthState = new DepthState(true, CompareFunction.LessEqual)
             };
         }
 
@@ -444,9 +443,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_MaterialList.ForEach(material => material.Build(m_Asset));
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            base.Dispose();
+            base.Dispose(disposing);
 
             m_DebugDisplaySettings.UnregisterDebug();
 
@@ -577,7 +576,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             CoreUtils.SetKeyword(cmd, "SHADOWS_SHADOWMASK", enableBakeShadowMask);
 
             // Configure material to use depends on shadow mask option
-            m_currentRendererConfigurationBakedLighting = enableBakeShadowMask ? HDUtils.k_RendererConfigurationBakedLightingWithShadowMask : HDUtils.k_RendererConfigurationBakedLighting;
+            m_currentRendererOptionsBakedLighting = enableBakeShadowMask ? HDUtils.k_RendererOptionsBakedLightingWithShadowMask : HDUtils.k_RendererOptionsBakedLighting;
             m_currentDebugViewMaterialGBuffer = enableBakeShadowMask ? m_DebugViewMaterialGBufferShadowMask : m_DebugViewMaterialGBuffer;
         }
 
@@ -1033,13 +1032,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                     ScriptableRenderContext renderContext,
                                     CommandBuffer cmd,
                                     ShaderTag passName,
-                                    RendererConfiguration rendererConfiguration = 0,
+                                    RendererOptions RendererOptions = 0,
                                     RenderQueueRange? inRenderQueueRange = null,
                                     RenderStateBlock? stateBlock = null,
                                     Material overrideMaterial = null)
         {
             m_SinglePassName[0] = passName;
-            RenderOpaqueRenderList(cull, camera, renderContext, cmd, m_SinglePassName, rendererConfiguration, inRenderQueueRange, stateBlock, overrideMaterial);
+            RenderOpaqueRenderList(cull, camera, renderContext, cmd, m_SinglePassName, RendererOptions, inRenderQueueRange, stateBlock, overrideMaterial);
         }
 
         void RenderOpaqueRenderList(CullResults cull,
@@ -1047,7 +1046,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                     ScriptableRenderContext renderContext,
                                     CommandBuffer cmd,
                                     ShaderTag[] passNames,
-                                    RendererConfiguration rendererConfiguration = 0,
+                                    RendererOptions RendererOptions = 0,
                                     RenderQueueRange? inRenderQueueRange = null,
                                     RenderStateBlock? stateBlock = null,
                                     Material overrideMaterial = null)
@@ -1061,10 +1060,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             var drawSettings = new DrawSettings(camera, HDShaderPassNames.s_EmptyName)
             {
-                rendererConfiguration = rendererConfiguration
+                rendererOptions = RendererOptions
             };
             var sorting = drawSettings.sorting;
-            sorting.flags = SortFlags.CommonOpaque;
+            sorting.criteria = DrawSortCriteria.CommonOpaque;
             drawSettings.sorting = sorting;
 
             for (int i = 0; i < passNames.Length; ++i)
@@ -1088,14 +1087,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                          ScriptableRenderContext renderContext,
                                          CommandBuffer cmd,
                                          ShaderTag passName,
-                                         RendererConfiguration rendererConfiguration = 0,
+                                         RendererOptions RendererOptions = 0,
                                          RenderQueueRange? inRenderQueueRange = null,
                                          RenderStateBlock? stateBlock = null,
                                          Material overrideMaterial = null)
         {
             m_SinglePassName[0] = passName;
             RenderTransparentRenderList(cull, camera, renderContext, cmd, m_SinglePassName,
-                                        rendererConfiguration, inRenderQueueRange, stateBlock, overrideMaterial);
+                                        RendererOptions, inRenderQueueRange, stateBlock, overrideMaterial);
         }
 
         void RenderTransparentRenderList(CullResults cull,
@@ -1103,7 +1102,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                          ScriptableRenderContext renderContext,
                                          CommandBuffer cmd,
                                          ShaderTag[] passNames,
-                                         RendererConfiguration rendererConfiguration = 0,
+                                         RendererOptions RendererOptions = 0,
                                          RenderQueueRange? inRenderQueueRange = null,
                                          RenderStateBlock? stateBlock = null,
                                          Material overrideMaterial = null
@@ -1118,10 +1117,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             var drawSettings = new DrawSettings(camera, HDShaderPassNames.s_EmptyName)
             {
-                rendererConfiguration = rendererConfiguration
+                rendererOptions = RendererOptions
             };
             var sorting = drawSettings.sorting;
-            sorting.flags = SortFlags.CommonTransparent;
+            sorting.criteria = DrawSortCriteria.CommonTransparent;
             drawSettings.sorting = sorting;
 
             for (int i = 0; i < passNames.Length; ++i)
@@ -1237,7 +1236,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 // setup GBuffer for rendering
                 HDUtils.SetRenderTarget(cmd, hdCamera, m_GbufferManager.GetBuffersRTI(enableShadowMask), m_CameraDepthStencilBuffer);
-                RenderOpaqueRenderList(cull, camera, renderContext, cmd, HDShaderPassNames.s_GBufferName, m_currentRendererConfigurationBakedLighting, HDRenderQueue.k_RenderQueue_AllOpaque);
+                RenderOpaqueRenderList(cull, camera, renderContext, cmd, HDShaderPassNames.s_GBufferName, m_currentRendererOptionsBakedLighting, HDRenderQueue.k_RenderQueue_AllOpaque);
 
                 m_GbufferManager.BindBufferAsTextures(cmd);
             }
@@ -1292,10 +1291,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                     HDUtils.SetRenderTarget(cmd, hdCamera, m_CameraColorBuffer, m_CameraDepthStencilBuffer, ClearFlag.All, CoreUtils.clearColorAllBlack);
                     // Render Opaque forward
-                    RenderOpaqueRenderList(cull, hdCamera.camera, renderContext, cmd, m_AllForwardOpaquePassNames, m_currentRendererConfigurationBakedLighting, stateBlock: m_DepthStateOpaque);
+                    RenderOpaqueRenderList(cull, hdCamera.camera, renderContext, cmd, m_AllForwardOpaquePassNames, m_currentRendererOptionsBakedLighting, stateBlock: m_DepthStateOpaque);
 
                     // Render forward transparent
-                    RenderTransparentRenderList(cull, hdCamera.camera, renderContext, cmd, m_AllTransparentPassNames, m_currentRendererConfigurationBakedLighting, stateBlock: m_DepthStateOpaque);
+                    RenderTransparentRenderList(cull, hdCamera.camera, renderContext, cmd, m_AllTransparentPassNames, m_currentRendererOptionsBakedLighting, stateBlock: m_DepthStateOpaque);
                 }
             }
 
@@ -1435,7 +1434,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     var passNames = m_FrameSettings.enableForwardRenderingOnly
                         ? m_ForwardAndForwardOnlyPassNames
                         : m_ForwardOnlyPassNames;
-                    RenderOpaqueRenderList(cullResults, camera, renderContext, cmd, passNames, m_currentRendererConfigurationBakedLighting);
+                    RenderOpaqueRenderList(cullResults, camera, renderContext, cmd, passNames, m_currentRendererOptionsBakedLighting);
                 }
                 else
                 {
@@ -1444,7 +1443,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {
                         DecalSystem.instance.SetAtlas(cmd); // for clustered decals
                     }
-                    RenderTransparentRenderList(cullResults, camera, renderContext, cmd, m_AllTransparentPassNames, m_currentRendererConfigurationBakedLighting, pass == ForwardPass.PreRefraction ? HDRenderQueue.k_RenderQueue_PreRefraction : HDRenderQueue.k_RenderQueue_Transparent);
+                    RenderTransparentRenderList(cullResults, camera, renderContext, cmd, m_AllTransparentPassNames, m_currentRendererOptionsBakedLighting, pass == ForwardPass.PreRefraction ? HDRenderQueue.k_RenderQueue_PreRefraction : HDRenderQueue.k_RenderQueue_Transparent);
                 }
             }
         }
@@ -1492,7 +1491,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 hdcamera.camera.depthTextureMode |= DepthTextureMode.MotionVectors | DepthTextureMode.Depth;
 
                 HDUtils.SetRenderTarget(cmd, hdcamera, m_VelocityBuffer, m_CameraDepthStencilBuffer);
-                RenderOpaqueRenderList(cullResults, hdcamera.camera, renderContext, cmd, HDShaderPassNames.s_MotionVectorsName, RendererConfiguration.PerObjectMotionVectors);
+                RenderOpaqueRenderList(cullResults, hdcamera.camera, renderContext, cmd, HDShaderPassNames.s_MotionVectorsName, RendererOptions.PerObjectMotionVectors);
             }
         }
 

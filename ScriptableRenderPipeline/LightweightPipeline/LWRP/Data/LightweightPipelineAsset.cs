@@ -286,51 +286,54 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             private set { m_Cascade4Split = value; }
         }
 
-        public override Material GetDefaultMaterial()
+        public override Material defaultMaterial
         {
-            return GetMaterial(DefaultMaterialType.Standard);
+            get { return GetMaterial(DefaultMaterialType.Standard); }
         }
 
-        public override Material GetDefaultParticleMaterial()
+        public override Material defaultParticleMaterial
         {
-            return GetMaterial(DefaultMaterialType.Particle);
+            get { return GetMaterial(DefaultMaterialType.Particle); }
         }
 
-        public override Material GetDefaultLineMaterial()
+        public override Material defaultLineMaterial
         {
-            return GetMaterial(DefaultMaterialType.UnityBuiltinDefault);
+            get { return GetMaterial(DefaultMaterialType.UnityBuiltinDefault); }
         }
 
-        public override Material GetDefaultTerrainMaterial()
+        public override Material defaultTerrainMaterial
         {
-            return GetMaterial(DefaultMaterialType.Terrain);
+            get { return GetMaterial(DefaultMaterialType.Terrain); }
         }
 
-        public override Material GetDefaultUIMaterial()
+        public override Material defaultUIMaterial
         {
-            return GetMaterial(DefaultMaterialType.UnityBuiltinDefault);
+            get { return GetMaterial(DefaultMaterialType.UnityBuiltinDefault); }
         }
 
-        public override Material GetDefaultUIOverdrawMaterial()
+        public override Material defaultUIOverdrawMaterial
         {
-            return GetMaterial(DefaultMaterialType.UnityBuiltinDefault);
+            get { return GetMaterial(DefaultMaterialType.UnityBuiltinDefault); }
         }
 
-        public override Material GetDefaultUIETC1SupportedMaterial()
+        public override Material defaultUIETC1SupportedMaterial
         {
-            return GetMaterial(DefaultMaterialType.UnityBuiltinDefault);
+            get { return GetMaterial(DefaultMaterialType.UnityBuiltinDefault); }
         }
 
-        public override Material GetDefault2DMaterial()
+        public override Material default2DMaterial
         {
-            return GetMaterial(DefaultMaterialType.UnityBuiltinDefault);
+            get { return GetMaterial(DefaultMaterialType.UnityBuiltinDefault); }
         }
 
-        public override Shader GetDefaultShader()
+        public override Shader defaultShader
         {
-            if (m_DefaultShader == null)
-                m_DefaultShader = Shader.Find(LightweightShaderUtils.GetShaderPath(ShaderPathID.STANDARD_PBS));
-            return m_DefaultShader;
+            get
+            {
+                if (m_DefaultShader == null)
+                    m_DefaultShader = Shader.Find(LightweightShaderUtils.GetShaderPath(ShaderPathID.STANDARD_PBS));
+                return m_DefaultShader;
+            }
         }
 
         public Shader BlitShader

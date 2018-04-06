@@ -262,9 +262,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             m_ErrorMaterial = CoreUtils.CreateEngineMaterial("Hidden/InternalErrorShader");
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            base.Dispose();
+            base.Dispose(disposing);
             Shader.globalRenderPipeline = "";
 
             SupportedRenderingFeatures.active = new SupportedRenderingFeatures();
@@ -283,9 +283,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 #if UNITY_EDITOR
             SupportedRenderingFeatures.active = new SupportedRenderingFeatures()
             {
-                reflectionProbeSupportFlags = SupportedRenderingFeatures.ReflectionProbeSupportFlags.None,
-                defaultMixedLightingMode = SupportedRenderingFeatures.LightmapMixedBakeMode.Subtractive,
-                supportedMixedLightingModes = SupportedRenderingFeatures.LightmapMixedBakeMode.Subtractive,
+                reflectionProbeSupportModes = SupportedRenderingFeatures.ReflectionProbeSupportModes.None,
+                defaultMixedLightingMode = SupportedRenderingFeatures.LightmapMixedBakeModes.Subtractive,
+                supportedMixedLightingModes = SupportedRenderingFeatures.LightmapMixedBakeModes.Subtractive,
                 supportedLightmapBakeTypes = LightmapBakeType.Baked | LightmapBakeType.Mixed,
                 supportedLightmapsModes = LightmapsMode.CombinedDirectional | LightmapsMode.NonDirectional,
                 rendererSupportsLightProbeProxyVolumes = false,
@@ -480,7 +480,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             var opaqueDrawSettings = new DrawSettings(m_CurrCamera, m_DepthPrepass);
             var sorting = opaqueDrawSettings.sorting;
-            sorting.flags = SortFlags.CommonOpaque;
+            sorting.criteria = DrawSortCriteria.CommonOpaque;
             opaqueDrawSettings.sorting = sorting;
 
             var opaqueFilterSettings = new FilterSettings(RenderQueueRange.opaque);
@@ -496,7 +496,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         {
             SetupShaderConstants(visibleLights, ref context, ref lightData);
 
-            RendererConfiguration rendererSettings = GetRendererSettings(ref lightData);
+            RendererOptions rendererSettings = GetRendererSettings(ref lightData);
 
             BeginForwardRendering(ref context, frameRenderingConfiguration);
             RenderOpaques(ref context, rendererSettings);
@@ -506,21 +506,21 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             EndForwardRendering(ref context, frameRenderingConfiguration);
         }
 
-        private void RenderOpaques(ref ScriptableRenderContext context, RendererConfiguration settings)
+        private void RenderOpaques(ref ScriptableRenderContext context, RendererOptions settings)
         {
             var opaqueDrawSettings = new DrawSettings(m_CurrCamera, m_LitPassName);
             opaqueDrawSettings.SetShaderPassName(1, m_UnlitPassName);
             var sorting = opaqueDrawSettings.sorting;
-            sorting.flags = SortFlags.CommonOpaque;
+            sorting.criteria = DrawSortCriteria.CommonOpaque;
             opaqueDrawSettings.sorting = sorting;
-            opaqueDrawSettings.rendererConfiguration = settings;
+            opaqueDrawSettings.rendererOptions = settings;
 
             var opaqueFilterSettings = new FilterSettings(RenderQueueRange.opaque);
 
             context.DrawRenderers(m_CullResults.visibleRenderers, ref opaqueDrawSettings, opaqueFilterSettings);
 
             // Render objects that did not match any shader pass with error shader
-            RenderObjectsWithError(ref context, opaqueFilterSettings, SortFlags.None);
+            RenderObjectsWithError(ref context, opaqueFilterSettings, DrawSortCriteria.None);
 
             if (m_CurrCamera.clearFlags == CameraClearFlags.Skybox)
                 context.DrawSkybox(m_CurrCamera);
@@ -569,21 +569,21 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             CommandBufferPool.Release(cmd);
         }
 
-        private void RenderTransparents(ref ScriptableRenderContext context, RendererConfiguration config)
+        private void RenderTransparents(ref ScriptableRenderContext context, RendererOptions config)
         {
             var transparentSettings = new DrawSettings(m_CurrCamera, m_LitPassName);
             transparentSettings.SetShaderPassName(1, m_UnlitPassName);
             var sorting = transparentSettings.sorting;
-            sorting.flags = SortFlags.CommonTransparent;
+            sorting.criteria = DrawSortCriteria.CommonTransparent;
             transparentSettings.sorting = sorting;
-            transparentSettings.rendererConfiguration = config;
+            transparentSettings.rendererOptions = config;
 
             var transparentFilterSettings = new FilterSettings(RenderQueueRange.transparent);
 
             context.DrawRenderers(m_CullResults.visibleRenderers, ref transparentSettings, transparentFilterSettings);
 
             // Render objects that did not match any shader pass with error shader
-            RenderObjectsWithError(ref context, transparentFilterSettings, SortFlags.None);
+            RenderObjectsWithError(ref context, transparentFilterSettings, DrawSortCriteria.None);
         }
 
         private void AfterTransparent(ref ScriptableRenderContext context, FrameRenderingConfiguration config)
@@ -598,7 +598,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         }
 
         [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
-        private void RenderObjectsWithError(ref ScriptableRenderContext context, FilterSettings filterSettings, SortFlags sortFlags)
+        private void RenderObjectsWithError(ref ScriptableRenderContext context, FilterSettings filterSettings, DrawSortCriteria sortCriteria)
         {
             if (m_ErrorMaterial != null)
             {
@@ -607,9 +607,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                     errorSettings.SetShaderPassName(i, s_LegacyPassNames[i]);
 
                 var sorting = errorSettings.sorting;
-                sorting.flags = sortFlags;
+                sorting.criteria = sortCriteria;
                 errorSettings.sorting = sorting;
-                errorSettings.rendererConfiguration = RendererConfiguration.None;
+                errorSettings.rendererOptions = RendererOptions.None;
                 errorSettings.SetOverrideMaterial(m_ErrorMaterial, 0);
                 context.DrawRenderers(m_CullResults.visibleRenderers, ref errorSettings, filterSettings);
             }
@@ -1426,11 +1426,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             }
         }
 
-        RendererConfiguration GetRendererSettings(ref LightData lightData)
+        RendererOptions GetRendererSettings(ref LightData lightData)
         {
-            RendererConfiguration settings = RendererConfiguration.PerObjectReflectionProbes | RendererConfiguration.PerObjectLightmaps | RendererConfiguration.PerObjectLightProbe;
+            RendererOptions settings = RendererOptions.PerObjectReflectionProbes | RendererOptions.PerObjectLightmaps | RendererOptions.PerObjectLightProbe;
             if (lightData.totalAdditionalLightsCount > 0)
-                settings |= RendererConfiguration.PerObjectLightIndices8;
+                settings |= RendererOptions.PerObjectLightIndexes8;
             return settings;
         }
 

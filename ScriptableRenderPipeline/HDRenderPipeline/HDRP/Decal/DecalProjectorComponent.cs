@@ -36,7 +36,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (m_Material == null)
             {
                 var hdrp = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
-                m_Material = hdrp != null ? hdrp.GetDefaultDecalMaterial() : null;
+                m_Material = hdrp != null ? hdrp.defaultDecalMaterial : null;
             }
 
             if(m_Handle != null)
@@ -50,7 +50,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_Handle = null;
         }
 
-		// Declare the method signature of the delegate to call.	
+		// Declare the method signature of the delegate to call.
 		public delegate void OnMaterialChangeDelegate();
 
 		// Declare the event to which editor code will hook itself.
@@ -127,7 +127,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return false;
 
             var hdrp = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
-            if ((hdrp != null) && (m_Material == hdrp.GetDefaultDecalMaterial()))
+            if ((hdrp != null) && (m_Material == hdrp.defaultDecalMaterial))
                 return false;
 
             return true;

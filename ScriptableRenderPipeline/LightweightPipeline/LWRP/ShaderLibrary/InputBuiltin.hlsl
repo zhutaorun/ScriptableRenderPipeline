@@ -114,7 +114,7 @@ real4 unity_SpecCube0_HDR;
 // HDR lightmap decode instructions
 real4 unity_Lightmap_HDR;
 
-// These are set internally by the engine upon request by RendererConfiguration.
+// These are set internally by the engine upon request by RendererOptions.
 // Check GetRendererSettings in LightweightPipeline.cs
 real4 unity_LightIndicesOffsetAndCount;
 real4 unity_4LightIndices0;

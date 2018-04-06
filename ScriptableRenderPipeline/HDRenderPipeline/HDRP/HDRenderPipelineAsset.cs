@@ -97,55 +97,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [SerializeField]
         public DiffusionProfileSettings diffusionProfileSettings;
 
-        public override Shader GetDefaultShader()
+        public override Shader defaultShader
         {
-            return m_RenderPipelineResources.defaultShader;
+            get { return m_RenderPipelineResources.defaultShader; }
         }
 
-        public override Material GetDefaultMaterial()
+        public override Material defaultMaterial
         {
-            return m_RenderPipelineResources.defaultDiffuseMaterial;
+            get { return m_RenderPipelineResources.defaultDiffuseMaterial; }
         }
 
         // Note: This function is HD specific
-        public Material GetDefaultDecalMaterial()
+        public Material defaultDecalMaterial
         {
-            return m_RenderPipelineResources.defaultDecalMaterial;
-        }
-
-        public override Material GetDefaultParticleMaterial()
-        {
-            return null;
-        }
-
-        public override Material GetDefaultLineMaterial()
-        {
-            return null;
-        }
-
-        public override Material GetDefaultTerrainMaterial()
-        {
-            return null;
-        }
-
-        public override Material GetDefaultUIMaterial()
-        {
-            return null;
-        }
-
-        public override Material GetDefaultUIOverdrawMaterial()
-        {
-            return null;
-        }
-
-        public override Material GetDefaultUIETC1SupportedMaterial()
-        {
-            return null;
-        }
-
-        public override Material GetDefault2DMaterial()
-        {
-            return null;
+            get { return m_RenderPipelineResources.defaultDecalMaterial; }
         }
 
         void ISerializationCallbackReceiver.OnBeforeSerialize()
