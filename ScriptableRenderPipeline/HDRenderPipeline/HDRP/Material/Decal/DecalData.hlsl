@@ -18,13 +18,13 @@ void GetSurfaceData(float2 texCoordDS, float4x4 decalToWorld, out DecalSurfaceDa
 #endif
 #if _NORMALMAP
 	surfaceData.normalWS.xyz = mul((float3x3)decalToWorld, UnpackNormalmapRGorAG(SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, texCoordDS))) * 0.5f + 0.5f;
-	surfaceData.normalWS.w = totalBlend;
+	surfaceData.normalWS.w = surfaceData.baseColor.w;
 	surfaceData.HTileMask |= DBUFFERHTILEBIT_NORMAL;
 #endif
 #if _MASKMAP
 	surfaceData.mask = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, texCoordDS.xy); 
 	surfaceData.mask.z = surfaceData.mask.w;
-	surfaceData.mask.w = totalBlend;
+	surfaceData.mask.w = surfaceData.baseColor.w;
 	surfaceData.HTileMask |= DBUFFERHTILEBIT_MASK;
 #endif
 }
