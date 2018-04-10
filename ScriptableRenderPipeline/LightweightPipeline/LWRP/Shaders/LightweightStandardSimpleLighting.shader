@@ -51,7 +51,7 @@ Shader "LightweightPipeline/Standard (Simple Lighting)"
 
     SubShader
     {
-        Tags { "RenderType" = "Opaque" "RenderPipeline" = "LightweightPipeline" }
+        Tags { "RenderType" = "Opaque" "RenderPipeline" = "LightweightPipeline" "IgnoreProjector" = "True"}
         LOD 300
 
         Pass
@@ -66,14 +66,14 @@ Shader "LightweightPipeline/Standard (Simple Lighting)"
             HLSLPROGRAM
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
-            #pragma target 3.0
+            #pragma target 2.0
 
             // -------------------------------------
             // Material Keywords
-            #pragma shader_feature _ALPHATEST_ON 
+            #pragma shader_feature _ALPHATEST_ON
             #pragma shader_feature _ALPHAPREMULTIPLY_ON
             #pragma shader_feature _ _SPECGLOSSMAP _SPECULAR_COLOR
-            #pragma shader_feature _ _GLOSSINESS_FROM_BASE_ALPHA
+            #pragma shader_feature _GLOSSINESS_FROM_BASE_ALPHA
             #pragma shader_feature _NORMALMAP
             #pragma shader_feature _EMISSION
 
@@ -82,26 +82,28 @@ Shader "LightweightPipeline/Standard (Simple Lighting)"
             #pragma multi_compile _ _ADDITIONAL_LIGHTS
             #pragma multi_compile _ _VERTEX_LIGHTS
             #pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
-            #pragma multi_compile _ FOG_LINEAR FOG_EXP2
+            #pragma multi_compile _ _SHADOWS_ENABLED
 
             // -------------------------------------
             // Unity defined keywords
             #pragma multi_compile _ DIRLIGHTMAP_COMBINED
             #pragma multi_compile _ LIGHTMAP_ON
+            #pragma multi_compile_fog
 
             //--------------------------------------
             // GPU Instancing
             #pragma multi_compile_instancing
 
-            #pragma vertex LitPassVertex
+            #pragma vertex LitPassVertexSimple
             #pragma fragment LitPassFragmentSimple
+            #define BUMP_SCALE_NOT_SUPPORTED 1
             #include "LWRP/ShaderLibrary/LightweightPassLit.hlsl"
             ENDHLSL
         }
 
         Pass
         {
-            Tags{"Lightmode" = "ShadowCaster"}
+            Tags{"LightMode" = "ShadowCaster"}
 
             ZWrite On
             ZTest LEqual
@@ -111,22 +113,18 @@ Shader "LightweightPipeline/Standard (Simple Lighting)"
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
             #pragma target 2.0
-            
+
             // -------------------------------------
             // Material Keywords
-            #pragma shader_feature _ALPHATEST_ON 
-            #pragma shader_feature _ALPHAPREMULTIPLY_ON
-            #pragma shader_feature _ _SPECGLOSSMAP _SPECULAR_COLOR
-            #pragma shader_feature _ _GLOSSINESS_FROM_BASE_ALPHA
-            #pragma shader_feature _NORMALMAP
-            #pragma shader_feature _EMISSION
+            #pragma shader_feature _ALPHATEST_ON
+            #pragma shader_feature _GLOSSINESS_FROM_BASE_ALPHA
 
             //--------------------------------------
             // GPU Instancing
             #pragma multi_compile_instancing
 
             #pragma vertex ShadowPassVertex
-            #pragma fragment LitPassFragmentSimpleNull
+            #pragma fragment ShadowPassFragment
 
             #include "LWRP/ShaderLibrary/LightweightPassShadow.hlsl"
             ENDHLSL
@@ -134,7 +132,7 @@ Shader "LightweightPipeline/Standard (Simple Lighting)"
 
         Pass
         {
-            Tags{"Lightmode" = "DepthOnly"}
+            Tags{"LightMode" = "DepthOnly"}
 
             ZWrite On
             ColorMask 0
@@ -144,23 +142,19 @@ Shader "LightweightPipeline/Standard (Simple Lighting)"
             #pragma prefer_hlslcc gles
             #pragma target 2.0
 
+            #pragma vertex DepthOnlyVertex
+            #pragma fragment DepthOnlyFragment
+
             // -------------------------------------
             // Material Keywords
-            #pragma shader_feature _ALPHATEST_ON 
-            #pragma shader_feature _ALPHAPREMULTIPLY_ON
-            #pragma shader_feature _ _SPECGLOSSMAP _SPECULAR_COLOR
-            #pragma shader_feature _ _GLOSSINESS_FROM_BASE_ALPHA
-            #pragma shader_feature _NORMALMAP
-            #pragma shader_feature _EMISSION
+            #pragma shader_feature _ALPHATEST_ON
+            #pragma shader_feature _GLOSSINESS_FROM_BASE_ALPHA
 
             //--------------------------------------
             // GPU Instancing
             #pragma multi_compile_instancing
 
-            #pragma vertex LitPassVertex
-            #pragma fragment LitPassFragmentSimpleNull
-        
-            #include "LWRP/ShaderLibrary/LightweightPassLit.hlsl"
+            #include "LWRP/ShaderLibrary/LightweightPassDepthOnly.hlsl"
             ENDHLSL
         }
 

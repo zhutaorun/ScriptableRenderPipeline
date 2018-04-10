@@ -20,6 +20,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public ComputeShader colorPyramidCS;
         public ComputeShader depthPyramidCS;
         public ComputeShader copyChannelCS;
+        public ComputeShader texturePaddingCS;
         public ComputeShader applyDistortionCS;
 
         // Lighting tile pass resources
@@ -32,6 +33,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public ComputeShader buildMaterialFlagsShader;
         public ComputeShader deferredComputeShader;
         public ComputeShader deferredDirectionalShadowComputeShader;
+        public ComputeShader volumeVoxelizationCS;
         public ComputeShader volumetricLightingCS;
 
         public ComputeShader subsurfaceScatteringCS; // Disney SSS
@@ -50,6 +52,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public ComputeShader computeGgxIblSampleData;
         public Shader GGXConvolve;
         public Shader opaqueAtmosphericScattering;
+        public Shader hdriSky;
+        public Shader proceduralSky;
 
         public Shader skyboxCubemap;
 

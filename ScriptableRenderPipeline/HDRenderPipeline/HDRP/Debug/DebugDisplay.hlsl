@@ -16,8 +16,10 @@ int _DebugMipMapMode; // Match enum DebugMipMapMode
 float4 _DebugLightingAlbedo; // x == bool override, yzw = albedo for diffuse
 float4 _DebugLightingSmoothness; // x == bool override, y == override value
 float4 _DebugLightingNormal; // x == bool override
+float4 _DebugLightingSpecularColor; // x == bool override, yzw = specular color
 float4 _MousePixelCoord;  // xy unorm, zw norm
 float _DebugEnvironmentProxyDepthScale;
+float _DebugExposure;
 CBUFFER_END
 
 TEXTURE2D(_DebugFont); // Debug font to write string in shader
@@ -187,12 +189,13 @@ void DrawInteger(int intValue, float3 fontColor, uint2 currentUnormCoord, inout 
     }
 
     // 4. Display leading 0
-#pragma warning(disable : 3557) // loop only executes for 0 iteration(s)
-    for (int i = 0; i < leading0; ++i)
+    if (leading0 > 0)
     {
-        DrawCharacter('0', fontColor, currentUnormCoord, fixedUnormCoord, flipY, color, -1);
+        for (int i = 0; i < leading0; ++i)
+        {
+            DrawCharacter('0', fontColor, currentUnormCoord, fixedUnormCoord, flipY, color, -1);
+        }
     }
-#pragma warning(default : 3557)
 
     // 5. Display sign
     if (intValue < 0 || forceNegativeSign)

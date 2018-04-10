@@ -32,7 +32,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 case CommandLineOperation.ResetMaterialKeywords:
                 {
-                    System.Console.WriteLine("[HDEditorCLI][ResetMaterialKeywords] Starting material reset");
+                    Console.WriteLine("[HDEditorCLI][ResetMaterialKeywords] Starting material reset");
 
                     var matIds = AssetDatabase.FindAssets("t:Material");
 
@@ -42,7 +42,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
 
                         if (HDEditorUtils.ResetMaterialKeywords(mat))
-                                System.Console.WriteLine("[HDEditorCLI][ResetMaterialKeywords] " + path);
+                                Console.WriteLine("[HDEditorCLI][ResetMaterialKeywords] " + path);
                     }
                     break;
                 }

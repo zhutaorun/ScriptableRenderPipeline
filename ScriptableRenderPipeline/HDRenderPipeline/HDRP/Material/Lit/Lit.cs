@@ -277,7 +277,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 hideFlags = HideFlags.HideAndDontSave,
                 wrapMode = TextureWrapMode.Clamp,
-                filterMode = FilterMode.Bilinear
+                filterMode = FilterMode.Bilinear,
+                name = CoreUtils.GetTextureAutoName(k_LtcLUTResolution, k_LtcLUTResolution, TextureFormat.RGBAHalf, depth: 3, dim: TextureDimension.Tex2DArray, name: "LTC_LUT")
             };
 
             LoadLUT(m_LtcData, 0, TextureFormat.RGBAHalf,   s_LtcGGXMatrixData);
@@ -293,6 +294,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public override void Cleanup()
         {
             CoreUtils.Destroy(m_InitPreFGD);
+            CoreUtils.Destroy(m_PreIntegratedFGD);
+            CoreUtils.Destroy(m_LtcData);
 
             // TODO: how to delete RenderTexture ? or do we need to do it ?
             m_isInit = false;
@@ -300,15 +303,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public override void RenderInit(CommandBuffer cmd)
         {
-            // Sample Game Change BEGIN
-            // TODO (petera) Remove this ugly hack
-            if (m_isInit && Time.frameCount > 3)
+            if (m_isInit)
                 return;
-
-            // Old code:
-            //if (m_isInit)
-            //    return;
-            // Sample Game Change END
 
             using (new ProfilingSample(cmd, "Init PreFGD"))
             {

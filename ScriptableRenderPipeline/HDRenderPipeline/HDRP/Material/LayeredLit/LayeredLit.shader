@@ -253,6 +253,7 @@ Shader "HDRenderPipeline/LayeredLit"
         [HideInInspector] _ZWrite ("__zw", Float) = 1.0
         [HideInInspector] _CullMode("__cullmode", Float) = 2.0
         [HideInInspector] _ZTestDepthEqualForOpaque("_ZTestDepthEqualForOpaque", Int) = 4 // Less equal
+        [HideInInspector] _ZTestGBuffer("_ZTestGBuffer", Int) = 4
 
         [ToggleUI] _EnableFogOnTransparent("Enable Fog", Float) = 1.0
         [ToggleUI] _EnableBlendModePreserveSpecularLighting("Enable Blend Mode Preserve Specular Lighting", Float) = 1.0
@@ -505,6 +506,7 @@ Shader "HDRenderPipeline/LayeredLit"
             Tags { "LightMode" = "GBuffer" } // This will be only for opaque object based on the RenderQueue index
 
             Cull [_CullMode]
+            ZTest[_ZTestGBuffer]
 
             Stencil
             {
@@ -526,50 +528,12 @@ Shader "HDRenderPipeline/LayeredLit"
             #pragma multi_compile SHADOWS_SHADOWMASK
 // sample-game end
 
-            #define SHADERPASS SHADERPASS_GBUFFER
-            #include "../../ShaderVariables.hlsl"
-            #ifdef DEBUG_DISPLAY
-            #include "../../Debug/DebugDisplay.hlsl"
-            #endif
-            #include "../../Material/Material.hlsl"
-            #include "../Lit/ShaderPass/LitSharePass.hlsl"
-            #include "LayeredLitData.hlsl"
-            #include "../../ShaderPass/ShaderPassGBuffer.hlsl"
-
-            ENDHLSL
-        }
-
-        // This pass is the same as GBuffer only it does not do alpha test (the clip instruction is removed)
-        // This is due to the fact that on GCN, any shader with a clip instruction cannot benefit from HiZ so when we do a prepass, in order to get the most performance, we need to make a special case in the subsequent GBuffer pass.
-        Pass
-        {
-            Name "GBufferWithPrepass"  // Name is not used
-            Tags { "LightMode" = "GBufferWithPrepass" } // This will be only for opaque object based on the RenderQueue index
-
-            Cull [_CullMode]
-
-            Stencil
-            {
-                WriteMask [_StencilWriteMask]
-                Ref [_StencilRef]
-                Comp Always
-                Pass Replace
-            }
-
-            HLSLPROGRAM
-
-// sample-game begin: limit to what we use
-            //#pragma multi_compile _ DEBUG_DISPLAY
-            #pragma shader_feature DEBUG_DISPLAY
-            #pragma multi_compile _ LIGHTMAP_ON
-            //#pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            //#pragma multi_compile _ DYNAMICLIGHTMAP_ON
-            //#pragma multi_compile _ SHADOWS_SHADOWMASK
-            #pragma multi_compile SHADOWS_SHADOWMASK
-// sample-game end
+        #ifdef _ALPHATEST_ON
+            // When we have alpha test, we will force a depth prepass so we always bypass the clip instruction in the GBuffer
+            #define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST 
+        #endif
 
             #define SHADERPASS SHADERPASS_GBUFFER
-            #define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
             #include "../../ShaderVariables.hlsl"
             #ifdef DEBUG_DISPLAY
             #include "../../Debug/DebugDisplay.hlsl"
@@ -716,10 +680,9 @@ Shader "HDRenderPipeline/LayeredLit"
             //#pragma multi_compile _ SHADOWS_SHADOWMASK
             #pragma multi_compile SHADOWS_SHADOWMASK
             // #include "../../Lighting/Forward.hlsl"
-            //#pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
-            #pragma multi_compile LIGHTLOOP_TILE_PASS
             //#pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST
             #pragma multi_compile USE_CLUSTERED_LIGHTLIST
+            #define LIGHTLOOP_TILE_PASS
 // sample-game end
 
             #define SHADERPASS SHADERPASS_FORWARD

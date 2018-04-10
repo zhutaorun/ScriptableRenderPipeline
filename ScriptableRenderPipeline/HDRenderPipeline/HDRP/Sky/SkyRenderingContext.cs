@@ -138,6 +138,33 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
+        // We do our own hash here because Unity does not provide correct hash for builtin types
+        // Moreover, we don't want to test every single parameters of the light so we filter them here in this specific function.
+        int GetSunLightHashCode(Light light)
+        {
+            HDAdditionalLightData ald = light.GetComponent<HDAdditionalLightData>();
+            unchecked
+            {
+                int hash = 13;
+                hash = hash * 23 + (light.GetHashCode() * 23 + light.transform.position.GetHashCode()) * 23 + light.transform.rotation.GetHashCode();
+                hash = hash * 23 + light.color.GetHashCode();
+                hash = hash * 23 + light.colorTemperature.GetHashCode();
+                hash = hash * 23 + light.intensity.GetHashCode();
+                hash = hash * 23 + light.range.GetHashCode();
+                if (light.cookie != null)
+                {
+                    hash = hash * 23 + (int)light.cookie.updateCount;
+                    hash = hash * 23 + (int)light.cookie.GetInstanceID();
+                }
+                if (ald != null)
+                {
+                    hash = hash * 23 + ald.lightDimmer.GetHashCode();
+                }
+
+                return hash;
+            }
+        }
+
         public bool UpdateEnvironment(SkyUpdateContext skyContext, HDCamera camera, Light sunLight, bool updateRequired, CommandBuffer cmd)
         {
             bool result = false;
@@ -150,10 +177,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_BuiltinParameters.screenSize = m_CubemapScreenSize;
                 m_BuiltinParameters.cameraPosWS = camera.camera.transform.position;
                 m_BuiltinParameters.hdCamera = null;
+                m_BuiltinParameters.debugSettings = null; // We don't want any debug when updating the environment.
 
                 int sunHash = 0;
                 if (sunLight != null)
-                    sunHash = (sunLight.GetHashCode() * 23 + sunLight.transform.position.GetHashCode()) * 23 + sunLight.transform.rotation.GetHashCode();
+                    sunHash = GetSunLightHashCode(sunLight);
                 int skyHash = sunHash * 23 + skyContext.skySettings.GetHashCode();
 
                 bool forceUpdate = (updateRequired || skyContext.updatedFramesRequired > 0 || m_NeedUpdate);
@@ -208,7 +236,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return result;
         }
 
-        public void RenderSky(SkyUpdateContext skyContext, HDCamera hdCamera, Light sunLight, RTHandle colorBuffer, RTHandle depthBuffer, CommandBuffer cmd)
+        public void RenderSky(SkyUpdateContext skyContext, HDCamera hdCamera, Light sunLight, RTHandle colorBuffer, RTHandle depthBuffer, DebugDisplaySettings debugSettings, CommandBuffer cmd)
         {
             if (skyContext.IsValid() && hdCamera.clearColorMode == HDAdditionalCameraData.ClearColorMode.Sky)
             {
@@ -223,6 +251,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     m_BuiltinParameters.colorBuffer = colorBuffer;
                     m_BuiltinParameters.depthBuffer = depthBuffer;
                     m_BuiltinParameters.hdCamera = hdCamera;
+                    m_BuiltinParameters.debugSettings = debugSettings;
 
                     skyContext.renderer.SetRenderTargets(m_BuiltinParameters);
                     skyContext.renderer.RenderSky(m_BuiltinParameters, false);
