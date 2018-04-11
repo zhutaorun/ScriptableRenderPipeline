@@ -75,13 +75,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public bool IsDebugDisplayEnabled()
         {
-            return materialDebugSettings.IsDebugDisplayEnabled() || lightingDebugSettings.IsDebugDisplayEnabled() || mipMapDebugSettings.IsDebugDisplayEnabled();
+            return materialDebugSettings.IsDebugDisplayEnabled() || lightingDebugSettings.IsDebugDisplayEnabled() || mipMapDebugSettings.IsDebugDisplayEnabled() || IsDebugFullScreenEnabled();
         }
 
         public bool IsDebugMaterialDisplayEnabled()
         {
             return materialDebugSettings.IsDebugDisplayEnabled();
         }
+
+        public bool IsDebugFullScreenEnabled()
+        {
+            return fullScreenDebugMode != FullScreenDebugMode.None;
+        }
+
         public bool IsDebugMipMapDisplayEnabled()
         {
             return mipMapDebugSettings.IsDebugDisplayEnabled();
@@ -154,6 +160,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             //    Texture.SetStreamingTextureMaterialDebugProperties();
         }
 
+        public bool DebugNeedsExposure()
+        {
+            DebugLightingMode debugLighting = lightingDebugSettings.debugLightingMode;
+            DebugViewGbuffer debugGBuffer = (DebugViewGbuffer)materialDebugSettings.debugViewGBuffer;
+            return  (debugLighting == DebugLightingMode.DiffuseLighting || debugLighting == DebugLightingMode.SpecularLighting) ||
+                    (debugGBuffer == DebugViewGbuffer.BakeDiffuseLightingWithAlbedoPlusEmissive) ||
+                    (fullScreenDebugMode == FullScreenDebugMode.PreRefractionColorPyramid || fullScreenDebugMode == FullScreenDebugMode.FinalColorPyramid);
+        }
+
         void RegisterDisplayStatsDebug()
         {
             m_DebugDisplayStatsItems = new DebugUI.Widget[]
@@ -218,7 +233,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     children =
                     {
-                        new DebugUI.UIntField { displayName = "Shadow Atlas Index", getter = () => lightingDebugSettings.shadowAtlasIndex, setter = value => lightingDebugSettings.shadowAtlasIndex = value, min = () => 0u, max = () => (uint)(RenderPipelineManager.currentPipeline as HDRenderPipeline).GetShadowAtlasCount() - 1u }
+                        new DebugUI.UIntField { displayName = "Shadow Atlas Index", getter = () => lightingDebugSettings.shadowAtlasIndex, setter = value => lightingDebugSettings.shadowAtlasIndex = value, min = () => 0u, max = () => (uint)(RenderPipelineManager.currentPipeline as HDRenderPipeline).GetShadowAtlasCount() - 1u },
+                        new DebugUI.UIntField { displayName = "Shadow Slice Index", getter = () => lightingDebugSettings.shadowSliceIndex, setter = value => lightingDebugSettings.shadowSliceIndex = value, min = () => 0u, max = () => (uint)(RenderPipelineManager.currentPipeline as HDRenderPipeline).GetShadowSliceCount(lightingDebugSettings.shadowAtlasIndex) - 1u }
                     }
                 });
             }
@@ -259,10 +275,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                     {
                                         case FullScreenDebugMode.FinalColorPyramid:
                                         case FullScreenDebugMode.PreRefractionColorPyramid:
-                                            id = HDShaderIDs._GaussianPyramidColorMipSize;
+                                            id = HDShaderIDs._ColorPyramidScale;
                                             break;
                                         default:
-                                            id = HDShaderIDs._DepthPyramidMipSize;
+                                            id = HDShaderIDs._DepthPyramidScale;
                                             break;
                                     }
                                     var size = Shader.GetGlobalVector(id);
@@ -276,10 +292,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                     {
                                         case FullScreenDebugMode.FinalColorPyramid:
                                         case FullScreenDebugMode.PreRefractionColorPyramid:
-                                            id = HDShaderIDs._GaussianPyramidColorMipSize;
+                                            id = HDShaderIDs._ColorPyramidScale;
                                             break;
                                         default:
-                                            id = HDShaderIDs._DepthPyramidMipSize;
+                                            id = HDShaderIDs._DepthPyramidScale;
                                             break;
                                     }
                                     var size = Shader.GetGlobalVector(id);
@@ -294,10 +310,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                     {
                                         case FullScreenDebugMode.FinalColorPyramid:
                                         case FullScreenDebugMode.PreRefractionColorPyramid:
-                                            id = HDShaderIDs._GaussianPyramidColorMipSize;
+                                            id = HDShaderIDs._ColorPyramidScale;
                                             break;
                                         default:
-                                            id = HDShaderIDs._DepthPyramidMipSize;
+                                            id = HDShaderIDs._DepthPyramidScale;
                                             break;
                                     }
                                     var size = Shader.GetGlobalVector(id);
@@ -340,6 +356,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             list.Add(new DebugUI.BoolField { displayName = "Override Normal", getter = () => lightingDebugSettings.overrideNormal, setter = value => lightingDebugSettings.overrideNormal = value });
 
+            list.Add(new DebugUI.BoolField { displayName = "Override Specular Color", getter = () => lightingDebugSettings.overrideSpecularColor, setter = value => lightingDebugSettings.overrideSpecularColor = value, onValueChanged = RefreshLightingDebug });
+            if (lightingDebugSettings.overrideSpecularColor)
+            {
+                list.Add(new DebugUI.Container
+                {
+                    children =
+                    {
+                        new DebugUI.ColorField { displayName = "Specular Color", getter = () => lightingDebugSettings.overrideSpecularColorValue, setter = value => lightingDebugSettings.overrideSpecularColorValue = value, showAlpha = false, hdr = false }
+                    }
+                });
+            }
+
             list.Add(new DebugUI.EnumField { displayName = "Tile/Cluster Debug", getter = () => (int)lightingDebugSettings.tileClusterDebug, setter = value => lightingDebugSettings.tileClusterDebug = (LightLoop.TileClusterDebug)value, autoEnum = typeof(LightLoop.TileClusterDebug), onValueChanged = RefreshLightingDebug });
             if (lightingDebugSettings.tileClusterDebug != LightLoop.TileClusterDebug.None && lightingDebugSettings.tileClusterDebug != LightLoop.TileClusterDebug.MaterialFeatureVariants)
             {
@@ -363,6 +391,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     }
                 });
             }
+
+            if (DebugNeedsExposure())
+                list.Add(new DebugUI.FloatField { displayName = "Debug Exposure", getter = () => lightingDebugSettings.debugExposure, setter = value => lightingDebugSettings.debugExposure = value });
 
             m_DebugLightingItems = list.ToArray();
             var panel = DebugManager.instance.GetPanel(k_PanelLighting, true);
@@ -409,7 +440,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             UnregisterDebugItems(k_PanelDisplayStats, m_DebugDisplayStatsItems);
             UnregisterDebugItems(k_PanelMaterials, m_DebugMaterialItems);
             UnregisterDebugItems(k_PanelLighting, m_DebugLightingItems);
-            UnregisterDebugItems(k_PanelRendering, m_DebugLightingItems);
+            UnregisterDebugItems(k_PanelRendering, m_DebugRenderingItems);
         }
 
         void UnregisterDebugItems(string panelName, DebugUI.Widget[] items)

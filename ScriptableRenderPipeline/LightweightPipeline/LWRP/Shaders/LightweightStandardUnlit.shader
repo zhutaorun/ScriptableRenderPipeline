@@ -19,7 +19,7 @@ Shader "LightweightPipeline/Standard Unlit"
     }
     SubShader
     {
-        Tags { "RenderType" = "Opaque" "IgnoreProjectors" = "True" "RenderPipeline" = "LightweightPipeline" }
+        Tags { "RenderType" = "Opaque" "IgnoreProjectors" = "True" "RenderPipeline" = "LightweightPipeline" "IgnoreProjector" = "True"}
         LOD 100
 
         Blend [_SrcBlend][_DstBlend]
@@ -103,6 +103,7 @@ Shader "LightweightPipeline/Standard Unlit"
                 half2 uv = IN.uv0AndFogCoord.xy;
                 half4 texColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv);
                 half3 color = texColor.rgb * _Color.rgb;
+
                 half alpha = texColor.a * _Color.a;
                 AlphaDiscard(alpha, _Cutoff);
 

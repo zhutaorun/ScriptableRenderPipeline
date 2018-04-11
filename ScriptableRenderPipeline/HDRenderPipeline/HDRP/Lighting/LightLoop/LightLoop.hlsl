@@ -31,14 +31,15 @@ void ApplyDebug(LightLoopContext lightLoopContext, float3 positionWS, inout floa
             float3(1.0, 1.0, 1.0)
         };
 
-        diffuseLighting = float3(0.0, 0.0, 0.0);
+        diffuseLighting = float3(1.0, 1.0, 1.0);
         if (_DirectionalLightCount > 0)
         {
             int shadowIdx = _DirectionalLightDatas[0].shadowIndex;
             float shadow = GetDirectionalShadowAttenuation(lightLoopContext.shadowContext, positionWS, float3(0.0, 1.0, 0.0 ), shadowIdx, -_DirectionalLightDatas[0].forward, float2(0.0, 0.0));
             uint  payloadOffset;
             real  alpha;
-            int shadowSplitIndex = EvalShadow_GetSplitIndex(lightLoopContext.shadowContext, shadowIdx, positionWS, payloadOffset, alpha);
+            int cascadeCount;
+            int shadowSplitIndex = EvalShadow_GetSplitIndex(lightLoopContext.shadowContext, shadowIdx, positionWS, payloadOffset, alpha, cascadeCount);
             if (shadowSplitIndex >= 0)
             {
                 diffuseLighting = lerp(s_CascadeColors[shadowSplitIndex], s_CascadeColors[shadowSplitIndex+1], alpha) * shadow;
@@ -46,6 +47,10 @@ void ApplyDebug(LightLoopContext lightLoopContext, float3 positionWS, inout floa
 
         }
     }
+
+    // We always apply exposure when in debug mode. The exposure value will be at a neutral 0.0 when not needed.
+    diffuseLighting *= exp2(_DebugExposure);
+    specularLighting *= exp2(_DebugExposure);
 #endif
 }
 

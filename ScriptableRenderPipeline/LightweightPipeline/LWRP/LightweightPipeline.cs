@@ -312,9 +312,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             Array.Sort(cameras, m_CameraComparer);
             foreach (Camera camera in cameras)
             {
+                RenderPipeline.BeginCameraRendering(camera);
+
+                bool sceneViewCamera = camera.cameraType == CameraType.SceneView;
+                bool stereoEnabled = XRSettings.isDeviceActive && !sceneViewCamera && (camera.stereoTargetEye == StereoTargetEyeMask.Both);
                 m_CurrCamera = camera;
-                bool sceneViewCamera = m_CurrCamera.cameraType == CameraType.SceneView;
-                bool stereoEnabled = IsStereoEnabled(m_CurrCamera);
 
                 // Disregard variations around kRenderScaleThreshold.
                 m_RenderScale = (Mathf.Abs(1.0f - m_Asset.RenderScale) < kRenderScaleThreshold) ? 1.0f : m_Asset.RenderScale;
@@ -327,12 +329,16 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 RenderPipeline.BeginCameraRendering(m_CurrCamera);
 
 
-
+                var cmd = CommandBufferPool.Get("");
                 ScriptableCullingParameters cullingParameters;
                 if (!CullResults.GetCullingParameters(m_CurrCamera, stereoEnabled, out cullingParameters))
+                {
+                    cmd.EndSample("LightweightPipeline.Render");
+                    context.ExecuteCommandBuffer(cmd);
+                    CommandBufferPool.Release(cmd);
                     continue;
+                }
 
-                var cmd = CommandBufferPool.Get("");
                 cullingParameters.shadowDistance = Mathf.Min(m_ShadowSettings.maxShadowDistance,
                         m_CurrCamera.farClipPlane);
 
@@ -441,6 +447,20 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             CommandBuffer cmd = CommandBufferPool.Get("Collect Shadows");
 
             SetShadowCollectPassKeywords(cmd, visibleLights[lightData.mainLightIndex], ref lightData);
+
+            // TODO: Support RenderScale for the SSSM target.  Should probably move allocation elsewhere, or at
+            // least propogate RenderTextureDescriptor generation
+            if (LightweightUtils.HasFlag(frameRenderingConfiguration, FrameRenderingConfiguration.Stereo))
+            {
+                var desc = XRSettings.eyeTextureDesc;
+                desc.depthBufferBits = 0;
+                desc.colorFormat = m_ShadowSettings.screenspaceShadowmapTextureFormat;
+                cmd.GetTemporaryRT(m_ScreenSpaceShadowMapRTID, desc, FilterMode.Bilinear);
+            }
+            else
+            {
+                cmd.GetTemporaryRT(m_ScreenSpaceShadowMapRTID, m_CurrCamera.pixelWidth, m_CurrCamera.pixelHeight, 0, FilterMode.Bilinear, m_ShadowSettings.screenspaceShadowmapTextureFormat);
+            }
 
             // Note: The source isn't actually 'used', but there's an engine peculiarity (bug) that
             // doesn't like null sources when trying to determine a stereo-ized blit.  So for proper
@@ -732,13 +752,13 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             m_CurrCameraColorRT = BuiltinRenderTextureType.CameraTarget;
 
             if (LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.IntermediateTexture) || m_RequireDepthTexture)
-                SetupIntermediateRenderTextures(cmd, renderingConfig, shadows, msaaSamples);
+                SetupIntermediateRenderTextures(cmd, renderingConfig, msaaSamples);
 
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
 
-        private void SetupIntermediateRenderTextures(CommandBuffer cmd, FrameRenderingConfiguration renderingConfig, bool shadows, int msaaSamples)
+        private void SetupIntermediateRenderTextures(CommandBuffer cmd, FrameRenderingConfiguration renderingConfig, int msaaSamples)
         {
             RenderTextureDescriptor baseDesc;
             if (LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.Stereo))
@@ -746,9 +766,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             else
                 baseDesc = new RenderTextureDescriptor(m_CurrCamera.pixelWidth, m_CurrCamera.pixelHeight);
 
-            float renderScale = GetRenderScale();
+            float renderScale = (m_CurrCamera.cameraType == CameraType.Game) ? m_Asset.RenderScale : 1.0f;
             baseDesc.width = (int)((float)baseDesc.width * renderScale);
             baseDesc.height = (int)((float)baseDesc.height * renderScale);
+
+            // TODO: Might be worth caching baseDesc for allocation of other targets (Screen-space Shadow Map?)
 
             if (m_RequireDepthTexture)
             {
@@ -761,6 +783,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 if (LightweightUtils.HasFlag(renderingConfig, FrameRenderingConfiguration.DepthCopy))
                     cmd.GetTemporaryRT(CameraRenderTargetID.depthCopy, depthRTDesc, FilterMode.Bilinear);
 
+                /*
                 if (shadows && m_ShadowSettings.screenSpace)
                 {
                     var screenspaceShadowmapDesc = baseDesc;
@@ -768,6 +791,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                     screenspaceShadowmapDesc.colorFormat = m_ShadowSettings.screenspaceShadowmapTextureFormat;
                     cmd.GetTemporaryRT(m_ScreenSpaceShadowMapRTID, screenspaceShadowmapDesc, FilterMode.Bilinear);
                 }
+                */
             }
 
             var colorRTDesc = baseDesc;
@@ -1175,19 +1199,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             CoreUtils.SetKeyword(cmd, "_MIXED_LIGHTING_SUBTRACTIVE", m_MixedLightingSetup == MixedLightingSetup.Subtractive);
             CoreUtils.SetKeyword(cmd, "_VERTEX_LIGHTS", vertexLightsCount > 0);
             CoreUtils.SetKeyword(cmd, "SOFTPARTICLES_ON", m_RequireDepthTexture && m_Asset.RequireSoftParticles);
-
-            bool linearFogModeEnabled = false;
-            bool exponentialFogModeEnabled = false;
-            if (RenderSettings.fog)
-            {
-                if (RenderSettings.fogMode == FogMode.Linear)
-                    linearFogModeEnabled = true;
-                else
-                    exponentialFogModeEnabled = true;
-            }
-
-            CoreUtils.SetKeyword(cmd, "FOG_LINEAR", linearFogModeEnabled);
-            CoreUtils.SetKeyword(cmd, "FOG_EXP2", exponentialFogModeEnabled);
         }
 
         private void SetShadowCollectPassKeywords(CommandBuffer cmd, VisibleLight shadowLight, ref LightData lightData)
