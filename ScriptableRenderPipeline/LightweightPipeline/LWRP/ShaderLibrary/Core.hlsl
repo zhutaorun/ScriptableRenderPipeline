@@ -41,7 +41,6 @@
     #define UNITY_Z_0_FAR_FROM_CLIPSPACE(coord) (coord)
 #endif
 
-
 void AlphaDiscard(half alpha, half cutoff, half offset = 0.0h)
 {
 #ifdef _ALPHATEST_ON

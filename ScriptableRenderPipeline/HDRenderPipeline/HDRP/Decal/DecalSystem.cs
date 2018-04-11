@@ -139,7 +139,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return res;
             }
 
-            public void UpdateCachedData(Transform transform, float drawDistance, float fadeScale, DecalHandle handle)
+            public void UpdateCachedData(Transform transform, float drawDistance, float fadeScale, DecalHandle handle) 
             {
                 int index = handle.m_Index;
                 m_CachedDecalToWorld[index] = transform.localToWorldMatrix;
@@ -359,7 +359,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 m_DiffuseTexIndex = (m_DiffuseTexture != null) ? instance.TextureAtlas.FetchSlice(cmd, m_DiffuseTexture) : -1;
                 m_NormalTexIndex = (m_NormalTexture != null) ? instance.TextureAtlas.FetchSlice(cmd, m_NormalTexture) : -1;
-                m_MaskTexIndex = (m_MaskTexture != null) ? instance.TextureAtlas.FetchSlice(cmd, m_MaskTexture) : -1;
+                m_MaskTexIndex = (m_MaskTexture != null) ? instance.TextureAtlas.FetchSlice(cmd, m_MaskTexture) : -1;             
             }
 
             public void RemoveFromTextureCache()
@@ -443,7 +443,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         public DecalHandle AddDecal(Transform transform, float drawDistance, float fadeScale, Material material)
-        {
+        {			
             DecalSet decalSet = null;
             int key = material.GetInstanceID();
             if (!m_DecalSets.TryGetValue(key, out decalSet))
@@ -511,7 +511,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 pair.Value.EndCull();
             }
         }
-
+       
         public void RenderIntoDBuffer(CommandBuffer cmd)
         {
             if (m_DecalMesh == null)

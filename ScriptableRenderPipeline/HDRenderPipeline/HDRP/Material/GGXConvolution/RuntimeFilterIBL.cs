@@ -87,7 +87,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             CoreUtils.Destroy(m_GgxConvolveMaterial);
             CoreUtils.Destroy(m_GgxIblSampleData);
-
             for (var i = 0; i < m_PlanarColorMips.Count; ++i)
                 m_PlanarColorMips[i].Release();
             m_PlanarColorMips.Clear();
@@ -168,11 +167,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 var lodIsMissing = i >= m_PlanarColorMips.Count;
                 RenderTexture rt = null;
-                var createRT = lodIsMissing
+                var createRT = lodIsMissing 
                     || (rt = m_PlanarColorMips[i]) == null
                     || rtHash != HashRenderTextureProperties(
                         rt.width, rt.height, rt.depth, rt.format, rt.sRGB
-                            ? RenderTextureReadWrite.sRGB
+                            ? RenderTextureReadWrite.sRGB 
                             : RenderTextureReadWrite.Linear
                     );
 
@@ -237,10 +236,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         int HashRenderTextureProperties(
-            int width,
+            int width, 
             int height,
-            int depth,
-            RenderTextureFormat format,
+            int depth, 
+            RenderTextureFormat format, 
             RenderTextureReadWrite sRGB)
         {
             return  width.GetHashCode()

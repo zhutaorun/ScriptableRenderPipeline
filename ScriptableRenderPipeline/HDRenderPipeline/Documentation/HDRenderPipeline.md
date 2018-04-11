@@ -886,3 +886,5 @@ Shader "Hidden/HDRenderPipeline/Sky/HDRISky"<br/>{
 ```
 
 After doing all this, the new Sky should automatically appear in the combo box in the *Visual Environment* component.
+
+

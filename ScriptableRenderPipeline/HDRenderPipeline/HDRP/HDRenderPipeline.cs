@@ -180,7 +180,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_ValidAPI = false;
 
                 return ;
-            }
+            }            
 
             m_Asset = asset;
             m_GPUCopy = new GPUCopy(asset.renderPipelineResources.copyChannelCS);
@@ -360,8 +360,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 Debug.LogError("High Definition Render Pipeline doesn't support Gamma mode, change to Linear mode");
             }
-
-
 #endif
 
             if (!IsSupportedPlatform())
@@ -371,7 +369,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #if UNITY_EDITOR
                 foreach (UnityEditor.SceneView sv in Resources.FindObjectsOfTypeAll(typeof(UnityEditor.SceneView)))
                     sv.ShowNotification(new GUIContent("Platform " + SystemInfo.operatingSystem + " with device " + SystemInfo.graphicsDeviceType.ToString() + " is not supported, no rendering will occur"));
-#endif
+#endif                
 
                 return false;
             }
@@ -729,12 +727,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             }
                             VolumeManager.instance.Update(camera.transform, layerMask);
                         }
-                    }
-
-                    // Disable postprocess if we enable debug mode
-                    if (m_CurrentDebugDisplaySettings.fullScreenDebugMode == FullScreenDebugMode.None && m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled())
-                    {
-                        m_FrameSettings.enablePostprocess = false;
                     }
 
                     var postProcessLayer = camera.GetComponent<PostProcessLayer>();

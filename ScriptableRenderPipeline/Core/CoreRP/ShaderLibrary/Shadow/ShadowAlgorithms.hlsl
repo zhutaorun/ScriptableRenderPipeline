@@ -569,7 +569,7 @@ real EvalShadow_CascadedDepth_Dither( ShadowContext shadowContext, real3 positio
 	real alpha;
 	int  cascadeCount;
 	int  shadowSplitIndex = EvalShadow_GetSplitIndex( shadowContext, index, positionWS, payloadOffset, alpha, cascadeCount );
-
+	
 	if( shadowSplitIndex < 0 )
 		return 1.0;
 
@@ -804,7 +804,7 @@ real3 EvalShadow_GetClosestSample_Cascade( ShadowContext shadowContext, real3 po
 	real alpha;
 	int  cascadeCount;
 	int  shadowSplitIndex = EvalShadow_GetSplitIndex( shadowContext, index, positionWS, payloadOffset, alpha, cascadeCount );
-
+	
 	if( shadowSplitIndex < 0 )
 		return 0.0;
 
@@ -830,7 +830,7 @@ real3 EvalShadow_GetClosestSample_Cascade( ShadowContext shadowContext, Texture2
 	real alpha;
 	int  cascadeCount;
 	int  shadowSplitIndex = EvalShadow_GetSplitIndex( shadowContext, index, positionWS, payloadOffset, alpha, cascadeCount );
-
+	
 	if( shadowSplitIndex < 0 )
 		return 0.0;
 

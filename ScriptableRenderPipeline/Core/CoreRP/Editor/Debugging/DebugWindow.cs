@@ -47,11 +47,6 @@ namespace UnityEditor.Experimental.Rendering
         static Dictionary<Type, Type> s_WidgetStateMap; // DebugUI.Widget type -> DebugState type
         static Dictionary<Type, DebugUIDrawer> s_WidgetDrawerMap; // DebugUI.Widget type -> DebugUIDrawer
 
-        bool m_IsActiveInPlayMode
-        {
-            get { return Application.isPlaying && DebugManager.instance.displayRuntimeUI; }
-        }
-
         [DidReloadScripts]
         static void OnEditorReload()
         {
@@ -279,9 +274,6 @@ namespace UnityEditor.Experimental.Rendering
 
         void Update()
         {
-            if (m_IsActiveInPlayMode)
-                return;
-
             int treeState = DebugManager.instance.GetState();
 
             if (m_DebugTreeState != treeState || m_IsDirty)
@@ -297,12 +289,6 @@ namespace UnityEditor.Experimental.Rendering
         {
             if (s_Styles == null)
                 s_Styles = new Styles();
-
-            if (m_IsActiveInPlayMode)
-            {
-                EditorGUILayout.HelpBox("The editor debug window is disabled while the runtime one is active.", MessageType.Info);
-                return;
-            }
 
             var panels = DebugManager.instance.panels;
             int itemCount = panels.Count(x => !x.isRuntimeOnly && x.children.Count(w => !w.isRuntimeOnly) > 0);
