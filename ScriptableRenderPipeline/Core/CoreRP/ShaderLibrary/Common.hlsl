@@ -96,6 +96,8 @@
 #define TEMPLATE_2_REAL TEMPLATE_2_HALF
 #define TEMPLATE_3_REAL TEMPLATE_3_HALF
 
+#define HAS_HALF 1
+
 #else
 
 #define real float
@@ -117,6 +119,8 @@
 #define TEMPLATE_2_REAL TEMPLATE_2_FLT
 #define TEMPLATE_3_REAL TEMPLATE_3_FLT
 
+#define HAS_HALF 0
+
 #endif // SHADER_API_MOBILE
 
 #endif // #ifndef real
@@ -125,7 +129,7 @@
 // (Note only 45 and above support compute shader)
 #ifdef  SHADER_STAGE_COMPUTE
 #   ifndef SHADER_TARGET
-#       if defined(SHADER_API_METAL) || defined(SHADER_API_VULKAN)
+#       if defined(SHADER_API_METAL)
 #       define SHADER_TARGET 45
 #       else
 #       define SHADER_TARGET 50
@@ -820,6 +824,7 @@ void LODDitheringTransition(uint2 positionSS, float ditherFactor)
 
     // We want to have a symmetry between 0..0.5 ditherFactor and 0.5..1 so no pixels are transparent during the transition
     // this is handled by this test which reverse the pattern
+    // TODO: replace the test (ditherFactor >= 0.5) with (isLod0) to avoid the distracting pattern flip around 0.5.  
     p = (ditherFactor >= 0.5) ? p : 1 - p;
     clip(ditherFactor - p);
 }

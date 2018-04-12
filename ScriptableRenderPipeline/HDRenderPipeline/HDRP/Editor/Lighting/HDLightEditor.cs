@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 
@@ -9,6 +10,19 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     [CustomEditorForRenderPipeline(typeof(Light), typeof(HDRenderPipelineAsset))]
     sealed partial class HDLightEditor : LightEditor
     {
+        [MenuItem("CONTEXT/Light/Remove HD Light", false,0)]
+        static void RemoveLight(MenuCommand menuCommand)
+        {
+            GameObject go = ( (Light) menuCommand.context ).gameObject;
+
+            Assert.IsNotNull(go);
+
+            Undo.IncrementCurrentGroup();
+            Undo.DestroyObjectImmediate(go.GetComponent<Light>());
+            Undo.DestroyObjectImmediate(go.GetComponent<HDAdditionalLightData>());
+            Undo.DestroyObjectImmediate(go.GetComponent<AdditionalShadowData>());
+        }
+
         sealed class SerializedLightData
         {
             public SerializedProperty directionalIntensity;
@@ -312,6 +326,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         // Caution: this function must match the one in HDAdditionalLightData.ConvertPhysicalLightIntensityToLightIntensity - any change need to be replicated
         void UpdateLightIntensity()
         {
+            // Clamp negative values.
+            m_AdditionalLightData.directionalIntensity.floatValue = Mathf.Max(0, m_AdditionalLightData.directionalIntensity.floatValue);
+            m_AdditionalLightData.punctualIntensity.floatValue    = Mathf.Max(0, m_AdditionalLightData.punctualIntensity.floatValue);
+            m_AdditionalLightData.areaIntensity.floatValue        = Mathf.Max(0, m_AdditionalLightData.areaIntensity.floatValue);
+
             switch (m_LightShape)
             {
                 case LightShape.Directional:
@@ -480,7 +499,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         // Internal utilities
         void ApplyAdditionalComponentsVisibility(bool hide)
         {
-            var flags = hide ? HideFlags.HideInInspector : HideFlags.None;
+            // UX team decided thta we should always show component in inspector.
+            // However already authored scene save this settings, so force the component to be visible
+            // var flags = hide ? HideFlags.HideInInspector : HideFlags.None;
+            var flags = HideFlags.None;
 
             foreach (var t in m_SerializedAdditionalLightData.targetObjects)
                 ((HDAdditionalLightData)t).hideFlags = flags;
