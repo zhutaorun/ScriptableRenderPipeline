@@ -202,11 +202,13 @@ Shader "GraphicTests/ComparerShader"
                     o.rgb = f;
                 if (_Mode == 5) // Heat view
                 {
-                    f = f * 3;
+                    float3 rgb = f.xxx;
 
-                    o.b = 1-abs( clamp(f, 0, 2)-1) ;
-                    o.g = 1-abs( clamp(f, 1, 3)-2 );
-                    o.r = clamp(f, 2, 3) - 2;
+                    rgb *= 5;
+
+                    o.b = saturate( 1.5 - abs( 1.5 - rgb.b ) );
+                    o.g = saturate( 2 - abs( 3 - rgb.g ) );
+                    o.r = saturate( 1.5 - abs( 4.5 - rgb.r ) );
                 }
 
                 _Split = lerp(_Split, 0.5, _ResultSplit);

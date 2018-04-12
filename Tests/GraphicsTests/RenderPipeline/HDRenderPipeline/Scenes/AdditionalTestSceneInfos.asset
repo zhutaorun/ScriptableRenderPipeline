@@ -12,12 +12,6 @@ MonoBehaviour:
   m_Name: AdditionalTestSceneInfos
   m_EditorClassIdentifier: 
   additionalInfos:
-  - name: 1102
-    comment: Waiting for negative values in BC6H.
-  - name: 1103
-    comment: Waiting for negative values in BC6H.
-  - name: 1206
-    comment: Waiting for negative values in BC6H.
   - name: 1302
     comment: Open the scene and apply the correct pipeline.
   - name: 1303
