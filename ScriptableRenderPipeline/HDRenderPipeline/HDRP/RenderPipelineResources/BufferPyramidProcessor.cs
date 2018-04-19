@@ -189,7 +189,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 var dest = mips[i];
 
                 var srcMip = new RectInt(0, 0, srcRect.width >> i, srcRect.height >> i);
-                //var dstMip = new RectInt(0, 0, srcMip.width >> 1, srcMip.height >> 1);
+                var dstMip = new RectInt(0, 0, srcMip.width >> 1, srcMip.height >> 1);
                 var srcWorkMip = new RectInt(
                     0,
                     0,
@@ -218,8 +218,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     1
                 );
 
-                var dstMipWidthToCopy = Mathf.Min(dest.width, dstWorkMip.width);
-                var dstMipHeightToCopy = Mathf.Min(dest.height, dstWorkMip.height);
+                var dstMipWidthToCopy = Mathf.Min(dest.width, dstMip.width);
+                var dstMipHeightToCopy = Mathf.Min(dest.height, dstMip.height);
 
                 // If we could bind texture mips as UAV we could avoid this copy...(which moreover copies more than the needed viewport if not fullscreen)
                 cmd.CopyTexture(
