@@ -65,9 +65,9 @@ MonoBehaviour:
       pointCookieSize: 512
       cubeCookieTexArraySize: 16
       reflectionProbeCacheSize: 128
-      planarReflectionProbeCacheSize: 128
+      planarReflectionProbeCacheSize: 4
       reflectionCubemapSize: 128
-      planarReflectionTextureSize: 128
+      planarReflectionTextureSize: 1024
       reflectionCacheCompressed: 0
       planarReflectionCacheCompressed: 0
       maxPlanarReflectionProbes: 128
@@ -80,6 +80,7 @@ MonoBehaviour:
       shadowAtlasHeight: 4096
     decalSettings:
       drawDistance: 1000
-      atlasSize: 8192
+      atlasWidth: 4096
+      atlasHeight: 4096
   diffusionProfileSettings: {fileID: 11400000, guid: 404820c4cf36ad944862fa59c56064f0,
     type: 2}

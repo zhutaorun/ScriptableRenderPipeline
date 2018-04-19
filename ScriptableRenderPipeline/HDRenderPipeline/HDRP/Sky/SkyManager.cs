@@ -27,15 +27,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
     public class BuiltinSkyParameters
     {
-        public Matrix4x4        pixelCoordToViewDirMatrix;
-        public Matrix4x4        invViewProjMatrix;
-        public Vector3          cameraPosWS;
-        public Vector4          screenSize;
-        public CommandBuffer    commandBuffer;
-        public Light            sunLight;
-        public RTHandle         colorBuffer;
-        public RTHandle         depthBuffer;
-        public HDCamera         hdCamera;
+        public Matrix4x4                pixelCoordToViewDirMatrix;
+        public Matrix4x4                invViewProjMatrix;
+        public Vector3                  cameraPosWS;
+        public Vector4                  screenSize;
+        public CommandBuffer            commandBuffer;
+        public Light                    sunLight;
+        public RTHandleSystem.RTHandle  colorBuffer;
+        public RTHandleSystem.RTHandle  depthBuffer;
+        public HDCamera                 hdCamera;
+
+        public DebugDisplaySettings debugSettings;
 
         public static RenderTargetIdentifier nullRT = -1;
     }
@@ -144,7 +146,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #if UNITY_EDITOR
             if (camera.camera.cameraType == CameraType.Preview)
             {
-                m_VisualSky.skySettings = m_DefaultPreviewSky;
+                m_VisualSky.skySettings = GetDefaultPreviewSkyInstance();
             }
 #endif
 
@@ -178,6 +180,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalFloat(HDShaderIDs._SkyTextureMipCount, mipCount);
         }
 
+#if UNITY_EDITOR
+        ProceduralSky GetDefaultPreviewSkyInstance()
+        {
+            if (m_DefaultPreviewSky == null)
+            {
+                m_DefaultPreviewSky = ScriptableObject.CreateInstance<ProceduralSky>();
+            }
+
+            return m_DefaultPreviewSky;
+        }
+#endif
+
         public void Build(HDRenderPipelineAsset hdAsset, IBLFilterGGX iblFilterGGX)
         {
             m_BakingSkyRenderingContext = new SkyRenderingContext(iblFilterGGX, (int)hdAsset.renderPipelineSettings.lightLoopSettings.skyReflectionSize, false);
@@ -189,14 +203,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_LightingOverrideVolumeStack = VolumeManager.instance.CreateStack();
             m_LightingOverrideLayerMask = hdAsset.renderPipelineSettings.lightLoopSettings.skyLightingOverrideLayerMask;
-
-#if UNITY_EDITOR
-            m_DefaultPreviewSky = ScriptableObject.CreateInstance<ProceduralSky>();
-#endif
         }
 
         public void Cleanup()
         {
+
+#if UNITY_EDITOR
+            CoreUtils.Destroy(m_DefaultPreviewSky);
+#endif
             CoreUtils.Destroy(m_StandardSkyboxMaterial);
             CoreUtils.Destroy(m_BlitCubemapMaterial);
             CoreUtils.Destroy(m_OpaqueAtmScatteringMaterial);
@@ -209,11 +223,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_SkyRenderingContext.Cleanup();
         }
 
-        public bool IsSkyValid()
+        public bool IsLightingSkyValid()
         {
             return m_VisualSky.IsValid() || m_LightingOverrideSky.IsValid();
         }
 
+        public bool IsVisualSkyValid()
+        {
+            return m_VisualSky.IsValid();
+        }
 
         void BlitCubemap(CommandBuffer cmd, Cubemap source, RenderTexture dest)
         {
@@ -284,7 +302,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_UpdateRequired = false;
 
             SetGlobalSkyTexture(cmd);
-            if (IsSkyValid())
+            if (IsLightingSkyValid())
             {
                 cmd.SetGlobalInt(HDShaderIDs._EnvLightSkyEnabled, 1);
             }
@@ -294,9 +312,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        public void RenderSky(HDCamera camera, Light sunLight, RTHandle colorBuffer, RTHandle depthBuffer, CommandBuffer cmd)
+        public void RenderSky(HDCamera camera, Light sunLight, RTHandleSystem.RTHandle colorBuffer, RTHandleSystem.RTHandle depthBuffer, DebugDisplaySettings debugSettings, CommandBuffer cmd)
         {
-            m_SkyRenderingContext.RenderSky(m_VisualSky, camera, sunLight, colorBuffer, depthBuffer, cmd);
+            m_SkyRenderingContext.RenderSky(m_VisualSky, camera, sunLight, colorBuffer, depthBuffer, debugSettings, cmd);
         }
 
         public void RenderOpaqueAtmosphericScattering(CommandBuffer cmd)

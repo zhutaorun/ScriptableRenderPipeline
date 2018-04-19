@@ -64,6 +64,12 @@ float GetDirectionalShadowAttenuation( ShadowContext shadowContext, float3 posit
 {
 	return GetDirectionalShadowAttenuation( shadowContext, positionWS, normalWS, shadowDataIndex, L );
 }
+
+float3 GetDirectionalShadowClosestSample( ShadowContext shadowContext, real3 positionWS, real3 normalWS, int index, real4 L )
+{
+	return EvalShadow_GetClosestSample_Cascade( shadowContext, shadowContext.tex2DArray[SHADOW_DISPATCH_DIR_TEX], positionWS, normalWS, index, L );
+}
+
 #endif
 
 
@@ -104,6 +110,17 @@ float GetPunctualShadowAttenuation( ShadowContext shadowContext, float3 position
 {
 	return GetPunctualShadowAttenuation( shadowContext, positionWS, normalWS, shadowDataIndex, L, L_dist );
 }
+
+float3 GetPunctualShadowClosestSample( ShadowContext shadowContext, real3 positionWS, int index, real3 L )
+{
+	return EvalShadow_GetClosestSample_Punctual( shadowContext, shadowContext.tex2DArray[SHADOW_DISPATCH_PUNC_TEX], positionWS, index, L );
+}
+
+float GetPunctualShadowClosestDistance( ShadowContext shadowContext, SamplerState sampl, real3 positionWS, int index, float3 L, float3 lightPositionWS)
+{
+	return EvalShadow_SampleClosestDistance_Punctual( shadowContext, shadowContext.tex2DArray[SHADOW_DISPATCH_PUNC_TEX], sampl, positionWS, index, L, lightPositionWS );
+}
+
 #endif
 
 // cleanup the defines
