@@ -16,6 +16,6 @@ Channel dropdown parameters are dynamic depending on the length of the input vec
 | Name        | Type           | Options  | Description |
 |:------------ |:-------------|:-----|:---|
 | Red out      | Dropdown | Red, Green, Blue, Alpha (depending on input vector dimension) | Defines which input channel should be used in the output's red channel |
-| Green out      | Dropdown | Red, Green, Blue, Alpha (depending on input vector dimension) | Defines which input channel should be used in the output's red channel |
-| Blue out      | Dropdown | Red, Green, Blue, Alpha (depending on input vector dimension) | Defines which input channel should be used in the output's red channel |
-| Alpha out      | Dropdown | Red, Green, Blue, Alpha (depending on input vector dimension) | Defines which input channel should be used in the output's red channel |
+| Green out      | Dropdown | Red, Green, Blue, Alpha (depending on input vector dimension) | Defines which input channel should be used in the output's green channel |
+| Blue out      | Dropdown | Red, Green, Blue, Alpha (depending on input vector dimension) | Defines which input channel should be used in the output's blue channel |
+| Alpha out      | Dropdown | Red, Green, Blue, Alpha (depending on input vector dimension) | Defines which input channel should be used in the output's alpha channel |
