@@ -143,7 +143,7 @@ float3 EvalShadow_ReceiverBias( ShadowData sd, float3 positionWS, float3 normalW
 	float normalBiasMax   = sd.normalBias.y;
 	float normalBiasScale = sd.normalBias.z;
 
-	float  NdotL       = dot( normalWS, L );
+	float  NdotL       = max(FLT_EPS, dot( normalWS, L ));
 	float  sine        = sqrt( saturate( 1.0 - NdotL * NdotL ) );
 	float  tangent     = abs( NdotL ) > 0.0 ? (sine / NdotL) : 0.0;
 		   sine        = clamp( sine    * normalBiasScale, normalBiasMin, normalBiasMax );
