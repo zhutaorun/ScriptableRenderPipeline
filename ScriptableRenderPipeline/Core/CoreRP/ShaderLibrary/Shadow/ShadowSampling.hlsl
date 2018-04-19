@@ -264,6 +264,29 @@ real SampleShadow_PCF_Tent_7x7(ShadowContext shadowContext, inout uint payloadOf
 }
 
 //
+//				   PCSS Sampling
+//
+#include "PCSS.hlsl"
+real SampleShadow_PCSS(ShadowContext shadowContext, inout uint payloadOffset, real3 coord, float slice, Texture2DArray tex, SamplerComparisonState compSamp, SamplerState samp)
+{
+	real2 params     = asfloat( shadowContext.payloads[payloadOffset].xy );
+	real  depthBias  = params.x; //TODO: Pass filter size.
+	payloadOffset++;
+
+	//1) Blocker Search
+	real AverageBlockerDepth = 0.0;
+	real NumBlockers 		 = 0.0;
+	if(!BlockerSearch(AverageBlockerDepth, NumBlockers, coord, slice, tex, samp)) 
+		return 1.0;
+
+	//2) Penumbra Estimation
+	real FilterSize = 0.004 * PenumbraSize(coord.z, AverageBlockerDepth);
+
+	//3) Filter
+	return PCSS(coord, FilterSize, slice, tex, compSamp); 
+}
+
+//
 //					9 tap adaptive PCF sampling
 //
 real SampleShadow_PCF_9tap_Adaptive( ShadowContext shadowContext, inout uint payloadOffset, real4 texelSizeRcp, real3 tcs, real2 sampleBias, float slice, uint texIdx, uint sampIdx )
@@ -557,6 +580,7 @@ real SampleShadow_SelectAlgorithm( ShadowContext shadowContext, ShadowData shado
 	case GPUSHADOWALGORITHM_PCF_TENT_3X3	: return SampleShadow_PCF_Tent_3x3( shadowContext, payloadOffset, shadowData.textureSize, shadowData.texelSizeRcp, posTC, sampleBias, shadowData.slice, tex, compSamp );
 	case GPUSHADOWALGORITHM_PCF_TENT_5X5	: return SampleShadow_PCF_Tent_5x5( shadowContext, payloadOffset, shadowData.textureSize, shadowData.texelSizeRcp, posTC, sampleBias, shadowData.slice, tex, compSamp );
 	case GPUSHADOWALGORITHM_PCF_TENT_7X7	: return SampleShadow_PCF_Tent_7x7( shadowContext, payloadOffset, shadowData.textureSize, shadowData.texelSizeRcp, posTC, sampleBias, shadowData.slice, tex, compSamp );
+	case GPUSHADOWALGORITHM_PCSS		    : return SampleShadow_PCSS( shadowContext, payloadOffset, posTC, shadowData.slice, tex, compSamp, s_point_clamp_sampler );
 
 	default: return 1.0;
 	}
