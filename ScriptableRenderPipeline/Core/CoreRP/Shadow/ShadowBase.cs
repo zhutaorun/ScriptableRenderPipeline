@@ -74,7 +74,7 @@ namespace UnityEngine.Experimental.Rendering
         PCF_tent_3x3    = ShadowAlgorithm.PCF       << 3 | ShadowVariant.V2,
         PCF_tent_5x5    = ShadowAlgorithm.PCF       << 3 | ShadowVariant.V3,
         PCF_tent_7x7    = ShadowAlgorithm.PCF       << 3 | ShadowVariant.V4,
-        PCSS            = ShadowAlgorithm.PCSS      << 3,
+        PCSS            = ShadowAlgorithm.PCSS      << 3 | ShadowVariant.V0,
         VSM             = ShadowAlgorithm.VSM       << 3,
         EVSM_2          = ShadowAlgorithm.EVSM      << 3 | ShadowVariant.V0,
         EVSM_4          = ShadowAlgorithm.EVSM      << 3 | ShadowVariant.V1,

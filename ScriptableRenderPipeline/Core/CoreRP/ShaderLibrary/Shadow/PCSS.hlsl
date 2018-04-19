@@ -71,12 +71,12 @@ real PenumbraSize(real Reciever, real Blocker)
     return (Reciever - Blocker) / Blocker;
 }
 
-bool BlockerSearch(inout real AverageBlockerDepth, inout real NumBlockers, real3 Coord, float Slice, Texture2DArray ShadowMap, SamplerState PointSampler)
+bool BlockerSearch(inout real AverageBlockerDepth, inout real NumBlockers, real LightArea, real3 Coord, float Slice, Texture2DArray ShadowMap, SamplerState PointSampler)
 {
     real BlockerSum = 0.0;
     for (int i = 0; i < 64; ++i)
     {
-        real ShadowMapDepth = SAMPLE_TEXTURE2D_ARRAY_LOD( ShadowMap, PointSampler, Coord.xy + PoissonDisk[i] * 0.004, Slice, 0.0 );
+        real ShadowMapDepth = SAMPLE_TEXTURE2D_ARRAY_LOD( ShadowMap, PointSampler, Coord.xy + PoissonDisk[i] * LightArea, Slice, 0.0 );
 
         if(ShadowMapDepth > Coord.z)
         {

@@ -270,17 +270,17 @@ real SampleShadow_PCF_Tent_7x7(ShadowContext shadowContext, inout uint payloadOf
 real SampleShadow_PCSS(ShadowContext shadowContext, inout uint payloadOffset, real3 coord, float slice, Texture2DArray tex, SamplerComparisonState compSamp, SamplerState samp)
 {
 	real2 params     = asfloat( shadowContext.payloads[payloadOffset].xy );
-	real  depthBias  = params.x; //TODO: Pass filter size.
+	real  LightArea  = 0.01 * (params.x / 255.0); //TODO: Pass filter size.
 	payloadOffset++;
 
 	//1) Blocker Search
 	real AverageBlockerDepth = 0.0;
 	real NumBlockers 		 = 0.0;
-	if(!BlockerSearch(AverageBlockerDepth, NumBlockers, coord, slice, tex, samp)) 
+	if(!BlockerSearch(AverageBlockerDepth, NumBlockers, LightArea, coord, slice, tex, samp)) 
 		return 1.0;
 
 	//2) Penumbra Estimation
-	real FilterSize = 0.004 * PenumbraSize(coord.z, AverageBlockerDepth);
+	real FilterSize = LightArea * PenumbraSize(coord.z, AverageBlockerDepth);
 
 	//3) Filter
 	return PCSS(coord, FilterSize, slice, tex, compSamp); 
