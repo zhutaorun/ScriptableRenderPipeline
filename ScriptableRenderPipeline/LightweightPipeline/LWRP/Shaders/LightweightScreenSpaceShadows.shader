@@ -2,19 +2,25 @@ Shader "Hidden/LightweightPipeline/ScreenSpaceShadows"
 {
     SubShader
     {
-        Tags{ "RenderPipeline" = "LightweightPipeline" }
+        Tags{ "RenderPipeline" = "LightweightPipeline" "IgnoreProjector" = "True"}
 
         HLSLINCLUDE
 
         #pragma prefer_hlslcc gles
-        //Keep compiler quiet about Shadows.hlsl. 
+        #pragma exclude_renderers d3d11_9x
+        //Keep compiler quiet about Shadows.hlsl.
         #include "CoreRP/ShaderLibrary/Common.hlsl"
         #include "CoreRP/ShaderLibrary/EntityLighting.hlsl"
         #include "CoreRP/ShaderLibrary/ImageBasedLighting.hlsl"
         #include "LWRP/ShaderLibrary/Core.hlsl"
         #include "LWRP/ShaderLibrary/Shadows.hlsl"
 
-        SCREENSPACE_TEXTURE(_CameraDepthTexture);
+#if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
+        TEXTURE2D_ARRAY(_CameraDepthTexture);
+#else
+        TEXTURE2D(_CameraDepthTexture);
+#endif // defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
+
         SAMPLER(sampler_CameraDepthTexture);
 
         struct VertexInput
@@ -50,11 +56,11 @@ Shader "Hidden/LightweightPipeline/ScreenSpaceShadows"
             return o;
         }
 
-        half Fragment(Interpolators i) : SV_Target
+        half4 Fragment(Interpolators i) : SV_Target
         {
             UNITY_SETUP_INSTANCE_ID(i);
 #if !defined(UNITY_STEREO_INSTANCING_ENABLED)
-            // Completely unclear why i.stereoTargetEyeIndex doesn't work here, considering 
+            // Completely unclear why i.stereoTargetEyeIndex doesn't work here, considering
             // this has to be correct in order for the texture array slices to be rasterized to
             // We can limit this workaround to stereo instancing for now.
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
@@ -69,21 +75,24 @@ Shader "Hidden/LightweightPipeline/ScreenSpaceShadows"
 #if UNITY_REVERSED_Z
             deviceDepth = 1 - deviceDepth;
 #endif
-            deviceDepth = 2 * deviceDepth - 1; //NOTE: Currently must massage depth before computing CS position. 
+            deviceDepth = 2 * deviceDepth - 1; //NOTE: Currently must massage depth before computing CS position.
 
             float3 vpos = ComputeViewSpacePosition(i.texcoord.zw, deviceDepth, unity_CameraInvProjection);
             float3 wpos = mul(unity_CameraToWorld, float4(vpos, 1)).xyz;
-            
-            //Fetch shadow coordinates for cascade.
-            float4 coords  = ComputeScreenSpaceShadowCoords(wpos);
 
-            return SampleShadowmap(coords);
+            //Fetch shadow coordinates for cascade.
+            float4 coords  = TransformWorldToShadowCoord(wpos);
+
+            // Screenspace shadowmap is only used for directional lights which use orthogonal projection.
+            ShadowSamplingData shadowSamplingData = GetMainLightShadowSamplingData();
+            half shadowStrength = GetMainLightShadowStrength();
+            return SampleShadowmap(coords, TEXTURE2D_PARAM(_ShadowMap, sampler_ShadowMap), shadowSamplingData, shadowStrength);
         }
 
         ENDHLSL
 
         Pass
-        {           
+        {
             ZTest Always
             ZWrite Off
             Cull Off
@@ -91,7 +100,7 @@ Shader "Hidden/LightweightPipeline/ScreenSpaceShadows"
             HLSLPROGRAM
             #pragma multi_compile _ _SHADOWS_SOFT
             #pragma multi_compile _ _SHADOWS_CASCADE
-            
+
             #pragma vertex   Vertex
             #pragma fragment Fragment
             ENDHLSL

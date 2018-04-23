@@ -10,19 +10,21 @@ Pass
 	HLSLPROGRAM
     // Required to compile gles 2.0 with standard srp library
     #pragma prefer_hlslcc gles
-	#pragma target 3.0
+	#pragma exclude_renderers d3d11_9x
+	#pragma target 2.0
 
 	// -------------------------------------
 	// Lightweight Pipeline keywords
 	#pragma multi_compile _ _ADDITIONAL_LIGHTS
 	#pragma multi_compile _ _VERTEX_LIGHTS
 	#pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
-	#pragma multi_compile _ FOG_LINEAR FOG_EXP2
+	#pragma multi_compile _ _SHADOWS_ENABLED
 
 	// -------------------------------------
 	// Unity defined keywords
 	#pragma multi_compile _ DIRLIGHTMAP_COMBINED
 	#pragma multi_compile _ LIGHTMAP_ON
+	#pragma multi_compile_fog
 
 	//--------------------------------------
 	// GPU Instancing
@@ -44,7 +46,7 @@ Pass
 	struct GraphVertexOutput
     {
         float4 clipPos                : SV_POSITION;
-        float4 lightmapUVOrVertexSH   : TEXCOORD0;
+        DECLARE_LIGHTMAP_OR_SH(lightmapUV, vertexSH, 0);
 		half4 fogFactorAndVertexLight : TEXCOORD1; // x: fogFactor, yzw: vertex light
     	float4 shadowCoord            : TEXCOORD2;
         ${Interpolators}
@@ -66,18 +68,26 @@ Pass
 		float3 lwWorldPos = TransformObjectToWorld(v.vertex.xyz);
 		float4 clipPos = TransformWorldToHClip(lwWorldPos);
 
- 		// We either sample GI from lightmap or SH. lightmap UV and vertex SH coefficients
-	    // are packed in lightmapUVOrVertexSH to save interpolator.
-	    // The following funcions initialize
-	    OUTPUT_LIGHTMAP_UV(v.texcoord1, unity_LightmapST, o.lightmapUVOrVertexSH);
-	    OUTPUT_SH(lwWNormal, o.lightmapUVOrVertexSH);
+ 		// We either sample GI from lightmap or SH.
+	    // Lightmap UV and vertex SH coefficients use the same interpolator ("float2 lightmapUV" for lightmap or "half3 vertexSH" for SH)
+        // see DECLARE_LIGHTMAP_OR_SH macro.
+	    // The following funcions initialize the correct variable with correct data
+	    OUTPUT_LIGHTMAP_UV(v.texcoord1, unity_LightmapST, o.lightmapUV);
+	    OUTPUT_SH(lwWNormal, o.vertexSH);
 
 	    half3 vertexLight = VertexLighting(lwWorldPos, lwWNormal);
 	    half fogFactor = ComputeFogFactor(clipPos.z);
 	    o.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
 	    o.clipPos = clipPos;
 
-	    o.shadowCoord = ComputeShadowCoord(o.clipPos);
+	    #ifdef _SHADOWS_ENABLED
+		#if SHADOWS_SCREEN
+			o.shadowCoord = ComputeShadowCoord(clipPos);
+		#else
+			o.shadowCoord = TransformWorldToShadowCoord(lwWorldPos);
+		#endif
+		#endif
+		
 		return o;
 	}
 
@@ -110,10 +120,14 @@ Pass
 #ifdef _NORMALMAP
 	    inputData.normalWS = TangentToWorldNormal(Normal, WorldSpaceTangent, WorldSpaceBiTangent, WorldSpaceNormal);
 #else
+    #if !SHADER_HINT_NICE_QUALITY
+        inputData.normalWS = WorldSpaceNormal;
+    #else
 	    inputData.normalWS = normalize(WorldSpaceNormal);
+    #endif
 #endif
 
-#ifdef SHADER_API_MOBILE
+#if !SHADER_HINT_NICE_QUALITY
 	    // viewDirection should be normalized here, but we avoid doing it as it's close enough and we save some ALU.
 	    inputData.viewDirectionWS = WorldSpaceViewDirection;
 #else
@@ -124,7 +138,7 @@ Pass
 
 	    inputData.fogCoord = IN.fogFactorAndVertexLight.x;
 	    inputData.vertexLighting = IN.fogFactorAndVertexLight.yzw;
-	    inputData.bakedGI = SampleGI(IN.lightmapUVOrVertexSH, inputData.normalWS);
+	    inputData.bakedGI = SAMPLE_GI(IN.lightmapUV, IN.vertexSH, inputData.normalWS);
 
 		half4 color = LightweightFragmentPBR(
 			inputData, 

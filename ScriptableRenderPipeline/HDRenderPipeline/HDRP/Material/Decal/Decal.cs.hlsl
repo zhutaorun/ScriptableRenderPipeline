@@ -38,16 +38,35 @@ struct DecalSurfaceData
 // PackingRules = Exact
 struct DecalData
 {
-	float4x4 worldToDecal;
+    float4x4 worldToDecal;
     float4x4 normalToWorld;
+    float4 diffuseScaleBias;
+    float4 normalScaleBias;
+    float4 maskScaleBias;
 };
 
 //
 // Accessors for UnityEngine.Experimental.Rendering.HDPipeline.DecalData
 //
+float4x4 GetWorldToDecal(DecalData value)
+{
+	return value.worldToDecal;
+}
 float4x4 GetNormalToWorld(DecalData value)
 {
 	return value.normalToWorld;
+}
+float4 GetDiffuseScaleBias(DecalData value)
+{
+	return value.diffuseScaleBias;
+}
+float4 GetNormalScaleBias(DecalData value)
+{
+	return value.normalScaleBias;
+}
+float4 GetMaskScaleBias(DecalData value)
+{
+	return value.maskScaleBias;
 }
 
 //

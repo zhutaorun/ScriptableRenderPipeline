@@ -11,16 +11,21 @@
 CBUFFER_START(UnityDebugDisplay)
 // Set of parameters available when switching to debug shader mode
 int _DebugLightingMode; // Match enum DebugLightingMode
+int _DebugLightingSubMode;
 int _DebugViewMaterial; // Contain the id (define in various materialXXX.cs.hlsl) of the property to display
 int _DebugMipMapMode; // Match enum DebugMipMapMode
+int _DebugStep;
 float4 _DebugLightingAlbedo; // x == bool override, yzw = albedo for diffuse
 float4 _DebugLightingSmoothness; // x == bool override, y == override value
 float4 _DebugLightingNormal; // x == bool override
+float4 _DebugLightingSpecularColor; // x == bool override, yzw = specular color
 float4 _MousePixelCoord;  // xy unorm, zw norm
-float _DebugEnvironmentProxyDepthScale;
+float4 _MouseClickPixelCoord;  // xy unorm, zw norm
+float _DebugExposure;
 CBUFFER_END
 
 TEXTURE2D(_DebugFont); // Debug font to write string in shader
+RWStructuredBuffer<ScreenSpaceTracingDebug> _DebugScreenSpaceTracingData;
 
 void GetPropertiesDataDebug(uint paramId, inout float3 result, inout bool needLinearToSRGB)
 {
@@ -187,12 +192,13 @@ void DrawInteger(int intValue, float3 fontColor, uint2 currentUnormCoord, inout 
     }
 
     // 4. Display leading 0
-#pragma warning(disable : 3557) // loop only executes for 0 iteration(s)
-    for (int i = 0; i < leading0; ++i)
+    if (leading0 > 0)
     {
-        DrawCharacter('0', fontColor, currentUnormCoord, fixedUnormCoord, flipY, color, -1);
+        for (int i = 0; i < leading0; ++i)
+        {
+            DrawCharacter('0', fontColor, currentUnormCoord, fixedUnormCoord, flipY, color, -1);
+        }
     }
-#pragma warning(default : 3557)
 
     // 5. Display sign
     if (intValue < 0 || forceNegativeSign)

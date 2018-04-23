@@ -108,8 +108,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static void Drawer_SectionCaptureMirror(PlanarReflectionProbeUI s, SerializedPlanarReflectionProbe d, Editor o)
         {
-            EditorGUILayout.PropertyField(d.captureMirrorPlaneLocalPosition, _.GetContent("Plane Position"));
-            EditorGUILayout.PropertyField(d.captureMirrorPlaneLocalNormal, _.GetContent("Plane Normal"));
+            // EditorGUILayout.PropertyField(d.captureMirrorPlaneLocalPosition, _.GetContent("Plane Position"));
+            // EditorGUILayout.PropertyField(d.captureMirrorPlaneLocalNormal, _.GetContent("Plane Normal"));
         }
 
         static void Drawer_SectionCaptureSettings(PlanarReflectionProbeUI s, SerializedPlanarReflectionProbe d, Editor o)
@@ -149,18 +149,31 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static void Drawer_SectionProbeModeRealtimeSettings(PlanarReflectionProbeUI s, SerializedPlanarReflectionProbe d, Editor o)
         {
+            GUI.enabled = false;
             EditorGUILayout.PropertyField(d.refreshMode, _.GetContent("Refresh Mode"));
             EditorGUILayout.PropertyField(d.capturePositionMode, _.GetContent("Capture Position Mode"));
+            d.refreshMode.enumValueIndex = (int)ReflectionProbeRefreshMode.EveryFrame;
+            d.capturePositionMode.enumValueIndex = (int)PlanarReflectionProbe.CapturePositionMode.MirrorCamera;
+            GUI.enabled = true;
         }
 
         static void Drawer_SectionInfluenceSettings(PlanarReflectionProbeUI s, SerializedPlanarReflectionProbe d, Editor o)
         {
-            EditorGUILayout.PropertyField(d.dimmer, _.GetContent("Dimmer"));
+            EditorGUILayout.PropertyField(d.weight, _.GetContent("Weight"));
+           
+
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField(d.multiplier, _.GetContent("Multiplier"));
+            if (EditorGUI.EndChangeCheck())
+                d.multiplier.floatValue = Mathf.Max(0.0f, d.multiplier.floatValue);
         }
 
         static void Drawer_FieldCaptureType(PlanarReflectionProbeUI s, SerializedPlanarReflectionProbe d, Editor o)
         {
+            GUI.enabled = false;
             EditorGUILayout.PropertyField(d.mode, _.GetContent("Type"));
+            d.mode.enumValueIndex = (int)ReflectionProbeMode.Realtime;
+            GUI.enabled = true;
         }
 
         static void Drawer_FieldProxyVolumeReference(PlanarReflectionProbeUI s, SerializedPlanarReflectionProbe d, Editor o)

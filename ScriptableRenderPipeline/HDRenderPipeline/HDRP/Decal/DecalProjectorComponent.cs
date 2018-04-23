@@ -12,18 +12,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 		public float m_DrawDistance = 1000.0f;
         public float m_FadeScale = 0.9f;
         private Material m_OldMaterial = null;
-        public const int kInvalidIndex = -1;  
-        private int m_CullIndex = kInvalidIndex;
+        private DecalSystem.DecalHandle m_Handle = null;
 
-        public int CullIndex
+        public DecalSystem.DecalHandle Handle
         {
             get
             {
-                return this.m_CullIndex;
+                return this.m_Handle;
             }
             set
             {
-                this.m_CullIndex = value;
+                this.m_Handle = value;
             }
         }
 
@@ -40,17 +39,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_Material = hdrp != null ? hdrp.GetDefaultDecalMaterial() : null;
             }
 
-            DecalSystem.instance.AddDecal(this);
-        }
-
-        public void Start()
-        {
-            DecalSystem.instance.AddDecal(this);
+            if(m_Handle != null)
+                DecalSystem.instance.RemoveDecal(m_Handle);
+            m_Handle = DecalSystem.instance.AddDecal(transform, m_DrawDistance, m_FadeScale, m_Material);
         }
 
         public void OnDisable()
         {
-            DecalSystem.instance.RemoveDecal(this);
+            DecalSystem.instance.RemoveDecal(m_Handle);
+            m_Handle = null;
         }
 
 		// Declare the method signature of the delegate to call.	
@@ -64,12 +61,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // handle material changes
             if (m_OldMaterial != m_Material)
             {
-                Material tempMaterial = m_Material;
-                m_Material = m_OldMaterial;
-                if(m_Material != null)
-                    DecalSystem.instance.RemoveDecal(this);
-                m_Material = tempMaterial;
-                DecalSystem.instance.AddDecal(this);
+                if( m_Handle != null)
+                    DecalSystem.instance.RemoveDecal(m_Handle);
+                m_Handle = DecalSystem.instance.AddDecal(transform, m_DrawDistance, m_FadeScale, m_Material);
                 m_OldMaterial = m_Material;
 
                 // notify the editor that material has changed so it can update the shader foldout
@@ -89,14 +83,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
+        public void Update()
+        {
+            if (m_Handle != null)
+            {
+                if (transform.hasChanged == true)
+                {
+                    DecalSystem.instance.UpdateCachedData(transform, m_DrawDistance, m_FadeScale, m_Handle);
+                    transform.hasChanged = false;
+                }
+            }
+        }
+
         private void DrawGizmo(bool selected)
         {
             var col = new Color(0.0f, 0.7f, 1f, 1.0f);
-            col.a = selected ? 0.3f : 0.1f;
-            Gizmos.color = col;
             Matrix4x4 offset = Matrix4x4.Translate(new Vector3(0.0f, -0.5f, 0.0f));
             Gizmos.matrix = transform.localToWorldMatrix * offset;
-            Gizmos.DrawCube(Vector3.zero, Vector3.one);
             col.a = selected ? 0.5f : 0.2f;
             Gizmos.color = col;
             Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
@@ -106,7 +109,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             DrawGizmo(true);
             // if this object is selected there is a chance the transform was changed so update culling info
-            DecalSystem.instance.UpdateCachedData(this);
+            DecalSystem.instance.UpdateCachedData(transform, m_DrawDistance, m_FadeScale, m_Handle);
         }
 
         public void OnDrawGizmos()

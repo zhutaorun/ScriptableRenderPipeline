@@ -21,9 +21,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public readonly GUIContent indirectBounceShadowWarning = new GUIContent("Realtime indirect bounce shadowing is not supported for Spot and Point lights.");
 
             // Additional light data
-            public readonly GUIContent directionalIntensity = new GUIContent("Intensity (Lux)", "");
-            public readonly GUIContent punctualIntensity = new GUIContent("Intensity (Lumen)", "");
-            public readonly GUIContent areaIntensity = new GUIContent("Intensity (Lumen)", "");
+            public readonly GUIContent directionalIntensity = new GUIContent("Intensity (Lux)", "Illuminance of the directional light at ground level in lux.");
+            public readonly GUIContent punctualIntensity = new GUIContent("Intensity (Lumen)", "Luminous power of the light in lumen. Spotlight are considered as point light with barndoor so match intensity of a point light.");
+            public readonly GUIContent areaIntensity = new GUIContent("Intensity (Lumen)", "Luminous power of the light in lumen.");
 
             public readonly GUIContent maxSmoothness = new GUIContent("Max Smoothness", "Very low cost way of faking spherical area lighting. This will modify the roughness of the material lit. This is useful when the specular highlight is too small or too sharp.");
             public readonly GUIContent affectDiffuse = new GUIContent("Affect Diffuse", "This will disable diffuse lighting for this light. Doesn't save performance, diffuse lighting is still computed.");
@@ -42,6 +42,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             public readonly GUIContent shape = new GUIContent("Type", "Specifies the current type of light. Possible types are Directional, Spot, Point, Rectangle and Line lights.");
             public readonly GUIContent[] shapeNames;
+            public readonly GUIContent enableSpotReflector = new GUIContent("Enable spot reflector", "When true it simulate a spot light with reflector (mean the intensity of the light will be more focus with narrower angle), otherwise light outside of the cone is simply absorbed (mean intensity is constent whatever the size of the cone).");
 
             // Additional shadow data
             public readonly GUIContent shadowResolution = new GUIContent("Resolution", "Controls the rendered resolution of the shadow maps. A higher resolution will increase the fidelity of shadows at the cost of GPU performance and memory usage.");

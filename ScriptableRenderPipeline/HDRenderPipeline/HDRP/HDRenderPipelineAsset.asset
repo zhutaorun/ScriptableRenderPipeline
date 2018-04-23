@@ -24,7 +24,6 @@ MonoBehaviour:
     specularGlobalDimmer: 1
     enableForwardRenderingOnly: 0
     enableDepthPrepassWithDeferredRendering: 0
-    enableAlphaTestOnlyInDeferredPrepass: 0
     enableTransparentPrepass: 1
     enableMotionVectors: 1
     enableObjectMotionVectors: 1
@@ -54,6 +53,7 @@ MonoBehaviour:
     supportSSAO: 1
     supportSubsurfaceScattering: 1
     supportForwardOnly: 0
+    enableUltraQualitySSS: 0
     supportDBuffer: 1
     supportMSAA: 0
     msaaSampleCount: 1
@@ -65,9 +65,9 @@ MonoBehaviour:
       pointCookieSize: 512
       cubeCookieTexArraySize: 16
       reflectionProbeCacheSize: 128
-      planarReflectionProbeCacheSize: 128
+      planarReflectionProbeCacheSize: 4
       reflectionCubemapSize: 128
-      planarReflectionTextureSize: 128
+      planarReflectionTextureSize: 1024
       reflectionCacheCompressed: 0
       planarReflectionCacheCompressed: 0
       maxPlanarReflectionProbes: 128

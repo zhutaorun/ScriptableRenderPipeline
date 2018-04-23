@@ -2,7 +2,7 @@
 // Only directional light is supported for lit particles
 // No shadow
 // No distortion
-Shader "LightweightPipeline/Particles/Standard"
+Shader "LightweightPipeline/Particles/Standard (Physically Based)"
 {
     Properties
     {
@@ -57,10 +57,11 @@ Shader "LightweightPipeline/Particles/Standard"
             HLSLPROGRAM
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
+            #pragma exclude_renderers d3d11_9x
             #pragma vertex ParticlesLitVertex
             #pragma fragment ParticlesLitFragment
             #pragma multi_compile __ SOFTPARTICLES_ON
-            #pragma target 3.5
+            #pragma target 2.0
 
             #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON _ALPHAPREMULTIPLY_ON _ALPHAMODULATE_ON
             #pragma shader_feature _METALLICGLOSSMAP
@@ -69,21 +70,25 @@ Shader "LightweightPipeline/Particles/Standard"
             #pragma shader_feature _FADING_ON
             #pragma shader_feature _REQUIRE_UV2
 
-            #include "LWRP/ShaderLibrary/Particles.hlsl"
+            #define NO_SHADOWS 1
+
+            #include "LWRP/ShaderLibrary/ParticlesPBR.hlsl"
             #include "LWRP/ShaderLibrary/Lighting.hlsl"
 
             VertexOutputLit ParticlesLitVertex(appdata_particles v)
             {
                 VertexOutputLit o;
-#if _NORMALMAP
-                OutputTangentToWorld(v.tangent, v.normal, o.tangent, o.binormal, o.normal);
-#else
-                o.normal = normalize(TransformObjectToWorldNormal(v.normal));
-#endif
-                o.color = v.color;
+                OUTPUT_NORMAL(v, o);
+
                 o.posWS.xyz = TransformObjectToWorld(v.vertex.xyz).xyz;
                 o.posWS.w = ComputeFogFactor(o.clipPos.z);
                 o.clipPos = TransformWorldToHClip(o.posWS.xyz);
+                o.viewDirShininess.xyz = VertexViewDirWS(GetCameraPositionWS() - o.posWS.xyz);
+                o.viewDirShininess.w = 0.0;
+                o.color = v.color;
+
+                // TODO: Instancing
+                // vertColor(v.color);
                 vertTexcoord(v, o);
                 vertFading(o, o.posWS, o.clipPos);
                 return o;
@@ -107,6 +112,6 @@ Shader "LightweightPipeline/Particles/Standard"
         }
     }
 
-    Fallback "LightweightPipeline/Particles/Standard Unlit"
+    Fallback "LightweightPipeline/Particles/Standard (Simple Lighting)"
     CustomEditor "LightweightStandardParticlesShaderGUI"
 }

@@ -1,21 +1,37 @@
-#include "Core.hlsl"
-#include "InputSurface.hlsl"
-#include "CoreRP/ShaderLibrary/Color.hlsl"
+#ifndef LIGHTWEIGHT_PARTICLES_INCLUDED
+#define LIGHTWEIGHT_PARTICLES_INCLUDED
 
-TEXTURE2D(_CameraDepthTexture);
-SAMPLER(sampler_CameraDepthTexture);
+#include "Core.hlsl"
+#include "CoreRP/ShaderLibrary/Color.hlsl"
+#include "InputSurfaceCommon.hlsl"
+
+CBUFFER_START(UnityPerMaterial)
 float4 _SoftParticleFadeParams;
 float4 _CameraFadeParams;
+float4 _MainTex_ST;
+half4 _Color;
+half4 _EmissionColor;
+half4 _SpecColor;
+
+#if defined (_COLORADDSUBDIFF_ON)
+    half4 _ColorAddSubDiff;
+#endif
+
+half _Cutoff;
+half _Shininess;
+half _Metallic;
+half _Glossiness;
+half _BumpScale;
+CBUFFER_END
+
+TEXTURE2D(_CameraDepthTexture); SAMPLER(sampler_CameraDepthTexture);
+TEXTURE2D(_SpecGlossMap);       SAMPLER(sampler_SpecGlossMap);
 
 #define SOFT_PARTICLE_NEAR_FADE _SoftParticleFadeParams.x
 #define SOFT_PARTICLE_INV_FADE_DISTANCE _SoftParticleFadeParams.y
 
 #define CAMERA_NEAR_FADE _CameraFadeParams.x
 #define CAMERA_INV_FADE_DISTANCE _CameraFadeParams.y
-
-#if defined (_COLORADDSUBDIFF_ON)
-half4 _ColorAddSubDiff;
-#endif
 
 // Color function
 #if defined(UNITY_PARTICLE_INSTANCING_ENABLED)
@@ -144,6 +160,7 @@ struct VertexOutputLit
     float4 projectedPosition        : TEXCOORD5;
 #endif
     float4 posWS                    : TEXCOORD6; // xyz: position; w = fogFactor;
+    half4 viewDirShininess          : TEXCOORD7; // xyz: viewDir; w = shininess
     float4 clipPos                  : SV_POSITION;
 };
 
@@ -157,53 +174,74 @@ half4 readTexture(TEXTURE2D_ARGS(_Texture, sampler_Texture), VertexOutputLit IN)
     return color;
 }
 
-void InitializeSurfaceData(VertexOutputLit IN, out SurfaceData surfaceData)
+half3 SampleNormalTS(VertexOutputLit IN, TEXTURE2D_ARGS(bumpMap, sampler_bumpMap), half scale = 1.0h)
 {
-    half4 albedo = readTexture(TEXTURE2D_PARAM(_MainTex, sampler_MainTex), IN) * IN.color;
+#if defined(_NORMALMAP)
+    half4 n = readTexture(TEXTURE2D_PARAM(bumpMap, sampler_bumpMap), IN);
+    #if BUMP_SCALE_NOT_SUPPORTED
+        return UnpackNormal(n);
+    #else
+        return UnpackNormalScale(n, scale);
+    #endif
+#else
+    return half3(0.0h, 0.0h, 1.0h);
+#endif
+}
+
+half3 SampleEmission(VertexOutputLit IN, half3 emissionColor, TEXTURE2D_ARGS(emissionMap, sampler_emissionMap))
+{
+#if defined(_EMISSION)
+    return readTexture(TEXTURE2D_PARAM(emissionMap, sampler_emissionMap), IN).rgb * emissionColor.rgb;
+#else
+    return half3(0.0h, 0.0h, 0.0h);
+#endif
+}
+
+half4 SampleAlbedo(VertexOutputLit IN, TEXTURE2D_ARGS(albedoMap, sampler_albedoMap))
+{
+    half4 albedo = readTexture(TEXTURE2D_PARAM(albedoMap, sampler_albedoMap), IN) * _Color;
 
     // No distortion Support
     fragColorMode(IN);
     fragSoftParticles(IN);
     fragCameraFading(IN);
 
-#if defined(_METALLICGLOSSMAP)
-    half2 metallicGloss = readTexture(_MetallicGlossMap, sampler_MetallicGlossMap, IN).ra * half2(1.0, _Glossiness);
-#else
-    half2 metallicGloss = half2(_Metallic, _Glossiness);
+    return albedo;
+}
+
+half4 SampleSpecularGloss(VertexOutputLit IN, half alpha, half4 specColor, TEXTURE2D_ARGS(specGlossMap, sampler_specGlossMap))
+{
+    half4 specularGloss = half4(0.0h, 0.0h, 0.0h, 1.0h);
+#ifdef _SPECGLOSSMAP
+    specularGloss = readTexture(TEXTURE2D_PARAM(specGlossMap, sampler_specGlossMap), IN);
+#elif defined(_SPECULAR_COLOR)
+    specularGloss = specColor;
 #endif
 
-#if defined(_NORMALMAP)
-    half3 normalTS = normalize(UnpackNormalScale(readTexture(_BumpMap, sampler_BumpMap, IN), _BumpScale));
-#else
-    half3 normalTS = float3(0, 0, 1);
+#ifdef _GLOSSINESS_FROM_BASE_ALPHA
+    specularGloss.a = alpha;
 #endif
+    return specularGloss;
+}
 
-#if defined(_EMISSION)
-    half3 emission = readTexture(_EmissionMap, sampler_EmissionMap, IN).rgb;
-#else
-    half3 emission = 0;
-#endif
-
-    surfaceData.albedo = albedo.rbg;
-    surfaceData.specular = half3(0, 0, 0);
-    surfaceData.normalTS = normalTS;
-    surfaceData.emission = emission * _EmissionColor.rgb;
-    surfaceData.metallic = metallicGloss.r;
-    surfaceData.smoothness = metallicGloss.g;
-    surfaceData.occlusion = 1.0;
-
+half AlphaBlendAndTest(half alpha, half cutoff)
+{
 #if defined(_ALPHABLEND_ON) || defined(_ALPHAPREMULTIPLY_ON) || defined(_ALPHAOVERLAY_ON)
-    surfaceData.alpha = albedo.a;
+    half result = alpha;
 #else
-    surfaceData.alpha = 1;
+    half result = 1.0h;
 #endif
+    AlphaDiscard(alpha, cutoff, 0.0001h);
 
+    return result;
+}
+
+half3 AlphaModulate(half3 albedo, half alpha)
+{
 #if defined(_ALPHAMODULATE_ON)
-    surfaceData.albedo = lerp(half3(1.0, 1.0, 1.0), surfaceData.albedo, surfaceData.alpha);
-#endif
-
-#if defined(_ALPHATEST_ON)
-    clip(surfaceData.alpha - _Cutoff + 0.0001);
+    return lerp(half3(1.0h, 1.0h, 1.0h), albedo, alpha);
+#else
+    return albedo;
 #endif
 }
 
@@ -214,12 +252,14 @@ void InitializeInputData(VertexOutputLit IN, half3 normalTS, out InputData input
 #if _NORMALMAP
     input.normalWS = TangentToWorldNormal(normalTS, IN.tangent, IN.binormal, IN.normal);
 #else
-    input.normalWS = normalize(IN.normal);
+    input.normalWS = FragmentNormalWS(IN.normal);
 #endif
 
-    input.viewDirectionWS = SafeNormalize(GetCameraPositionWS() - input.positionWS);
+    input.viewDirectionWS = FragmentViewDirWS(IN.viewDirShininess.xyz);
     input.shadowCoord = float4(0, 0, 0, 0);
-    input.fogCoord = IN.posWS.w;
-    input.vertexLighting = half3(0, 0, 0);
-    input.bakedGI = half3(0, 0, 0);
+    input.fogCoord = (half)IN.posWS.w;
+    input.vertexLighting = half3(0.0h, 0.0h, 0.0h);
+    input.bakedGI = half3(0.0h, 0.0h, 0.0h);
 }
+
+#endif // LIGHTWEIGHT_PARTICLES_INCLUDED

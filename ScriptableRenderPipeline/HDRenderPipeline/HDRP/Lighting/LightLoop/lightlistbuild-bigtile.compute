@@ -1,6 +1,6 @@
 #pragma kernel BigTileLightListGen
 
-#include "CoreRP/ShaderLibrary/common.hlsl"
+#include "CoreRP/ShaderLibrary/Common.hlsl"
 #include "LightLoop.cs.hlsl"
 #include "LightingConvexHullUtils.hlsl"
 #include "SortingComputeUtils.hlsl"
@@ -23,9 +23,6 @@ uniform float4x4 g_mScrProjectionArr[2];
 uniform float g_fNearPlane;
 uniform float g_fFarPlane;
 uniform uint g_isOrthographic;
-// TODO: These aren't used, we should remove them
-uniform int _EnvLightIndexShift;
-uniform int _DecalIndexShift;
 
 StructuredBuffer<float3> g_vBoundsBuffer : register( t1 );
 StructuredBuffer<LightVolumeData> _LightVolumeData : register(t2);
@@ -127,7 +124,7 @@ void BigTileLightListGen(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_Gro
 	uint2 viTilLL = 64*tileIDX;
 	uint2 viTilUR = min( viTilLL+uint2(64,64), uint2(iWidth, iHeight) );			// not width and height minus 1 since viTilUR represents the end of the tile corner.
 
-    // 'Normalized' coordinates of tile
+    // 'Normalized' coordinates of tile, for use with AABB bounds in g_vBoundsBuffer
 	float2 vTileLL = float2(viTilLL.x/(float) iWidth, viTilLL.y/(float) iHeight);
 	float2 vTileUR = float2(viTilUR.x/(float) iWidth, viTilUR.y/(float) iHeight);
 
