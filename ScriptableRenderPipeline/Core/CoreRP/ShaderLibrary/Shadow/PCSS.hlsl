@@ -68,7 +68,7 @@ static const float2 PoissonDisk[64] =
 
 real PenumbraSize(real Reciever, real Blocker)
 {
-    return (Reciever - Blocker) / Blocker;
+    return abs((Reciever - Blocker) / Blocker);
 }
 
 bool BlockerSearch(inout real AverageBlockerDepth, inout real NumBlockers, real LightArea, real3 Coord, float Slice, Texture2DArray ShadowMap, SamplerState PointSampler)
@@ -90,13 +90,34 @@ bool BlockerSearch(inout real AverageBlockerDepth, inout real NumBlockers, real 
     else                return true;
 }
 
-real PCSS(real3 Coord, real FilterRadius, float Slice, Texture2DArray ShadowMap, SamplerComparisonState CompSampler)
+real PCSS(real3 Coord, real FilterRadius, real4 ScaleOffset, float Slice, Texture2DArray ShadowMap, SamplerComparisonState CompSampler)
 {
+	real UMin = ScaleOffset.z;
+	real UMax = ScaleOffset.z + ScaleOffset.x;
+
+	real VMin = ScaleOffset.w;
+	real VMax = ScaleOffset.w + ScaleOffset.y;
+
     real Sum = 0.0;
     for(int i = 0; i < 64; ++i)
     {
         real2 Offset = PoissonDisk[i] * FilterRadius;
-        Sum += SAMPLE_TEXTURE2D_ARRAY_SHADOW(ShadowMap, CompSampler, real3(Coord.xy + Offset, Coord.z), Slice);
+
+		real U = Coord.x + Offset.x;
+		real V = Coord.y + Offset.y;
+
+		//NOTE: We must clamp the sampling within the bounds of the shadow atlas.
+		//		Overfiltering will leak results from other shadow lights.
+		//TODO: Investigate moving this to blocker search.
+		if(U <= UMin || U >= UMax
+		|| V <= VMin || V >= VMax)
+		{
+			Sum += SAMPLE_TEXTURE2D_ARRAY_SHADOW(ShadowMap, CompSampler, real3(Coord.xy, Coord.z), Slice);
+		}
+		else
+		{
+    		Sum += SAMPLE_TEXTURE2D_ARRAY_SHADOW(ShadowMap, CompSampler, real3(U, V, Coord.z), Slice);
+		}
     }
 
     return Sum / 64.0;

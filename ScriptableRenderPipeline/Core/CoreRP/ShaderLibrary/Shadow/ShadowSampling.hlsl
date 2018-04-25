@@ -267,10 +267,11 @@ real SampleShadow_PCF_Tent_7x7(ShadowContext shadowContext, inout uint payloadOf
 //				   PCSS Sampling
 //
 #include "PCSS.hlsl"
-real SampleShadow_PCSS(ShadowContext shadowContext, inout uint payloadOffset, real3 coord, float slice, Texture2DArray tex, SamplerComparisonState compSamp, SamplerState samp)
+real SampleShadow_PCSS(ShadowContext shadowContext, inout uint payloadOffset, real3 coord, real4 scaleOffset, float slice, Texture2DArray tex, SamplerComparisonState compSamp, SamplerState samp)
 {
-	real2 params     = asfloat( shadowContext.payloads[payloadOffset].xy );
-	real  LightArea  = 0.01 * (params.x / 255.0); //TODO: Pass filter size.
+	real2 params     		= asfloat( shadowContext.payloads[payloadOffset].xy );
+	real  LightArea  	    = (params.x / 255.0); //TODO: Floats through payload.
+	real  MinimumFilterSize = (params.y / 255.0);
 	payloadOffset++;
 
 	//1) Blocker Search
@@ -281,9 +282,10 @@ real SampleShadow_PCSS(ShadowContext shadowContext, inout uint payloadOffset, re
 
 	//2) Penumbra Estimation
 	real FilterSize = LightArea * PenumbraSize(coord.z, AverageBlockerDepth);
+	FilterSize = max(FilterSize, MinimumFilterSize);
 
 	//3) Filter
-	return PCSS(coord, FilterSize, slice, tex, compSamp); 
+	return PCSS(coord, FilterSize, scaleOffset, slice, tex, compSamp); 
 }
 
 //
@@ -580,7 +582,7 @@ real SampleShadow_SelectAlgorithm( ShadowContext shadowContext, ShadowData shado
 	case GPUSHADOWALGORITHM_PCF_TENT_3X3	: return SampleShadow_PCF_Tent_3x3( shadowContext, payloadOffset, shadowData.textureSize, shadowData.texelSizeRcp, posTC, sampleBias, shadowData.slice, tex, compSamp );
 	case GPUSHADOWALGORITHM_PCF_TENT_5X5	: return SampleShadow_PCF_Tent_5x5( shadowContext, payloadOffset, shadowData.textureSize, shadowData.texelSizeRcp, posTC, sampleBias, shadowData.slice, tex, compSamp );
 	case GPUSHADOWALGORITHM_PCF_TENT_7X7	: return SampleShadow_PCF_Tent_7x7( shadowContext, payloadOffset, shadowData.textureSize, shadowData.texelSizeRcp, posTC, sampleBias, shadowData.slice, tex, compSamp );
-	case GPUSHADOWALGORITHM_PCSS		    : return SampleShadow_PCSS( shadowContext, payloadOffset, posTC, shadowData.slice, tex, compSamp, s_point_clamp_sampler );
+	case GPUSHADOWALGORITHM_PCSS		    : return SampleShadow_PCSS( shadowContext, payloadOffset, posTC, shadowData.scaleOffset, shadowData.slice, tex, compSamp, s_point_clamp_sampler );
 
 	default: return 1.0;
 	}

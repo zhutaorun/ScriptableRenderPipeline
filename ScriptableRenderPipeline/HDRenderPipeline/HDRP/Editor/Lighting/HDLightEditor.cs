@@ -55,6 +55,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public SerializedProperty fadeDistance;
             public SerializedProperty resolution;
             public SerializedProperty softness;
+            public SerializedProperty baseFilterWidth;
 
             // Bias control
             public SerializedProperty viewBiasMin;
@@ -138,6 +139,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 fadeDistance = o.Find(x => x.shadowFadeDistance),
                 resolution = o.Find(x => x.shadowResolution),
                 softness = o.Find(x => x.shadowSoftness),
+                baseFilterWidth = o.Find(x => x.shadowBaseFilterWidth),
 
                 viewBiasMin = o.Find(x => x.viewBiasMin),
                 viewBiasMax = o.Find(x => x.viewBiasMax),
@@ -487,6 +489,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             EditorGUILayout.PropertyField(m_AdditionalShadowData.resolution, s_Styles.shadowResolution);
             EditorGUILayout.Slider(m_AdditionalShadowData.softness, 0.0f, 1.0f, s_Styles.shadowSoftness);
+            EditorGUILayout.Slider(m_AdditionalShadowData.baseFilterWidth, 0.0f, 0.001f, s_Styles.shadowBaseFilterWidth);
             //EditorGUILayout.Slider(settings.shadowsBias, 0.001f, 1f, s_Styles.shadowBias);
             //EditorGUILayout.Slider(settings.shadowsNormalBias, 0.001f, 1f, s_Styles.shadowNormalBias);
             EditorGUILayout.Slider(m_AdditionalShadowData.viewBiasScale, 0.0f, 15.0f, s_Styles.viewBiasScale);

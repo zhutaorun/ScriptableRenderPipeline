@@ -23,6 +23,8 @@ namespace UnityEngine.Experimental.Rendering
 
         [Range(0.0f, 1.0f)]
         public float shadowSoftness = 0.5f;
+        [Range(0.0f, 0.001f)]
+        public float shadowBaseFilterWidth = 0.0f;
 
         [Range(0.0f, 1.0f)]
         public float shadowDimmer = 1.0f;

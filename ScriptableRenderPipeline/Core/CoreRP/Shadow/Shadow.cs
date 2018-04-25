@@ -549,7 +549,7 @@ namespace UnityEngine.Experimental.Rendering
                    Debug.Log( "Fixed up shadow data for algorithm " + algo + ", variant " + vari );
                 }
 
-                sp.Set(asd.shadowSoftness * 255, 0, 0, 0);
+                sp.Set((0.01f * asd.shadowSoftness) * 255, asd.shadowBaseFilterWidth * 255, 0, 0);
                 payload[payloadOffset] = sp;
                 payloadOffset++;
             }
