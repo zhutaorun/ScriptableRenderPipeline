@@ -76,7 +76,7 @@ bool BlockerSearch(inout real AverageBlockerDepth, inout real NumBlockers, real 
     real BlockerSum = 0.0;
     for (int i = 0; i < 64; ++i)
     {
-        real ShadowMapDepth = SAMPLE_TEXTURE2D_ARRAY_LOD( ShadowMap, PointSampler, Coord.xy + PoissonDisk[i] * LightArea, Slice, 0.0 );
+        real ShadowMapDepth = SAMPLE_TEXTURE2D_ARRAY_LOD( ShadowMap, PointSampler, Coord.xy + PoissonDisk[i] * LightArea, Slice, 0.0 ).x;
 
         if(ShadowMapDepth > Coord.z)
         {

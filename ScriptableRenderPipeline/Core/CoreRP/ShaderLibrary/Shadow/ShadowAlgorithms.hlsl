@@ -376,7 +376,7 @@ real EvalShadow_PunctualDepth( ShadowContext shadowContext, real3 positionWS, re
 		real2  sampleBias = EvalShadow_SampleBias_Persp( sd, positionWS, normalWS, posTC );                                                                                                         \
 		/* sample the texture */																																						            \
 		uint   payloadOffset = GetPayloadOffset( sd );																																	            \
-		return SampleShadow_SelectAlgorithm( shadowContext, sd, payloadOffset, posTC, sampleBias, shadowAlgorithm, tex, samp );														                \
+		return SampleShadow_PCSS( shadowContext, payloadOffset, posTC, positionWS, sd.scaleOffset, sd.slice, tex, samp, s_point_clamp_sampler );													\
 	}
 	EvalShadow_PunctualDepth_( SamplerComparisonState )
 	EvalShadow_PunctualDepth_( SamplerState )
