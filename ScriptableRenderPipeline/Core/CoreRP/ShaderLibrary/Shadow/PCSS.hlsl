@@ -71,12 +71,14 @@ real PenumbraSize(real Reciever, real Blocker)
     return abs((Reciever - Blocker) / Blocker);
 }
 
-bool BlockerSearch(inout real AverageBlockerDepth, inout real NumBlockers, real LightArea, real3 Coord, float Slice, Texture2DArray ShadowMap, SamplerState PointSampler)
+bool BlockerSearch(inout real AverageBlockerDepth, inout real NumBlockers, real LightArea, real2 Noise, real3 Coord, float Slice, Texture2DArray ShadowMap, SamplerState PointSampler)
 {
     real BlockerSum = 0.0;
     for (int i = 0; i < 64; ++i)
     {
-        real ShadowMapDepth = SAMPLE_TEXTURE2D_ARRAY_LOD( ShadowMap, PointSampler, Coord.xy + PoissonDisk[i] * LightArea, Slice, 0.0 ).x;
+		real2 Offset = real2(PoissonDisk[i].x * +Noise.y + PoissonDisk[i].y * Noise.x, 
+						     PoissonDisk[i].x * -Noise.x + PoissonDisk[i].y * Noise.y) * LightArea;
+        real ShadowMapDepth = SAMPLE_TEXTURE2D_ARRAY_LOD( ShadowMap, PointSampler, Coord.xy + Offset, Slice, 0.0 ).x;
 
         if(ShadowMapDepth > Coord.z)
         {
@@ -90,7 +92,7 @@ bool BlockerSearch(inout real AverageBlockerDepth, inout real NumBlockers, real 
     else                return true;
 }
 
-real PCSS(real3 Coord, real FilterRadius, real4 ScaleOffset, float Slice, Texture2DArray ShadowMap, SamplerComparisonState CompSampler)
+real PCSS(real3 Coord, real FilterRadius, real2 Noise, real4 ScaleOffset, float Slice, Texture2DArray ShadowMap, SamplerComparisonState CompSampler)
 {
 	real UMin = ScaleOffset.z;
 	real UMax = ScaleOffset.z + ScaleOffset.x;
@@ -101,7 +103,8 @@ real PCSS(real3 Coord, real FilterRadius, real4 ScaleOffset, float Slice, Textur
     real Sum = 0.0;
     for(int i = 0; i < 64; ++i)
     {
-        real2 Offset = PoissonDisk[i] * FilterRadius;
+		real2 Offset = real2(PoissonDisk[i].x * +Noise.y + PoissonDisk[i].y * Noise.x, 
+						     PoissonDisk[i].x * -Noise.x + PoissonDisk[i].y * Noise.y) * FilterRadius;
 
 		real U = Coord.x + Offset.x;
 		real V = Coord.y + Offset.y;

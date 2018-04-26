@@ -83,3 +83,4 @@ MonoBehaviour:
   shadowBlurMoments: {fileID: 7200000, guid: fb36979473602464fa32deacb9630c08, type: 3}
   debugShadowMapShader: {fileID: 4800000, guid: ee25e539f5594f44085e0a9000c15d9b,
     type: 3}
+  randomRotation: {fileID: 2800000, guid: ef0ff5b8fee243e45a9ead86e0ca18bb, type: 3}

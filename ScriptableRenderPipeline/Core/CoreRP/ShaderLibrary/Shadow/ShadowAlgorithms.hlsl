@@ -518,7 +518,7 @@ real EvalShadow_CascadedDepth_Blend( ShadowContext shadowContext, real3 position
 		real3 posTC = EvalShadow_GetTexcoords( sd, positionWS, false );																											                                    \
 		/* evalute the first cascade */																																					                            \
 		real2 sampleBias = EvalShadow_SampleBias_Ortho( sd, normalWS );                                                                                                                                             \
-		real  shadow     = SampleShadow_SelectAlgorithm( shadowContext, sd, payloadOffset, posTC, sampleBias, shadowAlgorithms[shadowSplitIndex], tex, samp );                                                      \
+		real  shadow     = SampleShadow_PCSS( shadowContext, payloadOffset, posTC, positionWS, sd.scaleOffset, sd.slice, tex, samp, s_point_clamp_sampler );	                                                     \
 		real  shadow1    = 1.0;                                                                                                                                                                                     \
 																																																					\
 		shadowSplitIndex++;                                                                                                                                                                                         \
@@ -537,7 +537,7 @@ real EvalShadow_CascadedDepth_Blend( ShadowContext shadowContext, real3 position
 																																																					\
 				UNITY_BRANCH                                                                                                                                                                                        \
 				if( all( abs( posNDC.xy ) <= (1.0 - sd.texelSizeRcp.zw * 0.5) ) )                                                                                                                                   \
-					shadow1 = SampleShadow_SelectAlgorithm( shadowContext, sd, orig_payloadOffset, posTC, sampleBias, shadowAlgorithms[shadowSplitIndex], tex, samp );                                              \
+					shadow1 = SampleShadow_PCSS( shadowContext, orig_payloadOffset, posTC, positionWS, sd.scaleOffset, sd.slice, tex, samp, s_point_clamp_sampler );                                              \
 			}                                                                                                                                                                                                       \
 		}                                                                                                                                                                                                           \
 		shadow = lerp( shadow, shadow1, alpha );                                                                                                                                                                    \
