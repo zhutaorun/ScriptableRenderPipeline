@@ -383,10 +383,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Warning: different views can use the same camera!
         public long GetViewID()
         {
-            long viewID = camera.GetInstanceID();
-            // Make it positive.
-            viewID += (-(long)int.MinValue) + 1;
-            return viewID;
+            if (camera.cameraType == CameraType.Game)
+            {
+                long viewID = camera.GetInstanceID();
+                // Make it positive.
+                viewID += (-(long)int.MinValue) + 1;
+                Debug.Assert(viewID > 0);
+                return viewID;
+            }
+            else
+            {
+                return 0;
+            }
         }
 
         public void Reset()
