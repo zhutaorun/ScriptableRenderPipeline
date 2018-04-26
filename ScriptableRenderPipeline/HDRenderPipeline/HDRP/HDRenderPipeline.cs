@@ -597,6 +597,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         0.0f
                     ));
                 }
+
+                //TODO: Nullcheck
+                cmd.SetGlobalTexture(HDShaderIDs._RandomRotationTexture, m_Asset.renderPipelineResources.randomRotation);
             }
         }
 

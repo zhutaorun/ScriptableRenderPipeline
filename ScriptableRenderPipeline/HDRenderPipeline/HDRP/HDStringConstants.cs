@@ -55,6 +55,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _ShadowmapExp_VSM_1 = Shader.PropertyToID("_ShadowmapExp_VSM_1");
         public static readonly int _ShadowmapExp_VSM_2 = Shader.PropertyToID("_ShadowmapExp_VSM_2");
         public static readonly int _ShadowmapExp_PCF = Shader.PropertyToID("_ShadowmapExp_PCF");
+        public static readonly int _RandomRotationTexture = Shader.PropertyToID("_RandomRotationTexture");
 
         public static readonly int g_LayeredSingleIdxBuffer = Shader.PropertyToID("g_LayeredSingleIdxBuffer");
         public static readonly int _EnvLightIndexShift = Shader.PropertyToID("_EnvLightIndexShift");

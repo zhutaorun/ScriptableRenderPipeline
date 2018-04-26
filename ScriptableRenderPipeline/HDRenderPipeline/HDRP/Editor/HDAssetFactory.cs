@@ -115,6 +115,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 newAsset.shadowClearShader = Load<Shader>(CorePath + "Shadow/ShadowClear.shader");
                 newAsset.shadowBlurMoments = Load<ComputeShader>(CorePath + "Shadow/ShadowBlurMoments.compute");
                 newAsset.debugShadowMapShader = Load<Shader>(CorePath + "Shadow/DebugDisplayShadowMap.shader");
+                newAsset.randomRotation = Load<Texture2D>(CorePath + "Shadow/RandomRotation.png");
 
                 AssetDatabase.CreateAsset(newAsset, pathName);
                 ProjectWindowUtil.ShowCreatedAsset(newAsset);

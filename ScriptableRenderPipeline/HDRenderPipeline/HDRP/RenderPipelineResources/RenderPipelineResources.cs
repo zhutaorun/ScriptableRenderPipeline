@@ -68,5 +68,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Shader shadowClearShader;
         public ComputeShader shadowBlurMoments;
         public Shader debugShadowMapShader;
+        public Texture2D randomRotation;
     }
 }
