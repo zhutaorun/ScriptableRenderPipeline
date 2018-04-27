@@ -1,4 +1,24 @@
-static const float2 PoissonDisk[64] =
+static const float2 PoissonDisk16[16] =
+{
+	float2(0.1232981, -0.03923375),
+	float2(-0.5625377, -0.3602428),
+	float2(0.6403719, 0.06821123),
+	float2(0.2813387, -0.5881588),
+	float2(-0.5731218, 0.2700572),
+	float2(0.2033166, 0.4197739),
+	float2(0.8467958, -0.3545584),
+	float2(-0.4230451, -0.797441),
+	float2(0.7190253, 0.5693575),
+	float2(0.03815468, -0.9914171),
+	float2(-0.2236265, 0.5028614),
+	float2(0.1722254, 0.983663),
+	float2(-0.2912464, 0.8980512),
+	float2(-0.8984148, -0.08762786),
+	float2(-0.6995085, 0.6734185),
+	float2(-0.293196, -0.06289119)
+};
+
+static const float2 PoissonDisk64[64] =
 {
 	float2 ( 0.1187053,   0.7951565),
 	float2 ( 0.1173675,   0.6087878),
@@ -66,6 +86,25 @@ static const float2 PoissonDisk[64] =
 	float2 ( 0.799141,   -0.5886372)
 };
 
+TEXTURE2D(_RandomRotationTexture);
+SAMPLER(sampler_RandomRotationTexture);
+
+real2 SampleNoise(real3 PositionWS)
+{
+	//Reconstruct screen pos.
+	float4 PositionCS = TransformWorldToHClip(PositionWS);
+	float4 PositionSS = PositionCS * 0.5;
+	PositionSS.xy 	  = float2(PositionSS.x, PositionSS.y * -1) + PositionSS.w;
+	PositionSS.zw 	  = PositionCS.zw;
+	PositionSS.xyz   /= PositionSS.w;
+
+	//Noise.
+	float4 R = SAMPLE_TEXTURE2D_LOD(_RandomRotationTexture, sampler_RandomRotationTexture, 100.0 * PositionSS.xy, 0.0);
+	float DT = dot(R, float3(12.9898, 78.233, 45.5432));
+	float  N = 10.0 * frac(sin(DT) * 43758.545);
+	return real2(sin(N), cos(N)); 
+}
+
 real PenumbraSize(real Reciever, real Blocker)
 {
     return abs((Reciever - Blocker) / Blocker);
@@ -76,8 +115,8 @@ bool BlockerSearch(inout real AverageBlockerDepth, inout real NumBlockers, real 
     real BlockerSum = 0.0;
     for (int i = 0; i < 64; ++i)
     {
-		real2 Offset = real2(PoissonDisk[i].x * +Noise.y + PoissonDisk[i].y * Noise.x, 
-						     PoissonDisk[i].x * -Noise.x + PoissonDisk[i].y * Noise.y) * LightArea;
+		real2 Offset = real2(PoissonDisk64[i].x * +Noise.y + PoissonDisk64[i].y * Noise.x, 
+						     PoissonDisk64[i].x * -Noise.x + PoissonDisk64[i].y * Noise.y) * LightArea;
         real ShadowMapDepth = SAMPLE_TEXTURE2D_ARRAY_LOD( ShadowMap, PointSampler, Coord.xy + Offset, Slice, 0.0 ).x;
 
         if(ShadowMapDepth > Coord.z)
@@ -103,8 +142,8 @@ real PCSS(real3 Coord, real FilterRadius, real2 Noise, real4 ScaleOffset, float 
     real Sum = 0.0;
     for(int i = 0; i < 64; ++i)
     {
-		real2 Offset = real2(PoissonDisk[i].x * +Noise.y + PoissonDisk[i].y * Noise.x, 
-						     PoissonDisk[i].x * -Noise.x + PoissonDisk[i].y * Noise.y) * FilterRadius;
+		real2 Offset = real2(PoissonDisk64[i].x * +Noise.y + PoissonDisk64[i].y * Noise.x, 
+						     PoissonDisk64[i].x * -Noise.x + PoissonDisk64[i].y * Noise.y) * FilterRadius;
 
 		real U = Coord.x + Offset.x;
 		real V = Coord.y + Offset.y;

@@ -263,20 +263,6 @@ real SampleShadow_PCF_Tent_7x7(ShadowContext shadowContext, inout uint payloadOf
 	return shadow;
 }
 
-TEXTURE2D(_RandomRotationTexture);
-SAMPLER(sampler_RandomRotationTexture);
-
-float LocalRand01(float3 seed)
-{
-	float dt = dot(seed, float3(12.9898, 78.233, 45.5432));// project seed on random constant vector   
-	return frac(sin(dt) * 43758.5453);// return only fractional part
-}
-
-float LocalRandAngle(float3 seed)
-{
-	return LocalRand01(seed) * 50.0;
-}
-
 //
 //				   PCSS Sampling
 //
@@ -288,15 +274,7 @@ real SampleShadow_PCSS(ShadowContext shadowContext, inout uint payloadOffset, re
 	real  MinimumFilterSize = (params.y / 255.0);
 	payloadOffset++;
 
-	//Noise
-	float4 PositionCS = TransformWorldToHClip(positionWS);
-	float4 PositionSS = PositionCS * 0.5;
-	PositionSS.xy = float2(PositionSS.x, PositionSS.y * -1) + PositionSS.w;
-	PositionSS.zw = PositionCS.zw;
-	PositionSS.xyz /= PositionSS.w;
-	float4 Rotation = SAMPLE_TEXTURE2D_LOD(_RandomRotationTexture, sampler_RandomRotationTexture, 30.0 * PositionSS.xy, 0.0);
-	float Angle = LocalRandAngle(Rotation.xyz);
-	real2 Noise = real2(sin(Angle), cos(Angle)); 
+	real2 Noise = SampleNoise(positionWS);
 
 	//1) Blocker Search
 	real AverageBlockerDepth = 0.0;
