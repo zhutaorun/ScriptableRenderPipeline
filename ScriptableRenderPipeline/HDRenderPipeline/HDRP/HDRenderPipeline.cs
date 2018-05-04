@@ -1077,7 +1077,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var drawSettings = new DrawRendererSettings(camera, HDShaderPassNames.s_EmptyName)
             {
                 rendererConfiguration = rendererConfiguration,
-                sorting = { flags = SortFlags.CommonOpaque }
+                sorting = { flags = SortFlags.CanvasOrder | SortFlags.OptimizeStateChanges | SortFlags.RenderQueue | SortFlags.SortingLayer }  // Decals force a depth-prepass so there is no reason to break batches with QuantizedFrontToBack
             };
 
             for (int i = 0; i < passNames.Length; ++i)

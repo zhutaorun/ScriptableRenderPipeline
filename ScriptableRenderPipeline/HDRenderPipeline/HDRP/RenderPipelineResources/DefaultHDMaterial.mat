@@ -4,7 +4,7 @@
 Material:
   serializedVersion: 6
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: DefaultHDMaterial
   m_Shader: {fileID: 4800000, guid: 6e4ae4064600d784cac1e41a9e6f2e59, type: 3}
@@ -18,7 +18,7 @@ Material:
   - DistortionVectors
   - TransparentBackfaceDebugDisplay
   - TransparentDepthPrepass
-  - TransparentDepthPostpass
+  - TransparentDepthPostPass
   - TransparentBackface
   - MOTIONVECTORS
   m_SavedProperties:
@@ -204,12 +204,14 @@ Material:
     - _EnableBlendModeAccurateLighting: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
+    - _EnableFpsMode: 0
     - _EnableMotionVectorForVertexAnimation: 0
     - _EnablePerPixelDisplacement: 0
     - _EnableSpecularOcclusion: 0
     - _EnableTransparentFog: 1
     - _EnableWind: 0
     - _EnergyConservingSpecularColor: 1
+    - _FpsModeFov: 60
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
