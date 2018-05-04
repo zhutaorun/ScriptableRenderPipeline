@@ -3,11 +3,11 @@
 
 #pragma kernel ScreenBoundsAABB
 
-#include "CoreRP/ShaderLibrary/common.hlsl"
+#include "CoreRP/ShaderLibrary/Common.hlsl"
 #include "LightLoop.cs.hlsl"
 #include "LightCullUtils.hlsl"
 
-#pragma only_renderers d3d11 ps4 xboxone vulkan metal
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
 uniform int g_isOrthographic;
 uniform int g_iNrVisibLights;

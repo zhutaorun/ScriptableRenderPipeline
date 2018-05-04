@@ -364,7 +364,7 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
     HLSLINCLUDE
 
     #pragma target 5.0
-    #pragma only_renderers d3d11 ps4 xboxone vulkan metal
+    #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
     #pragma shader_feature _ALPHATEST_ON
     #pragma shader_feature _DEPTHOFFSET_ON
@@ -473,10 +473,10 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
     // Include
     //-------------------------------------------------------------------------------------
 
-    #include "CoreRP/ShaderLibrary/common.hlsl"
+    #include "CoreRP/ShaderLibrary/Common.hlsl"
     #include "CoreRP/ShaderLibrary/Wind.hlsl"
     #include "CoreRP/ShaderLibrary/GeometricTools.hlsl"
-    #include "CoreRP/ShaderLibrary/tessellation.hlsl"
+    #include "CoreRP/ShaderLibrary/Tessellation.hlsl"
     #include "../../ShaderPass/FragInputs.hlsl"
     #include "../../ShaderPass/ShaderPass.cs.hlsl"
 
