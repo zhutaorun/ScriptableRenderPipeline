@@ -504,7 +504,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_lightList = new LightList();
             m_lightList.Allocate();
             m_Env2DCaptureVP.Clear();
-            for (int i = 0, c = Mathf.Max(1, hdAsset.renderPipelineSettings.lightLoopSettings.maxPlanarReflectionProbes); i < c; ++i)
+            for (int i = 0, c = Mathf.Max(1, hdAsset.renderPipelineSettings.lightLoopSettings.planarReflectionProbeCacheSize); i < c; ++i)
                 m_Env2DCaptureVP.Add(Matrix4x4.identity);
 
             m_DirectionalLightDatas = new ComputeBuffer(k_MaxDirectionalLightsOnScreen, System.Runtime.InteropServices.Marshal.SizeOf(typeof(DirectionalLightData)));
@@ -985,6 +985,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             lightData.diffuseScale = additionalLightData.affectDiffuse ? lightScale * m_FrameSettings.diffuseGlobalDimmer : 0.0f;
             lightData.specularScale = additionalLightData.affectSpecular ? lightScale * m_FrameSettings.specularGlobalDimmer : 0.0f;
 
+            lightData.volumetricDimmer = additionalLightData.volumetricDimmer;
+
             if (lightData.diffuseScale <= 0.0f && lightData.specularScale <= 0.0f)
                 return false;
 
@@ -1446,6 +1448,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public void UpdateCullingParameters(ref ScriptableCullingParameters cullingParams)
         {
             m_ShadowMgr.UpdateCullingParameters( ref cullingParams );
+            // In HDRP we don't need per object light/probe info so we disable the native code that handles it.
+            #if UNITY_2018_2_OR_NEWER
+            cullingParams.cullingFlags |= CullFlag.DisablePerObjectCulling;
+            #endif
         }
 
         public bool IsBakedShadowMaskLight(Light light)
@@ -2331,7 +2337,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cmd.SetComputeIntParam(deferredDirectionalShadowComputeShader, HDShaderIDs._DirectionalShadowIndex, m_CurrentSunLightShadowIndex);
                 cmd.SetComputeVectorParam(deferredDirectionalShadowComputeShader, HDShaderIDs._DirectionalLightDirection, -m_CurrentSunLight.transform.forward);
                 cmd.SetComputeTextureParam(deferredDirectionalShadowComputeShader, kernel, HDShaderIDs._DeferredShadowTextureUAV, deferredShadowRT);
-                cmd.SetComputeTextureParam(deferredDirectionalShadowComputeShader, kernel, HDShaderIDs._MainDepthTexture, depthTexture);
+                cmd.SetComputeTextureParam(deferredDirectionalShadowComputeShader, kernel, HDShaderIDs._CameraDepthTexture, depthTexture);
 
                 int deferredShadowTileSize = 16; // Must match DeferreDirectionalShadow.compute
                 int numTilesX = (hdCamera.actualWidth + (deferredShadowTileSize - 1)) / deferredShadowTileSize;
@@ -2409,7 +2415,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             }
                         }
 
-                        cmd.SetComputeTextureParam(deferredComputeShader, kernel, HDShaderIDs._MainDepthTexture, depthTexture);
+                        cmd.SetComputeTextureParam(deferredComputeShader, kernel, HDShaderIDs._CameraDepthTexture, depthTexture);
 
                         // TODO: Is it possible to setup this outside the loop ? Can figure out how, get this: Property (specularLightingUAV) at kernel index (21) is not set
                         cmd.SetComputeTextureParam(deferredComputeShader, kernel, HDShaderIDs.specularLightingUAV, colorBuffers[0]);

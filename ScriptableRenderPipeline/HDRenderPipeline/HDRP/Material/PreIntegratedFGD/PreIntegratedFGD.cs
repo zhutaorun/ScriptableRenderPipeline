@@ -23,7 +23,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         int m_refCounting;
 
         // For image based lighting
-        Material m_InitPreFGD;
+        Material m_PreIntegratedFGDMaterial;
         RenderTexture m_PreIntegratedFGD;
 
         PreIntegratedFGD()
@@ -38,14 +38,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (m_refCounting == 0)
             {
-                m_InitPreFGD = CoreUtils.CreateEngineMaterial("Hidden/HDRenderPipeline/PreIntegratedFGD");
+                var hdrp = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
+                m_PreIntegratedFGDMaterial = CoreUtils.CreateEngineMaterial(hdrp.renderPipelineResources.preIntegratedFGD);
 
                 m_PreIntegratedFGD = new RenderTexture(128, 128, 0, RenderTextureFormat.ARGB2101010, RenderTextureReadWrite.Linear);
                 m_PreIntegratedFGD.hideFlags = HideFlags.HideAndDontSave;
                 m_PreIntegratedFGD.filterMode = FilterMode.Bilinear;
                 m_PreIntegratedFGD.wrapMode = TextureWrapMode.Clamp;
                 m_PreIntegratedFGD.hideFlags = HideFlags.DontSave;
-                m_PreIntegratedFGD.name = CoreUtils.GetRenderTargetAutoName(128, 128, RenderTextureFormat.ARGB2101010, "PreIntegratedFGD");
+                m_PreIntegratedFGD.name = CoreUtils.GetRenderTargetAutoName(128, 128, 1, RenderTextureFormat.ARGB2101010, "PreIntegratedFGD");
                 m_PreIntegratedFGD.Create();
 
                 m_isInit = false;
@@ -59,9 +60,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (m_isInit)
                 return;
 
-            using (new ProfilingSample(cmd, "Init PreFGD"))
+            using (new ProfilingSample(cmd, "PreIntegratedFGD Material Generation"))
             {
-                CoreUtils.DrawFullScreen(cmd, m_InitPreFGD, new RenderTargetIdentifier(m_PreIntegratedFGD));
+                CoreUtils.DrawFullScreen(cmd, m_PreIntegratedFGDMaterial, new RenderTargetIdentifier(m_PreIntegratedFGD));
             }
 
             m_isInit = true;
@@ -73,7 +74,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (m_refCounting == 0)
             {
-                CoreUtils.Destroy(m_InitPreFGD);
+                CoreUtils.Destroy(m_PreIntegratedFGDMaterial);
                 CoreUtils.Destroy(m_PreIntegratedFGD);
 
                 m_isInit = false;

@@ -148,6 +148,8 @@
 #include "API/Metal.hlsl"
 #elif defined(SHADER_API_VULKAN)
 #include "API/Vulkan.hlsl"
+#elif defined(SHADER_API_SWITCH)
+#include "API/Switch.hlsl"
 #elif defined(SHADER_API_GLCORE)
 #include "API/GLCore.hlsl"
 #elif defined(SHADER_API_GLES3)
@@ -490,10 +492,10 @@ uint GetMipCount(Texture2D tex)
     // Metal doesn't support high enough OpenGL version
 
 #if defined(MIP_COUNT_SUPPORTED)
-    uint width, height, depth, mipCount;
-    width = height = depth = mipCount = 0;
-    tex.GetDimensions(width, height, depth, mipCount);
-    return mipCount;
+    uint mipLevel, width, height, mipCount;
+    mipLevel = width = height = mipCount = 0;
+	tex.GetDimensions(mipLevel, width, height, mipCount);
+    return mipCount;	
 #else
     return 0;
 #endif
