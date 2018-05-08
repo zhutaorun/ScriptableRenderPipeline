@@ -27,12 +27,14 @@
 - Default number of planar reflection change from 4 to 2
 - Rename _MainDepthTexture to _CameraDepthTexture
 - The VolumetricLightingController has been moved to the Interpolation Volume framework and now functions similarly to the VolumetricFog settings
+- Update of UI of cookie, CubeCookie, Reflection probe and planar reflection probe to combo box
 
 ### Bug fixes
 - Fix ConvertPhysicalLightIntensityToLightIntensity() function used when creating light from script to match HDLightEditor behavior
 - Fix numerical issues with the default value of mean free path of volumetric fog 
 - Fix the bug preventing decals from coexisting with density volumes
 - Fix issue with alpha tested geometry using planar/triplanar mapping not render correctly or flickering (due to being wrongly alpha tested in depth prepass)
+- Fix meta pass with triplanar (was not handling correctly the normal)
 
 ## [2018.1.0f2]
 
