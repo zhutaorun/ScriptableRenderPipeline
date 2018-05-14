@@ -150,6 +150,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             public DecalSet(Material material)
             {
+                Cleanup();
                 m_Material = material;
                 InitializeMaterialValues();
             }
@@ -440,6 +441,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
             }
 
+            public void Cleanup()
+            {
+                m_DecalToWorld = new List<Matrix4x4[]>();
+                m_NormalToWorld = new List<Matrix4x4[]>();
+
+                m_CullingGroup = null;
+                m_BoundingSpheres = new BoundingSphere[kDecalBlockSize];
+                m_Handles = new DecalHandle[kDecalBlockSize];
+                m_ResultIndices = new int[kDecalBlockSize];
+                m_NumResults = 0;
+                m_DecalsCount = 0;
+                m_CachedDecalToWorld = new Matrix4x4[kDecalBlockSize];
+                m_CachedNormalToWorld = new Matrix4x4[kDecalBlockSize];
+                m_CachedDrawDistances = new Vector2[kDecalBlockSize]; // x - draw distance, y - fade scale
+                m_CachedUVScaleBias = new Vector4[kDecalBlockSize]; // xy - scale, zw bias
+                m_Blend = 0;
+                m_Diffuse = new TextureScaleBias();
+                m_Normal = new TextureScaleBias();
+                m_Mask = new TextureScaleBias();
+            }
+
             private List<Matrix4x4[]> m_DecalToWorld = new List<Matrix4x4[]>();
             private List<Matrix4x4[]> m_NormalToWorld = new List<Matrix4x4[]>();
 
@@ -623,6 +645,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // set to null so that they get recreated
             m_DecalMesh = null;
             m_Atlas = null;
+            foreach (var pair in m_DecalSets)
+            {
+                pair.Value.Cleanup();
+            }
         }
 
         public void RenderDebugOverlay(HDCamera hdCamera, CommandBuffer cmd, DebugDisplaySettings debugDisplaySettings, ref float x, ref float y, float overlaySize, float width)

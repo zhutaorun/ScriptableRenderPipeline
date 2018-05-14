@@ -669,6 +669,45 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         CullResults m_CullResults;
         ReflectionProbeCullResults m_ReflectionProbeCullResults;
+
+        void BuildLightListAndRenderShadows(CommandBuffer cmd, HDCamera hdCamera, Camera camera, ScriptableRenderContext renderContext, PostProcessLayer postProcessLayer)
+        {            
+            GPUFence buildGPULightListsCompleteFence = new GPUFence();
+            if (hdCamera.frameSettings.enableAsyncCompute)
+            {
+                GPUFence startFence = cmd.CreateGPUFence();
+                renderContext.ExecuteCommandBuffer(cmd);
+                cmd.Clear();
+
+                buildGPULightListsCompleteFence = m_LightLoop.BuildGPULightListsAsyncBegin(hdCamera, renderContext, m_CameraDepthStencilBuffer, m_CameraStencilBufferCopy, startFence, m_SkyManager.IsLightingSkyValid());
+            }
+            
+            using (new ProfilingSample(cmd, "Render shadows", CustomSamplerId.RenderShadows.GetSampler()))
+            {
+                // This call overwrites camera properties passed to the shader system.
+                m_LightLoop.RenderShadows(renderContext, cmd, m_CullResults);
+
+                // Overwrite camera properties set during the shadow pass with the original camera properties.
+                renderContext.SetupCameraProperties(camera, hdCamera.frameSettings.enableStereo);
+                hdCamera.SetupGlobalParams(cmd, m_Time, m_LastTime);
+                if (hdCamera.frameSettings.enableStereo)
+                    hdCamera.SetupGlobalStereoParams(cmd);
+            }
+            
+          
+            if (hdCamera.frameSettings.enableAsyncCompute)
+            {
+                m_LightLoop.BuildGPULightListAsyncEnd(hdCamera, cmd, buildGPULightListsCompleteFence);
+            }
+            else
+            {
+                using (new ProfilingSample(cmd, "Build Light list", CustomSamplerId.BuildLightList.GetSampler()))
+                {
+                    m_LightLoop.BuildGPULightLists(hdCamera, cmd, m_CameraDepthStencilBuffer, m_CameraStencilBufferCopy, m_SkyManager.IsLightingSkyValid());
+                }
+            }
+        }
+
         public override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
         {
             if (!m_ValidAPI)
@@ -945,6 +984,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     bool forcePrepassForDecals = m_DbufferManager.vsibleDecalCount > 0;
                     RenderDepthPrepass(m_CullResults, hdCamera, renderContext, cmd, forcePrepassForDecals);
 
+                    //RenderGBuffer(m_CullResults, hdCamera, enableBakeShadowMask, renderContext, cmd);
+                    if (forcePrepassForDecals && !m_CurrentDebugDisplaySettings.IsDebugMaterialDisplayEnabled())
+                    {
+                        // In both forward and deferred, everything opaque should have been rendered at this point so we can safely copy the depth buffer for later processing.
+                        CopyDepthBufferIfNeeded(cmd);
+                        BuildLightListAndRenderShadows(cmd, hdCamera, camera, renderContext, postProcessLayer);   
+                    }
+
                     RenderObjectsVelocity(m_CullResults, hdCamera, renderContext, cmd);
 
                     // This will bind the depth buffer if needed for DBuffer)
@@ -1002,50 +1049,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                         StopStereoRendering(renderContext, hdCamera);
 
-                        GPUFence buildGPULightListsCompleteFence = new GPUFence();
-                        if (hdCamera.frameSettings.enableAsyncCompute)
+                        if (!forcePrepassForDecals)
                         {
-                            GPUFence startFence = cmd.CreateGPUFence();
-                            renderContext.ExecuteCommandBuffer(cmd);
-                            cmd.Clear();
-
-                            buildGPULightListsCompleteFence = m_LightLoop.BuildGPULightListsAsyncBegin(hdCamera, renderContext, m_CameraDepthStencilBuffer, m_CameraStencilBufferCopy, startFence, m_SkyManager.IsLightingSkyValid());
-                        }
-
-                        using (new ProfilingSample(cmd, "Render shadows", CustomSamplerId.RenderShadows.GetSampler()))
-                        {
-                            // This call overwrites camera properties passed to the shader system.
-                            m_LightLoop.RenderShadows(renderContext, cmd, m_CullResults);
-
-                            // Overwrite camera properties set during the shadow pass with the original camera properties.
-                            renderContext.SetupCameraProperties(camera, hdCamera.frameSettings.enableStereo);
-                            hdCamera.SetupGlobalParams(cmd, m_Time, m_LastTime);
-                            if (hdCamera.frameSettings.enableStereo)
-                                hdCamera.SetupGlobalStereoParams(cmd);
+                            BuildLightListAndRenderShadows(cmd, hdCamera, camera, renderContext, postProcessLayer);                         
                         }
 
                         using (new ProfilingSample(cmd, "Deferred directional shadows", CustomSamplerId.RenderDeferredDirectionalShadow.GetSampler()))
                         {
                             // When debug is enabled we need to clear otherwise we may see non-shadows areas with stale values.
-                            if(m_CurrentDebugDisplaySettings.fullScreenDebugMode == FullScreenDebugMode.DeferredShadows)
+                            if (m_CurrentDebugDisplaySettings.fullScreenDebugMode == FullScreenDebugMode.DeferredShadows)
                             {
                                 HDUtils.SetRenderTarget(cmd, hdCamera, m_DeferredShadowBuffer, ClearFlag.Color, CoreUtils.clearColorAllBlack);
                             }
 
                             m_LightLoop.RenderDeferredDirectionalShadow(hdCamera, m_DeferredShadowBuffer, GetDepthTexture(), cmd);
                             PushFullScreenDebugTexture(hdCamera, cmd, m_DeferredShadowBuffer, FullScreenDebugMode.DeferredShadows);
-                        }
-
-                        if (hdCamera.frameSettings.enableAsyncCompute)
-                        {
-                            m_LightLoop.BuildGPULightListAsyncEnd(hdCamera, cmd, buildGPULightListsCompleteFence);
-                        }
-                        else
-                        {
-                            using (new ProfilingSample(cmd, "Build Light list", CustomSamplerId.BuildLightList.GetSampler()))
-                            {
-                                m_LightLoop.BuildGPULightLists(hdCamera, cmd, m_CameraDepthStencilBuffer, m_CameraStencilBufferCopy, m_SkyManager.IsLightingSkyValid());
-                            }
                         }
 
                         {
