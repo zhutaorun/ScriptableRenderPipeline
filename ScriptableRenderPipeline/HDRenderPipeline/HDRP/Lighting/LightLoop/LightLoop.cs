@@ -1975,7 +1975,51 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.DispatchCompute(buildPerVoxelLightListShader, s_GenListPerVoxelKernel, numTilesX, numTilesY, numEyes);
         }
 
-        public void BuildGPULightListsCommon(HDCamera hdCamera, CommandBuffer cmd, RenderTargetIdentifier cameraDepthBufferRT, RenderTargetIdentifier stencilTextureRT, bool skyEnabled)
+
+        public void BuildMaterialFlags(HDCamera hdCamera, CommandBuffer cmd, RenderTargetIdentifier stencilTextureRT)
+        {
+            var numTilesX = GetNumTileFtplX(hdCamera);
+            var numTilesY = GetNumTileFtplY(hdCamera);
+            var numTiles = numTilesX * numTilesY;
+            bool enableFeatureVariants = GetFeatureVariantsEnabled();
+            if (enableFeatureVariants)
+            {
+                // material classification
+                if (m_FrameSettings.lightLoopSettings.enableComputeMaterialVariants)
+                {
+                    int buildMaterialFlagsKernel = s_BuildMaterialFlagsOrKernel;
+
+                    uint baseFeatureFlags = 0;
+                    if (!m_FrameSettings.lightLoopSettings.enableComputeLightVariants)
+                    {
+                        buildMaterialFlagsKernel = s_BuildMaterialFlagsWriteKernel;
+                        baseFeatureFlags |= LightDefinitions.s_LightFeatureMaskFlags;
+                    }
+
+                    cmd.SetComputeIntParam(buildMaterialFlagsShader, HDShaderIDs.g_BaseFeatureFlags, (int)baseFeatureFlags);
+                    cmd.SetComputeIntParams(buildMaterialFlagsShader, HDShaderIDs.g_viDimensions, s_TempScreenDimArray);
+                    cmd.SetComputeBufferParam(buildMaterialFlagsShader, buildMaterialFlagsKernel, HDShaderIDs.g_TileFeatureFlags, s_TileFeatureFlags);
+
+                    cmd.SetComputeTextureParam(buildMaterialFlagsShader, buildMaterialFlagsKernel, HDShaderIDs._StencilTexture, stencilTextureRT);
+
+                    cmd.DispatchCompute(buildMaterialFlagsShader, buildMaterialFlagsKernel, numTilesX, numTilesY, 1);
+                }
+                // clear dispatch indirect buffer
+                cmd.SetComputeBufferParam(clearDispatchIndirectShader, s_ClearDispatchIndirectKernel, HDShaderIDs.g_DispatchIndirectBuffer, s_DispatchIndirectBuffer);
+                cmd.DispatchCompute(clearDispatchIndirectShader, s_ClearDispatchIndirectKernel, 1, 1, 1);
+
+                // add tiles to indirect buffer
+                cmd.SetComputeBufferParam(buildDispatchIndirectShader, s_BuildDispatchIndirectKernel, HDShaderIDs.g_DispatchIndirectBuffer, s_DispatchIndirectBuffer);
+                cmd.SetComputeBufferParam(buildDispatchIndirectShader, s_BuildDispatchIndirectKernel, HDShaderIDs.g_TileList, s_TileList);
+                cmd.SetComputeBufferParam(buildDispatchIndirectShader, s_BuildDispatchIndirectKernel, HDShaderIDs.g_TileFeatureFlags, s_TileFeatureFlags);
+                cmd.SetComputeIntParam(buildDispatchIndirectShader, HDShaderIDs.g_NumTiles, numTiles);
+                cmd.SetComputeIntParam(buildDispatchIndirectShader, HDShaderIDs.g_NumTilesX, numTilesX);
+                cmd.DispatchCompute(buildDispatchIndirectShader, s_BuildDispatchIndirectKernel, (numTiles + 63) / 64, 1, 1);
+            }
+        }
+
+
+        public void BuildGPULightListsCommon(HDCamera hdCamera, CommandBuffer cmd, RenderTargetIdentifier cameraDepthBufferRT, bool skyEnabled)
         {
             var camera = hdCamera.camera;
             cmd.BeginSample("Build Light List");
@@ -2138,42 +2182,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Cluster
             VoxelLightListGeneration(cmd, hdCamera, projscrArr, invProjscrArr, cameraDepthBufferRT);
 
-            if (enableFeatureVariants)
-            {
-                // material classification
-                if (m_FrameSettings.lightLoopSettings.enableComputeMaterialVariants)
-                {
-                    int buildMaterialFlagsKernel = s_BuildMaterialFlagsOrKernel;
-
-                    uint baseFeatureFlags = 0;
-                    if (!m_FrameSettings.lightLoopSettings.enableComputeLightVariants)
-                    {
-                        buildMaterialFlagsKernel = s_BuildMaterialFlagsWriteKernel;
-                        baseFeatureFlags |= LightDefinitions.s_LightFeatureMaskFlags;
-                    }
-
-                    cmd.SetComputeIntParam(buildMaterialFlagsShader, HDShaderIDs.g_BaseFeatureFlags, (int)baseFeatureFlags);
-                    cmd.SetComputeIntParams(buildMaterialFlagsShader, HDShaderIDs.g_viDimensions, s_TempScreenDimArray);
-                    cmd.SetComputeBufferParam(buildMaterialFlagsShader, buildMaterialFlagsKernel, HDShaderIDs.g_TileFeatureFlags, s_TileFeatureFlags);
-
-                    cmd.SetComputeTextureParam(buildMaterialFlagsShader, buildMaterialFlagsKernel, HDShaderIDs._StencilTexture, stencilTextureRT);
-
-                    cmd.DispatchCompute(buildMaterialFlagsShader, buildMaterialFlagsKernel, numTilesX, numTilesY, 1);
-                }
-
-                // clear dispatch indirect buffer
-                cmd.SetComputeBufferParam(clearDispatchIndirectShader, s_ClearDispatchIndirectKernel, HDShaderIDs.g_DispatchIndirectBuffer, s_DispatchIndirectBuffer);
-                cmd.DispatchCompute(clearDispatchIndirectShader, s_ClearDispatchIndirectKernel, 1, 1, 1);
-
-                // add tiles to indirect buffer
-                cmd.SetComputeBufferParam(buildDispatchIndirectShader, s_BuildDispatchIndirectKernel, HDShaderIDs.g_DispatchIndirectBuffer, s_DispatchIndirectBuffer);
-                cmd.SetComputeBufferParam(buildDispatchIndirectShader, s_BuildDispatchIndirectKernel, HDShaderIDs.g_TileList, s_TileList);
-                cmd.SetComputeBufferParam(buildDispatchIndirectShader, s_BuildDispatchIndirectKernel, HDShaderIDs.g_TileFeatureFlags, s_TileFeatureFlags);
-                cmd.SetComputeIntParam(buildDispatchIndirectShader, HDShaderIDs.g_NumTiles, numTiles);
-                cmd.SetComputeIntParam(buildDispatchIndirectShader, HDShaderIDs.g_NumTilesX, numTilesX);
-                cmd.DispatchCompute(buildDispatchIndirectShader, s_BuildDispatchIndirectKernel, (numTiles + 63) / 64, 1, 1);
-            }
-
             cmd.EndSample("Build Light List");
         }
 
@@ -2181,7 +2189,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             cmd.SetRenderTarget(BuiltinRenderTextureType.None);
 
-            BuildGPULightListsCommon(hdCamera, cmd, cameraDepthBufferRT, stencilTextureRT, skyEnabled);
+            BuildGPULightListsCommon(hdCamera, cmd, cameraDepthBufferRT, skyEnabled);
             PushGlobalParams(hdCamera, cmd);
         }
 
@@ -2190,7 +2198,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var cmd = CommandBufferPool.Get("Build light list");
             cmd.WaitOnGPUFence(startFence);
 
-            BuildGPULightListsCommon(hdCamera, cmd, cameraDepthBufferRT, stencilTextureRT, skyEnabled);
+            BuildGPULightListsCommon(hdCamera, cmd, cameraDepthBufferRT,  skyEnabled);
             GPUFence completeFence = cmd.CreateGPUFence();
             renderContext.ExecuteCommandBufferAsync(cmd, ComputeQueueType.Background);
             CommandBufferPool.Release(cmd);

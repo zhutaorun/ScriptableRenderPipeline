@@ -984,10 +984,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     bool forcePrepassForDecals = m_DbufferManager.vsibleDecalCount > 0;
                     RenderDepthPrepass(m_CullResults, hdCamera, renderContext, cmd, forcePrepassForDecals);
 
-                    //RenderGBuffer(m_CullResults, hdCamera, enableBakeShadowMask, renderContext, cmd);
                     if (forcePrepassForDecals && !m_CurrentDebugDisplaySettings.IsDebugMaterialDisplayEnabled())
-                    {
-                        // In both forward and deferred, everything opaque should have been rendered at this point so we can safely copy the depth buffer for later processing.
+                    {                        
                         CopyDepthBufferIfNeeded(cmd);
                         BuildLightListAndRenderShadows(cmd, hdCamera, camera, renderContext, postProcessLayer);   
                     }
@@ -1047,12 +1045,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             }
                         }
 
+
                         StopStereoRendering(renderContext, hdCamera);
 
                         if (!forcePrepassForDecals)
                         {
                             BuildLightListAndRenderShadows(cmd, hdCamera, camera, renderContext, postProcessLayer);                         
                         }
+
+                        m_LightLoop.BuildMaterialFlags(hdCamera, cmd, m_CameraStencilBufferCopy);
 
                         using (new ProfilingSample(cmd, "Deferred directional shadows", CustomSamplerId.RenderDeferredDirectionalShadow.GetSampler()))
                         {
