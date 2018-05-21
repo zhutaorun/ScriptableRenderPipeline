@@ -987,13 +987,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     if (forcePrepassForDecals && !m_CurrentDebugDisplaySettings.IsDebugMaterialDisplayEnabled())
                     {                        
                         CopyDepthBufferIfNeeded(cmd);
-                        BuildLightListAndRenderShadows(cmd, hdCamera, camera, renderContext, postProcessLayer);   
+                        BuildLightListAndRenderShadows(cmd, hdCamera, camera, renderContext, postProcessLayer);
+                        DecalSystem.instance.SetAtlas(cmd); // for clustered decals
                     }
 
                     RenderObjectsVelocity(m_CullResults, hdCamera, renderContext, cmd);
 
                     // This will bind the depth buffer if needed for DBuffer)
-                    RenderDBuffer(hdCamera, cmd);
+                    //RenderDBuffer(hdCamera, cmd);
 
 					RenderGBuffer(m_CullResults, hdCamera, enableBakeShadowMask, renderContext, cmd);
 
@@ -1044,7 +1045,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 HDUtils.DrawFullScreen(cmd, hdCamera, m_CopyStencilForNoLighting, m_CameraStencilBufferCopy, m_CameraDepthStencilBuffer, null, 1);
                             }
                         }
-
 
                         StopStereoRendering(renderContext, hdCamera);
 

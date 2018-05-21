@@ -53,7 +53,7 @@ void AddDecalContribution(PositionInputs posInput, inout SurfaceData surfaceData
 		// the code in the macros, gets moved inside the conditionals by the compiler
 		FETCH_DBUFFER(DBuffer, _DBufferTexture, posInput.positionSS);
 
-#ifdef _SURFACE_TYPE_TRANSPARENT	// forward transparent using clustered decals
+//#ifdef _SURFACE_TYPE_TRANSPARENT	// forward transparent using clustered decals
         uint decalCount, decalStart;
 		DBuffer0 = float4(0.0f, 0.0f, 0.0f, 1.0f);
 		DBuffer1 = float4(0.5f, 0.5f, 0.5f, 1.0f);
@@ -136,9 +136,9 @@ void AddDecalContribution(PositionInputs posInput, inout SurfaceData surfaceData
 				}
 			}
 		}
-#else
-		mask = UnpackByte(LOAD_TEXTURE2D(_DecalHTileTexture, posInput.positionSS / 8).r);
-#endif
+//#else
+//		mask = UnpackByte(LOAD_TEXTURE2D(_DecalHTileTexture, posInput.positionSS / 8).r);
+//#endif
 		DECODE_FROM_DBUFFER(DBuffer, decalSurfaceData);
 		// using alpha compositing https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch23.html
 		if(mask & DBUFFERHTILEBIT_DIFFUSE)
