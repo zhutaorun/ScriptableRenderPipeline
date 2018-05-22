@@ -2513,6 +2513,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
+        public void RenderDecals(Camera camera, CommandBuffer cmd)
+        {
+            if (!m_FrameSettings.lightLoopSettings.enableTileAndCluster)
+            {
+                cmd.EnableShaderKeyword("LIGHTLOOP_SINGLE_PASS");
+                cmd.DisableShaderKeyword("LIGHTLOOP_TILE_PASS");
+            }
+            else
+            {
+                cmd.EnableShaderKeyword("LIGHTLOOP_TILE_PASS");
+                cmd.DisableShaderKeyword("LIGHTLOOP_SINGLE_PASS");
+                CoreUtils.SetKeyword(cmd, "USE_FPTL_LIGHTLIST", true);
+                CoreUtils.SetKeyword(cmd, "USE_CLUSTERED_LIGHTLIST", false);
+                cmd.SetGlobalBuffer(HDShaderIDs.g_vLightListGlobal, s_LightList);
+            }
+        }
+
         public void RenderDebugOverlay(HDCamera hdCamera, CommandBuffer cmd, DebugDisplaySettings debugDisplaySettings, ref float x, ref float y, float overlaySize, float width)
         {
             LightingDebugSettings lightingDebug = debugDisplaySettings.lightingDebugSettings;

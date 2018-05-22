@@ -988,7 +988,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {                        
                         CopyDepthBufferIfNeeded(cmd);
                         BuildLightListAndRenderShadows(cmd, hdCamera, camera, renderContext, postProcessLayer);
-                        DecalSystem.instance.SetAtlas(cmd); // for clustered decals
+                        DecalSystem.instance.SetAtlas(cmd); 
+                        m_LightLoop.RenderDecals(camera, cmd);  // this will set the tiling parameters and light list.
                     }
 
                     RenderObjectsVelocity(m_CullResults, hdCamera, renderContext, cmd);
