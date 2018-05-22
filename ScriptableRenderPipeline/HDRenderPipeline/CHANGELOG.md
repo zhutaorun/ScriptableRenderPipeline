@@ -2,6 +2,7 @@
 # Changelog
 
 ## [2018.2 undecided]
+- Fix issue with LOD transition and instancing
 
 ### Improvements
 - Add stripper of shader variant when building a player. Save shader compile time.
@@ -45,6 +46,8 @@
 - Fix unnecessary division by PI for baked area lights.
 - Fix line lights sent to the lightmappers. The backends don't support this light type.
 - Fix issue with shadow mask framesettings not correctly taken into account when shadow mask is enabled for lighting.
+- Fix directional light and shadow mask transition, they are now matching making smooth transition
+- Fix banding issues caused by high intensity volumetric lighting
 
 ## [2018.1.0f2]
 
