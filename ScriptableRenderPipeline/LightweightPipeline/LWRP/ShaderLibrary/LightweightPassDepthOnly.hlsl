@@ -7,6 +7,10 @@ struct VertexInput
 {
     float4 position     : POSITION;
     float2 texcoord     : TEXCOORD0;
+#ifdef _VEGETATION
+    float3 normal : NORMAL;
+    float4 color : COLOR;
+#endif
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -23,6 +27,13 @@ VertexOutput DepthOnlyVertex(VertexInput v)
     VertexOutput o = (VertexOutput)0;
     UNITY_SETUP_INSTANCE_ID(v);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+
+#ifdef _VOLUME_WIND
+#ifdef _VEGETATION
+    float3 objectOrigin = UNITY_ACCESS_INSTANCED_PROP(Props, _Position);
+    v.position.xyz = VegetationDeformation(v.position.xyz, objectOrigin, v.normal, v.color.x, v.color.z, v.color.y);
+#endif
+#endif
 
     o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
     o.clipPos = TransformObjectToHClip(v.position.xyz);

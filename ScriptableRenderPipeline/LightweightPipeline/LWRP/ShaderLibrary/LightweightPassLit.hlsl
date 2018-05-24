@@ -10,6 +10,9 @@ struct LightweightVertexInput
     float4 tangent : TANGENT;
     float2 texcoord : TEXCOORD0;
     float2 lightmapUV : TEXCOORD1;
+#ifdef _VEGETATION
+    float4 color : COLOR;
+#endif
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -83,6 +86,13 @@ LightweightVertexOutput LitPassVertex(LightweightVertexInput v)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
     o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
+
+#ifdef _VOLUME_WIND
+#ifdef _VEGETATION
+    float3 objectOrigin = UNITY_ACCESS_INSTANCED_PROP(Props, _Position);
+    v.vertex.xyz = VegetationDeformation(v.vertex.xyz, objectOrigin, v.normal, v.color.x, v.color.z, v.color.y);
+#endif
+#endif
 
     float3 posWS = TransformObjectToWorld(v.vertex.xyz);
     o.clipPos = TransformWorldToHClip(posWS);
