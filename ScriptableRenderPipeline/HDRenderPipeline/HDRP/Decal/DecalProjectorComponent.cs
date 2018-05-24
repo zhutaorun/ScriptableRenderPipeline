@@ -8,6 +8,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     [ExecuteInEditMode]
     public class DecalProjectorComponent : MonoBehaviour
     {
+        public Mesh m_Mesh;
         public Material m_Material = null;
 		public float m_DrawDistance = 1000.0f;
         public float m_FadeScale = 0.9f;

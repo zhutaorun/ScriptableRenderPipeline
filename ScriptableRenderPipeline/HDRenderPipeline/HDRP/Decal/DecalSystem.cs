@@ -10,9 +10,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public const int kInvalidIndex = -1;
         public class DecalHandle
         {
-            public DecalHandle(int index, int materialID)
+            public DecalHandle(int index, UInt64 key)
             {
-                m_MaterialID = materialID;
+                m_Key = key;
                 m_Index = index;
             }
 
@@ -24,8 +24,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     return false;
                 return true;
             }
-            public int m_MaterialID;    // identifies decal set
-            public int m_Index;         // identifies decal within the set
+            public UInt64  m_Key;            // identifies decal set
+            public int m_Index = kInvalidIndex; // identifies decal within the set
         }
 
         static DecalSystem m_Instance;
@@ -75,13 +75,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         //      #define UNITY_INSTANCED_ARRAY_SIZE  250
         private const int kDrawIndexedBatchSize = 250;
 
-        // cube mesh bounds for decal
+        // cube mesh bounds for projection decal
         static Vector4 kMin = new Vector4(-0.5f, -1.0f, -0.5f, 1.0f);
         static Vector4 kMax = new Vector4( 0.5f,  0.0f,  0.5f, 1.0f);
 
         static public Mesh m_DecalMesh = null;
 
-        // clustered draw data
+        // clustered draw data, projection decals only
         static public DecalData[] m_DecalDatas = new DecalData[kDecalBlockSize];
         static public SFiniteLightBound[] m_Bounds = new SFiniteLightBound[kDecalBlockSize];
         static public LightVolumeData[] m_LightVolumes = new LightVolumeData[kDecalBlockSize];
@@ -89,7 +89,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
 		static public float[] m_BoundingDistances = new float[1];
 
-        private Dictionary<int, DecalSet> m_DecalSets = new Dictionary<int, DecalSet>();
+        private Dictionary<UInt64, ProjectionDecalSet> m_ProjectionDecalSets = new Dictionary<UInt64, ProjectionDecalSet>();
+        private Dictionary<UInt64, MeshDecalSet> m_MeshDecalSets = new Dictionary<UInt64, MeshDecalSet>();
 
         // current camera
         private Camera m_Camera;
@@ -138,7 +139,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         private List<TextureScaleBias> m_TextureList = new List<TextureScaleBias>();
 
-        private class DecalSet
+        private abstract class DecalSetBase
         {
             public void InitializeMaterialValues()
             {
@@ -148,13 +149,119 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_Blend = m_Material.GetFloat("_DecalBlend");
             }
 
-            public DecalSet(Material material)
+            public DecalSetBase(Material material)
             {
                 m_Material = material;
                 InitializeMaterialValues();
             }
 
-            private BoundingSphere GetDecalProjectBoundingSphere(Matrix4x4 decalToWorld)
+            protected abstract BoundingSphere GetBoundingSphere(Matrix4x4 decalToWorld);
+
+            public virtual void UpdateCachedData(Transform transform, float drawDistance, float fadeScale, Vector4 uvScaleBias, DecalHandle handle)
+            {
+                int index = handle.m_Index;
+                m_CachedDecalToWorld[index] = transform.localToWorldMatrix;           
+                // draw distance can't be more than global draw distance
+                m_CachedDrawDistances[index].x = drawDistance < instance.DrawDistance
+                    ? drawDistance
+                    : instance.DrawDistance;
+                m_CachedDrawDistances[index].y = fadeScale;               
+                m_BoundingSpheres[index] = GetBoundingSphere(m_CachedDecalToWorld[index]);
+            }
+
+            public void BeginCull()
+            {
+                if (m_CullingGroup != null)
+                {
+                    Debug.LogError("Begin/EndCull() called out of sequence for decal projectors.");
+                }
+
+                // let the culling group code do some of the heavy lifting for global draw distance
+                m_BoundingDistances[0] = DecalSystem.instance.DrawDistance;
+                m_NumResults = 0;
+                m_CullingGroup = new CullingGroup();
+                m_CullingGroup.targetCamera = instance.CurrentCamera;
+                m_CullingGroup.SetDistanceReferencePoint(m_CullingGroup.targetCamera.transform.position);
+                m_CullingGroup.SetBoundingDistances(m_BoundingDistances);
+                m_CullingGroup.SetBoundingSpheres(m_BoundingSpheres);
+                m_CullingGroup.SetBoundingSphereCount(m_DecalsCount);
+            }
+
+            public int QueryCullResults()
+            {
+                m_NumResults = m_CullingGroup.QueryIndices(true, m_ResultIndices, 0);
+                return m_NumResults;
+            }
+          
+            protected void AssignDecalToWorldBatches(ref Matrix4x4[] decalToWorldBatch,  int batchCount)
+            {
+                if (m_DecalToWorld.Count == batchCount)
+                {
+                    decalToWorldBatch = new Matrix4x4[kDrawIndexedBatchSize];
+                    m_DecalToWorld.Add(decalToWorldBatch);
+                }
+                else
+                {
+                    decalToWorldBatch = m_DecalToWorld[batchCount];
+                }
+            }
+
+            public abstract void CreateDrawData();
+
+            public void EndCull()
+            {
+                if (m_CullingGroup == null)
+                {
+                    Debug.LogError("Begin/EndCull() called out of sequence for decal projectors.");
+                }
+                else
+                {
+                    m_CullingGroup.Dispose();
+                    m_CullingGroup = null;
+                }
+            }
+
+            public abstract void RenderIntoDBuffer(CommandBuffer cmd);
+
+            public Material KeyMaterial
+            {
+                get
+                {
+                    return this.m_Material;
+                }
+            }
+
+            public int Count
+            {
+                get
+                {
+                    return this.m_DecalsCount;
+                }
+            }
+
+            protected List<Matrix4x4[]> m_DecalToWorld = new List<Matrix4x4[]>();            
+            protected CullingGroup m_CullingGroup = null;
+            protected DecalHandle[] m_Handles = new DecalHandle[kDecalBlockSize];
+            protected BoundingSphere[] m_BoundingSpheres = new BoundingSphere[kDecalBlockSize];           
+            protected int[] m_ResultIndices = new int[kDecalBlockSize];
+            protected int m_NumResults = 0;
+            protected int m_DecalsCount = 0;
+            protected Matrix4x4[] m_CachedDecalToWorld = new Matrix4x4[kDecalBlockSize];          
+            protected Vector2[] m_CachedDrawDistances = new Vector2[kDecalBlockSize]; // x - draw distance, y - fade scale           
+            protected Material m_Material;
+            protected float m_Blend = 0;
+            protected TextureScaleBias m_Diffuse = new TextureScaleBias();
+            protected TextureScaleBias m_Normal = new TextureScaleBias();
+            protected TextureScaleBias m_Mask = new TextureScaleBias();
+        }
+
+        private class ProjectionDecalSet : DecalSetBase
+        {         
+            public ProjectionDecalSet(Material material) : base(material)
+            {
+            }
+
+            protected override BoundingSphere GetBoundingSphere(Matrix4x4 decalToWorld)
             {
                 Vector4 min = new Vector4();
                 Vector4 max = new Vector4();
@@ -166,11 +273,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return res;
             }
 
-            public void UpdateCachedData(Transform transform, float drawDistance, float fadeScale, Vector4 uvScaleBias, DecalHandle handle) 
+            public override void UpdateCachedData(Transform transform, float drawDistance, float fadeScale, Vector4 uvScaleBias, DecalHandle handle) 
             {
+                base.UpdateCachedData(transform, drawDistance, fadeScale, uvScaleBias, handle);
                 int index = handle.m_Index;
-                m_CachedDecalToWorld[index] = transform.localToWorldMatrix;
-
+                
                 Matrix4x4 decalRotation = Matrix4x4.Rotate(transform.rotation);
                 // z/y axis swap for normal to decal space, Unity is column major
                 float y0 = decalRotation.m01;
@@ -183,17 +290,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 decalRotation.m12 = y1;
                 decalRotation.m22 = y2;
 
-                m_CachedNormalToWorld[index] = decalRotation;
-                // draw distance can't be more than global draw distance
-                m_CachedDrawDistances[index].x = drawDistance < instance.DrawDistance
-                    ? drawDistance
-                    : instance.DrawDistance;
-                m_CachedDrawDistances[index].y = fadeScale;
-                m_CachedUVScaleBias[index] = uvScaleBias;
-                m_BoundingSpheres[index] = GetDecalProjectBoundingSphere(m_CachedDecalToWorld[index]);
+                m_CachedNormalToWorld[index] = decalRotation;               
+                m_CachedUVScaleBias[index] = uvScaleBias;                
             }
 
-            public DecalHandle AddDecal(Transform transform, float drawDistance, float fadeScale, Vector4 uvScaleBias, int materialID)
+            public DecalHandle AddDecal(Transform transform, float drawDistance, float fadeScale, Vector4 uvScaleBias, UInt64 key)
             {
                 // increase array size if no space left
                 if (m_DecalsCount == m_Handles.Length)
@@ -221,7 +322,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     m_CachedUVScaleBias = newCachedUVScaleBias;
                 }
 
-                DecalHandle decalHandle = new DecalHandle(m_DecalsCount, materialID);
+                DecalHandle decalHandle = new DecalHandle(m_DecalsCount, key);
                 m_Handles[m_DecalsCount] = decalHandle;
                 UpdateCachedData(transform, drawDistance, fadeScale, uvScaleBias, decalHandle);
                 m_DecalsCount++;
@@ -244,30 +345,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_CachedUVScaleBias[removeAtIndex] = m_CachedUVScaleBias[m_DecalsCount - 1];
                 m_DecalsCount--;
                 handle.m_Index = kInvalidIndex;
-            }
-
-            public void BeginCull()
-            {
-                if (m_CullingGroup != null)
-                {
-                    Debug.LogError("Begin/EndCull() called out of sequence for decal projectors.");
-                }
-
-                // let the culling group code do some of the heavy lifting for global draw distance
-                m_BoundingDistances[0] = DecalSystem.instance.DrawDistance;
-                m_NumResults = 0;
-                m_CullingGroup = new CullingGroup();
-                m_CullingGroup.targetCamera = instance.CurrentCamera;
-                m_CullingGroup.SetDistanceReferencePoint( m_CullingGroup.targetCamera.transform.position);
-                m_CullingGroup.SetBoundingDistances(m_BoundingDistances);
-                m_CullingGroup.SetBoundingSpheres(m_BoundingSpheres);
-                m_CullingGroup.SetBoundingSphereCount(m_DecalsCount);
-            }
-
-            public int QueryCullResults()
-            {
-                m_NumResults = m_CullingGroup.QueryIndices(true, m_ResultIndices, 0);
-                return m_NumResults;
             }
 
             private void GetDecalVolumeDataAndBound(Matrix4x4 decalToWorld, Matrix4x4 worldToView)
@@ -309,23 +386,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_LightVolumes[m_DecalDatasCount].boxInvRange.Set(1.0f / LightLoop.k_BoxCullingExtentThreshold.x, 1.0f /LightLoop. k_BoxCullingExtentThreshold.y, 1.0f / LightLoop.k_BoxCullingExtentThreshold.z);
             }
 
-            private void AssignCurrentBatches(ref Matrix4x4[] decalToWorldBatch, ref Matrix4x4[] normalToWorldBatch, int batchCount)
+            private void AssignNormalToWorldBatches(ref Matrix4x4[] normalToWorldBatch, int batchCount)
             {
-                if (m_DecalToWorld.Count == batchCount)
-                {
-                    decalToWorldBatch = new Matrix4x4[kDrawIndexedBatchSize];
-                    m_DecalToWorld.Add(decalToWorldBatch);
+                if (m_NormalToWorld.Count == batchCount)
+                {                   
                     normalToWorldBatch = new Matrix4x4[kDrawIndexedBatchSize];
                     m_NormalToWorld.Add(normalToWorldBatch);
                 }
                 else
-                {
-                    decalToWorldBatch = m_DecalToWorld[batchCount];
+                {                    
                     normalToWorldBatch = m_NormalToWorld[batchCount];
                 }
             }
 
-            public void CreateDrawData()
+            public override void CreateDrawData()
             {
                 if (m_NumResults == 0)
                     return;
@@ -336,7 +410,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 Matrix4x4[] decalToWorldBatch = null;
                 Matrix4x4[] normalToWorldBatch = null;
 
-                AssignCurrentBatches(ref decalToWorldBatch, ref normalToWorldBatch, batchCount);
+                AssignDecalToWorldBatches(ref decalToWorldBatch, batchCount);
+                AssignNormalToWorldBatches(ref normalToWorldBatch, batchCount);
 
                 Vector3 cameraPos = instance.CurrentCamera.transform.position;
                 Matrix4x4 worldToView = LightLoop.WorldToCamera(instance.CurrentCamera);
@@ -369,22 +444,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         {
                             instanceCount = 0;
                             batchCount++;
-                            AssignCurrentBatches(ref decalToWorldBatch, ref normalToWorldBatch, batchCount);
+                            AssignDecalToWorldBatches(ref decalToWorldBatch, batchCount);
+                            AssignNormalToWorldBatches(ref normalToWorldBatch, batchCount);
                         }
                     }
-                }
-            }
-
-            public void EndCull()
-            {
-                if (m_CullingGroup == null)
-                {
-                    Debug.LogError("Begin/EndCull() called out of sequence for decal projectors.");
-                }
-                else
-                {
-                    m_CullingGroup.Dispose();
-                    m_CullingGroup = null;
                 }
             }
 
@@ -404,7 +467,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
             }
 
-            public void RenderIntoDBuffer(CommandBuffer cmd)
+            public override void RenderIntoDBuffer(CommandBuffer cmd)
             {
                 if(m_NumResults == 0)
                     return;
@@ -439,26 +502,49 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     return this.m_DecalsCount;
                 }
             }
-
-            private List<Matrix4x4[]> m_DecalToWorld = new List<Matrix4x4[]>();
+           
             private List<Matrix4x4[]> m_NormalToWorld = new List<Matrix4x4[]>();
-
-            private CullingGroup m_CullingGroup = null;
-            private BoundingSphere[] m_BoundingSpheres = new BoundingSphere[kDecalBlockSize];
-            private DecalHandle[] m_Handles = new DecalHandle[kDecalBlockSize];
-            private int[] m_ResultIndices = new int[kDecalBlockSize];
-            private int m_NumResults = 0;
-            private int m_DecalsCount = 0;
-            private Matrix4x4[] m_CachedDecalToWorld = new Matrix4x4[kDecalBlockSize];
             private Matrix4x4[] m_CachedNormalToWorld = new Matrix4x4[kDecalBlockSize];
-			private Vector2[] m_CachedDrawDistances = new Vector2[kDecalBlockSize]; // x - draw distance, y - fade scale
             private Vector4[] m_CachedUVScaleBias = new Vector4[kDecalBlockSize]; // xy - scale, zw bias
-            private Material m_Material;
-            private float m_Blend = 0;
+        }
 
-            TextureScaleBias m_Diffuse = new TextureScaleBias();
-            TextureScaleBias m_Normal = new TextureScaleBias();
-            TextureScaleBias m_Mask = new TextureScaleBias();
+        private class MeshDecalSet : DecalSetBase
+        {
+            public MeshDecalSet(Material material, Mesh mesh) : base(material)
+            {
+                m_Mesh = mesh;
+            }
+
+            public DecalHandle AddDecal(Transform transform, float drawDistance, float fadeScale, Vector4 uvScaleBias, UInt64 key)
+            {
+                // increase array size if no space left
+                if (m_DecalsCount == m_Handles.Length)
+                {
+                    DecalHandle[] newHandles = new DecalHandle[m_DecalsCount + kDecalBlockSize];
+                    BoundingSphere[] newSpheres = new BoundingSphere[m_DecalsCount + kDecalBlockSize];
+                    Matrix4x4[] newCachedTransforms = new Matrix4x4[m_DecalsCount + kDecalBlockSize];                    
+                    Vector2[] newCachedDrawDistances = new Vector2[m_DecalsCount + kDecalBlockSize];                   
+                    m_ResultIndices = new int[m_DecalsCount + kDecalBlockSize];
+
+                    m_Handles.CopyTo(newHandles, 0);
+                    m_BoundingSpheres.CopyTo(newSpheres, 0);
+                    m_CachedDecalToWorld.CopyTo(newCachedTransforms, 0);                   
+                    m_CachedDrawDistances.CopyTo(newCachedDrawDistances, 0);                   
+
+                    m_Handles = newHandles;
+                    m_BoundingSpheres = newSpheres;
+                    m_CachedDecalToWorld = newCachedTransforms;
+                    m_CachedDrawDistances = newCachedDrawDistances;                    
+                }
+
+                DecalHandle decalHandle = new DecalHandle(m_DecalsCount, key);
+                m_Handles[m_DecalsCount] = decalHandle;
+                UpdateCachedData(transform, drawDistance, fadeScale, uvScaleBias, decalHandle);
+                m_DecalsCount++;
+                return decalHandle;
+            }
+
+            private Mesh m_Mesh;
         }
 
         public DecalHandle AddDecal(Transform transform, float drawDistance, float fadeScale, Vector4 uvScaleBias, Material material)
@@ -472,6 +558,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
             return decalSet.AddDecal(transform, drawDistance, fadeScale, uvScaleBias, key);
         }
+
+        public MeshDecalHandle AddMeshDecal(Transform transform, float drawDistance, float fadeScale, Mesh mesh, Material material)
+        {
+            MeshDecalSet meshDecalSet = null;
+            UInt64 matKey = (UInt64)material.GetInstanceID();
+            UInt64 meshKey = (UInt64)mesh.GetInstanceID();
+            UInt64 key = (meshKey << 32) + matKey;
+            if (!m_MeshDecalSets.TryGetValue(key, out meshDecalSet))
+            {
+                meshDecalSet = new MeshDecalSet(material, mesh);
+                m_MeshDecalSets.Add(key, meshDecalSet);
+            }
+            return meshDecalSet.AddDecal(transform, drawDistance, fadeScale, mesh, key);
+        }
+
+
 
         public void RemoveDecal(DecalHandle handle)
         {

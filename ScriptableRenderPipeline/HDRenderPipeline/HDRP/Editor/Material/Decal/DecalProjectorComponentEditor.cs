@@ -13,6 +13,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     {
         private MaterialEditor m_MaterialEditor = null;
         private DecalProjectorComponent m_DecalProjectorComponent = null;
+        private SerializedProperty m_MeshProperty;
         private SerializedProperty m_MaterialProperty;
         private SerializedProperty m_DrawDistanceProperty;
         private SerializedProperty m_FadeScaleProperty;
@@ -66,6 +67,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             m_DecalProjectorComponent = (DecalProjectorComponent)target;
             m_MaterialEditor = (MaterialEditor)CreateEditor(m_DecalProjectorComponent.Mat);
 			m_DecalProjectorComponent.OnMaterialChange += OnMaterialChange;
+            m_MeshProperty = serializedObject.FindProperty("m_Mesh");
             m_MaterialProperty = serializedObject.FindProperty("m_Material");
             m_DrawDistanceProperty = serializedObject.FindProperty("m_DrawDistance");
             m_FadeScaleProperty = serializedObject.FindProperty("m_FadeScale");
@@ -113,6 +115,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             EditorGUI.BeginChangeCheck();
 
+            EditorGUILayout.PropertyField(m_MeshProperty);
             EditorGUILayout.PropertyField(m_MaterialProperty);
             EditorGUILayout.PropertyField(m_DrawDistanceProperty);
             EditorGUILayout.Slider(m_FadeScaleProperty, 0.0f, 1.0f, new GUIContent("Fade scale"));
