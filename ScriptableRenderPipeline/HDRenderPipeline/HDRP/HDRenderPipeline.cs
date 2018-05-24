@@ -996,8 +996,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                     // This will bind the depth buffer if needed for DBuffer)
                     //RenderDBuffer(hdCamera, cmd);
+                    if (forcePrepassForDecals && !m_CurrentDebugDisplaySettings.IsDebugMaterialDisplayEnabled())
+                    {
+                        m_LightLoop.RenderDecals(camera, cmd);  // this will set the tiling parameters and light list.
+                    }
 
-					RenderGBuffer(m_CullResults, hdCamera, enableBakeShadowMask, renderContext, cmd);
+                    RenderGBuffer(m_CullResults, hdCamera, enableBakeShadowMask, renderContext, cmd);
 
                     // In both forward and deferred, everything opaque should have been rendered at this point so we can safely copy the depth buffer for later processing.
                     CopyDepthBufferIfNeeded(cmd);

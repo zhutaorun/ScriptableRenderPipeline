@@ -51,7 +51,7 @@ void AddDecalContribution(PositionInputs posInput, inout SurfaceData surfaceData
 		DecalSurfaceData decalSurfaceData;
 		int mask = 0;
 		// the code in the macros, gets moved inside the conditionals by the compiler
-		FETCH_DBUFFER(DBuffer, _DBufferTexture, posInput.positionSS);
+//		FETCH_DBUFFER(DBuffer, _DBufferTexture, posInput.positionSS);
 
 //#ifdef _SURFACE_TYPE_TRANSPARENT	// forward transparent using clustered decals
         uint decalCount, decalStart;
