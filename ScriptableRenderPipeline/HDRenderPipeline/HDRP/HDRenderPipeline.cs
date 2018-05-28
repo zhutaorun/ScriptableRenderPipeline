@@ -951,8 +951,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     bool forcePrepassForDecals = m_DbufferManager.vsibleDecalCount > 0;
                     RenderDepthPrepass(m_CullResults, hdCamera, renderContext, cmd, forcePrepassForDecals);
 
-                    RenderObjectsVelocity(m_CullResults, hdCamera, renderContext, cmd);
-
                     // This will bind the depth buffer if needed for DBuffer)
                     RenderDBuffer(hdCamera, cmd);
 
@@ -961,6 +959,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // In both forward and deferred, everything opaque should have been rendered at this point so we can safely copy the depth buffer for later processing.
                     CopyDepthBufferIfNeeded(cmd);
 
+                    // TODO: In the future we will render object velocity at the same time as depth prepass (we need C++ modification for this)
+                    // Once the C++ change is here we will first render all object without motion vector then motion vector object
+                    // We can't currently render object velocity after depth prepass because if there is no depth prepass we can have motion vector write that should have been rejected
+                    RenderObjectsVelocity(m_CullResults, hdCamera, renderContext, cmd);
                     RenderCameraVelocity(m_CullResults, hdCamera, renderContext, cmd);
 
                     // Depth texture is now ready, bind it (Depth buffer could have been bind before if DBuffer is enable)
