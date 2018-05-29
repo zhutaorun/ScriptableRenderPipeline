@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UnityEngine.Experimental.Rendering
+namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 {
 	public interface IRendererEffect 
 	{
 		string GetKeywordName();
 
-		EffectData[] GetValue();
+		EffectData[] GetValue(RendererListener listener);
 	}
 }

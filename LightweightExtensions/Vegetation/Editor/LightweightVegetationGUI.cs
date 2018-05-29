@@ -4,7 +4,7 @@ using UnityEngine.Experimental.Rendering;
 
 namespace UnityEditor
 {
-    public sealed class LightweightStandardGUI : LightweightShaderGUI
+    internal class LightweightVegetationGUI : LightweightShaderGUI
     {
         public enum WorkflowMode
         {
@@ -41,6 +41,15 @@ namespace UnityEditor
             public static readonly string[] specularSmoothnessChannelNames = {"Specular Alpha", "Albedo Alpha"};
         }
 
+        private static class ExtendedStyles
+        {
+            public static string vegetationProperties = "Vegetation Properties";
+
+            public static GUIContent trunkText = new GUIContent("Trunk Stiffness", "");
+            public static GUIContent branchText = new GUIContent("Branch Stiffness", "");
+            public static GUIContent leafText = new GUIContent("Leaf Stiffness", "");
+        }
+
         private MaterialProperty workflowMode;
 
         private MaterialProperty albedoColor;
@@ -63,6 +72,10 @@ namespace UnityEditor
         private MaterialProperty occlusionMap;
         private MaterialProperty emissionColorForRendering;
         private MaterialProperty emissionMap;
+        
+        private MaterialProperty trunkStiffness;
+        private MaterialProperty branchStiffness;
+        private MaterialProperty leafStiffness;
 
         public override void FindProperties(MaterialProperty[] properties)
         {
@@ -89,6 +102,10 @@ namespace UnityEditor
             occlusionMap = FindProperty("_OcclusionMap", properties);
             emissionColorForRendering = FindProperty("_EmissionColor", properties);
             emissionMap = FindProperty("_EmissionMap", properties);
+
+            trunkStiffness = FindProperty("_TrunkStiffness", properties);
+            branchStiffness = FindProperty("_BranchStiffness", properties);
+            leafStiffness = FindProperty("_LeafStiffness", properties);
         }
 
         public override void MaterialChanged(Material material)
@@ -121,6 +138,11 @@ namespace UnityEditor
                 m_MaterialEditor.TextureScaleOffsetProperty(albedoMap);
                 if (EditorGUI.EndChangeCheck())
                     emissionMap.textureScaleAndOffset = albedoMap.textureScaleAndOffset; // Apply the main texture scale and offset to the emission texture as well, for Enlighten's sake
+
+                EditorGUILayout.Space();
+
+                GUILayout.Label(ExtendedStyles.vegetationProperties, EditorStyles.boldLabel);
+                DoVegetationArea();
 
                 EditorGUILayout.Space();
 
@@ -267,6 +289,13 @@ namespace UnityEditor
                 return SmoothnessMapChannel.AlbedoAlpha;
 
             return SmoothnessMapChannel.SpecularMetallicAlpha;
+        }
+
+        void DoVegetationArea()
+        {
+            m_MaterialEditor.ShaderProperty(trunkStiffness, ExtendedStyles.trunkText);
+            m_MaterialEditor.ShaderProperty(branchStiffness, ExtendedStyles.branchText);
+            m_MaterialEditor.ShaderProperty(leafStiffness, ExtendedStyles.leafText);
         }
 
         static void SetMaterialKeywords(Material material)

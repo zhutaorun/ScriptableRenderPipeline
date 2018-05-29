@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
-using UnityEngine.Experimental.Rendering;
+using UnityEngine.Experimental.Rendering.LightweightPipeline;
 
-namespace UnityEditor.Experimental.Rendering
+namespace UnityEditor.Experimental.Rendering.LightweightPipeline
 {
     [CustomEditor(typeof(RendererListener))]
 	public class RendererListenerEditor : Editor 

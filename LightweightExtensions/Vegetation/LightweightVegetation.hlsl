@@ -1,11 +1,20 @@
 #include "LWRP/ShaderLibrary/Lighting.hlsl"
 
+// ------------------------------
+// Defines
+
 #define _VEGETATION
 #define UNITY_USE_SHCOEFFS_ARRAYS 1
 
-//float3 _VolumeDirection;
-//float _VolumeStrength;
-//float _VolumeTurbulence;
+// ------------------------------
+// Per Material
+
+float _TrunkStiffness;
+float _BranchStiffness;
+float _LeafStiffness;
+
+// ------------------------------
+// Per Instance
 
 UNITY_INSTANCING_BUFFER_START(Props)
 UNITY_DEFINE_INSTANCED_PROP(float3, _Position)
@@ -13,6 +22,9 @@ UNITY_DEFINE_INSTANCED_PROP(half3, _VolumeDirection)
 UNITY_DEFINE_INSTANCED_PROP(half, _VolumeStrength)
 UNITY_DEFINE_INSTANCED_PROP(half, _VolumeTurbulence)
 UNITY_INSTANCING_BUFFER_END(Props)
+
+// ------------------------------
+// Wave Functions
 
 half4 SmoothCurve( half4 x ) 
 {
@@ -29,21 +41,27 @@ half4 SmoothTriangleWave( half4 x )
     return SmoothCurve( TriangleWave( x ) );
 }
 
-float3 VegetationDeformation(float3 position, float3 origin, float3 normal, half leafStiffness, half branchStiffness, half phaseOffset)
+// ------------------------------
+// Entry Point
+
+float3 VegetationDeformation(float3 position, float3 origin, float3 normal, half3 vCol)
 {
     // ------------------------------
     // Main Bending
 
-    // Move these to Material
-    float trunkStiffness = 0.5; // 0 - 1
+    // Re-range material properties
+    half turbulenceValue = UNITY_ACCESS_INSTANCED_PROP(Props, _VolumeTurbulence) * 10;
+    half strengthValue = UNITY_ACCESS_INSTANCED_PROP(Props, _VolumeStrength) * 5;
+    float2 directionValue = UNITY_ACCESS_INSTANCED_PROP(Props, _VolumeDirection).xz;
 
-    float fBendScale = (1 - trunkStiffness) * 0.1; // main bend opacity
+    // Calculate main bend
+    float fBendScale = (1 - _TrunkStiffness) * 0.1; // main bend opacity
     float fLength = length(position); // distance to origin
-    float2 turbulence = float2(sin(_Time.y + origin.x) * 0.1, sin(_Time.y + origin.z) * 0.1); // Turbulence 0 - 0.1
-    float2 vWind = UNITY_ACCESS_INSTANCED_PROP(Props, _VolumeDirection).xz * lerp(0.1, turbulence, UNITY_ACCESS_INSTANCED_PROP(Props, _VolumeTurbulence)); // wind direction
+    float2 turbulence = float2(sin(_Time.y * turbulenceValue + origin.x) * 0.1, sin(_Time.y * turbulenceValue + origin.z) * 0.1); // Turbulence 0 - 0.1
+    float2 vWind = directionValue * lerp(0.1, turbulence, min(1, turbulence)); // wind direction
 
     // Bend factor - Wind variation is done on the CPU.
-    float fBF = position.y * fBendScale * UNITY_ACCESS_INSTANCED_PROP(Props, _VolumeStrength);
+    float fBF = position.y * fBendScale * strengthValue;
 
     // Smooth bending factor and increase its nearby height limit.
     fBF += 1.0;
@@ -62,11 +80,11 @@ float3 VegetationDeformation(float3 position, float3 origin, float3 normal, half
 
     float fSpeed = 0.25; // leaf occil
     float fDetailFreq = 0.3; // detail leaf occil
-    float fEdgeAtten = leafStiffness; // leaf stiffness (red)
-    float fDetailAmp = 0.1; // leaf edge amplitude of movement
-    float fBranchAtten = 1 - branchStiffness; // branch stiffness (blue)
-    float fBranchAmp = 5.5; // branch amplitude of movement
-    float fBranchPhase = phaseOffset * 3.3; // leaf phase (green)
+    float fEdgeAtten = vCol.x * (1 - _LeafStiffness) * 2; // leaf stiffness (red)
+    float fDetailAmp = 0.5 * turbulenceValue; // leaf edge amplitude of movement
+    float fBranchAtten = (1 - vCol.z) * (1 - _BranchStiffness) * 2; // branch stiffness (blue)
+    float fBranchAmp = .11 * turbulenceValue; //5.5 // branch amplitude of movement
+    float fBranchPhase = vCol.y * 3.3; // leaf phase (green)
 
     // Phases (object, vertex, branch)
     float fObjPhase = dot(origin, 1);

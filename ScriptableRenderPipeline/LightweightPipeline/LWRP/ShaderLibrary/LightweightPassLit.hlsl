@@ -90,7 +90,7 @@ LightweightVertexOutput LitPassVertex(LightweightVertexInput v)
 #ifdef _VOLUME_WIND
 #ifdef _VEGETATION
     float3 objectOrigin = UNITY_ACCESS_INSTANCED_PROP(Props, _Position);
-    v.vertex.xyz = VegetationDeformation(v.vertex.xyz, objectOrigin, v.normal, v.color.x, v.color.z, v.color.y);
+    v.vertex.xyz = VegetationDeformation(v.vertex.xyz, objectOrigin, v.normal, v.color.xyz);
 #endif
 #endif
 

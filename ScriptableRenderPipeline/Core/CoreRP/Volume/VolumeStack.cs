@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace UnityEngine.Experimental.Rendering
 {
-    public class VolumeStack : IDisposable
+    public sealed class VolumeStack : IDisposable
     {
         // Holds the state of _all_ component types you can possibly add on volumes
         public Dictionary<Type, VolumeComponent> components;

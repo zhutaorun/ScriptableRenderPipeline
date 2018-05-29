@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 
-namespace UnityEngine.Experimental.Rendering
+namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 {
     [DisallowMultipleComponent, ExecuteInEditMode]
     [AddComponentMenu("Volume Listeners/Renderer Listener", 1000)]
@@ -45,7 +45,7 @@ namespace UnityEngine.Experimental.Rendering
         {
             m_Trigger = transform;
             m_Block = new MaterialPropertyBlock();
-            m_Stack = new VolumeStack();
+            m_Stack = VolumeManager.instance.CreateStack();
         }
 
         private void OnDisable()
@@ -89,7 +89,7 @@ namespace UnityEngine.Experimental.Rendering
                 if(effect == null)
                     continue;
 
-                EffectData[] effectData = effect.GetValue();
+                EffectData[] effectData = effect.GetValue(this);
                 foreach(Material mat in renderer.sharedMaterials)
                 {
                     foreach(EffectData data in effectData)

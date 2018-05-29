@@ -31,7 +31,7 @@ VertexOutput DepthOnlyVertex(VertexInput v)
 #ifdef _VOLUME_WIND
 #ifdef _VEGETATION
     float3 objectOrigin = UNITY_ACCESS_INSTANCED_PROP(Props, _Position);
-    v.position.xyz = VegetationDeformation(v.position.xyz, objectOrigin, v.normal, v.color.x, v.color.z, v.color.y);
+    v.position.xyz = VegetationDeformation(v.position.xyz, objectOrigin, v.normal, v.color.xyz);
 #endif
 #endif
 

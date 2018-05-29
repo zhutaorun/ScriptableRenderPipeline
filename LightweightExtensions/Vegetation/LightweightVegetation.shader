@@ -40,6 +40,11 @@ Shader "LightweightPipeline/Vegetation (Physically Based)"
         _DetailAlbedoMap("Detail Albedo x2", 2D) = "grey" {}
         _DetailNormalMapScale("Scale", Float) = 1.0
         _DetailNormalMap("Normal Map", 2D) = "bump" {}
+        
+        // Vegetation
+        _TrunkStiffness("Trunk Stiffness", Range(0.0, 1.0)) = 0.5
+        _BranchStiffness("Branch Stiffness", Range(0.0, 1.0)) = 0.5
+        _LeafStiffness("Leaf Stiffness", Range(0.0, 1.0)) = 0.5
 
         [Enum(UV0,0,UV1,1)] _UVSec("UV Set for secondary textures", Float) = 0
 
@@ -245,5 +250,5 @@ Shader "LightweightPipeline/Vegetation (Physically Based)"
 
     }
     FallBack "Hidden/InternalErrorShader"
-    CustomEditor "LightweightStandardGUI"
+    CustomEditor "LightweightVegetationGUI"
 }
