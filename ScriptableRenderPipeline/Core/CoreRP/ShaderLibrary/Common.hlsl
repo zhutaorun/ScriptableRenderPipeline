@@ -479,9 +479,9 @@ float ComputeTextureLOD(float2 uv, float2 texelSize)
 }
 
 //Compute Texture LOD for 3D Texture
-float ComputeTextureLOD(float3 Px, float3 Py)
+float ComputeTextureLOD(float3 Px, float3 Py, float3 Pz)
 {
-    float d = max(dot(Px, Px), dot(Py, Py));
+    float d = max(dot(Px, Px), max(dot(Py, Py), dot(Pz, Pz)));
     return max(0.0, 0.5 * log2(d));
 }
 

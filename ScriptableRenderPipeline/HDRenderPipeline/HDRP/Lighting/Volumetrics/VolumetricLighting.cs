@@ -445,7 +445,7 @@ public class VolumetricLightingSystem
         cmd.SetGlobalTexture(HDShaderIDs._VBufferLighting,                m_LightingBufferHandle);
     }
 
-    public DensityVolumeList PrepareVisibleDensityVolumeList(HDCamera hdCamera, CommandBuffer cmd)
+    public DensityVolumeList PrepareVisibleDensityVolumeList(HDCamera hdCamera, CommandBuffer cmd, float time)
     {
         DensityVolumeList densityVolumes = new DensityVolumeList();
 
@@ -470,7 +470,7 @@ public class VolumetricLightingSystem
             m_VisibleVolumeData.Clear();
 
             // Collect all visible finite volume data, and upload it to the GPU.
-            DensityVolume[] volumes = DensityVolumeManager.manager.PrepareDensityVolumeData(cmd);
+            DensityVolume[] volumes = DensityVolumeManager.manager.PrepareDensityVolumeData(cmd, hdCamera.camera, time); 
 
             for (int i = 0; i < Math.Min(volumes.Length, k_MaxVisibleVolumeCount); i++)
             {
@@ -543,12 +543,13 @@ public class VolumetricLightingSystem
             Matrix4x4 transform   = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(vFoV, resolution, hdCamera.viewMatrix, false);
 
             Texture3D volumeAtlas = DensityVolumeManager.manager.volumeAtlas.volumeAtlas;
-            Vector2 volumeAtlasDimensions = new Vector2(0.0f, 0.0f);
+            Vector3 volumeAtlasDimensions = new Vector3(0.0f, 0.0f, 0.0f);
 
             if (volumeAtlas != null)
             {
                 volumeAtlasDimensions.x = volumeAtlas.width / volumeAtlas.depth; // 1 / number of textures
                 volumeAtlasDimensions.y = 1.0f / volumeAtlas.width;
+                volumeAtlasDimensions.z = volumeAtlas.width;
             }
 
             cmd.SetComputeTextureParam(m_VolumeVoxelizationCS, kernel, HDShaderIDs._VBufferDensity, m_DensityBufferHandle);
