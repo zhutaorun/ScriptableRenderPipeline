@@ -56,7 +56,7 @@ void Frag(PackedVaryingsToPS packedInput,
     ApplyDebugToSurfaceData(input.worldToTangent, surfaceData);
 #endif
 
-    BSDFData bsdfData = ConvertSurfaceDataToBSDFData(surfaceData);
+    BSDFData bsdfData = ConvertSurfaceDataToBSDFData(surfaceData, builtinData.emissiveColor);
 
     PreLightData preLightData = GetPreLightData(V, posInput, bsdfData);
 

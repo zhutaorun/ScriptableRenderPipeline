@@ -140,6 +140,8 @@ struct BSDFData
     float ior;
     float3 absorptionCoefficient;
     float transmittanceMask;
+    float3 emissiveColor;
+    float pad0;
 };
 
 //

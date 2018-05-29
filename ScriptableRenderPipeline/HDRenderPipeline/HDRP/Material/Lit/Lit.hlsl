@@ -342,7 +342,7 @@ SSSData ConvertSurfaceDataToSSSData(SurfaceData surfaceData)
 // conversion function for forward
 //-----------------------------------------------------------------------------
 
-BSDFData ConvertSurfaceDataToBSDFData(SurfaceData surfaceData)
+BSDFData ConvertSurfaceDataToBSDFData(SurfaceData surfaceData, float3 emission = float3(0, 0, 0))
 {
     BSDFData bsdfData;
     ZERO_INITIALIZE(BSDFData, bsdfData);
@@ -360,6 +360,9 @@ BSDFData ConvertSurfaceDataToBSDFData(SurfaceData surfaceData)
 
     bsdfData.diffuseColor = ComputeDiffuseColor(surfaceData.baseColor, metallic);
     bsdfData.fresnel0     = HasFeatureFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR) ? surfaceData.specularColor : ComputeFresnel0(surfaceData.baseColor, surfaceData.metallic, DEFAULT_SPECULAR_VALUE);
+
+    bsdfData.emissiveColor = emission;
+    bsdfData.pad0          = 0.0;
 
     // Note: we have ZERO_INITIALIZE the struct so bsdfData.anisotropy == 0.0
     // Note: DIFFUSION_PROFILE_NEUTRAL_ID is 0
@@ -1047,7 +1050,7 @@ float3 GetBakedDiffuseLighting(SurfaceData surfaceData, BuiltinData builtinData,
 #endif
 
     // Premultiply bake diffuse lighting information with DisneyDiffuse pre-integration
-    return builtinData.bakeDiffuseLighting * preLightData.diffuseFGD * surfaceData.ambientOcclusion * bsdfData.diffuseColor + builtinData.emissiveColor;
+    return builtinData.bakeDiffuseLighting * preLightData.diffuseFGD * surfaceData.ambientOcclusion * bsdfData.diffuseColor + 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -1085,9 +1088,9 @@ bool ShouldOutputSplitLighting(BSDFData bsdfData)
 
 #ifdef HAS_LIGHTLOOP
 
-#ifndef _SURFACE_TYPE_TRANSPARENT
-#define USE_DEFERRED_DIRECTIONAL_SHADOWS // Deferred shadows are always enabled for opaque objects
-#endif
+//#ifndef _SURFACE_TYPE_TRANSPARENT
+//#define USE_DEFERRED_DIRECTIONAL_SHADOWS // Deferred shadows are always enabled for opaque objects
+//#endif
 
 #include "../../Lighting/LightEvaluation.hlsl"
 
@@ -1300,6 +1303,10 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
         float thicknessInMeters      = thicknessInUnits * _WorldScales[bsdfData.diffusionProfile].x;
         float thicknessInMillimeters = thicknessInMeters * MILLIMETERS_PER_METER;
 
+        //Thickness Bias
+        float biasThreshold = step(0.25, distFrontFaceToLight - distBackFaceToLight);
+        thicknessInMillimeters = lerp(thicknessInMillimeters, FLT_MAX, biasThreshold);
+
     #if SHADEROPTIONS_USE_DISNEY_SSS
         // We need to make sure it's not less than the baked thickness to minimize light leaking.
         float thicknessDelta = max(0, thicknessInMillimeters - bsdfData.thickness);
@@ -1466,6 +1473,10 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
             float thicknessInUnits       = (distFrontFaceToLight - distBackFaceToLight) * -NdotL;
             float thicknessInMeters      = thicknessInUnits * _WorldScales[bsdfData.diffusionProfile].x;
             float thicknessInMillimeters = thicknessInMeters * MILLIMETERS_PER_METER;
+
+            //Thickness Bias
+            float biasThreshold = step(0.25, distFrontFaceToLight - distBackFaceToLight);
+            thicknessInMillimeters = lerp(thicknessInMillimeters, FLT_MAX, biasThreshold);
 
         #if SHADEROPTIONS_USE_DISNEY_SSS
             // We need to make sure it's not less than the baked thickness to minimize light leaking.
@@ -2026,7 +2037,7 @@ void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
 
     AmbientOcclusionFactor aoFactor;
     // Use GTAOMultiBounce approximation for ambient occlusion (allow to get a tint from the baseColor)
-#if 0
+#if 1
     GetScreenSpaceAmbientOcclusion(posInput.positionSS, preLightData.NdotV, bsdfData.perceptualRoughness, bsdfData.specularOcclusion, aoFactor);
 #else
     GetScreenSpaceAmbientOcclusionMultibounce(posInput.positionSS, preLightData.NdotV, bsdfData.perceptualRoughness, bsdfData.specularOcclusion, bsdfData.diffuseColor, bsdfData.fresnel0, aoFactor);
@@ -2034,6 +2045,8 @@ void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
 
     // Add indirect diffuse + emissive (if any) - Ambient occlusion is multiply by emissive which is wrong but not a big deal
     bakeDiffuseLighting                 *= aoFactor.indirectAmbientOcclusion;
+    bakeDiffuseLighting                 += bsdfData.emissiveColor; //DREAM: ADD the emissive.
+
     lighting.indirect.specularReflected *= aoFactor.indirectSpecularOcclusion;
     lighting.direct.diffuse             *= aoFactor.directAmbientOcclusion;
 

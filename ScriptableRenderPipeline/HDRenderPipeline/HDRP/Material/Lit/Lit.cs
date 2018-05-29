@@ -177,6 +177,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Reuse thickness from SSS
             public Vector3 absorptionCoefficient;
             public float transmittanceMask;
+            
+            public Vector3 emissiveColor;
+            public float   pad0;
         };
 
         //-----------------------------------------------------------------------------
