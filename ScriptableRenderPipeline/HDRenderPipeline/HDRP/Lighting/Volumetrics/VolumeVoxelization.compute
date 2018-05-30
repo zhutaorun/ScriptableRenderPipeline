@@ -247,13 +247,13 @@ void FillVolumetricDensityBuffer(PositionInputs posInput, float3 rayOriginWS, fl
                     if (_VolumeData[volumeIndex].textureIndex != -1)
                     {
                         float3 voxelRightSizeBS = mul(voxelRightSize, transpose(obbFrame));
-                        float3 voxelRightSizeUV = (voxelRightSizeBS / (obbExtents * 2));
+                        float3 voxelRightSizeUV = (voxelRightSizeBS / obbExtents);
                         
                         float3 voxelUpSizeBS = mul(voxelUpSize, transpose(obbFrame));
-                        float3 voxelUpSizeUV = (voxelUpSizeBS / (obbExtents * 2));
+                        float3 voxelUpSizeUV = (voxelUpSizeBS / obbExtents);
                         
                         float3 voxelDepthSizeBS = mul(voxelDepthSize, transpose(obbFrame));
-                        float3 voxelDepthSizeUV = (voxelDepthSizeBS / (obbExtents * 2));
+                        float3 voxelDepthSizeUV = (voxelDepthSizeBS / obbExtents);
                         
                         scatteringAndExtinctionMask = SampleVolumeMask(_VolumeData[volumeIndex], voxelCenterUV * 0.5 + 0.5, voxelRightSizeUV, voxelUpSizeUV, voxelDepthSizeUV);
                     }
