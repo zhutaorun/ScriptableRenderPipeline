@@ -71,8 +71,8 @@ TEXTURE2D(_GBufferTexture3);
 #include "../../Lighting/LightLoop/LightLoop.cs.hlsl"
 
 // Currently disable SSR until critical editor fix is available
-#undef LIGHTFEATUREFLAGS_SSREFLECTION
-#define LIGHTFEATUREFLAGS_SSREFLECTION 0
+//#undef LIGHTFEATUREFLAGS_SSREFLECTION
+//#define LIGHTFEATUREFLAGS_SSREFLECTION 0
 
 // Combination need to be define in increasing "comlexity" order as define by FeatureFlagsToTileVariant
 static const uint kFeatureVariantFlags[NUM_FEATURE_VARIANTS] =
