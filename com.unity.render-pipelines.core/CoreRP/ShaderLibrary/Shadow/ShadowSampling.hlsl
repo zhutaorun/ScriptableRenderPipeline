@@ -263,6 +263,32 @@ real SampleShadow_PCF_Tent_7x7(ShadowContext shadowContext, inout uint payloadOf
     return shadow;
 }
 
+
+//
+//            PCSS SAMPLING
+//
+#include "PCSS.hlsl"
+real SampleShadow_PCSS(ShadowContext shadowContext, inout uint payloadOffset, real3 coord, real4 scaleOffset, float slice, Texture2DArray tex, SamplerComparisonState compSamp, SamplerState samp)
+{
+    real2 params           = asfloat(shadowContext.payloads[payloadOffset].xy);
+    real LightArea         = (params.x / 255.0); //TODO: Floats through payload.
+    real MinimumFilterSize = (params.y / 255.0);
+    payloadOffset++;
+
+    //1) Blocker Search
+    real AverageBlockerDepth = 0.0;
+    real NumBlockers         = 0.0;
+    if (!BlockerSearch(AverageBlockerDepth, NumBlockers, LightArea, coord, slice, tex, samp)) 
+        return 1.0;
+
+    //2) Penumbra Estimation
+    real FilterSize = LightArea * PenumbraSize(coord.z, AverageBlockerDepth);
+    FilterSize = max(FilterSize, MinimumFilterSize);
+
+    //3) Filter
+    return PCSS(coord, FilterSize, scaleOffset, slice, tex, compSamp);
+}
+
 //
 //                  9 tap adaptive PCF sampling
 //
@@ -557,7 +583,7 @@ real SampleShadow_SelectAlgorithm( ShadowContext shadowContext, ShadowData shado
     case GPUSHADOWALGORITHM_PCF_TENT_3X3    : return SampleShadow_PCF_Tent_3x3( shadowContext, payloadOffset, shadowData.textureSize, shadowData.texelSizeRcp, posTC, sampleBias, shadowData.slice, tex, compSamp );
     case GPUSHADOWALGORITHM_PCF_TENT_5X5    : return SampleShadow_PCF_Tent_5x5( shadowContext, payloadOffset, shadowData.textureSize, shadowData.texelSizeRcp, posTC, sampleBias, shadowData.slice, tex, compSamp );
     case GPUSHADOWALGORITHM_PCF_TENT_7X7    : return SampleShadow_PCF_Tent_7x7( shadowContext, payloadOffset, shadowData.textureSize, shadowData.texelSizeRcp, posTC, sampleBias, shadowData.slice, tex, compSamp );
-
+    case GPUSHADOWALGORITHM_PCSS            : return SampleShadow_PCSS(shadowContext, payloadOffset, posTC, shadowData.scaleOffset, shadowData.slice, tex, compSamp, s_point_clamp_sampler);
     default: return 1.0;
     }
 }

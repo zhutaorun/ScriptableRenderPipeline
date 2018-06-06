@@ -162,12 +162,13 @@ namespace UnityEngine.Experimental.Rendering
         override protected void Register(GPUShadowType type, ShadowRegistry registry)
         {
             ShadowPrecision precision = m_ShadowmapBits == 32 ? ShadowPrecision.High : ShadowPrecision.Low;
-            m_SupportedAlgorithms.Reserve(5);
+            m_SupportedAlgorithms.Reserve(6);
             m_SupportedAlgorithms.AddUniqueUnchecked((int)ShadowUtils.Pack(ShadowAlgorithm.PCF, ShadowVariant.V0, precision));
             m_SupportedAlgorithms.AddUniqueUnchecked((int)ShadowUtils.Pack(ShadowAlgorithm.PCF, ShadowVariant.V1, precision));
             m_SupportedAlgorithms.AddUniqueUnchecked((int)ShadowUtils.Pack(ShadowAlgorithm.PCF, ShadowVariant.V2, precision));
             m_SupportedAlgorithms.AddUniqueUnchecked((int)ShadowUtils.Pack(ShadowAlgorithm.PCF, ShadowVariant.V3, precision));
             m_SupportedAlgorithms.AddUniqueUnchecked((int)ShadowUtils.Pack(ShadowAlgorithm.PCF, ShadowVariant.V4, precision));
+            m_SupportedAlgorithms.AddUniqueUnchecked((int)ShadowUtils.Pack(ShadowAlgorithm.PCSS, ShadowVariant.V0, precision)); //TODO: Consider the highest precision for blocker search.
 
             ShadowRegistry.VariantDelegate del = (Light l, ShadowAlgorithm dataAlgorithm, ShadowVariant dataVariant, ShadowPrecision dataPrecision, ref int[] dataBlock) =>
                 {
@@ -181,6 +182,11 @@ namespace UnityEngine.Experimental.Rendering
                 new ShadowVariant[] { ShadowVariant.V0, ShadowVariant.V1, ShadowVariant.V2, ShadowVariant.V3, ShadowVariant.V4 },
                 new string[] {"1 tap", "9 tap adaptive", "tent 3x3 (4 taps)", "tent 5x5 (9 taps)", "tent 7x7 (16 taps)" },
                 new ShadowRegistry.VariantDelegate[] { del, del, del, del, del });
+
+            registry.Register(type, precision, ShadowAlgorithm.PCSS, "Percentage Closer Soft Shadows (PCSS)",
+                new ShadowVariant[] { ShadowVariant.V0 },
+                new string[] { "poisson 64" },
+                new ShadowRegistry.VariantDelegate[] { del });
         }
 
         // returns true if the original data passed integrity checks, false if the data had to be modified
@@ -437,7 +443,7 @@ namespace UnityEngine.Experimental.Rendering
         virtual protected uint ReservePayload(ShadowRequest sr)
         {
             uint payloadSize  = sr.shadowType == GPUShadowType.Directional ? (1 + k_MaxCascadesInShader + ((uint)m_TmpBorders.Length / 4)) : 0;
-            payloadSize += ShadowUtils.ExtractAlgorithm(sr.shadowAlgorithm) == ShadowAlgorithm.PCF ? 1u : 0;
+                 payloadSize += ShadowUtils.ExtractAlgorithm(sr.shadowAlgorithm) == ShadowAlgorithm.PCSS ? 1u : 0;
             return payloadSize;
         }
 
@@ -526,6 +532,25 @@ namespace UnityEngine.Experimental.Rendering
                     }
                     break;
                 }
+            }
+
+            if(algo == ShadowAlgorithm.PCSS)
+            {
+                AdditionalShadowData asd = lights[sr.index].light.GetComponent<AdditionalShadowData>();
+                if (!asd)
+                    return;
+
+                int shadowDataFormat;
+                int[] shadowData = asd.GetShadowData(out shadowDataFormat);
+                if (!CheckDataIntegrity(algo, vari, prec, ref shadowData))
+                {
+                    asd.SetShadowAlgorithm((int)algo, (int)vari, (int)prec, shadowDataFormat, shadowData);
+                    Debug.Log("Fixed up shadow data for algorithm " + algo + ", variant " + vari);
+                }
+
+                sp.Set((0.01f * asd.shadowSoftness) * 255, asd.shadowMinimumSoftness * 255, 0, 0);
+                payload[payloadOffset] = sp;
+                payloadOffset++;
             }
         }
 
