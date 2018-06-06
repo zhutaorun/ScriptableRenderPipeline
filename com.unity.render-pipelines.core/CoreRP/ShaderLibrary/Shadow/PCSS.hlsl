@@ -71,13 +71,14 @@ real PenumbraSize(real Reciever, real Blocker)
    return abs((Reciever - Blocker) / Blocker);
 }
 
-bool BlockerSearch(inout real AverageBlockerDepth, inout real NumBlockers, real LightArea, real3 Coord, float Slice, Texture2DArray ShadowMap, SamplerState PointSampler)
+bool BlockerSearch(inout real AverageBlockerDepth, inout real NumBlockers, real LightArea, real3 Coord, float Slice, real2 SampleBias, Texture2DArray ShadowMap, SamplerState PointSampler)
 {
    real BlockerSum = 0.0;
    for (int i = 0; i < 64; ++i)
    {
-       //TODO: Noise
-        real2 Offset = PoissonDisk64[i] * LightArea;
+       real2 Offset = real2(PoissonDisk64[i].x *  SampleBias.y + PoissonDisk64[i].y * SampleBias.x,
+                            PoissonDisk64[i].x * -SampleBias.x + PoissonDisk64[i].y * SampleBias.y) * LightArea;
+
        real ShadowMapDepth = SAMPLE_TEXTURE2D_ARRAY_LOD( ShadowMap, PointSampler, Coord.xy + Offset, Slice, 0.0 ).x;
 
        if(ShadowMapDepth > Coord.z)
@@ -92,7 +93,7 @@ bool BlockerSearch(inout real AverageBlockerDepth, inout real NumBlockers, real 
    else                return true;
 }
 
-real PCSS(real3 Coord, real FilterRadius, real4 ScaleOffset, float Slice, Texture2DArray ShadowMap, SamplerComparisonState CompSampler)
+real PCSS(real3 Coord, real FilterRadius, real4 ScaleOffset, float Slice, real2 SampleBias, Texture2DArray ShadowMap, SamplerComparisonState CompSampler)
 {
     real UMin = ScaleOffset.z;
     real UMax = ScaleOffset.z + ScaleOffset.x;
@@ -103,8 +104,8 @@ real PCSS(real3 Coord, real FilterRadius, real4 ScaleOffset, float Slice, Textur
    real Sum = 0.0;
    for(int i = 0; i < 64; ++i)
    {
-        //TODO: Noise
-        real2 Offset = PoissonDisk64[i] * FilterRadius;
+        real2 Offset = real2(PoissonDisk64[i].x *  SampleBias.y + PoissonDisk64[i].y * SampleBias.x,
+                             PoissonDisk64[i].x * -SampleBias.x + PoissonDisk64[i].y * SampleBias.y) * FilterRadius;
 
         real U = Coord.x + Offset.x;
         real V = Coord.y + Offset.y;
