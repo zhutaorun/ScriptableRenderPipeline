@@ -281,14 +281,12 @@ real SampleShadow_PCSS(ShadowContext shadowContext, inout uint payloadOffset, re
     //1) Blocker Search
     real AverageBlockerDepth = 0.0;
     real NumBlockers         = 0.0;
-    if (!BlockerSearch(AverageBlockerDepth, NumBlockers, LightArea, coord, slice, SampleBias, tex, samp)) 
+    if (!BlockerSearch(AverageBlockerDepth, NumBlockers, LightArea + MinimumFilterSize, coord, slice, SampleBias, tex, samp)) 
         return 1.0;
 
     //2) Penumbra Estimation
     real FilterSize = LightArea * PenumbraSize(coord.z, AverageBlockerDepth);
     FilterSize = max(FilterSize, MinimumFilterSize);
-
-
 
     //3) Filter
     return PCSS(coord, FilterSize, scaleOffset, slice, SampleBias, tex, compSamp);
