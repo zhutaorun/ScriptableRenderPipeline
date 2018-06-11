@@ -179,6 +179,7 @@ float4 _EmissiveColorMap_TexelSize;
 float4 _EmissiveColorMap_MipInfo;
 float _EmissiveColorMapUV;
 float _EmissiveColorMapUVLocal;
+float _EmissiveIntensity;
 float _AlbedoAffectEmissive;
 
 float _GeometricNormalFilteringEnabled;

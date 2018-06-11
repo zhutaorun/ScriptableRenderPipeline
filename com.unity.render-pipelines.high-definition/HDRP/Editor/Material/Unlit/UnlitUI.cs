@@ -13,6 +13,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static GUIContent colorText = new GUIContent("Color", "Color");
 
             public static GUIContent emissiveText = new GUIContent("Emissive Color", "Emissive");
+            public static GUIContent emissiveIntensityText = new GUIContent("Emissive Intensity", "Emissive");
         }
 
         protected MaterialProperty color = null;
@@ -23,6 +24,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string kEmissiveColor = "_EmissiveColor";
         protected MaterialProperty emissiveColorMap = null;
         protected const string kEmissiveColorMap = "_EmissiveColorMap";
+        protected MaterialProperty emissiveIntensity = null;
+        protected const string kEmissiveIntensity = "_EmissiveIntensity";
 
         override protected void FindMaterialProperties(MaterialProperty[] props)
         {
@@ -31,6 +34,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             emissiveColor = FindProperty(kEmissiveColor, props);
             emissiveColorMap = FindProperty(kEmissiveColorMap, props);
+            emissiveIntensity = FindProperty(kEmissiveIntensity, props);
         }
 
         protected override void MaterialPropertiesGUI(Material material)
@@ -42,6 +46,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             m_MaterialEditor.TexturePropertySingleLine(Styles.emissiveText, emissiveColorMap, emissiveColor);
             m_MaterialEditor.TextureScaleOffsetProperty(emissiveColorMap);
+            m_MaterialEditor.ShaderProperty(emissiveIntensity, Styles.emissiveIntensityText);
 
             var surfaceTypeValue = (SurfaceType)surfaceType.floatValue;
             if (surfaceTypeValue == SurfaceType.Transparent)
@@ -64,9 +69,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
         }
 
-        protected override bool ShouldEmissionBeEnabled(Material material)
+        protected override bool ShouldEmissionBeEnabled(Material mat)
         {
-            return (material.GetColor(kEmissiveColor) != Color.black) || material.GetTexture(kEmissiveColorMap);
+            return mat.GetFloat(kEmissiveIntensity) > 0.0f;
         }
 
         protected override void SetupMaterialKeywordsAndPassInternal(Material material)

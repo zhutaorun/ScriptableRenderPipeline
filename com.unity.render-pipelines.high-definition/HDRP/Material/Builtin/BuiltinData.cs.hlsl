@@ -14,10 +14,11 @@
 #define DEBUGVIEW_BUILTIN_BUILTINDATA_SHADOW_MASK_2 (104)
 #define DEBUGVIEW_BUILTIN_BUILTINDATA_SHADOW_MASK_3 (105)
 #define DEBUGVIEW_BUILTIN_BUILTINDATA_EMISSIVE_COLOR (106)
-#define DEBUGVIEW_BUILTIN_BUILTINDATA_VELOCITY (107)
-#define DEBUGVIEW_BUILTIN_BUILTINDATA_DISTORTION (108)
-#define DEBUGVIEW_BUILTIN_BUILTINDATA_DISTORTION_BLUR (109)
-#define DEBUGVIEW_BUILTIN_BUILTINDATA_DEPTH_OFFSET (110)
+#define DEBUGVIEW_BUILTIN_BUILTINDATA_EMISSIVE_INTENSITY (107)
+#define DEBUGVIEW_BUILTIN_BUILTINDATA_VELOCITY (108)
+#define DEBUGVIEW_BUILTIN_BUILTINDATA_DISTORTION (109)
+#define DEBUGVIEW_BUILTIN_BUILTINDATA_DISTORTION_BLUR (110)
+#define DEBUGVIEW_BUILTIN_BUILTINDATA_DEPTH_OFFSET (111)
 
 //
 // UnityEngine.Experimental.Rendering.HDPipeline.Builtin+LightTransportData:  static fields
@@ -36,6 +37,7 @@ struct BuiltinData
     float shadowMask2;
     float shadowMask3;
     float3 emissiveColor;
+    float emissiveIntensity;
     float2 velocity;
     float2 distortion;
     float distortionBlur;
@@ -78,6 +80,10 @@ void GetGeneratedBuiltinDataDebug(uint paramId, BuiltinData builtindata, inout f
             break;
         case DEBUGVIEW_BUILTIN_BUILTINDATA_EMISSIVE_COLOR:
             result = builtindata.emissiveColor;
+            needLinearToSRGB = true;
+            break;
+        case DEBUGVIEW_BUILTIN_BUILTINDATA_EMISSIVE_INTENSITY:
+            result = builtindata.emissiveIntensity.xxx;
             break;
         case DEBUGVIEW_BUILTIN_BUILTINDATA_VELOCITY:
             result = float3(builtindata.velocity, 0.0);
