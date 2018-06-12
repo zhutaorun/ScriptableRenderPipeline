@@ -452,14 +452,15 @@ namespace UnityEditor.ShaderGraph.Drawing
                     return;
 
                 var path = AssetDatabase.GetAssetPath(asset);
-                var extension = Path.GetExtension(path);
+                // Remove the "." in ".extension_name"
+                var extension = Path.GetExtension(path).Substring(1);
                 Type graphType;
-                switch (extension)
+                switch (extension.ToLower())
                 {
-                    case ".ShaderGraph":
+                    case ShaderGraphImporter.ShaderGraphExtension:
                         graphType = typeof(MaterialGraph);
                         break;
-                    case ".ShaderSubGraph":
+                    case ShaderSubGraphImporter.ShaderSubGraphExtension:
                         graphType = typeof(SubGraph);
                         break;
                     default:
