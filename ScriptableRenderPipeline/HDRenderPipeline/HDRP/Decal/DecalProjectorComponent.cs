@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -9,10 +9,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public class DecalProjectorComponent : MonoBehaviour
     {
         public Material m_Material = null;
-		public float m_DrawDistance = 1000.0f;
+        public float m_DrawDistance = 1000.0f;
         public float m_FadeScale = 0.9f;
-        public Vector2 m_UVScale = new Vector2(1,1);
-        public Vector2 m_UVBias = new Vector2(0,0);
+        public Vector2 m_UVScale = new Vector2(1, 1);
+        public Vector2 m_UVBias = new Vector2(0, 0);
+        public bool m_AffectsTransparency = false;
         private Material m_OldMaterial = null;
         private DecalSystem.DecalHandle m_Handle = null;
 
@@ -41,46 +42,53 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_Material = hdrp != null ? hdrp.GetDefaultDecalMaterial() : null;
             }
 
-            if(m_Handle != null)
+            if (m_Handle != null)
+            { 
                 DecalSystem.instance.RemoveDecal(m_Handle);
+                m_Handle = null;
+            }
+
             Vector4 uvScaleBias = new Vector4(m_UVScale.x, m_UVScale.y, m_UVBias.x, m_UVBias.y);
-            m_Handle = DecalSystem.instance.AddDecal(transform, m_DrawDistance, m_FadeScale, uvScaleBias, m_Material);
+            m_Handle = DecalSystem.instance.AddDecal(transform, m_DrawDistance, m_FadeScale, uvScaleBias, m_AffectsTransparency, m_Material);
         }
 
         public void OnDisable()
         {
-            DecalSystem.instance.RemoveDecal(m_Handle);
-            m_Handle = null;
+            if (m_Handle != null)
+            { 
+                DecalSystem.instance.RemoveDecal(m_Handle);
+                m_Handle = null;
+            }
         }
 
-		// Declare the method signature of the delegate to call.	
-		public delegate void OnMaterialChangeDelegate();
+        // Declare the method signature of the delegate to call.
+        public delegate void OnMaterialChangeDelegate();
 
-		// Declare the event to which editor code will hook itself.
-		public event OnMaterialChangeDelegate OnMaterialChange;
+        // Declare the event to which editor code will hook itself.
+        public event OnMaterialChangeDelegate OnMaterialChange;
 
         public void OnValidate()
         {
             // handle material changes
             if (m_OldMaterial != m_Material)
             {
-                if( m_Handle != null)
+                if (m_Handle != null)
                     DecalSystem.instance.RemoveDecal(m_Handle);
                 Vector4 uvScaleBias = new Vector4(m_UVScale.x, m_UVScale.y, m_UVBias.x, m_UVBias.y);
-                m_Handle = DecalSystem.instance.AddDecal(transform, m_DrawDistance, m_FadeScale, uvScaleBias, m_Material);
+                m_Handle = DecalSystem.instance.AddDecal(transform, m_DrawDistance, m_FadeScale, uvScaleBias, m_AffectsTransparency, m_Material);
                 m_OldMaterial = m_Material;
 
                 // notify the editor that material has changed so it can update the shader foldout
-				if (OnMaterialChange != null)
-				{
-					OnMaterialChange();
-				}
+                if (OnMaterialChange != null)
+                {
+                    OnMaterialChange();
+                }
             }
 
             if (m_Material != null)
             {
                 Shader shader = m_Material.shader;
-                if((shader != null) &&  (shader.name != "HDRenderPipeline/Decal"))
+                if ((shader != null) &&  (shader.name != "HDRenderPipeline/Decal"))
                 {
                     Debug.LogWarning("Decal projector component material is not using HDRenderPipeline/Decal shader.", this);
                 }
@@ -94,7 +102,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 if (transform.hasChanged == true)
                 {
                     Vector4 uvScaleBias = new Vector4(m_UVScale.x, m_UVScale.y, m_UVBias.x, m_UVBias.y);
-                    DecalSystem.instance.UpdateCachedData(transform, m_DrawDistance, m_FadeScale, uvScaleBias, m_Handle);
+                    DecalSystem.instance.UpdateCachedData(transform, m_DrawDistance, m_FadeScale, uvScaleBias, m_AffectsTransparency, m_Handle);
                     transform.hasChanged = false;
                 }
             }
@@ -115,7 +123,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             DrawGizmo(true);
             // if this object is selected there is a chance the transform was changed so update culling info
             Vector4 uvScaleBias = new Vector4(m_UVScale.x, m_UVScale.y, m_UVBias.x, m_UVBias.y);
-            DecalSystem.instance.UpdateCachedData(transform, m_DrawDistance, m_FadeScale, uvScaleBias, m_Handle);
+            DecalSystem.instance.UpdateCachedData(transform, m_DrawDistance, m_FadeScale, uvScaleBias, m_AffectsTransparency, m_Handle);
         }
 
         public void OnDrawGizmos()

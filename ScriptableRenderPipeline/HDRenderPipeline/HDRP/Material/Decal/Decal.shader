@@ -2,6 +2,7 @@ Shader "HDRenderPipeline/Decal"
 {
     Properties
     {
+		_BaseColor("_BaseColor", Color) = (1,1,1,1)
         _BaseColorMap("BaseColorMap", 2D) = "white" {}
         _NormalMap("NormalMap", 2D) = "bump" {}     // Tangent space normal map
         _MaskMap("MaskMap", 2D) = "white" {}
@@ -57,8 +58,8 @@ Shader "HDRenderPipeline/Decal"
 
         Pass
         {
-            Name "DBuffer"  // Name is not used
-            Tags { "LightMode" = "DBuffer" } // This will be only for opaque object based on the RenderQueue index
+            Name "DBufferProjector"  // Name is not used
+            Tags { "LightMode" = "DBufferProjector" } // This will be only for opaque object based on the RenderQueue index
 
             // back faces with zfail, for cases when camera is inside the decal volume
             Cull Front
@@ -69,7 +70,7 @@ Shader "HDRenderPipeline/Decal"
 
             HLSLPROGRAM
 
-            #define SHADERPASS SHADERPASS_DBUFFER
+            #define SHADERPASS SHADERPASS_DBUFFER_PROJECTOR
             #include "../../ShaderVariables.hlsl"
             #include "Decal.hlsl"
             #include "ShaderPass/DecalSharePass.hlsl"
@@ -81,8 +82,8 @@ Shader "HDRenderPipeline/Decal"
 
 		Pass
 		{
-			Name "MeshDecals"  // Name is not used
-			Tags{"LightMode" = "MeshDecals"} // This will be only for opaque object based on the RenderQueue index
+			Name "DBufferMesh"  // Name is not used
+			Tags{"LightMode" = "DBufferMesh"} // This will be only for opaque object based on the RenderQueue index
 										 
 			Cull Back
 			ZWrite Off
@@ -92,7 +93,7 @@ Shader "HDRenderPipeline/Decal"
 
 			HLSLPROGRAM
 
-			#define SHADERPASS SHADERPASS_MESHDECALS
+			#define SHADERPASS SHADERPASS_DBUFFER_MESH
 			#include "../../ShaderVariables.hlsl"
 			#include "Decal.hlsl"
 			#include "ShaderPass/DecalSharePass.hlsl"

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
@@ -18,8 +18,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         private SerializedProperty m_FadeScaleProperty;
         private SerializedProperty m_UVScaleProperty;
         private SerializedProperty m_UVBiasProperty;
+        private SerializedProperty m_AffectsTransparencyProperty;
 
-        public class DecalBoundsHandle :  BoxBoundsHandle
+        public class DecalBoundsHandle : BoxBoundsHandle
         {
             protected override Bounds OnHandleChanged(HandleDirection handle, Bounds boundsOnClick, Bounds newBounds)
             {
@@ -57,7 +58,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public Vector3 m_Translation;
             public Vector3 m_Scale;
         }
-        
+
         private DecalBoundsHandle m_Handle = new DecalBoundsHandle();
 
         private void OnEnable()
@@ -65,24 +66,25 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // Create an instance of the MaterialEditor
             m_DecalProjectorComponent = (DecalProjectorComponent)target;
             m_MaterialEditor = (MaterialEditor)CreateEditor(m_DecalProjectorComponent.Mat);
-			m_DecalProjectorComponent.OnMaterialChange += OnMaterialChange;
+            m_DecalProjectorComponent.OnMaterialChange += OnMaterialChange;
             m_MaterialProperty = serializedObject.FindProperty("m_Material");
             m_DrawDistanceProperty = serializedObject.FindProperty("m_DrawDistance");
             m_FadeScaleProperty = serializedObject.FindProperty("m_FadeScale");
             m_UVScaleProperty = serializedObject.FindProperty("m_UVScale");
             m_UVBiasProperty = serializedObject.FindProperty("m_UVBias");
+            m_AffectsTransparencyProperty = serializedObject.FindProperty("m_AffectsTransparency");
         }
 
-		private void OnDisable()
-		{
-			m_DecalProjectorComponent.OnMaterialChange -= OnMaterialChange;
-		}
+        private void OnDisable()
+        {
+            m_DecalProjectorComponent.OnMaterialChange -= OnMaterialChange;
+        }
 
-		public void OnMaterialChange()
-		{
-			// Update material editor with the new material
-			m_MaterialEditor = (MaterialEditor)CreateEditor(m_DecalProjectorComponent.Mat);
-		}
+        public void OnMaterialChange()
+        {
+            // Update material editor with the new material
+            m_MaterialEditor = (MaterialEditor)CreateEditor(m_DecalProjectorComponent.Mat);
+        }
 
         void OnSceneGUI()
         {
@@ -93,21 +95,21 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             Handles.color = Color.white;
             // decal mesh is centered at (0, -0.5, 0)
             // zero out the local scale in the matrix so that handle code gives us back the actual scale
-            Handles.matrix = Matrix4x4.TRS(m_DecalProjectorComponent.transform.position, m_DecalProjectorComponent.transform.rotation, Vector3.one) * Matrix4x4.Translate(new Vector3(0.0f, -0.5f* m_DecalProjectorComponent.transform.localScale.y, 0.0f));
-            // pass in the scale 
+            Handles.matrix = Matrix4x4.TRS(m_DecalProjectorComponent.transform.position, m_DecalProjectorComponent.transform.rotation, Vector3.one) * Matrix4x4.Translate(new Vector3(0.0f, -0.5f * m_DecalProjectorComponent.transform.localScale.y, 0.0f));
+            // pass in the scale
             m_Handle.SetSizeAndCenter(m_DecalProjectorComponent.transform.localScale, Vector3.zero);
             m_Handle.DrawHandle();
             if (EditorGUI.EndChangeCheck())
             {
                 // adjust decal transform if handle changed
-                m_DecalProjectorComponent.transform.Translate(m_Handle.m_Translation);                
+                m_DecalProjectorComponent.transform.Translate(m_Handle.m_Translation);
                 m_DecalProjectorComponent.transform.localScale = m_Handle.m_Scale;
                 Repaint();
             }
 
             Handles.matrix = mat;
             Handles.color = col;
-        } 
+        }
 
         public override void OnInspectorGUI()
         {
@@ -118,6 +120,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             EditorGUILayout.Slider(m_FadeScaleProperty, 0.0f, 1.0f, new GUIContent("Fade scale"));
             EditorGUILayout.PropertyField(m_UVScaleProperty);
             EditorGUILayout.PropertyField(m_UVBiasProperty);
+            EditorGUILayout.PropertyField(m_AffectsTransparencyProperty);
             if (EditorGUI.EndChangeCheck())
             {
                 serializedObject.ApplyModifiedProperties();
