@@ -1315,6 +1315,10 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
         float thicknessInMeters = thicknessInUnits * _WorldScales[bsdfData.diffusionProfile].x;
         float thicknessInMillimeters = thicknessInMeters * MILLIMETERS_PER_METER;
 
+        //Thickness Bias
+        float biasThreshold = step(lightData.thicknessBias, distFrontFaceToLight - distBackFaceToLight);
+        thicknessInMillimeters = lerp(thicknessInMillimeters, FLT_MAX, biasThreshold);
+
 #if SHADEROPTIONS_USE_DISNEY_SSS
         // We need to make sure it's not less than the baked thickness to minimize light leaking.
         float thicknessDelta = max(0, thicknessInMillimeters - bsdfData.thickness);
@@ -1481,6 +1485,10 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
             float thicknessInUnits       = (distFrontFaceToLight - distBackFaceToLight) * -NdotL;
             float thicknessInMeters      = thicknessInUnits * _WorldScales[bsdfData.diffusionProfile].x;
             float thicknessInMillimeters = thicknessInMeters * MILLIMETERS_PER_METER;
+
+            //Thickness Bias
+            float biasThreshold = step(lightData.thicknessBias, distFrontFaceToLight - distBackFaceToLight);
+            thicknessInMillimeters = lerp(thicknessInMillimeters, FLT_MAX, biasThreshold);
 
         #if SHADEROPTIONS_USE_DISNEY_SSS
             // We need to make sure it's not less than the baked thickness to minimize light leaking.

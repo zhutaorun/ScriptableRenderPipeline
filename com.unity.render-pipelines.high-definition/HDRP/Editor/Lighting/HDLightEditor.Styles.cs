@@ -59,6 +59,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public readonly GUIContent normalBiasMax = new GUIContent("Normal Bias Max");
             public readonly GUIContent normalBiasScale = new GUIContent("Normal Bias Scale");
             public readonly GUIContent sampleBiasScale = new GUIContent("Sample Bias Scale");
+            public readonly GUIContent thicknessBias = new GUIContent("Thickness Bias");
             public readonly GUIContent edgeLeakFixup = new GUIContent("Edge Leak Fixup");
             public readonly GUIContent edgeToleranceNormal = new GUIContent("Edge Tolerance Normal");
             public readonly GUIContent edgeTolerance = new GUIContent("Edge Tolerance");
