@@ -95,7 +95,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public float volumetricDimmer; // TODO: improve the cache locality
 
-        public Vector3 unused0;
+        public Vector3 unused1;
         public float thicknessBias;
     };
 

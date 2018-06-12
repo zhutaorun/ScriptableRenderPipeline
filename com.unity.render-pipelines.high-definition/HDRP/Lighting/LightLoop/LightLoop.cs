@@ -1060,7 +1060,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 lightData.nonLightmappedOnly = 0;
             }
 
-            lightData.unused0 = Vector3.zero;
+            lightData.unused1 = Vector3.zero;
             lightData.thicknessBias = additionalshadowData.thicknessBias;
 
             m_lightList.lights.Add(lightData);

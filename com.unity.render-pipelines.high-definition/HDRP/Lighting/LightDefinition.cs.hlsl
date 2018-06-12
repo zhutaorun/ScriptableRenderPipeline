@@ -94,7 +94,7 @@ struct LightData
     int lightType;
     float minRoughness;
     float volumetricDimmer;
-    float3 unused0;
+    float3 unused1;
     float thicknessBias;
 };
 
@@ -282,9 +282,9 @@ float GetVolumetricDimmer(LightData value)
 {
 	return value.volumetricDimmer;
 }
-float3 GetUnused0(LightData value)
+float3 GetUnused1(LightData value)
 {
-    return value.unused0;
+    return value.unused1;
 }
 float GetThicknessBias(LightData value)
 {
