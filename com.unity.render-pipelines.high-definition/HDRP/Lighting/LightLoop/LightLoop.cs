@@ -867,6 +867,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Fallback to the first non shadow casting directional light.
             m_CurrentSunLight = m_CurrentSunLight == null ? light.light : m_CurrentSunLight;
 
+
+            directionalLightData.unused0 = Vector3.zero;
+            directionalLightData.thicknessBias = additionalShadowData.thicknessBias;
+
             m_lightList.directionalLights.Add(directionalLightData);
 
             return true;
@@ -1055,6 +1059,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 lightData.shadowMaskSelector.x = -1.0f;
                 lightData.nonLightmappedOnly = 0;
             }
+
+            lightData.unused0 = Vector3.zero;
+            lightData.thicknessBias = additionalshadowData.thicknessBias;
 
             m_lightList.lights.Add(lightData);
 

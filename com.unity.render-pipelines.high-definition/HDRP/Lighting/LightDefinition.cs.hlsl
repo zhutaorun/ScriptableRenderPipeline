@@ -64,6 +64,8 @@ struct DirectionalLightData
     float volumetricDimmer;
     int nonLightmappedOnly;
     float4 shadowMaskSelector;
+    float3 unused0;
+    float thicknessBias;
 };
 
 // Generated from UnityEngine.Experimental.Rendering.HDPipeline.LightData
@@ -92,6 +94,8 @@ struct LightData
     int lightType;
     float minRoughness;
     float volumetricDimmer;
+    float3 unused0;
+    float thicknessBias;
 };
 
 // Generated from UnityEngine.Experimental.Rendering.HDPipeline.EnvLightData
@@ -177,6 +181,14 @@ int GetNonLightmappedOnly(DirectionalLightData value)
 float4 GetShadowMaskSelector(DirectionalLightData value)
 {
 	return value.shadowMaskSelector;
+}
+float3 GetUnused0(DirectionalLightData value)
+{
+    return value.unused0;
+}
+float GetThicknessBias(DirectionalLightData value)
+{
+    return value.thicknessBias;
 }
 
 //
@@ -269,6 +281,14 @@ float GetMinRoughness(LightData value)
 float GetVolumetricDimmer(LightData value)
 {
 	return value.volumetricDimmer;
+}
+float3 GetUnused0(LightData value)
+{
+    return value.unused0;
+}
+float GetThicknessBias(LightData value)
+{
+    return value.thicknessBias;
 }
 
 //

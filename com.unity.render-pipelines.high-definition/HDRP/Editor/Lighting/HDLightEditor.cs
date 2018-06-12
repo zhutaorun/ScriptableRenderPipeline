@@ -60,6 +60,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public SerializedProperty minimumSoftness;
 
             // Bias control
+            public SerializedProperty thicknessBias;
             public SerializedProperty viewBiasMin;
             public SerializedProperty viewBiasMax;
             public SerializedProperty viewBiasScale;
@@ -145,6 +146,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     softness = o.Find(x => x.shadowSoftness),
                     minimumSoftness = o.Find(x => x.shadowMinimumSoftness),
 
+                    thicknessBias = o.Find(x => x.thicknessBias),
                     viewBiasMin = o.Find(x => x.viewBiasMin),
                     viewBiasMax = o.Find(x => x.viewBiasMax),
                     viewBiasScale = o.Find(x => x.viewBiasScale),
@@ -599,6 +601,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     // Link min to max and don't expose normalBiasScale (useless when min == max)
                     m_AdditionalShadowData.normalBiasMax.floatValue = m_AdditionalShadowData.normalBiasMin.floatValue;
                 }
+
+                EditorGUILayout.Slider(m_AdditionalShadowData.thicknessBias, 0.0f, 10.0f, s_Styles.thicknessBias);
+
                 //EditorGUILayout.PropertyField(m_AdditionalShadowData.normalBiasMax, s_Styles.normalBiasMax);
                 //EditorGUILayout.PropertyField(m_AdditionalShadowData.normalBiasScale, s_Styles.normalBiasScale);
                 //EditorGUILayout.PropertyField(m_AdditionalShadowData.sampleBiasScale, s_Styles.sampleBiasScale);

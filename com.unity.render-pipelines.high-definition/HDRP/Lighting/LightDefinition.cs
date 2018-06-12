@@ -55,6 +55,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public int nonLightmappedOnly; // Use with ShadowMask feature // TODO: make it a bool
 
         public Vector4 shadowMaskSelector; // Use with ShadowMask feature
+
+        public Vector3 unused0;
+        public float thicknessBias;
     };
 
     [GenerateHLSL]
@@ -91,6 +94,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public float minRoughness;  // This is use to give a small "area" to punctual light, as if we have a light with a radius.
 
         public float volumetricDimmer; // TODO: improve the cache locality
+
+        public Vector3 unused0;
+        public float thicknessBias;
     };
 
 
