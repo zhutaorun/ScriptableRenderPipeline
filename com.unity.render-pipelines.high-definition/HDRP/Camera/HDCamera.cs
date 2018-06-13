@@ -270,7 +270,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             projectionParams = new Vector4(flipProj ? -1 : 1, n, f, 1.0f / f);
 
-            // See Common.hlsl#LinearEyeDepth for detailed explanation
+            // See Common.hlsl#LinearEyeDepth for a detailed explanation
             var p = projMatrix; // Shorthand variable
             invProjectionPerspectiveParams = new Vector4(
                 p.m32 * p.m20 / (p.m23 * p.m00),
@@ -517,7 +517,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalVector(HDShaderIDs._ScreenToTargetScale,       doubleBufferedViewportScale);
             cmd.SetGlobalVector(HDShaderIDs._ZBufferParams,             zBufferParams);
             cmd.SetGlobalVector(HDShaderIDs._ProjectionParams,          projectionParams);
-            cmd.SetGlobalVector(HDShaderIDs._InvProjPerspParam,          invProjectionPerspectiveParams);
+            cmd.SetGlobalVector(HDShaderIDs._InvProjPerspParam,         invProjectionPerspectiveParams);
             cmd.SetGlobalVector(HDShaderIDs._InvProjOrthoParam,         invProjectionOrthographicParams);
             cmd.SetGlobalVector(HDShaderIDs.unity_OrthoParams,          unity_OrthoParams);
             cmd.SetGlobalVector(HDShaderIDs._ScreenParams,              screenParams);

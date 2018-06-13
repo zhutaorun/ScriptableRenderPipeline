@@ -606,7 +606,7 @@ float LinearEyeDepth(float2 positionNDC, float deviceDepth, float4 invProjParam)
 // We see that m33 and m32 are both factors of two groups, as those two coefficient are exclusively 1 or 0, these group can be considered as "perspective group" and "orthographic group"
 // (3') z_v = (1 + orthographicGroup) / (perspectiveGroup + ((m22/m23) - m02*m20/(m00*m23) - m21*m12/(m11*m23)))
 //
-// We can express this as:
+// We can write this as:
 // (4) z_v = dot(X_d, invOrthoParams) / dot(X_d, invProjParams)
 //
 // Se we expect:
@@ -614,19 +614,20 @@ float LinearEyeDepth(float2 positionNDC, float deviceDepth, float4 invProjParam)
 // invPerspParams   = float4(    -m32*m20/(m23*m00), -m32*m21/(m23*m11),  m32/m23,    m22/m23 - m02*m20/(m23*m00) - m12*m21/(m23*m11))
 float LinearEyeDepth(float2 positionNDC, float deviceDepth, float4 invOrthoParams, float4 invPerspParams)
 {
-    float4 X_d = float4(positionNDC * 2 - 1, deviceDepth, 1);
-    return dot(X_d, invOrthoParams) / dot(X_d, invPerspParams);
+    float4 positionDevice = float4(positionNDC * 2 - 1, deviceDepth, 1);
+    return dot(positionDevice, invOrthoParams) / dot(positionDevice, invPerspParams);
 }
 
 // Decode view space position from linear depth
 // Handle oblique perspective/orthographic projections
 // Based on equations of LinearEyeDepth
-float3 DecodeViewSpaceFromLinearDepth(uint2 positionSS, float linearDepth, float2 screenSize, float4x4 projectionMatrix)
+float3 DecodeViewSpaceFromLinearDepth(float2 positionSS, float linearDepth, float2 screenSize, float4x4 projectionMatrix)
 {
     float2 positionNDC = positionSS / float2(screenSize - 1);
     float2 positionDevice = float2(positionNDC * 2 - 1);
     float3 positionVS = float3(
-        (linearDepth * (/* Seems like a -1 is required here? */-positionDevice.x * projectionMatrix._m32 - projectionMatrix._m02) + projectionMatrix._m33 * positionDevice.x) / projectionMatrix._m00,
+        /* Seems like we need to negate the x component */
+        -(linearDepth * (positionDevice.x * projectionMatrix._m32 - projectionMatrix._m02) + projectionMatrix._m33 * positionDevice.x) / projectionMatrix._m00,
         (linearDepth * (positionDevice.y * projectionMatrix._m32 - projectionMatrix._m12) + projectionMatrix._m33 * positionDevice.y) / projectionMatrix._m11,
         linearDepth
     );

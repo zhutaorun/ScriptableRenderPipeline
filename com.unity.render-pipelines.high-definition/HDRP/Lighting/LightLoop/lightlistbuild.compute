@@ -147,7 +147,8 @@ void LIGHTLISTGEN(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID)
         {
             int idx = i * NR_THREADS + t;
             uint2 uCrd = min( uint2(viTilLL.x+(idx&0xf), viTilLL.y+(idx>>4)), uint2(iWidth-1, iHeight-1) );
-            const float fDepth = FetchDepth(g_depth_tex, uCrd);
+            // TODO: reverse Z is not handled properly here
+            const float fDepth = LOAD_TEXTURE2D_LOD(g_depth_tex, uCrd, 0).r;
             vLinDepths[i] = GetLinearDepth(uCrd, fDepth);
             if(fDepth<VIEWPORT_SCALE_Z)     // if not skydome
             {
