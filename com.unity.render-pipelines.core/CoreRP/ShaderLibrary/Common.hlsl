@@ -611,7 +611,7 @@ float LinearEyeDepth(float2 positionNDC, float deviceDepth, float4 invProjParam)
 //
 // Se we expect:
 // invOrthoParams   = float4(     m33*m20/(m23*m00),  m33*m21/(m23*m11), -m33/m23,    1)
-// invPerspParams   = float4(    -m32*m20/(m23*m00), -m32*m21/(m23*m11),  m32/m23,    m22/m23 - m02*m20/(m23*m00) - m12*m21/(m23*m11))
+// invPerspParams   = float4(     m32*m20/(m23*m00),  m32*m21/(m23*m11), -m32/m23,    m22/m23 - m02*m20/(m23*m00) - m12*m21/(m23*m11))
 float LinearEyeDepth(float2 positionNDC, float deviceDepth, float4 invOrthoParams, float4 invPerspParams)
 {
     float4 positionDevice = float4(positionNDC * 2 - 1, deviceDepth, 1);
