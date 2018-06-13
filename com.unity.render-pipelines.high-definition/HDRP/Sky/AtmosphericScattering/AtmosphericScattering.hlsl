@@ -128,8 +128,31 @@ float4 EvaluateAtmosphericScattering(PositionInputs posInput)
         }
         case FOGTYPE_VOLUMETRIC_AND_EXPONENTIAL:
         {
-            fogColor  = float3(1, 0, 0);
-            fogFactor = 1.0; 
+            //Volumetric
+            float4 volFog = SampleVolumetricLighting(TEXTURE3D_PARAM(_VBufferLighting, s_linear_clamp_sampler),
+                                                     posInput.positionNDC,
+                                                     posInput.linearDepth,
+                                                     _VBufferResolution,
+                                                     _VBufferSliceCount.xy,
+                                                     _VBufferUvScaleAndLimit.xy,
+                                                     _VBufferUvScaleAndLimit.zw,
+                                                     _VBufferDepthEncodingParams,
+                                                     _VBufferDepthDecodingParams,
+                                                     true, true);
+
+            float  factorV = 1 - volFog.a;                            // Opacity from transmittance
+            float3 colorV  = volFog.rgb * min(rcp(factorV), FLT_MAX); // Un-premultiply, clamp to avoid (0 * INF = NaN)
+
+            //Exponential
+            float distance = length(GetWorldSpaceViewDir(posInput.positionWS));
+            float fogHeight = max(0.0, GetAbsolutePositionWS(posInput.positionWS).y - _ExpFogBaseHeight);
+            float  factorE = _FogDensity * TransmittanceHomogeneousMedium(_ExpFogHeightAttenuation, fogHeight) * (1.0f - TransmittanceHomogeneousMedium(1.0f / _ExpFogDistance, distance));
+            float3 colorE  = GetFogColor(posInput);
+
+            //Composite
+            fogColor  = colorE * factorV.xxx + colorV;  //https://bartwronski.files.wordpress.com/2014/08/bwronski_volumetric_fog_siggraph2014.pdf
+            fogFactor = max(factorE, factorV);
+
             break;
         }
 #endif // SHADEROPTIONS_VOLUMETRIC_LIGHTING_PRESET
