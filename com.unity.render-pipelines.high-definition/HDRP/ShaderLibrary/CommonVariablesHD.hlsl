@@ -3,7 +3,11 @@
 #ifndef UNITY_COMMON_VARIABLES_HD_INCLUDED
 #define UNITY_COMMON_VARIABLES_HD_INCLUDED
 
-#include "CoreRP/ShaderLibrary/CommonVariables.hlsl"
+///////////////////////////////////////////////////////////////
+//           HD Pipeline Specific Common Variables           //
+///////////////////////////////////////////////////////////////
+
+#include "CoreRP/ShaderLibrary/CommonVariables.hlsl" // Always include CoreRP version
 #include "../ShaderConfig.cs.hlsl"
 
 // CAUTION:

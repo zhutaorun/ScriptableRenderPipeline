@@ -5,6 +5,10 @@
 #ifndef UNITY_COMMON_MATRICES_HD_INCLUDED
 #define UNITY_COMMON_MATRICES_HD_INCLUDED
 
+///////////////////////////////////////////////////////////////
+//              HD Camera Specific Matrix Macros             //
+///////////////////////////////////////////////////////////////
+
 #if defined(USING_STEREO_MATRICES)
 
 #define UNITY_MATRIX_M     unity_ObjectToWorld

@@ -3,7 +3,11 @@
 #ifndef UNITY_COMMON_VARIABLES_LW_INCLUDED
 #define UNITY_COMMON_VARIABLES_LW_INCLUDED
 
-#include "CoreRP/ShaderLibrary/CommonVariables.hlsl"
+///////////////////////////////////////////////////////////////
+//           LW Pipeline Specific Common Variables           //
+///////////////////////////////////////////////////////////////
+
+#include "CoreRP/ShaderLibrary/CommonVariables.hlsl" // Always include CoreRP version
 
 #if defined(STEREO_INSTANCING_ON) && (defined(SHADER_API_D3D11) || defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE) || defined(SHADER_API_PSSL))
 #define UNITY_STEREO_INSTANCING_ENABLED

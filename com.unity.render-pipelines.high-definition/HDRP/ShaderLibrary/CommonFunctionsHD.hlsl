@@ -1,7 +1,11 @@
 #ifndef UNITY_COMMON_FUNCTIONS_HD_INCLUDED
 #define UNITY_COMMON_FUNCTIONS_HD_INCLUDED
 
-#include "CoreRP/ShaderLibrary/CommonFunctions.hlsl"
+///////////////////////////////////////////////////////////////
+//           HD Pipeline Specific Common Functions           //
+///////////////////////////////////////////////////////////////
+
+#include "CoreRP/ShaderLibrary/CommonFunctions.hlsl"  // Always include CoreRP version
 
 // This method should be used for rendering any full screen quad that uses an auto-scaling Render Targets (see RTHandle/HDCamera)
 // It will account for the fact that the textures it samples are not necesarry using the full space of the render texture but only a partial viewport.

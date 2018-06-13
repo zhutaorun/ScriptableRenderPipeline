@@ -287,16 +287,7 @@ half3 SampleSH(half3 normalWS)
     return max(half3(0, 0, 0), SampleSH9(SHCoefficients, normalWS));
 }
 
-#define UNITY_MATRIX_M     unity_ObjectToWorld
-#define UNITY_MATRIX_I_M   unity_WorldToObject
-#define UNITY_MATRIX_V     unity_MatrixV
-#define UNITY_MATRIX_I_V   unity_MatrixInvV
-#define UNITY_MATRIX_P     OptimizeProjectionMatrix(glstate_matrix_projection)
-#define UNITY_MATRIX_I_P   ERROR_UNITY_MATRIX_I_P_IS_NOT_DEFINED
-#define UNITY_MATRIX_VP    unity_MatrixVP
-#define UNITY_MATRIX_I_VP  ERROR_UNITY_MATRIX_I_VP_IS_NOT_DEFINED
-#define UNITY_MATRIX_MV    mul(UNITY_MATRIX_V, UNITY_MATRIX_M)
-
+#include "CoreRP/ShaderLibrary/CommonMatrices.hlsl"
 #include "CoreRP/ShaderLibrary/CommonTransformation.hlsl"
 
 #endif // UNITY_SHADER_VARIABLES_INCLUDED

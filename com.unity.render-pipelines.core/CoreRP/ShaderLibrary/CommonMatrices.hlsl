@@ -1,6 +1,10 @@
 #ifndef UNITY_COMMON_MATRICES_INCLUDED
 #define UNITY_COMMON_MATRICES_INCLUDED
 
+///////////////////////////////////////////////////////////////
+//                     Matrix Macros                         //
+///////////////////////////////////////////////////////////////
+
 #define UNITY_MATRIX_M     unity_ObjectToWorld
 #define UNITY_MATRIX_I_M   unity_WorldToObject
 #define UNITY_MATRIX_V     unity_MatrixV
