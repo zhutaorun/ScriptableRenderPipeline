@@ -3,7 +3,11 @@
 
 #include "CoreRP/ShaderLibrary/Common.hlsl"
 #include "CoreRP/ShaderLibrary/Packing.hlsl"
-#include "Input.hlsl"
+#include "CoreRP/ShaderLibrary/CommonMatrices.hlsl"
+#include "CoreRP/ShaderLibrary/UnityInstancing.hlsl"
+
+#include "CommonVariablesLW.hlsl"
+#include "CommonFunctionsLW.hlsl"
 
 #if !defined(SHADER_HINT_NICE_QUALITY)
 #ifdef SHADER_API_MOBILE
@@ -18,6 +22,7 @@
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
+
 #ifdef _NORMALMAP
     #define OUTPUT_NORMAL(IN, OUT) OutputTangentToWorld(IN.tangent, IN.normal, OUT.tangent.xyz, OUT.binormal.xyz, OUT.normal.xyz)
 #else
