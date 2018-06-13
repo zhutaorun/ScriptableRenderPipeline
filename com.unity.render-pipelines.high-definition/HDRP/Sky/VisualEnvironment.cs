@@ -53,6 +53,28 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     fogSettings.PushShaderParameters(hdCamera, cmd);
                     break;
                 }
+                case FogType.VolumetricAndLinear:
+                {
+                    var volumetricFogSettings = VolumeManager.instance.stack.GetComponent<VolumetricFog>();
+                    var linearFogSettings     = VolumeManager.instance.stack.GetComponent<LinearFog>();
+                    volumetricFogSettings.PushShaderParameters(hdCamera, cmd);
+                    linearFogSettings.PushShaderParameters(hdCamera, cmd);
+
+                    //NOTE: Currently must override _AtmosphericScatteringType here.
+                    cmd.SetGlobalInt(HDShaderIDs._AtmosphericScatteringType, (int)FogType.VolumetricAndLinear);
+                    break;
+                }
+                case FogType.VolumetricAndExponential:
+                {
+                    var volumetricFogSettings  = VolumeManager.instance.stack.GetComponent<VolumetricFog>();
+                    var exponentialFogSettings = VolumeManager.instance.stack.GetComponent<ExponentialFog>();
+                    volumetricFogSettings.PushShaderParameters(hdCamera, cmd);
+                    exponentialFogSettings.PushShaderParameters(hdCamera, cmd);
+
+                    //NOTE: Currently must override _AtmosphericScatteringType here.
+                    cmd.SetGlobalInt(HDShaderIDs._AtmosphericScatteringType, (int)FogType.VolumetricAndExponential);
+                    break;
+                }
             }
         }
     }
