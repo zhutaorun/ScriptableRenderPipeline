@@ -415,7 +415,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // VisualEnvironment sets global fog parameters: _GlobalAnisotropy, _GlobalScattering, _GlobalExtinction.
 
-            if (visualEnvironment.fogType != FogType.Volumetric)
+            if (visualEnvironment.fogType != FogType.Volumetric &&
+                visualEnvironment.fogType != FogType.VolumetricAndLinear &&
+                visualEnvironment.fogType != FogType.VolumetricAndExponential)
             {
                 // Set the neutral black texture.
                 cmd.SetGlobalTexture(HDShaderIDs._VBufferLighting, CoreUtils.blackVolumeTexture);
@@ -453,7 +455,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return densityVolumes;
 
             var visualEnvironment = VolumeManager.instance.stack.GetComponent<VisualEnvironment>();
-            if (visualEnvironment.fogType != FogType.Volumetric)
+            if (visualEnvironment.fogType != FogType.Volumetric &&
+                visualEnvironment.fogType != FogType.VolumetricAndLinear &&
+                visualEnvironment.fogType != FogType.VolumetricAndExponential)
                 return densityVolumes;
 
             using (new ProfilingSample(cmd, "Prepare Visible Density Volume List"))
@@ -512,7 +516,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return;
 
             var visualEnvironment = VolumeManager.instance.stack.GetComponent<VisualEnvironment>();
-            if (visualEnvironment.fogType != FogType.Volumetric)
+            if (visualEnvironment.fogType != FogType.Volumetric &&
+                visualEnvironment.fogType != FogType.VolumetricAndLinear &&
+                visualEnvironment.fogType != FogType.VolumetricAndExponential)
                 return;
 
             using (new ProfilingSample(cmd, "Volume Voxelization"))
@@ -615,7 +621,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return;
 
             var visualEnvironment = VolumeManager.instance.stack.GetComponent<VisualEnvironment>();
-            if (visualEnvironment.fogType != FogType.Volumetric)
+            if (visualEnvironment.fogType != FogType.Volumetric &&
+                visualEnvironment.fogType != FogType.VolumetricAndLinear &&
+                visualEnvironment.fogType != FogType.VolumetricAndExponential)
                 return;
 
             using (new ProfilingSample(cmd, "Volumetric Lighting"))

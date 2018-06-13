@@ -80,9 +80,9 @@ float4 EvaluateAtmosphericScattering(PositionInputs posInput)
             fogFactor = _FogDensity * TransmittanceHomogeneousMedium(_ExpFogHeightAttenuation, fogHeight) * (1.0f - TransmittanceHomogeneousMedium(1.0f / _ExpFogDistance, distance));
             break;
         }
+#if (SHADEROPTIONS_VOLUMETRIC_LIGHTING_PRESET != 0)
         case FOGTYPE_VOLUMETRIC:
         {
-        #if (SHADEROPTIONS_VOLUMETRIC_LIGHTING_PRESET != 0)
             float4 volFog = SampleVolumetricLighting(TEXTURE3D_PARAM(_VBufferLighting, s_linear_clamp_sampler),
                                                      posInput.positionNDC,
                                                      posInput.linearDepth,
@@ -96,9 +96,43 @@ float4 EvaluateAtmosphericScattering(PositionInputs posInput)
 
             fogFactor = 1 - volFog.a;                              // Opacity from transmittance
             fogColor  = volFog.rgb * min(rcp(fogFactor), FLT_MAX); // Un-premultiply, clamp to avoid (0 * INF = NaN)
-        #endif
+        
+            break;
+        }        
+        case FOGTYPE_VOLUMETRIC_AND_LINEAR:
+        {
+            //Volumetric
+            float4 volFog = SampleVolumetricLighting(TEXTURE3D_PARAM(_VBufferLighting, s_linear_clamp_sampler),
+                                                     posInput.positionNDC,
+                                                     posInput.linearDepth,
+                                                     _VBufferResolution,
+                                                     _VBufferSliceCount.xy,
+                                                     _VBufferUvScaleAndLimit.xy,
+                                                     _VBufferUvScaleAndLimit.zw,
+                                                     _VBufferDepthEncodingParams,
+                                                     _VBufferDepthDecodingParams,
+                                                     true, true);
+
+            float  factorV = 1 - volFog.a;                            // Opacity from transmittance
+            float3 colorV  = volFog.rgb * min(rcp(factorV), FLT_MAX); // Un-premultiply, clamp to avoid (0 * INF = NaN)
+
+            //Linear
+            float  factorL = _FogDensity * saturate((posInput.linearDepth - _LinearFogStart) * _LinearFogOneOverRange) * saturate((_LinearFogHeightEnd - GetAbsolutePositionWS(posInput.positionWS).y) * _LinearFogHeightOneOverRange);
+            float3 colorL  = GetFogColor(posInput);
+
+            //Composite
+            fogColor  = colorL * factorV.xxx + colorV;  //https://bartwronski.files.wordpress.com/2014/08/bwronski_volumetric_fog_siggraph2014.pdf
+            fogFactor = max(factorL, factorV);
+
             break;
         }
+        case FOGTYPE_VOLUMETRIC_AND_EXPONENTIAL:
+        {
+            fogColor  = float3(1, 0, 0);
+            fogFactor = 1.0; 
+            break;
+        }
+#endif // SHADEROPTIONS_VOLUMETRIC_LIGHTING_PRESET
     }
 
     return float4(fogColor, fogFactor);

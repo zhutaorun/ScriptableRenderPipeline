@@ -62,7 +62,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         None,
         Linear,
         Exponential,
-        Volumetric
+        Volumetric,
+        VolumetricAndLinear,
+        VolumetricAndExponential
     }
 
     [GenerateHLSL]
