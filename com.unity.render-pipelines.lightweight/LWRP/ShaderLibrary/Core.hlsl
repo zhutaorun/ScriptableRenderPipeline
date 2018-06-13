@@ -117,15 +117,6 @@ half3 TangentToWorldNormal(half3 normalTangent, half3 tangent, half3 binormal, h
     return FragmentNormalWS(mul(normalTangent, tangentToWorld));
 }
 
-// TODO: A similar function should be already available in SRP lib on master. Use that instead
-float4 ComputeScreenPos(float4 positionCS)
-{
-    float4 o = positionCS * 0.5f;
-    o.xy = float2(o.x, o.y * _ProjectionParams.x) + o.w;
-    o.zw = positionCS.zw;
-    return o;
-}
-
 half ComputeFogFactor(float z)
 {
     float clipZ_01 = UNITY_Z_0_FAR_FROM_CLIPSPACE(z);

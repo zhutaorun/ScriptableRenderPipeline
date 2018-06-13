@@ -707,6 +707,14 @@ float2 ComputeNormalizedDeviceCoordinates(float3 position, float4x4 clipSpaceTra
     return ComputeNormalizedDeviceCoordinatesWithZ(position, clipSpaceTransform).xy;
 }
 
+float4 ComputeScreenPos(float4 positionCS, float projectionSign)
+{
+    float4 o = positionCS * 0.5f;
+    o.xy = float2(o.x, o.y * projectionSign) + o.w;
+    o.zw = positionCS.zw;
+    return o;
+}
+
 float3 ComputeViewSpacePosition(float2 positionNDC, float deviceDepth, float4x4 invProjMatrix)
 {
     float4 positionCS = ComputeClipSpacePosition(positionNDC, deviceDepth);
@@ -818,6 +826,15 @@ void ApplyDepthOffsetPositionInput(float3 V, float depthOffsetVS, float3 viewFor
 // ----------------------------------------------------------------------------
 // Misc utilities
 // ----------------------------------------------------------------------------
+
+bool IsGammaSpace()
+{
+    #ifdef UNITY_COLORSPACE_GAMMA
+        return true;
+    #else
+        return false;
+    #endif
+}
 
 // Normalize that account for vectors with zero length
 real3 SafeNormalize(real3 inVec)

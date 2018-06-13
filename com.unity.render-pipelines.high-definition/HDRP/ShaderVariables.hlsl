@@ -3,6 +3,7 @@
 #ifndef UNITY_SHADER_VARIABLES_INCLUDED
 #define UNITY_SHADER_VARIABLES_INCLUDED
 
+#include "CoreRP/ShaderLibrary/CommonVariables.hlsl"
 #include "ShaderConfig.cs.hlsl"
 
 // CAUTION:
@@ -166,23 +167,11 @@ SAMPLER(s_trilinear_clamp_sampler);
 
 // ----------------------------------------------------------------------------
 
-TEXTURE2D(_CameraDepthTexture);
-SAMPLER(sampler_CameraDepthTexture);
-
-// Main lightmap
-TEXTURE2D(unity_Lightmap);
-SAMPLER(samplerunity_Lightmap);
-// Dual or directional lightmap (always used with unity_Lightmap, so can share sampler)
-TEXTURE2D(unity_LightmapInd);
-
 // Dynamic GI lightmap
 TEXTURE2D(unity_DynamicLightmap);
 SAMPLER(samplerunity_DynamicLightmap);
 
 TEXTURE2D(unity_DynamicDirectionality);
-
-// We can have shadowMask only if we have lightmap, so no sampler
-TEXTURE2D(unity_ShadowMask);
 
 // TODO: Change code here so probe volume use only one transform instead of all this parameters!
 TEXTURE3D(unity_ProbeVolumeSH);
@@ -320,21 +309,6 @@ float4x4 _InvViewProjMatrixStereo[2];
 CBUFFER_END
 
 #endif // USING_STEREO_MATRICES
-
-float4x4 OptimizeProjectionMatrix(float4x4 M)
-{
-    // Matrix format (x = non-constant value).
-    // Orthographic Perspective  Combined(OR)
-    // | x 0 0 x |  | x 0 x 0 |  | x 0 x x |
-    // | 0 x 0 x |  | 0 x x 0 |  | 0 x x x |
-    // | x x x x |  | x x x x |  | x x x x | <- oblique projection row
-    // | 0 0 0 1 |  | 0 0 x 0 |  | 0 0 x x |
-    // Notice that some values are always 0.
-    // We can avoid loading and doing math with constants.
-    M._21_41 = 0;
-    M._12_42 = 0;
-    return M;
-}
 
 #ifdef USE_LEGACY_UNITY_MATRIX_VARIABLES
     #include "ShaderVariablesMatrixDefsLegacyUnity.hlsl"

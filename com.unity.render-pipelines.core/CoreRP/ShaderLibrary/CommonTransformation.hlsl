@@ -2,12 +2,30 @@
 #define UNITY_COMMON_TRANSFORMATION_INCLUDED
 
 ///////////////////////////////////////////////////////////////
+//              Required Pipeline Variables                  //
+///////////////////////////////////////////////////////////////
+
+// unity_WorldTransformParams
+// UNITY_MATRIX_M
+// UNITY_MATRIX_I_M
+// UNITY_MATRIX_I_V
+// UNITY_MATRIX_V
+// UNITY_MATRIX_VP
+// UNITY_MATRIX_P
+
+///////////////////////////////////////////////////////////////
 //                  Built In Variables                       //
 ///////////////////////////////////////////////////////////////
 
 real GetOddNegativeScale()
 {
     return unity_WorldTransformParams.w;
+}
+
+// Note: '_WorldSpaceCameraPos' is set by the legacy Unity code.
+float3 GetCameraPositionWS()
+{
+    return _WorldSpaceCameraPos;
 }
 
 ///////////////////////////////////////////////////////////////
@@ -36,9 +54,36 @@ float4x4 GetWorldToHClipMatrix()
 }
 
 // Transform to homogenous clip space
+float4x4 GetViewToWorldMatrix()
+{
+    return UNITY_MATRIX_I_V;
+}
+
+// Transform to homogenous clip space
 float4x4 GetViewToHClipMatrix()
 {
     return UNITY_MATRIX_P;
+}
+
+real3x3 CreateWorldToTangent(real3 normal, real3 tangent, real flipSign)
+{
+    // For odd-negative scale transforms we need to flip the sign
+    real sgn = flipSign * GetOddNegativeScale();
+    real3 bitangent = cross(normal, tangent) * sgn;
+
+    return real3x3(tangent, bitangent, normal);
+}
+
+// UNITY_MATRIX_V defines a right-handed view space with the Z axis pointing towards the viewer.
+// This function reverses the direction of the Z axis (so that it points forward),
+// making the view space coordinate system left-handed.
+void GetLeftHandedViewSpaceMatrices(out float4x4 viewMatrix, out float4x4 projMatrix)
+{
+    viewMatrix = UNITY_MATRIX_V;
+    viewMatrix._31_32_33_34 = -viewMatrix._31_32_33_34;
+
+    projMatrix = UNITY_MATRIX_P;
+    projMatrix._13_23_33_43 = -projMatrix._13_23_33_43;
 }
 
 ///////////////////////////////////////////////////////////////
@@ -115,15 +160,6 @@ real3 TransformWorldToObjectDir(real3 dirWS)
 float4 TransformWorldToHClip(float3 positionWS)
 {
     return mul(GetWorldToHClipMatrix(), float4(positionWS, 1.0));
-}
-
-real3x3 CreateWorldToTangent(real3 normal, real3 tangent, real flipSign)
-{
-    // For odd-negative scale transforms we need to flip the sign
-    real sgn = flipSign * GetOddNegativeScale();
-    real3 bitangent = cross(normal, tangent) * sgn;
-
-    return real3x3(tangent, bitangent, normal);
 }
 
 real3 TransformTangentToObject(real3 dirTS, real3x3 worldToTangent)

@@ -1,9 +1,12 @@
 // UNITY_SHADER_NO_UPGRADE
-
 #ifndef UNITY_SHADER_VARIABLES_INCLUDED
 #define UNITY_SHADER_VARIABLES_INCLUDED
 
-#include "ShaderConfig.cs.hlsl"
+// ----------------------------------------------------------------------------
+// Included in preview shader
+// ----------------------------------------------------------------------------
+
+#include "CoreRP/ShaderLibrary/CommonVariables.hlsl"
 
 // CAUTION:
 // Currently the shaders compiler always include regualr Unity shaderVariables, so I get a conflict here were UNITY_SHADER_VARIABLES_INCLUDED is already define, this need to be fixed.
@@ -208,12 +211,6 @@ SAMPLER(s_trilinear_clamp_sampler);
 TEXTURE2D(_MainDepthTexture);
 SAMPLER(sampler_MainDepthTexture);
 
-// Main lightmap
-TEXTURE2D(unity_Lightmap);
-SAMPLER(samplerunity_Lightmap);
-// Dual or directional lightmap (always used with unity_Lightmap, so can share sampler)
-TEXTURE2D(unity_LightmapInd);
-
 // Dynamic GI lightmap
 TEXTURE2D(unity_DynamicLightmap);
 SAMPLER(samplerunity_DynamicLightmap);
@@ -223,9 +220,6 @@ TEXTURE2D(unity_DynamicDirectionality);
 // Default reflection probe
 TEXTURECUBE(unity_SpecCube0);
 SAMPLER(samplerunity_SpecCube0);
-
-// We can have shadowMask only if we have lightmap, so no sampler
-TEXTURE2D(unity_ShadowMask);
 
 // TODO: Change code here so probe volume use only one transform instead of all this parameters!
 TEXTURE3D(unity_ProbeVolumeSH);
@@ -261,27 +255,48 @@ float4   _ScreenSize;       // {w, h, 1/w, 1/h}
 float4   _FrustumPlanes[6]; // {(a, b, c) = N, d = -dot(N, P)} [L, R, T, B, N, F]
 CBUFFER_END
 
-float4x4 OptimizeProjectionMatrix(float4x4 M)
-{
-    // Matrix format (x = non-constant value).
-    // Orthographic Perspective  Combined(OR)
-    // | x 0 0 x |  | x 0 x 0 |  | x 0 x x |
-    // | 0 x 0 x |  | 0 x x 0 |  | 0 x x x |
-    // | x x x x |  | x x x x |  | x x x x | <- oblique projection row
-    // | 0 0 0 1 |  | 0 0 x 0 |  | 0 0 x x |
-    // Notice that some values are always 0.
-    // We can avoid loading and doing math with constants.
-    M._21_41 = 0;
-    M._12_42 = 0;
-    return M;
-}
-
-#ifdef USE_LEGACY_UNITY_MATRIX_VARIABLES
-    #include "ShaderVariablesMatrixDefsLegacyUnity.hlsl"
+#if UNITY_REVERSED_Z
+    #if SHADER_API_OPENGL || SHADER_API_GLES || SHADER_API_GLES3
+        //GL with reversed z => z clip range is [near, -far] -> should remap in theory but dont do it in practice to save some perf (range is close enough)
+        #define UNITY_Z_0_FAR_FROM_CLIPSPACE(coord) max(-(coord), 0)
+    #else
+        //D3d with reversed Z => z clip range is [near, 0] -> remapping to [0, far]
+        //max is required to protect ourselves from near plane not being correct/meaningfull in case of oblique matrices.
+        #define UNITY_Z_0_FAR_FROM_CLIPSPACE(coord) max(((1.0-(coord)/_ProjectionParams.y)*_ProjectionParams.z),0)
+    #endif
+#elif UNITY_UV_STARTS_AT_TOP
+    //D3d without reversed z => z clip range is [0, far] -> nothing to do
+    #define UNITY_Z_0_FAR_FROM_CLIPSPACE(coord) (coord)
 #else
-    #include "ShaderVariablesMatrixDefsHDCamera.hlsl"
+    //Opengl => z clip range is [-near, far] -> should remap in theory but dont do it in practice to save some perf (range is close enough)
+    #define UNITY_Z_0_FAR_FROM_CLIPSPACE(coord) (coord)
 #endif
 
-#include "ShaderVariablesFunctions.hlsl"
+half3 SampleSH(half3 normalWS)
+{
+    // LPPV is not supported in Ligthweight Pipeline
+    real4 SHCoefficients[7];
+    SHCoefficients[0] = unity_SHAr;
+    SHCoefficients[1] = unity_SHAg;
+    SHCoefficients[2] = unity_SHAb;
+    SHCoefficients[3] = unity_SHBr;
+    SHCoefficients[4] = unity_SHBg;
+    SHCoefficients[5] = unity_SHBb;
+    SHCoefficients[6] = unity_SHC;
+
+    return max(half3(0, 0, 0), SampleSH9(SHCoefficients, normalWS));
+}
+
+#define UNITY_MATRIX_M     unity_ObjectToWorld
+#define UNITY_MATRIX_I_M   unity_WorldToObject
+#define UNITY_MATRIX_V     unity_MatrixV
+#define UNITY_MATRIX_I_V   unity_MatrixInvV
+#define UNITY_MATRIX_P     OptimizeProjectionMatrix(glstate_matrix_projection)
+#define UNITY_MATRIX_I_P   ERROR_UNITY_MATRIX_I_P_IS_NOT_DEFINED
+#define UNITY_MATRIX_VP    unity_MatrixVP
+#define UNITY_MATRIX_I_VP  ERROR_UNITY_MATRIX_I_VP_IS_NOT_DEFINED
+#define UNITY_MATRIX_MV    mul(UNITY_MATRIX_V, UNITY_MATRIX_M)
+
+#include "CoreRP/ShaderLibrary/CommonTransformation.hlsl"
 
 #endif // UNITY_SHADER_VARIABLES_INCLUDED

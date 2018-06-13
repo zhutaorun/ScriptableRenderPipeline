@@ -35,6 +35,7 @@ ${Defines}
     // Lighting include is needed because of GI
     #include "LWRP/ShaderLibrary/Core.hlsl"
     #include "LWRP/ShaderLibrary/Lighting.hlsl"
+    #include "CoreRP/ShaderLibrary/Common.hlsl"
     #include "CoreRP/ShaderLibrary/Color.hlsl"
     #include "LWRP/ShaderLibrary/InputSurfaceUnlit.hlsl"
     #include "ShaderGraphLibrary/Functions.hlsl"

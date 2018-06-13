@@ -204,7 +204,7 @@ float4 TransformWorldToShadowCoord(float3 positionWS)
 float4 ComputeShadowCoord(float4 clipPos)
 {
     // TODO: This might have to be corrected for double-wide and texture arrays
-    return ComputeScreenPos(clipPos);
+    return ComputeScreenPos(clipPos, _ProjectionParams.x);
 }
 
 half MainLightRealtimeShadowAttenuation(float4 shadowCoord)
