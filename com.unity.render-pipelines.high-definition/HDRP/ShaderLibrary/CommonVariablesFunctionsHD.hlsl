@@ -1,5 +1,5 @@
-#ifndef UNITY_SHADER_VARIABLES_FUNCTIONS_INCLUDED
-#define UNITY_SHADER_VARIABLES_FUNCTIONS_INCLUDED
+#ifndef UNITY_COMMON_VARIABLES_FUNCTIONS_HD_INCLUDED
+#define UNITY_COMMON_VARIABLES_FUNCTIONS_HD_INCLUDED
 
 #include "CoreRP/ShaderLibrary/CommonTransformation.hlsl"
 
@@ -103,4 +103,4 @@ float3 GetWorldSpaceNormalizeViewDir(float3 positionWS)
     return normalize(GetWorldSpaceViewDir(positionWS));
 }
 
-#endif // UNITY_SHADER_VARIABLES_FUNCTIONS_INCLUDED
+#endif // UNITY_COMMON_VARIABLES_FUNCTIONS_HD_INCLUDED

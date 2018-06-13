@@ -1,7 +1,7 @@
 // UNITY_SHADER_NO_UPGRADE
 
-#ifndef UNITY_SHADER_VARIABLES_INCLUDED
-#define UNITY_SHADER_VARIABLES_INCLUDED
+#ifndef UNITY_COMMON_VARIABLES_HD_INCLUDED
+#define UNITY_COMMON_VARIABLES_HD_INCLUDED
 
 #include "CoreRP/ShaderLibrary/CommonVariables.hlsl"
 #include "../ShaderConfig.cs.hlsl"
@@ -320,6 +320,6 @@ CBUFFER_END
 #endif
 
 #include "CoreRP/ShaderLibrary/UnityInstancing.hlsl"
-#include "ShaderVariablesFunctions.hlsl"
+#include "CommonVariablesFunctionsHD.hlsl"
 
-#endif // UNITY_SHADER_VARIABLES_INCLUDED
+#endif // UNITY_COMMON_VARIABLES_HD_INCLUDED
