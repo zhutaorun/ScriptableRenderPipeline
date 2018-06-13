@@ -288,6 +288,6 @@ half3 SampleSH(half3 normalWS)
 }
 
 #include "CoreRP/ShaderLibrary/CommonMatrices.hlsl"
-#include "CoreRP/ShaderLibrary/CommonTransformation.hlsl"
+#include "CoreRP/ShaderLibrary/CommonFunctions.hlsl"
 
 #endif // UNITY_SHADER_VARIABLES_INCLUDED

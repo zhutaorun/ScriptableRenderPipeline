@@ -320,10 +320,10 @@ CBUFFER_END
 #endif
     #include "CoreRP/ShaderLibrary/CommonMatrices.hlsl"
 #else
-    #include "ShaderVariablesMatrixDefsHDCamera.hlsl"
+    #include "CommonMatricesHD.hlsl"
 #endif
 
 #include "CoreRP/ShaderLibrary/UnityInstancing.hlsl"
-#include "CommonVariablesFunctionsHD.hlsl"
+#include "CommonFunctionsHD.hlsl"
 
 #endif // UNITY_COMMON_VARIABLES_HD_INCLUDED

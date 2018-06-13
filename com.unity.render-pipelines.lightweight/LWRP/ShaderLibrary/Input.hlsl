@@ -52,8 +52,8 @@ StructuredBuffer<int> _LightIndexBuffer;
 #endif
 
 #include "CoreRP/ShaderLibrary/CommonMatrices.hlsl"
-#include "InputBuiltin.hlsl"
 #include "CoreRP/ShaderLibrary/UnityInstancing.hlsl"
-#include "CoreFunctions.hlsl"
+#include "CommonVariablesLW.hlsl"
+#include "CommonFunctionsLW.hlsl"
 
 #endif
