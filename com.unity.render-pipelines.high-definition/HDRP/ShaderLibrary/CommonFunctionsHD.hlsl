@@ -1,7 +1,7 @@
-#ifndef UNITY_COMMON_VARIABLES_FUNCTIONS_HD_INCLUDED
-#define UNITY_COMMON_VARIABLES_FUNCTIONS_HD_INCLUDED
+#ifndef UNITY_COMMON_FUNCTIONS_HD_INCLUDED
+#define UNITY_COMMON_FUNCTIONS_HD_INCLUDED
 
-#include "CoreRP/ShaderLibrary/CommonTransformation.hlsl"
+#include "CoreRP/ShaderLibrary/CommonFunctions.hlsl"
 
 // This method should be used for rendering any full screen quad that uses an auto-scaling Render Targets (see RTHandle/HDCamera)
 // It will account for the fact that the textures it samples are not necesarry using the full space of the render texture but only a partial viewport.
@@ -103,4 +103,4 @@ float3 GetWorldSpaceNormalizeViewDir(float3 positionWS)
     return normalize(GetWorldSpaceViewDir(positionWS));
 }
 
-#endif // UNITY_COMMON_VARIABLES_FUNCTIONS_HD_INCLUDED
+#endif // UNITY_COMMON_FUNCTIONS_HD_INCLUDED

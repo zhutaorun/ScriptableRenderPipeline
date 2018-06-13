@@ -1,7 +1,7 @@
 // UNITY_SHADER_NO_UPGRADE
 
-#ifndef LIGHTWEIGHT_SHADER_VARIABLES_INCLUDED
-#define LIGHTWEIGHT_SHADER_VARIABLES_INCLUDED
+#ifndef UNITY_COMMON_VARIABLES_LW_INCLUDED
+#define UNITY_COMMON_VARIABLES_LW_INCLUDED
 
 #include "CoreRP/ShaderLibrary/CommonVariables.hlsl"
 
@@ -235,4 +235,4 @@ float4   _ScreenSize;       // {w, h, 1/w, 1/h}
 float4   _FrustumPlanes[6]; // {(a, b, c) = N, d = -dot(N, P)} [L, R, T, B, N, F]
 CBUFFER_END
 
-#endif // LIGHTWEIGHT_SHADER_VARIABLES_INCLUDED
+#endif // UNITY_COMMON_VARIABLES_LW_INCLUDED
