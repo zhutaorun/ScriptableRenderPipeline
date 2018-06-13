@@ -26,6 +26,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector4   zBufferParams;
         public Vector4   unity_OrthoParams;
         public Vector4   projectionParams;
+        public Vector4   invProjectionPerspectiveParams;
+        public Vector4   invProjectionOrthographicParams;
         public Vector4   screenParams;
 
         public VolumetricLightingSystem.VBufferParameters[] vBufferParams; // Double-buffered
@@ -268,6 +270,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             projectionParams = new Vector4(flipProj ? -1 : 1, n, f, 1.0f / f);
 
+            // See Common.hlsl#LinearEyeDepth for detailed explanation
+            var p = projMatrix; // Shorthand variable
+            invProjectionPerspectiveParams = new Vector4(
+                p.m32 * p.m20 / (p.m23 * p.m00),
+                p.m32 * p.m21 / (p.m23 * p.m11),
+                -p.m32 / p.m23,
+                p.m22 / p.m23 - p.m02 * p.m20 / (p.m23 * p.m00) - p.m12 * p.m21 / (p.m23 * p.m11)
+            );
+            invProjectionOrthographicParams = new Vector4(
+                p.m33 * p.m20 / (p.m23 * p.m00),
+                p.m33 * p.m21 / (p.m23 * p.m11),
+                -p.m33 / p.m23,
+                1
+            );
+
             float orthoHeight = camera.orthographic ? 2 * camera.orthographicSize : 0;
             float orthoWidth  = orthoHeight * camera.aspect;
             unity_OrthoParams = new Vector4(orthoWidth, orthoHeight, 0, camera.orthographic ? 1 : 0);
@@ -495,11 +512,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalMatrix(HDShaderIDs._NonJitteredViewProjMatrix, nonJitteredViewProjMatrix);
             cmd.SetGlobalMatrix(HDShaderIDs._PrevViewProjMatrix,        prevViewProjMatrix);
             cmd.SetGlobalVector(HDShaderIDs._WorldSpaceCameraPos,       worldSpaceCameraPos);
-            cmd.SetGlobalFloat(HDShaderIDs._DetViewMatrix,             detViewMatrix);
+            cmd.SetGlobalFloat(HDShaderIDs._DetViewMatrix,              detViewMatrix);
             cmd.SetGlobalVector(HDShaderIDs._ScreenSize,                screenSize);
             cmd.SetGlobalVector(HDShaderIDs._ScreenToTargetScale,       doubleBufferedViewportScale);
             cmd.SetGlobalVector(HDShaderIDs._ZBufferParams,             zBufferParams);
             cmd.SetGlobalVector(HDShaderIDs._ProjectionParams,          projectionParams);
+            cmd.SetGlobalVector(HDShaderIDs._InvProjPerspParam,          invProjectionPerspectiveParams);
+            cmd.SetGlobalVector(HDShaderIDs._InvProjOrthoParam,         invProjectionOrthographicParams);
             cmd.SetGlobalVector(HDShaderIDs.unity_OrthoParams,          unity_OrthoParams);
             cmd.SetGlobalVector(HDShaderIDs._ScreenParams,              screenParams);
             cmd.SetGlobalVector(HDShaderIDs._TaaFrameRotation,          taaFrameRotation);

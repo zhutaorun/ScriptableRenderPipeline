@@ -30,6 +30,9 @@ uniform uint g_isOrthographic;
 uniform int _EnvLightIndexShift;
 uniform int _DecalIndexShift;
 uniform uint g_BaseFeatureFlags;
+uniform float4 _InvProjPerspParam;
+uniform float4 _InvProjOrthoParam;
+uniform float4x4 _ProjMatrix;
 
 Texture2D g_depth_tex : register( t0 );
 StructuredBuffer<float3> g_vBoundsBuffer : register( t1 );
@@ -72,44 +75,17 @@ groupshared uint ldsFeatureFlags;
 RWStructuredBuffer<uint> g_TileFeatureFlags;
 #endif
 
-//float GetLinearDepth(float3 vP)
-//{
-//  float4 v4Pres = mul(g_mInvScrProjection, float4(vP,1.0));
-//  return v4Pres.z / v4Pres.w;
-//}
-
-float GetLinearDepth(float zDptBufSpace)    // 0 is near 1 is far
+float GetLinearDepth(uint2 uCrd, float zDptBufSpace)    // 0 is near 1 is far
 {
-    // for perspective projection m22 is zero and m23 is +1/-1 (depends on left/right hand proj)
-    // however this function must also work for orthographic projection so we keep it like this.
-    float m22 = g_mInvScrProjection[2].z, m23 = g_mInvScrProjection[2].w;
-    float m32 = g_mInvScrProjection[3].z, m33 = g_mInvScrProjection[3].w;
-
-    return (m22*zDptBufSpace+m23) / (m32*zDptBufSpace+m33);
-
-    //float3 vP = float3(0.0f,0.0f,zDptBufSpace);
-    //float4 v4Pres = mul(g_mInvScrProjection, float4(vP,1.0));
-    //return v4Pres.z / v4Pres.w;
+    float2 positionNDC = float2(uCrd) / float2(g_viDimensions.xy - 1);
+    float fDepth = LOAD_TEXTURE2D_LOD(g_depth_tex, uCrd, 0).r;
+    // Decode linear depth with oblique perspective/orthographic projections
+    return LinearEyeDepth(positionNDC, fDepth, _InvProjOrthoParam, _InvProjPerspParam);
 }
 
 float3 GetViewPosFromLinDepth(float2 v2ScrPos, float fLinDepth)
 {
-    bool isOrthographic = g_isOrthographic!=0;
-    float fSx = g_mScrProjection[0].x;
-    float fSy = g_mScrProjection[1].y;
-    float fCx = isOrthographic ? g_mScrProjection[0].w : g_mScrProjection[0].z;
-    float fCy = isOrthographic ? g_mScrProjection[1].w : g_mScrProjection[1].z;
-
-#if USE_LEFT_HAND_CAMERA_SPACE
-    bool useLeftHandVersion = true;
-#else
-    bool useLeftHandVersion = isOrthographic;
-#endif
-
-    float s = useLeftHandVersion ? 1 : (-1);
-    float2 p = float2( (s*v2ScrPos.x-fCx)/fSx, (s*v2ScrPos.y-fCy)/fSy);
-
-    return float3(isOrthographic ? p.xy : (fLinDepth*p.xy), fLinDepth);
+    return DecodeViewSpaceFromLinearDepth(v2ScrPos, fLinDepth, g_viDimensions.xy, _ProjMatrix);
 }
 
 float GetOnePixDiagWorldDistAtDepthOne()
@@ -172,7 +148,7 @@ void LIGHTLISTGEN(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID)
             int idx = i * NR_THREADS + t;
             uint2 uCrd = min( uint2(viTilLL.x+(idx&0xf), viTilLL.y+(idx>>4)), uint2(iWidth-1, iHeight-1) );
             const float fDepth = FetchDepth(g_depth_tex, uCrd);
-            vLinDepths[i] = GetLinearDepth(fDepth);
+            vLinDepths[i] = GetLinearDepth(uCrd, fDepth);
             if(fDepth<VIEWPORT_SCALE_Z)     // if not skydome
             {
                 dpt_mi = min(fDepth, dpt_mi);

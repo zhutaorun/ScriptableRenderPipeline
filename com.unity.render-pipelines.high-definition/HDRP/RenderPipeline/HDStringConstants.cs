@@ -211,10 +211,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _ViewProjMatrix = Shader.PropertyToID("_ViewProjMatrix");
         public static readonly int _InvViewProjMatrix = Shader.PropertyToID("_InvViewProjMatrix");
         public static readonly int _DetViewMatrix = Shader.PropertyToID("_DetViewMatrix");
-        public static readonly int _ZBufferParams = Shader.PropertyToID("_ZBufferParams");
+        public static readonly int _ZBufferParams = Shader.PropertyToID("_ZBufferParams"); 
         public static readonly int _ProjectionParams = Shader.PropertyToID("_ProjectionParams");
         public static readonly int unity_OrthoParams = Shader.PropertyToID("unity_OrthoParams");
-        public static readonly int _InvProjParam = Shader.PropertyToID("_InvProjParam");
+        public static readonly int _InvProjPerspParam = Shader.PropertyToID("_InvProjPerspParam");
+        public static readonly int _InvProjOrthoParam = Shader.PropertyToID("_InvProjOrthoParam");
         public static readonly int _ScreenSize = Shader.PropertyToID("_ScreenSize");
         public static readonly int _ScreenParams = Shader.PropertyToID("_ScreenParams");
         public static readonly int _ScreenToTargetScale = Shader.PropertyToID("_ScreenToTargetScale");

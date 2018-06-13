@@ -579,6 +579,61 @@ float LinearEyeDepth(float2 positionNDC, float deviceDepth, float4 invProjParam)
 }
 
 // Z buffer to linear depth.
+// Correctly handles oblique view frustums, perspective and orthographic
+//
+// We consider that the projection matrix has this form (column major):
+// |m00  0    m20  0    |
+// |0    m11  m21  0    |
+// |m02  m12  m22  m32  |
+// |0    0    m23  m33  |
+//
+// Perspective          : m32 == 1 and m33 == 0  (we have 1 and not -1 because forward is -Z)
+// Orthographic         : m32 == 0 and m33 == 1
+// Oblique near plane   : m20 != 0 and m21 != 0
+// Non oblique          : m20 == 0 and m21 == 0
+//
+// Considering this, we have the projection equations: (1) X_cs = X_vs * P and (2) X_d = X_cs / w_cs
+//
+// So we have by combining (1) and (2):
+// | x_d = (m00 * x_v + m02 * z_v) / (m32 * z_v + m33)
+// | y_d = (m11 * y_v + m12 * z_v) / (m32 * z_v + m33)
+// | z_d = (m20 * x_v + m21 * y_v + m22 * z_v + m23) / (m32 * v_z + m33)
+// | w_cs  = m32 * v_z + m33
+//
+// We can resolve z_v with x_d, y_d and z_d as:
+// (3) z_v = (1 + (m33 / m22) * ((m20/m00) * x_d + (m21/m11) * y_d - z_d)) / ((m32/m23) * (-(m20/m00) * x_d -(m21/m11) * y_d + z_d) + ((m22/m23) - m02*m20/(m00*m23) - m21*m12/(m11*m23)))
+//
+// We see that m33 and m32 are both factors of two groups, as those two coefficient are exclusively 1 or 0, these group can be considered as "perspective group" and "orthographic group"
+// (3') z_v = (1 + orthographicGroup) / (perspectiveGroup + ((m22/m23) - m02*m20/(m00*m23) - m21*m12/(m11*m23)))
+//
+// We can express this as:
+// (4) z_v = dot(X_d, invOrthoParams) / dot(X_d, invProjParams)
+//
+// Se we expect:
+// invOrthoParams   = float4(     m33*m20/(m23*m00),  m33*m21/(m23*m11),      -1,    1)
+// invPerspParams   = float4(    -m32*m20/(m23*m00), -m32*m21/(m23*m11), m32/m23,    m22/m23 - m02*m20/(m23*m00) - m12*m21/(m23*m11))
+float LinearEyeDepth(float2 positionNDC, float deviceDepth, float4 invOrthoParams, float4 invPerspParams)
+{
+    float4 X_d = float4(positionNDC * 2 - 1, deviceDepth, 1);
+    return dot(X_d, invOrthoParams) / dot(X_d, invPerspParams);
+}
+
+// Decode view space position from linear depth
+// Handle oblique perspective/orthographic projections
+// Based on equations of LinearEyeDepth
+float3 DecodeViewSpaceFromLinearDepth(uint2 positionSS, float linearDepth, float2 screenSize, float4x4 projectionMatrix)
+{
+    float2 positionNDC = positionSS / float2(screenSize - 1);
+    float2 positionDevice = float2(positionNDC * 2 - 1);
+    float3 positionVS = float3(
+        (linearDepth * (/* Seems like a -1 is required here? */-positionDevice.x * projectionMatrix._m32 - projectionMatrix._m02) + projectionMatrix._m33 * positionDevice.x) / projectionMatrix._m00,
+        (linearDepth * (positionDevice.y * projectionMatrix._m32 - projectionMatrix._m12) + projectionMatrix._m33 * positionDevice.y) / projectionMatrix._m11,
+        linearDepth
+    );
+    return positionVS;
+}
+
+// Z buffer to linear depth.
 // Works in all cases.
 // Typically, this is the cheapest variant, provided you've already computed 'positionWS'.
 // Assumes that the 'positionWS' is in front of the camera.

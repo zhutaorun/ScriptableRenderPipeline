@@ -244,6 +244,11 @@ CBUFFER_START(UnityPerView)
     // w = 1 + 1.0/height
     float4 _ScreenParams;
 
+    // Vectors to linearize depth buffer when using perspective/orthographic, normal/oblique matrices
+    // See Common.hlsl#LinearEyeDepth for detailed explanation
+    float4 _InvProjPersParam;
+    float4 _InvProjOrthoParam;
+
     float4 _FrustumPlanes[6];           // { (a, b, c) = N, d = -dot(N, P) } [L, R, T, B, N, F]
 
     // TAA Frame Index ranges from 0 to 7. This gives you two rotations per cycle.
