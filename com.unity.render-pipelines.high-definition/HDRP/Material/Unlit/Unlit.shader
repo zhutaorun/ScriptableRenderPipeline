@@ -99,7 +99,7 @@ Shader "HDRenderPipeline/Unlit"
     //-------------------------------------------------------------------------------------
 
     #include "CoreRP/ShaderLibrary/Common.hlsl"
-    #include "../../ShaderVariables.hlsl"
+    #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
     #include "../../ShaderPass/FragInputs.hlsl"
     #include "../../ShaderPass/ShaderPass.cs.hlsl"
 

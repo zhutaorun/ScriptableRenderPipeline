@@ -71,7 +71,7 @@ Shader "HDRenderPipeline/Decal"
             HLSLPROGRAM
 
             #define SHADERPASS SHADERPASS_DBUFFER_PROJECTOR
-            #include "../../ShaderVariables.hlsl"
+            #include "../../ShaderLibrary/CommonVariablesHD.hlsl"
             #include "Decal.hlsl"
             #include "ShaderPass/DecalSharePass.hlsl"
             #include "DecalData.hlsl"
@@ -94,7 +94,7 @@ Shader "HDRenderPipeline/Decal"
 			HLSLPROGRAM
 
 			#define SHADERPASS SHADERPASS_DBUFFER_MESH
-			#include "../../ShaderVariables.hlsl"
+			#include "../../ShaderLibrary/CommonVariablesHD.hlsl"
 			#include "Decal.hlsl"
 			#include "ShaderPass/DecalSharePass.hlsl"
 			#include "DecalData.hlsl"

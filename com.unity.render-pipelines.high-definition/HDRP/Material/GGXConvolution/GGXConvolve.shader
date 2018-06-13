@@ -22,7 +22,7 @@ Shader "Hidden/HDRenderPipeline/GGXConvolve"
             #include "CoreRP/ShaderLibrary/Common.hlsl"
             #include "CoreRP/ShaderLibrary/ImageBasedLighting.hlsl"
             #include "GGXConvolution.cs.hlsl"
-            #include "../../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
 
             TEXTURECUBE(_MainTex);
 

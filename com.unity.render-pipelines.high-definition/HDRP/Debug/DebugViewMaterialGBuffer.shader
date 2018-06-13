@@ -21,7 +21,7 @@ Shader "Hidden/HDRenderPipeline/DebugViewMaterialGBuffer"
 
             // CAUTION: In case deferred lighting need to support various lighting model statically, we will require to do multicompile with different define like UNITY_MATERIAL_LIT
             #define UNITY_MATERIAL_LIT // Need to be define before including Material.hlsl
-            #include "../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #define DEBUG_DISPLAY
             #include "../Debug/DebugDisplay.hlsl"
             #include "../Material/Material.hlsl"

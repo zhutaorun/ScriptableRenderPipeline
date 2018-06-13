@@ -40,7 +40,7 @@
 #include "CoreRP/ShaderLibrary/Filtering.hlsl"
 #include "CoreRP/ShaderLibrary/VolumeRendering.hlsl"
 
-#include "../../ShaderVariables.hlsl"
+#include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
 #include "VolumetricLighting.cs.hlsl"
 #include "VBuffer.hlsl"
 

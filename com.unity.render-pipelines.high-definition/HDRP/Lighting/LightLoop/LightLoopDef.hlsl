@@ -260,7 +260,7 @@ void GetCountAndStartCluster(uint2 tileIndex, uint clusterIndex, uint lightCateg
 void GetCountAndStartCluster(PositionInputs posInput, uint lightCategory, out uint start, out uint lightCount)
 {
     // Note: XR depends on unity_StereoEyeIndex already being defined,
-    // which means ShaderVariables.hlsl needs to be defined ahead of this!
+    // which means CommonVariablesHD.hlsl needs to be defined ahead of this!
 
     uint2 tileIndex    = posInput.tileCoord;
     uint  clusterIndex = GetLightClusterIndex(tileIndex, posInput.linearDepth);

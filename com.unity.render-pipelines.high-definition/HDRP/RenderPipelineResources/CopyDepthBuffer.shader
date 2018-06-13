@@ -28,7 +28,7 @@ Shader "Hidden/HDRenderPipeline/CopyDepthBuffer"
             // #pragma enable_d3d11_debug_symbols
 
             #include "CoreRP/ShaderLibrary/Common.hlsl"
-            #include "../ShaderVariables.hlsl"
+            #include "../ShaderLibrary/CommonVariablesHD.hlsl"
 
             TEXTURE2D(_InputDepthTexture);
 

@@ -7,7 +7,7 @@
 #endif
 
 #include "CoreRP/ShaderLibrary/Common.hlsl"
-#include "../ShaderVariables.hlsl"
+#include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
 #include "../Material/NormalBuffer.hlsl"
 #include "Lighting.hlsl"
 

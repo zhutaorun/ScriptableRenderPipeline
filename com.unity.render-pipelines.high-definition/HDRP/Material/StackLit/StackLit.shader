@@ -334,7 +334,7 @@ Shader "HDRenderPipeline/StackLit"
             // We reuse depth prepass for the scene selection, allow to handle alpha correctly as well as tessellation and vertex animation
             #define SHADERPASS SHADERPASS_DEPTH_ONLY
             #define SCENESELECTIONPASS // This will drive the output of the scene selection shader
-            #include "../../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #include "../../Material/Material.hlsl"
             #include "ShaderPass/StackLitDepthPass.hlsl"
             #include "StackLitData.hlsl"
@@ -356,7 +356,7 @@ Shader "HDRenderPipeline/StackLit"
 
             #define WRITE_NORMAL_BUFFER
             #define SHADERPASS SHADERPASS_DEPTH_ONLY
-            #include "../../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #include "../../Material/Material.hlsl"
             // As we enabled WRITE_NORMAL_BUFFER we need all regular interpolator
             #include "ShaderPass/StackLitSharePass.hlsl"
@@ -382,7 +382,7 @@ Shader "HDRenderPipeline/StackLit"
             // both direct and indirect lighting) will hand up in the "regular" lightmap->LIGHTMAP_ON.
 
             #define SHADERPASS SHADERPASS_LIGHT_TRANSPORT
-            #include "../../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #include "../../Material/Material.hlsl"
             #include "ShaderPass/StackLitSharePass.hlsl"
             #include "StackLitData.hlsl"
@@ -408,7 +408,7 @@ Shader "HDRenderPipeline/StackLit"
 
             #define SHADERPASS SHADERPASS_SHADOWS
             #define USE_LEGACY_UNITY_MATRIX_VARIABLES
-            #include "../../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #include "../../Material/Material.hlsl"
 
             #include "ShaderPass/StackLitDepthPass.hlsl"
@@ -432,7 +432,7 @@ Shader "HDRenderPipeline/StackLit"
             HLSLPROGRAM
 
             #define SHADERPASS SHADERPASS_DISTORTION
-            #include "../../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #include "../../Material/Material.hlsl"
             #include "ShaderPass/StackLitDistortionPass.hlsl"
             #include "StackLitData.hlsl"
@@ -491,7 +491,7 @@ Shader "HDRenderPipeline/StackLit"
             #ifndef _SURFACE_TYPE_TRANSPARENT
                 #define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
             #endif
-            #include "../../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #ifdef DEBUG_DISPLAY
             #include "../../Debug/DebugDisplay.hlsl"
             #endif

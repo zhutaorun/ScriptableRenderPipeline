@@ -42,7 +42,7 @@
 #include "CoreRP/ShaderLibrary/Packing.hlsl"
 #include "CoreRP/ShaderLibrary/Sampling/Sampling.hlsl"
 #include "CoreRP/ShaderLibrary/SpaceFillingCurves.hlsl"
-#include "../../ShaderVariables.hlsl"
+#include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
 #include "../../Lighting/LightDefinition.cs.hlsl"
 #include "SubsurfaceScattering.hlsl"
 

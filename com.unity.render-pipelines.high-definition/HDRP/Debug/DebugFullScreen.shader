@@ -21,7 +21,7 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
             #include "CoreRP/ShaderLibrary/Color.hlsl"
             #include "CoreRP/ShaderLibrary/Debug.hlsl"
             #include "HDRP/Material/Lit/Lit.cs.hlsl"
-            #include "../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #include "../Debug/DebugDisplay.cs.hlsl"
             #include "../Material/Builtin/BuiltinData.hlsl"
 

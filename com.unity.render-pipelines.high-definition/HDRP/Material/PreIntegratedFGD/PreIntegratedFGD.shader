@@ -15,7 +15,7 @@ Shader "Hidden/HDRenderPipeline/PreIntegratedFGD"
 
             #include "CoreRP/ShaderLibrary/Common.hlsl"
             #include "CoreRP/ShaderLibrary/ImageBasedLighting.hlsl"
-            #include "../../ShaderVariables.hlsl"
+            #include "../../ShaderLibrary/CommonVariablesHD.hlsl"
 
             struct Attributes
             {

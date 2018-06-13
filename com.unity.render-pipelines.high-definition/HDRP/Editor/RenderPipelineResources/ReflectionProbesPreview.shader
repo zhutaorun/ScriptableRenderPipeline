@@ -25,7 +25,7 @@ Shader "Debug/ReflectionProbePreview"
             #pragma fragment frag
 
             #include "CoreRP/ShaderLibrary/Common.hlsl"
-            #include "HDRP/ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
 
             struct appdata
             {

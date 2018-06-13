@@ -151,7 +151,7 @@ FragInputs UnpackVaryingsMeshToFragInputs(PackedVaryingsMeshToPS input)
 
 #ifdef VARYINGS_NEED_TANGENT_TO_WORLD
     float flipSign = input.interpolators2.w > 0.0 ? 1.0 : -1.0;
-    output.worldToTangent = BuildWorldToTangent(input.interpolators2.xyz, input.interpolators1.xyz, flipSign)
+    output.worldToTangent = BuildWorldToTangent(input.interpolators2.xyz, input.interpolators1.xyz, flipSign);
 #endif // VARYINGS_NEED_TANGENT_TO_WORLD
 
 #ifdef VARYINGS_NEED_TEXCOORD0

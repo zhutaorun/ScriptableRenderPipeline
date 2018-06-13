@@ -32,7 +32,7 @@
 #include "CoreRP/ShaderLibrary/Common.hlsl"
 #include "CoreRP/Utilities/GeometryUtils.cs.hlsl"
 
-#include "../../ShaderVariables.hlsl"
+#include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
 #include "VolumetricLighting.cs.hlsl"
 
 #define UNITY_MATERIAL_VOLUMETRIC          // Define before including Lighting.hlsl and Material.hlsl

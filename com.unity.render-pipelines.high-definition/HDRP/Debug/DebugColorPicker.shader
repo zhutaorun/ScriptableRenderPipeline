@@ -19,7 +19,7 @@ Shader "Hidden/HDRenderPipeline/DebugColorPicker"
 
             #include "CoreRP/ShaderLibrary/Common.hlsl"
             #include "CoreRP/ShaderLibrary/Color.hlsl"
-            #include "../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #include "../Debug/DebugDisplay.cs.hlsl"
             #include "../Debug/DebugDisplay.hlsl"
 

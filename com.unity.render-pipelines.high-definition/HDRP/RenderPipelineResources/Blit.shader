@@ -5,7 +5,7 @@ Shader "Hidden/HDRenderPipeline/Blit"
         #pragma target 4.5
         #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
         #include "CoreRP/ShaderLibrary/Common.hlsl"
-        #include "../ShaderVariables.hlsl"
+        #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
 
         TEXTURE2D(_BlitTexture);
         SamplerState sampler_PointClamp;

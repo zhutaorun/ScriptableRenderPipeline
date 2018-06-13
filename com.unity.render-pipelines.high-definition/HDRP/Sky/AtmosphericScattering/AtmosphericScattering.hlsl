@@ -6,7 +6,7 @@
 
 #include "AtmosphericScattering.cs.hlsl"
 #include "../SkyVariables.hlsl"
-#include "../../ShaderVariables.hlsl"
+#include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
 #include "../../Lighting/Volumetrics/VBuffer.hlsl"
 
 #if (SHADEROPTIONS_VOLUMETRIC_LIGHTING_PRESET != 0)

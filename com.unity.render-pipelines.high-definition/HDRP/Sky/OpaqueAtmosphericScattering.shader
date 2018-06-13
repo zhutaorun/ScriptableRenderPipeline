@@ -20,7 +20,7 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
 
             #include "CoreRP/ShaderLibrary/Common.hlsl"
             #include "CoreRP/ShaderLibrary/Color.hlsl"
-            #include "../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #include "AtmosphericScattering/AtmosphericScattering.hlsl"
 
             struct Attributes

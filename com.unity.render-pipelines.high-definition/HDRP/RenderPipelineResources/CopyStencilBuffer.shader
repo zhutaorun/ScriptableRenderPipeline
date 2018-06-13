@@ -14,7 +14,7 @@ Shader "Hidden/HDRenderPipeline/CopyStencilBuffer"
 
     #include "CoreRP/ShaderLibrary/Common.hlsl"
     #include "CoreRP/ShaderLibrary/Packing.hlsl"
-    #include "../ShaderVariables.hlsl"
+    #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
 
     int _StencilRef;
     RW_TEXTURE2D(float, _HTile); // DXGI_FORMAT_R8_UINT is not supported by Unity

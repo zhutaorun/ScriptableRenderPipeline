@@ -531,7 +531,7 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
 
             #define SHADERPASS SHADERPASS_DEPTH_ONLY
             #define SCENESELECTIONPASS // This will drive the output of the scene selection shader
-            #include "../../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #include "../../Material/Material.hlsl"
             #include "../Lit/ShaderPass/LitDepthPass.hlsl"
             #include "LayeredLitData.hlsl"
@@ -574,7 +574,7 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
         #endif
 
             #define SHADERPASS SHADERPASS_GBUFFER
-            #include "../../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #ifdef DEBUG_DISPLAY
             #include "../../Debug/DebugDisplay.hlsl"
             #endif
@@ -605,7 +605,7 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
             #undef TESSELLATION_ON
 
             #define SHADERPASS SHADERPASS_LIGHT_TRANSPORT
-            #include "../../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #include "../../Material/Material.hlsl"
             #include "../Lit/ShaderPass/LitSharePass.hlsl"
             #include "LayeredLitData.hlsl"
@@ -639,7 +639,7 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
             #pragma domain Domain
 
             #define SHADERPASS SHADERPASS_VELOCITY
-            #include "../../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #include "../../Material/Material.hlsl"
             #include "../Lit/ShaderPass/LitVelocityPass.hlsl"
             #include "LayeredLitData.hlsl"
@@ -668,7 +668,7 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
 
             #define SHADERPASS SHADERPASS_SHADOWS
             #define USE_LEGACY_UNITY_MATRIX_VARIABLES
-            #include "../../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #include "../../Material/Material.hlsl"
             #include "../Lit/ShaderPass/LitDepthPass.hlsl"
             #include "LayeredLitData.hlsl"
@@ -696,7 +696,7 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
             #pragma multi_compile _ WRITE_NORMAL_BUFFER
 
             #define SHADERPASS SHADERPASS_DEPTH_ONLY
-            #include "../../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #include "../../Material/Material.hlsl"
 
             #ifdef WRITE_NORMAL_BUFFER // If enabled we need all regular interpolator
@@ -750,7 +750,7 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
             #ifndef _SURFACE_TYPE_TRANSPARENT
                 #define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
             #endif
-            #include "../../ShaderVariables.hlsl"
+            #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
             #ifdef DEBUG_DISPLAY
             #include "../../Debug/DebugDisplay.hlsl"
             #endif
