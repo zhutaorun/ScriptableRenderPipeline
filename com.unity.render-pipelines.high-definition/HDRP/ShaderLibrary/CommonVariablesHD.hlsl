@@ -4,7 +4,7 @@
 #define UNITY_SHADER_VARIABLES_INCLUDED
 
 #include "CoreRP/ShaderLibrary/CommonVariables.hlsl"
-#include "ShaderConfig.cs.hlsl"
+#include "../ShaderConfig.cs.hlsl"
 
 // CAUTION:
 // Currently the shaders compiler always include regualr Unity shaderVariables, so I get a conflict here were UNITY_SHADER_VARIABLES_INCLUDED is already define, this need to be fixed.
