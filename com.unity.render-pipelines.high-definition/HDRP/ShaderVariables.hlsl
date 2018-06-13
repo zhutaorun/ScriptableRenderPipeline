@@ -311,7 +311,10 @@ CBUFFER_END
 #endif // USING_STEREO_MATRICES
 
 #ifdef USE_LEGACY_UNITY_MATRIX_VARIABLES
-    #include "ShaderVariablesMatrixDefsLegacyUnity.hlsl"
+#ifdef UNITY_SHADER_VARIABLES_MATRIX_DEFS_HDCAMERA_INCLUDED
+    #error Mixing HDCamera and legacy Unity matrix definitions
+#endif
+    #include "CoreRP/ShaderLibrary/CommonMatrices.hlsl"
 #else
     #include "ShaderVariablesMatrixDefsHDCamera.hlsl"
 #endif
