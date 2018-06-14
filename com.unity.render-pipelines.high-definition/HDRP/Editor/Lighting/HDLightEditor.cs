@@ -329,17 +329,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             if(m_AdditionalLightData.showAdditionalSettings.boolValue)
             {
-                EditorGUILayout.Space();
-                EditorGUILayout.LabelField("Additional Settings", EditorStyles.boldLabel);
-                EditorGUI.indentLevel++;
-
                 if (m_LightShape == LightShape.Point ||
                    m_LightShape == LightShape.Spot)
                 {
-                    DrawLightFlags();
-                }
+                    EditorGUILayout.Space();
+                    EditorGUILayout.LabelField("Additional Settings", EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
 
-                EditorGUI.indentLevel--;
+                    DrawLightFlags();
+
+                    EditorGUI.indentLevel--;
+                }
             }
 
             if (EditorGUI.EndChangeCheck())

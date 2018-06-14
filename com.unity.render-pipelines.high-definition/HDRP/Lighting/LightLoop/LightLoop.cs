@@ -816,14 +816,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             float diffuseDimmer = m_FrameSettings.diffuseGlobalDimmer * additionalData.lightDimmer;
             float specularDimmer = m_FrameSettings.specularGlobalDimmer * additionalData.lightDimmer;
-            if (diffuseDimmer  <= 0.0f && specularDimmer <= 0.0f)
+            if (diffuseDimmer <= 0.0f && specularDimmer <= 0.0f)
                 return false;
 
             // Light direction for directional is opposite to the forward direction
             directionalLightData.forward = light.light.transform.forward;
             // Rescale for cookies and windowing.
-            directionalLightData.right      = light.light.transform.right * 2 / Mathf.Max(additionalData.shapeWidth, 0.001f);
-            directionalLightData.up         = light.light.transform.up    * 2 / Mathf.Max(additionalData.shapeHeight, 0.001f);
+            directionalLightData.right = light.light.transform.right * 2 / Mathf.Max(additionalData.shapeWidth, 0.001f);
+            directionalLightData.up = light.light.transform.up * 2 / Mathf.Max(additionalData.shapeHeight, 0.001f);
             directionalLightData.positionWS = light.light.transform.position;
             directionalLightData.color = GetLightColor(light);
 
@@ -869,7 +869,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
 
             directionalLightData.unused0 = Vector3.zero;
-            directionalLightData.thicknessBias = additionalShadowData.thicknessBias;
+            if (additionalShadowData)
+            {
+                directionalLightData.thicknessBias = additionalShadowData.thicknessBias;
+            }
+            else
+            {
+                directionalLightData.thicknessBias = 0;
+            }
 
             m_lightList.directionalLights.Add(directionalLightData);
 
