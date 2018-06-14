@@ -3,6 +3,12 @@
 
 #define SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv) shadergraph_LWSampleSceneDepth(uv);
 #define SHADERGRAPH_SAMPLE_SCENE_COLOR(uv) shadergraph_LWSampleSceneColor(uv);
+#define SHADERGRAPH_SAMPLE_BAKED_GI(normal) shadergraph_LWSampleBakedGI(normal);
+
+#if defined(REQUIRE_OPAQUE_TEXTURE)
+    TEXTURE2D(_CameraOpaqueTexture);
+    SAMPLER(sampler_CameraOpaqueTexture);
+#endif
 
 float shadergraph_LWSampleSceneDepth(float2 uv)
 {
@@ -13,7 +19,15 @@ float shadergraph_LWSampleSceneDepth(float2 uv)
     return 0;
 }
 
-float shadergraph_LWSampleSceneColor(float2 uv)
+float3 shadergraph_LWSampleSceneColor(float2 uv)
+{
+#if defined(REQUIRE_OPAQUE_TEXTURE)
+    return SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, uv);
+#endif
+    return 0;
+}
+
+float shadergraph_LWSampleBakedGI(float3 normal)
 {
     return 0;
 }

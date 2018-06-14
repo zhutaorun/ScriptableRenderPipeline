@@ -3,27 +3,28 @@ using UnityEngine;
 
 namespace UnityEditor.ShaderGraph
 {
-    [Title("Input", "Scene", "Light Probe")]
-    public class LightProbeNode : CodeFunctionNode
+    [FormerName("UnityEditor.ShaderGraph.LightProbeNode")]
+    [Title("Input", "Scene", "Baked GI")]
+    public class BakedGINode : CodeFunctionNode
     {
         public override bool hasPreview { get { return false; } }
 
-        public LightProbeNode()
+        public BakedGINode()
         {
-            name = "Light Probe";
+            name = "Baked GI";
         }
 
         public override string documentationURL
         {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Light-Probe-Node"; }
+            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Baked-GI-Node"; }
         }
 
         protected override MethodInfo GetFunctionToConvert()
         {
-            return GetType().GetMethod("Unity_LightProbe", BindingFlags.Static | BindingFlags.NonPublic);
+            return GetType().GetMethod("Unity_BakedGI", BindingFlags.Static | BindingFlags.NonPublic);
         }
 
-        static string Unity_LightProbe(
+        static string Unity_BakedGI(
             [Slot(0, Binding.WorldSpaceNormal)] Vector3 Normal,
             [Slot(1, Binding.None)] out Vector3 Out)
         {
@@ -31,17 +32,9 @@ namespace UnityEditor.ShaderGraph
             return
                 @"
 {
-    Out = SampleSH(Normal);
+    Out = SHADERGRAPH_SAMPLE_BAKED_GI(Normal);
 }
 ";
-        }
-
-        public override PreviewMode previewMode
-        {
-            get
-            {
-                return PreviewMode.Preview3D;
-            }
         }
     }
 }

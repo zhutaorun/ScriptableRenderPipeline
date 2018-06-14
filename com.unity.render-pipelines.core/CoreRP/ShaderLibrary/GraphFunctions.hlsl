@@ -22,8 +22,8 @@ struct Gradient
     #define SHADERGRAPH_SAMPLE_SCENE_COLOR(uv) shadergraph_SampleSceneColor(uv);
 #endif
 
-#ifndef SHADERGRAPH_SAMPLE_LIGHTMAP
-    #define SHADERGRAPH_SAMPLE_LIGHTMAP(uv) shadergraph_SampleLightmap(uv);
+#ifndef SHADERGRAPH_SAMPLE_BAKED_GI
+    #define SHADERGRAPH_SAMPLE_BAKED_GI(normal) shadergraph_SampleBakedGI(normal);
 #endif
 
 #ifndef SHADERGRAPH_SAMPLE_SHADOWMASK
@@ -35,14 +35,14 @@ float shadergraph_SampleSceneDepth(float2 uv)
     return 1;
 }
 
-float shadergraph_SampleSceneColor(float2 uv)
+float3 shadergraph_SampleSceneColor(float2 uv)
 {
     return 0;
 }
 
-float shadergraph_SampleLightmap(float2 uv)
+float shadergraph_SampleBakedGI(float3 normal)
 {
-    return SAMPLE_TEXTURE2D(unity_Lightmap, samplerunity_Lightmap, uv);
+    return 0;
 }
 
 float shadergraph_SampleShadowmask(float2 uv)
