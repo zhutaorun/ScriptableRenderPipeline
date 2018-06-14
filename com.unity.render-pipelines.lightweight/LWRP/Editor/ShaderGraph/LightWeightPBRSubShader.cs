@@ -182,6 +182,8 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             modelRequiements.requiresViewDir |= m_PixelCoordinateSpace;
             modelRequiements.requiresMeshUVs.Add(UVChannel.UV1);
 
+            var combinedRequirements = vertexRequirements.Union(pixelRequirements).Union(modelRequiements);
+
             // ----------------------------------------------------- //
             //                START SHADER GENERATION                //
             // ----------------------------------------------------- //
@@ -214,6 +216,9 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             if (masterNode.surfaceType == SurfaceType.Transparent && masterNode.alphaMode == AlphaMode.Premultiply)
                 defines.AppendLine("#define _ALPHAPREMULTIPLY_ON 1");
 
+            if (combinedRequirements.requiresDepthTexture)
+                defines.AppendLine("#define REQUIRE_DEPTH_TEXTURE");
+            
             // ----------------------------------------------------- //
             //                START VERTEX DESCRIPTION               //
             // ----------------------------------------------------- //
@@ -460,7 +465,7 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
 
             if (masterNode.IsSlotConnected(PBRMasterNode.AlphaThresholdSlotId))
                 defines.AppendLine("#define _AlphaClip 1");
-
+            
             // ----------------------------------------------------- //
             //                START VERTEX DESCRIPTION               //
             // ----------------------------------------------------- //

@@ -22,7 +22,7 @@ namespace UnityEditor
 
         public static string GetDebugOutputPath()
         {
-            var path = GetRepositoryPath();
+            var path =  Application.dataPath;// GetRepositoryPath();
             if (path == null)
                 return null;
             path = Path.Combine(path, "DebugOutput");

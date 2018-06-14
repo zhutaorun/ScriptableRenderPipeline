@@ -59,8 +59,6 @@ Pass
 
     #include "CoreRP/ShaderLibrary/NormalSurfaceGradient.hlsl"
 
-    #include "ShaderGraphLibrary/GraphFunctions.hlsl"
-
     // define FragInputs structure
     #include "HDRP/ShaderPass/FragInputs.hlsl"
     #include "HDRP/ShaderPass/ShaderPass.cs.hlsl"
@@ -93,6 +91,7 @@ ${Defines}
     //-------------------------------------------------------------------------------------
 
     #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
+    #include "HDRP/ShaderLibrary/GraphFunctionsHD.hlsl"
     #ifdef DEBUG_DISPLAY
         #include "HDRP/Debug/DebugDisplay.hlsl"
     #endif

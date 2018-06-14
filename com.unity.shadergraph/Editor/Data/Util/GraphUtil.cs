@@ -808,7 +808,7 @@ namespace UnityEditor.ShaderGraph
                 finalShader.AppendLine(@"#include ""CoreRP/ShaderLibrary/UnityInstancing.hlsl""");
                 finalShader.AppendLine(@"#include ""CoreRP/ShaderLibrary/EntityLighting.hlsl""");
                 finalShader.AppendLine(@"#include ""ShaderGraphLibrary/CommonVariablesSG.hlsl""");
-                finalShader.AppendLine(@"#include ""ShaderGraphLibrary/GraphFunctions.hlsl""");
+                finalShader.AppendLine(@"#include ""CoreRP/ShaderLibrary/GraphFunctions.hlsl""");
                 finalShader.AppendNewLine();
 
                 finalShader.AppendLines(shaderProperties.GetPropertiesDeclaration(0));
