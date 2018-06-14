@@ -7,6 +7,8 @@
 //           HD Pipeline Specific Common Variables           //
 ///////////////////////////////////////////////////////////////
 
+#define REQUIRE_DEPTH_TEXTURE
+
 #include "CoreRP/ShaderLibrary/CommonVariables.hlsl" // Always include CoreRP version
 #include "../ShaderConfig.cs.hlsl"
 

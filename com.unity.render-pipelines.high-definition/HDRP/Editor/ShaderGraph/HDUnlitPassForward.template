@@ -48,7 +48,7 @@ Pass
     #include "CoreRP/ShaderLibrary/Common.hlsl"
     #include "CoreRP/ShaderLibrary/Wind.hlsl"
 
-    #include "ShaderGraphLibrary/Functions.hlsl"
+    #include "ShaderGraphLibrary/GraphFunctions.hlsl"
 
     // define FragInputs structure
     #include "HDRP/ShaderPass/FragInputs.hlsl"

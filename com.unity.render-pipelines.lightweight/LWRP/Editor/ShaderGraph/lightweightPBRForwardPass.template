@@ -44,7 +44,7 @@ ${Defines}
 	#include "CoreRP/ShaderLibrary/Common.hlsl"
 	#include "CoreRP/ShaderLibrary/Color.hlsl"
 	#include "CoreRP/ShaderLibrary/UnityInstancing.hlsl"
-	#include "ShaderGraphLibrary/Functions.hlsl"
+	#include "ShaderGraphLibrary/GraphFunctions.hlsl"
 
 ${Graph}
 	struct GraphVertexOutput

@@ -6,8 +6,21 @@
 ///////////////////////////////////////////////////////////////
 
 // Depth buffer
-TEXTURE2D(_CameraDepthTexture);
-SAMPLER(sampler_CameraDepthTexture);
+#if defined(REQUIRE_DEPTH_TEXTURE)
+#if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
+    TEXTURE2D_ARRAY(_CameraDepthTexture);
+#else
+    TEXTURE2D(_CameraDepthTexture);
+    SAMPLER(sampler_CameraDepthTexture);
+#endif
+#elif defined(REQUIRE_DEPTH_TEXTURE_FLOAT)
+#if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
+    TEXTURE2D_ARRAY_FLOAT(_CameraDepthTexture);
+#else
+    TEXTURE2D_FLOAT(_CameraDepthTexture);
+    SAMPLER(sampler_CameraDepthTexture);
+#endif // REQUIRE_DEPTH_TEXTURE
+#endif
 
 // Main lightmap
 TEXTURE2D(unity_Lightmap);
