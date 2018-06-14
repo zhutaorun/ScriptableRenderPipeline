@@ -218,6 +218,9 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
 
             if (combinedRequirements.requiresDepthTexture)
                 defines.AppendLine("#define REQUIRE_DEPTH_TEXTURE");
+
+            if (combinedRequirements.requiresCameraOpaqueTexture)
+                defines.AppendLine("#define REQUIRE_OPAQUE_TEXTURE");
             
             // ----------------------------------------------------- //
             //                START VERTEX DESCRIPTION               //

@@ -16,6 +16,7 @@ namespace UnityEditor.ShaderGraph
         public bool requiresFaceSign;
         public List<UVChannel> requiresMeshUVs;
         public bool requiresDepthTexture;
+        public bool requiresCameraOpaqueTexture;
 
         public static ShaderGraphRequirements none
         {
@@ -49,6 +50,7 @@ namespace UnityEditor.ShaderGraph
             newReqs.requiresVertexColor = other.requiresVertexColor | requiresVertexColor;
             newReqs.requiresFaceSign = other.requiresFaceSign | requiresFaceSign;
             newReqs.requiresDepthTexture = other.requiresDepthTexture | requiresDepthTexture;
+            newReqs.requiresCameraOpaqueTexture = other.requiresCameraOpaqueTexture | requiresCameraOpaqueTexture;
 
             newReqs.requiresMeshUVs = new List<UVChannel>();
             if (requiresMeshUVs != null)
@@ -70,6 +72,7 @@ namespace UnityEditor.ShaderGraph
             bool requiresVertexColor = nodes.OfType<IMayRequireVertexColor>().Any(x => x.RequiresVertexColor());
             bool requiresFaceSign = nodes.OfType<IMayRequireFaceSign>().Any(x => x.RequiresFaceSign());
             bool requiresDepthTexture = nodes.OfType<IMayRequireDepthTexture>().Any(x => x.RequiresDepthTexture());
+            bool requiresCameraOpaqueTexture = nodes.OfType<IMayRequireCameraOpaqueTexture>().Any(x => x.RequiresCameraOpaqueTexture());
 
             var meshUV = new List<UVChannel>();
             for (int uvIndex = 0; uvIndex < ShaderGeneratorNames.UVCount; ++uvIndex)
@@ -107,7 +110,8 @@ namespace UnityEditor.ShaderGraph
                 requiresVertexColor = requiresVertexColor,
                 requiresFaceSign = requiresFaceSign,
                 requiresMeshUVs = meshUV,
-                requiresDepthTexture = requiresDepthTexture
+                requiresDepthTexture = requiresDepthTexture,
+                requiresCameraOpaqueTexture = requiresCameraOpaqueTexture
             };
 
             return reqs;
