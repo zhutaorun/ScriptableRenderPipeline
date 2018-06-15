@@ -80,7 +80,6 @@ ${Defines}
     //-------------------------------------------------------------------------------------
 
     #include "HDRP/ShaderLibrary/CommonVariablesHD.hlsl"
-    #include "HDRP/ShaderLibrary/GraphFunctionsHD.hlsl"
     #ifdef DEBUG_DISPLAY
         #include "HDRP/Debug/DebugDisplay.hlsl"
     #endif
@@ -93,6 +92,7 @@ ${Defines}
         #include "HDRP/Material/Material.hlsl"
     #endif
     #include "HDRP/Material/MaterialUtilities.hlsl"
+    #include "HDRP/ShaderLibrary/GraphFunctionsHD.hlsl"
 
     //-------------------------------------------------------------------------------------
     // Interpolator Packing And Struct Declarations

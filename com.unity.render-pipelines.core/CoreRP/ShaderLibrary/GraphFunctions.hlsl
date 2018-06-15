@@ -27,7 +27,7 @@ struct Gradient
 #endif
 
 #ifndef SHADERGRAPH_SAMPLE_SHADOWMASK
-    #define SHADERGRAPH_SAMPLE_SHADOWMASK(uv) shadergraph_SampleShadowmask(uv);
+    #define SHADERGRAPH_SAMPLE_SHADOWMASK(positionWS, uv) shadergraph_SampleShadowmask(positionWS, uv);
 #endif
 
 float shadergraph_SampleSceneDepth(float2 uv)
@@ -45,9 +45,9 @@ float shadergraph_SampleBakedGI(float3 normal)
     return 0;
 }
 
-float shadergraph_SampleShadowmask(float2 uv)
+float4 shadergraph_SampleShadowmask(float3 positionWS, float2 uv)
 {
-    return SAMPLE_TEXTURE2D(unity_ShadowMask, samplerunity_Lightmap, uv);
+    return 0;
 }
 
 #endif // UNITY_GRAPHFUNCTIONS_INCLUDED
