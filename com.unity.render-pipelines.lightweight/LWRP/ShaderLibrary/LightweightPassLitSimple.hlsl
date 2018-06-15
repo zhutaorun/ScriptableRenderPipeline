@@ -103,7 +103,11 @@ LightweightVertexOutput LitPassVertexSimple(LightweightVertexInput v)
     OUTPUT_SH(o.normal.xyz, o.vertexSH);
 
     half3 vertexLight = VertexLighting(o.posWSShininess.xyz, o.normal.xyz);
+#if defined(FOG_EXP)
+    half fogFactor = ComputeGlobalFogFactor(o.posWSShininess.xyz);
+#else
     half fogFactor = ComputeFogFactor(o.clipPos.z);
+#endif
     o.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
 
 #ifdef _SHADOWS_ENABLED

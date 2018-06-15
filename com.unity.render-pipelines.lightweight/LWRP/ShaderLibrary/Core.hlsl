@@ -126,6 +126,24 @@ float4 ComputeScreenPos(float4 positionCS)
     return o;
 }
 
+half ComputeGlobalFogFactor(float3 wPos)
+{
+    half cHeightFalloff = 0.1;
+    half3 camPos = GetCameraPositionWS();
+	half cVolFogHeightDensityAtViewer = exp( -cHeightFalloff * camPos.y );
+    half3 cameraToWorldPos = wPos - camPos;
+	half fogInt = length( cameraToWorldPos ) * cVolFogHeightDensityAtViewer;
+
+	const half cSlopeThreshold = 0.01;
+	if( abs( cameraToWorldPos.y ) > cSlopeThreshold )
+	{
+		half t = cHeightFalloff * cameraToWorldPos.y;
+		fogInt *= ( 1.0 - exp( -t ) ) / t;
+	}
+	
+	return unity_FogParams.x * fogInt;
+}
+
 half ComputeFogFactor(float z)
 {
     float clipZ_01 = UNITY_Z_0_FAR_FROM_CLIPSPACE(z);
