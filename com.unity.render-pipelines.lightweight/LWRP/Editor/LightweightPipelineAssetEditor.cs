@@ -173,9 +173,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
                 ShadowCascades cascades = (ShadowCascades)m_ShadowCascadesProp.intValue;
                 if (cascades == ShadowCascades.FOUR_CASCADES)
-                    CoreEditorUtils.DrawCascadeSplitGUI<Vector3>(ref m_ShadowCascade4SplitProp);
+                    LightweightEditorUtils.DrawCascadeSplitGUI<Vector3>(ref m_ShadowCascade4SplitProp);
                 else if (cascades == ShadowCascades.TWO_CASCADES)
-                    CoreEditorUtils.DrawCascadeSplitGUI<float>(ref m_ShadowCascade2SplitProp);
+                    LightweightEditorUtils.DrawCascadeSplitGUI<float>(ref m_ShadowCascade2SplitProp);
 
                 EditorGUI.indentLevel--;
                 EditorGUILayout.Space();

@@ -1,15 +1,10 @@
 using System;
-using System.IO;
-using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
 using UnityEngine;
 
 namespace UnityEditor.Experimental.Rendering
 {
-    static class ShadowCascadeSplitGUI
+    internal static class ShadowCascadeSplitGUI
     {
         private const int kSliderbarTopMargin = 2;
         private const int kSliderbarHeight = 24;
