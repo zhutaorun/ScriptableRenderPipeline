@@ -3,9 +3,9 @@ using UnityEngine;
 
 namespace UnityEditor.Experimental.Rendering
 {
-    internal static class LightweightEditorUtils
+    static class LightweightEditorUtils
     {
-        internal static void DrawCascadeSplitGUI<T>(ref SerializedProperty shadowCascadeSplit)
+        public static void DrawCascadeSplitGUI<T>(ref SerializedProperty shadowCascadeSplit)
         {
             float[] cascadePartitionSizes = null;
 
