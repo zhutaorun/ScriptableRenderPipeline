@@ -47,7 +47,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [Range(0.0f, 1.0f)]
         public float lightDimmer = 1.0f;
 
-        [Range(0.0f, 1.0f)]
+        [Range(0.0f, 20.0f)]
         public float volumetricDimmer = 1.0f;
 
         // Not used for directional lights.
