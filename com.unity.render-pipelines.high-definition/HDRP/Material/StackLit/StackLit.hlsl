@@ -122,7 +122,7 @@ TEXTURE2D(_GBufferTexture0);
 #    define COAT_NB_LOBES 0
 #    define COAT_LOBE_IDX 0
 #    define BASE_LOBEA_IDX 0
-#    define BASE_LOBEB_IDX (BASE_LOBEA_IDX+1)
+#    define BASE_LOBEB_IDX (BASE_LOBEA_IDX+1) // (make sure B is always #A+1)
 #    define NB_NORMALS 1
 #    define NB_LV_DIR 1
 
@@ -139,8 +139,8 @@ TEXTURE2D(_GBufferTexture0);
 
 // TODO: if dual lobe base
 //#define BASE_NB_LOBES 1
-#define BASE_NB_LOBES 2
-#define TOTAL_NB_LOBES (BASE_NB_LOBES+COAT_NB_LOBES)
+#define BASE_NB_LOBES 2 // use numeric indices for these arrays
+#define TOTAL_NB_LOBES (BASE_NB_LOBES+COAT_NB_LOBES) // use *_LOBE?_IDX for these arrays.
 
 
 // TODO CLEANUP and put in proper define above
@@ -1546,13 +1546,13 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData b
         // Otherwise, the calculation of these is done for each light
         //
 
-        // Handle IBL + area light + multiscattering.
-        // Note: use the not modified by anisotropy iblPerceptualRoughness here.
-
+        // Handle FGD texture fetches for IBL + area light + multiscattering.
+        // Note: use the unmodified by anisotropy iblPerceptualRoughness here.
+        //
         // Here, we will fetch our actual FGD terms, see ComputeAdding for details: the F0 params
         // will be replaced by our energy coefficients. Note that the way to do it depends on the
         // formulation of ComputeAdding (with FGD fetches or only Fresnel terms).
-
+        //
         // Also note that while the fetch directions for the light samples (IBL) are the ones
         // at the top interface, for the FGD terms (in fact, for all angle dependent BSDF
         // parametrization data), we need to use the actual interface angle a propagated direction
@@ -1608,10 +1608,26 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData b
             preLightData.TdotV = TdotV;
             preLightData.BdotV = BdotV;
 #endif
- 
-            // perceptualRoughness is use as input and output here
-            GetGGXAnisotropicModifiedNormalAndRoughness(bsdfData.bitangentWS, bsdfData.tangentWS, N, V, preLightData.iblAnisotropy[0], preLightData.iblPerceptualRoughness[BASE_LOBEA_IDX], iblN[BASE_LOBEA_IDX], preLightData.iblPerceptualRoughness[BASE_LOBEA_IDX]);
-            GetGGXAnisotropicModifiedNormalAndRoughness(bsdfData.bitangentWS, bsdfData.tangentWS, N, V, preLightData.iblAnisotropy[1], preLightData.iblPerceptualRoughness[BASE_LOBEB_IDX], iblN[BASE_LOBEB_IDX], preLightData.iblPerceptualRoughness[BASE_LOBEB_IDX]);
+
+            // Handle iblPerceptualRoughness modifications for anisotropy.
+            // iblPerceptualRoughness is used as input and output here:
+            GetGGXAnisotropicModifiedNormalAndRoughness(bsdfData.bitangentWS,
+                bsdfData.tangentWS,
+                N[BASE_NORMAL_IDX],
+                V,
+                preLightData.iblAnisotropy[0],
+                preLightData.iblPerceptualRoughness[BASE_LOBEA_IDX],
+                iblN[BASE_LOBEA_IDX],
+                preLightData.iblPerceptualRoughness[BASE_LOBEA_IDX]);
+
+            GetGGXAnisotropicModifiedNormalAndRoughness(bsdfData.bitangentWS,
+                bsdfData.tangentWS,
+                N[BASE_NORMAL_IDX],
+                V,
+                preLightData.iblAnisotropy[1],
+                preLightData.iblPerceptualRoughness[BASE_LOBEB_IDX],
+                iblN[BASE_LOBEB_IDX],
+                preLightData.iblPerceptualRoughness[BASE_LOBEB_IDX]);
 
             iblN[COAT_LOBE_IDX] = N[COAT_NORMAL_IDX]; // no anisotropy for coat.
         }
@@ -1628,15 +1644,14 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData b
             iblN[BASE_LOBEA_IDX] = iblN[BASE_LOBEB_IDX] = N[BASE_NORMAL_IDX];
         } // anisotropy
 
-        // IBL
-        // Handle IBL pre calculated data + GGX multiscattering energy loss compensation term
+        // Handle IBL fetch direction R + GGX multiscattering energy loss compensation term
 
         iblR[0] = reflect(-V, iblN[0]);
         iblR[1] = reflect(-V, iblN[1]);
         iblR[2] = reflect(-V, iblN[2]);
 
         // Correction of reflected direction for better handling of rough material
-
+        //
         // Notice again that the roughness and iblR properly use the output lobe statistics, but baseLayerNdotV
         // is used for the offspecular correction because the true original offspecular tilt is parametrized by
         // the angle at the base layer and the correction itself is influenced by that. See comments above.
@@ -1688,34 +1703,6 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData b
         preLightData.iblPerceptualRoughness[0] = bsdfData.perceptualRoughnessA;
         preLightData.iblPerceptualRoughness[1] = bsdfData.perceptualRoughnessB;
 
-        if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_ANISOTROPY))
-        {
-            float TdotV = dot(bsdfData.tangentWS,   V);
-            float BdotV = dot(bsdfData.bitangentWS, V);
-
-            preLightData.partLambdaV[0] = GetSmithJointGGXAnisoPartLambdaV(TdotV, BdotV, NdotV[0], preLightData.layeredRoughnessT[0], preLightData.layeredRoughnessB[0]);
-            preLightData.partLambdaV[1] = GetSmithJointGGXAnisoPartLambdaV(TdotV, BdotV, NdotV[0], preLightData.layeredRoughnessT[1], preLightData.layeredRoughnessB[1]);
-
-            // For GGX aniso and IBL we have done an empirical (eye balled) approximation compare to the reference.
-            // We use a single fetch, and we stretch the normal to use based on various criteria.
-            // result are far away from the reference but better than nothing
-            // For positive anisotropy values: tangent = highlight stretch (anisotropy) direction, bitangent = grain (brush) direction.
-            float3 grainDirWS = (bsdfData.anisotropy >= 0.0) ? bsdfData.bitangentWS : bsdfData.tangentWS;
-
-            // Reduce stretching for (perceptualRoughness < 0.2).
-            float stretch[2];
-            stretch[0] = abs(bsdfData.anisotropy) * saturate(5 * preLightData.iblPerceptualRoughness[0]);
-            stretch[1] = abs(bsdfData.anisotropy) * saturate(5 * preLightData.iblPerceptualRoughness[1]);
-            iblN[0] = GetAnisotropicModifiedNormal(grainDirWS, N[0], V, stretch[0]);
-            iblN[1] = GetAnisotropicModifiedNormal(grainDirWS, N[0], V, stretch[1]);
-        }
-        else
-        {
-            preLightData.partLambdaV[0] = GetSmithJointGGXPartLambdaV(NdotV[0], preLightData.layeredRoughnessT[0]);
-            preLightData.partLambdaV[1] = GetSmithJointGGXPartLambdaV(NdotV[0], preLightData.layeredRoughnessT[1]);
-            iblN[0] = iblN[1] = N[0];
-        } // ...no anisotropy
-
         float3 f0forCalculatingFGD = bsdfData.fresnel0;
         if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_IRIDESCENCE))
         {
@@ -1727,8 +1714,7 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData b
             }
         }
 
-        // IBL
-        // Handle IBL pre calculated data + GGX multiscattering energy loss compensation term
+        // Handle FGD texture fetches for IBL + area light + multiscattering.
 
         GetPreIntegratedFGDGGXAndDisneyDiffuse(NdotV[0],
                                                preLightData.iblPerceptualRoughness[BASE_LOBEA_IDX],
@@ -1745,13 +1731,46 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData b
                                                specularReflectivity[BASE_LOBEB_IDX]);
 
 
+        if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_ANISOTROPY))
+        {
+            float TdotV = dot(bsdfData.tangentWS,   V);
+            float BdotV = dot(bsdfData.bitangentWS, V);
+
+            preLightData.partLambdaV[0] = GetSmithJointGGXAnisoPartLambdaV(TdotV, BdotV, NdotV[0], preLightData.layeredRoughnessT[0], preLightData.layeredRoughnessB[0]);
+            preLightData.partLambdaV[1] = GetSmithJointGGXAnisoPartLambdaV(TdotV, BdotV, NdotV[0], preLightData.layeredRoughnessT[1], preLightData.layeredRoughnessB[1]);
+
+            // Handle iblPerceptualRoughness modifications for anisotropy.
+            // iblPerceptualRoughness is used as input and output here:
+            GetGGXAnisotropicModifiedNormalAndRoughness(bsdfData.bitangentWS,
+                bsdfData.tangentWS,
+                N[BASE_NORMAL_IDX],
+                V,
+                preLightData.iblAnisotropy[0],
+                preLightData.iblPerceptualRoughness[BASE_LOBEA_IDX],
+                iblN[BASE_LOBEA_IDX],
+                preLightData.iblPerceptualRoughness[BASE_LOBEA_IDX]);
+
+            GetGGXAnisotropicModifiedNormalAndRoughness(bsdfData.bitangentWS,
+                bsdfData.tangentWS,
+                N[BASE_NORMAL_IDX],
+                V,
+                preLightData.iblAnisotropy[1],
+                preLightData.iblPerceptualRoughness[BASE_LOBEB_IDX],
+                iblN[BASE_LOBEB_IDX],
+                preLightData.iblPerceptualRoughness[BASE_LOBEB_IDX]);
+        }
+        else
+        {
+            preLightData.partLambdaV[0] = GetSmithJointGGXPartLambdaV(NdotV[0], preLightData.layeredRoughnessT[0]);
+            preLightData.partLambdaV[1] = GetSmithJointGGXPartLambdaV(NdotV[0], preLightData.layeredRoughnessT[1]);
+            iblN[0] = iblN[1] = N[0];
+        } // ...no anisotropy
+
+        // Handle IBL fetch direction R + GGX multiscattering energy loss compensation term
+
         iblR[0] = reflect(-V, iblN[0]);
         iblR[1] = reflect(-V, iblN[1]);
-        // This is a ad-hoc tweak to better match reference of anisotropic GGX.
-        // TODO: We need a better hack.
-        float fact = saturate(1.2 - abs(bsdfData.anisotropy));
-        preLightData.iblPerceptualRoughness[0] *= fact;
-        preLightData.iblPerceptualRoughness[1] *= fact;
+
         // Correction of reflected direction for better handling of rough material
         preLightData.iblR[0] = GetSpecularDominantDir(N[0], iblR[0], preLightData.iblPerceptualRoughness[0], NdotV[0]);
         preLightData.iblR[1] = GetSpecularDominantDir(N[0], iblR[1], preLightData.iblPerceptualRoughness[1], NdotV[0]);
@@ -1763,7 +1782,6 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData b
         // formulation. ie Compensation corresponds to using FGDinf instead of FGD.
         preLightData.energyCompensationFactor[BASE_LOBEA_IDX] = GetEnergyCompensationFactor(specularReflectivity[BASE_LOBEA_IDX], bsdfData.fresnel0);
         preLightData.energyCompensationFactor[BASE_LOBEB_IDX] = GetEnergyCompensationFactor(specularReflectivity[BASE_LOBEB_IDX], bsdfData.fresnel0);
-
 
 #else
         preLightData.energyCompensationFactor[BASE_LOBEA_IDX] =
