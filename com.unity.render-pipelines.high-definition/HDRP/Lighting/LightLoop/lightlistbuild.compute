@@ -33,6 +33,7 @@ uniform uint g_BaseFeatureFlags;
 uniform float4 _InvProjPerspParam;
 uniform float4 _InvProjOrthoParam;
 uniform float4x4 _ProjMatrix;
+uniform float4x4 _InvProjMatrix;
 
 Texture2D g_depth_tex : register( t0 );
 StructuredBuffer<float3> g_vBoundsBuffer : register( t1 );
@@ -75,19 +76,6 @@ groupshared uint ldsFeatureFlags;
 RWStructuredBuffer<uint> g_TileFeatureFlags;
 #endif
 
-float GetLinearDepth(uint2 uCrd, float zDptBufSpace)    // 0 is near 1 is far
-{
-    float2 positionNDC = float2(uCrd) / float2(g_viDimensions.xy - 1);
-    float fDepth = LOAD_TEXTURE2D_LOD(g_depth_tex, uCrd, 0).r;
-    // Decode linear depth with oblique perspective/orthographic projections
-    return LinearEyeDepth(positionNDC, fDepth, _InvProjOrthoParam, _InvProjPerspParam);
-}
-
-float3 GetViewPosFromLinDepth(float2 v2ScrPos, float fLinDepth)
-{
-    return DecodeViewSpaceFromLinearDepth(v2ScrPos, fLinDepth, g_viDimensions.xy, _ProjMatrix);
-}
-
 float GetOnePixDiagWorldDistAtDepthOne()
 {
     float fSx = g_mScrProjection[0].x;
@@ -101,7 +89,7 @@ int SphericalIntersectionTests(uint threadID, int iNrCoarseLights, float2 screen
 #endif
 
 #ifdef FINE_PRUNING_ENABLED
-void FinePruneLights(uint threadID, int iNrCoarseLights, uint2 viTilLL, float4 vLinDepths);
+void FinePruneLights(uint threadID, int iNrCoarseLights, uint2 viTilLL, float3 vVPoss[4]);
 #endif
 
 [numthreads(NR_THREADS, 1, 1)]
@@ -139,7 +127,7 @@ void LIGHTLISTGEN(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID)
     float dpt_mi=asfloat(uFltMax), dpt_ma=0.0;
 
 
-    float4 vLinDepths;
+    float3 vVPoss[4];
     {
         // Fetch depths and calculate min/max
         UNITY_UNROLL
@@ -149,7 +137,11 @@ void LIGHTLISTGEN(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID)
             uint2 uCrd = min( uint2(viTilLL.x+(idx&0xf), viTilLL.y+(idx>>4)), uint2(iWidth-1, iHeight-1) );
             // TODO: reverse Z is not handled properly here
             const float fDepth = LOAD_TEXTURE2D_LOD(g_depth_tex, uCrd, 0).r;
-            vLinDepths[i] = GetLinearDepth(uCrd, fDepth);
+            vVPoss[i] = ComputeViewSpacePosition(
+                uCrd / float2(g_viDimensions.xy - 1),
+                fDepth,
+                _InvProjMatrix
+            );
             if(fDepth<VIEWPORT_SCALE_Z)     // if not skydome
             {
                 dpt_mi = min(fDepth, dpt_mi);
@@ -224,7 +216,7 @@ void LIGHTLISTGEN(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID)
     {
         // initializes ldsNrLightsFinal with the number of accepted lights.
         // all accepted entries delivered in prunedList[].
-        FinePruneLights(t, iNrCoarseLights, viTilLL, vLinDepths);
+        FinePruneLights(t, iNrCoarseLights, viTilLL, vVPoss);
     }
 #endif
 
@@ -315,10 +307,13 @@ int SphericalIntersectionTests(uint threadID, int iNrCoarseLights, float2 screen
     GroupMemoryBarrierWithGroupSync();
 #endif
 
-#if USE_LEFT_HAND_CAMERA_SPACE
-    float3 V = GetViewPosFromLinDepth( screenCoordinate, 1.0);
-#else
-    float3 V = GetViewPosFromLinDepth( screenCoordinate, -1.0);
+    float3 V = ComputeViewSpacePosition(
+        screenCoordinate / float2(g_viDimensions.xy - 1),
+        1,
+        _InvProjMatrix
+    );
+#if !USE_LEFT_HAND_CAMERA_SPACE
+    V.z *= -1;
 #endif
 
     float onePixDiagDist = GetOnePixDiagWorldDistAtDepthOne();
@@ -348,7 +343,7 @@ int SphericalIntersectionTests(uint threadID, int iNrCoarseLights, float2 screen
 #ifdef FINE_PRUNING_ENABLED
 // initializes ldsNrLightsFinal with the number of accepted lights.
 // all accepted entries delivered in prunedList[].
-void FinePruneLights(uint threadID, int iNrCoarseLights, uint2 viTilLL, float4 vLinDepths)
+void FinePruneLights(uint threadID, int iNrCoarseLights, uint2 viTilLL, float3 vVPoss[4])
 {
     uint t = threadID;
     uint iWidth = g_viDimensions.x;
@@ -378,7 +373,7 @@ void FinePruneLights(uint threadID, int iNrCoarseLights, uint2 viTilLL, float4 v
                 int idx = t + i*NR_THREADS;
 
                 uint2 uPixLoc = min(uint2(viTilLL.x+(idx&0xf), viTilLL.y+(idx>>4)), uint2(iWidth-1, iHeight-1));
-                float3 vVPos = GetViewPosFromLinDepth(uPixLoc + float2(0.5,0.5), vLinDepths[i]);
+                float3 vVPos = vVPoss[i];
 
                 // check pixel
                 float3 fromLight = vVPos-lightData.lightPos.xyz;
@@ -408,7 +403,7 @@ void FinePruneLights(uint threadID, int iNrCoarseLights, uint2 viTilLL, float4 v
                 int idx = t + i*NR_THREADS;
 
                 uint2 uPixLoc = min(uint2(viTilLL.x+(idx&0xf), viTilLL.y+(idx>>4)), uint2(iWidth-1, iHeight-1));
-                float3 vVPos = GetViewPosFromLinDepth(uPixLoc + float2(0.5,0.5), vLinDepths[i]);
+                float3 vVPos = vVPoss[i];
 
                 // check pixel
                 float3 vLp = lightData.lightPos.xyz;
@@ -435,7 +430,7 @@ void FinePruneLights(uint threadID, int iNrCoarseLights, uint2 viTilLL, float4 v
                 int idx = t + i*NR_THREADS;
 
                 uint2 uPixLoc = min(uint2(viTilLL.x+(idx&0xf), viTilLL.y+(idx>>4)), uint2(iWidth-1, iHeight-1));
-                float3 vVPos = GetViewPosFromLinDepth(uPixLoc + float2(0.5,0.5), vLinDepths[i]);
+                float3 vVPos = vVPoss[i];
 
                 // check pixel
                 float3 toLight  = lightData.lightPos.xyz - vVPos;

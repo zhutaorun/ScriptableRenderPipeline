@@ -5,6 +5,7 @@ Shader "Hidden/HDRenderPipeline/DebugViewTiles"
         Tags{ "RenderPipeline" = "HDRenderPipeline" }
         Pass
         {
+            Cull Off
             ZWrite Off
             ZTest Always
             Blend SrcAlpha OneMinusSrcAlpha
