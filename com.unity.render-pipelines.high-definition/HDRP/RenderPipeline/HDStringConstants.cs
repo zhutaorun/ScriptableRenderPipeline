@@ -20,6 +20,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly string s_ShadowCasterStr = "ShadowCaster";
         public static readonly string s_MeshDecalsStr = "DBufferMesh";
 
+        //Custom: Eye Volume
+        public static readonly string s_EyeVolumeFrontCullStr = "EyeVolumeFrontCull";
+        public static readonly string s_EyeVolumeBackCullStr  = "EyeVolumeBackCull";
+        public static readonly string s_EyeVolumeResolveStr   = "EyeVolumeResolve";
+
         // ShaderPass name
         public static readonly ShaderPassName s_EmptyName = new ShaderPassName(s_EmptyStr);
         public static readonly ShaderPassName s_ForwardName = new ShaderPassName(s_ForwardStr);
@@ -35,6 +40,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly ShaderPassName s_TransparentBackfaceName = new ShaderPassName(s_TransparentBackfaceStr);
         public static readonly ShaderPassName s_TransparentDepthPostpassName = new ShaderPassName(s_TransparentDepthPostpassStr);
         public static readonly ShaderPassName s_MeshDecalsName = new ShaderPassName(s_MeshDecalsStr);
+
+        //Custom: Eye Volume
+        public static readonly ShaderPassName s_EyeVolumeFrontCullName = new ShaderPassName(s_EyeVolumeFrontCullStr);
+        public static readonly ShaderPassName s_EyeVolumeBackCullName  = new ShaderPassName(s_EyeVolumeBackCullStr);
+        public static readonly ShaderPassName s_EyeVolumeResolveName = new ShaderPassName(s_EyeVolumeResolveStr);
 
         // Legacy name
         public static readonly ShaderPassName s_AlwaysName = new ShaderPassName("Always");

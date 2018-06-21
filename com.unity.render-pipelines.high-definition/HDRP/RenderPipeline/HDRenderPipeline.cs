@@ -72,6 +72,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Renderer Bake configuration can vary depends on if shadow mask is enabled or no
         RendererConfiguration m_currentRendererConfigurationBakedLighting = HDUtils.k_RendererConfigurationBakedLighting;
         Material m_CopyStencilForNoLighting;
+        Material m_CopyStencilForEyeVolumes;
         Material m_CopyDepth;
         GPUCopy m_GPUCopy;
         BufferPyramid m_BufferPyramid;
@@ -111,6 +112,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // The pass "SRPDefaultUnlit" is a fall back to legacy unlit rendering and is required to support unity 2d + unity UI that render in the scene.
         ShaderPassName[] m_ForwardAndForwardOnlyPassNames = { HDShaderPassNames.s_ForwardOnlyName, HDShaderPassNames.s_ForwardName, HDShaderPassNames.s_SRPDefaultUnlitName };
         ShaderPassName[] m_ForwardOnlyPassNames = { HDShaderPassNames.s_ForwardOnlyName, HDShaderPassNames.s_SRPDefaultUnlitName };
+
+        //Custom: Eye Volume Pass Names
+        ShaderPassName[] m_EyeVolumeFrontCullPassNames = { HDShaderPassNames.s_EyeVolumeFrontCullName };
+        ShaderPassName[] m_EyeVolumeBackCullPassNames = { HDShaderPassNames.s_EyeVolumeBackCullName };
+        ShaderPassName[] m_EyeVolumeResolvePassNames = { HDShaderPassNames.s_EyeVolumeResolveName };
 
         ShaderPassName[] m_AllTransparentPassNames = {  HDShaderPassNames.s_TransparentBackfaceName,
                                                         HDShaderPassNames.s_ForwardOnlyName,
@@ -245,6 +251,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_CopyStencilForNoLighting = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.copyStencilBuffer);
             m_CopyStencilForNoLighting.SetInt(HDShaderIDs._StencilRef, (int)StencilLightingUsage.NoLighting);
             m_CopyStencilForNoLighting.SetInt(HDShaderIDs._StencilMask, (int)StencilBitMask.LightingMask);
+
+            m_CopyStencilForEyeVolumes = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.copyStencilBuffer);
+            m_CopyStencilForEyeVolumes.SetInt(HDShaderIDs._StencilRef,  (int)1);
+            m_CopyStencilForEyeVolumes.SetInt(HDShaderIDs._StencilMask, (int)255);
+
             m_CameraMotionVectorsMaterial = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.cameraMotionVectors);
 
             m_CopyDepth = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.copyDepthBuffer);
@@ -508,6 +519,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_MaterialList.ForEach(material => material.Cleanup());
 
             CoreUtils.Destroy(m_CopyStencilForNoLighting);
+            CoreUtils.Destroy(m_CopyStencilForEyeVolumes);
             CoreUtils.Destroy(m_CameraMotionVectorsMaterial);
 
             CoreUtils.Destroy(m_DebugViewMaterialGBuffer);
@@ -1616,7 +1628,45 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     var debugSSTThisPass = debugScreenSpaceTracing && (m_CurrentDebugDisplaySettings.lightingDebugSettings.debugLightingMode == DebugLightingMode.ScreenSpaceTracingReflection);
                     if (debugSSTThisPass)
                         cmd.SetRandomWriteTarget(7, m_DebugScreenSpaceTracingData);
+
                     RenderOpaqueRenderList(cullResults, hdCamera, renderContext, cmd, passNames, m_currentRendererConfigurationBakedLighting);
+
+                    //Custom: Render eye volumes to stencil.
+                    using (new ProfilingSample(cmd, "Eye Volumes"))
+                    {
+                        RenderOpaqueRenderList(cullResults, hdCamera, renderContext, cmd, m_EyeVolumeFrontCullPassNames, m_currentRendererConfigurationBakedLighting); //Front Face Culling
+                        RenderOpaqueRenderList(cullResults, hdCamera, renderContext, cmd, m_EyeVolumeBackCullPassNames,  m_currentRendererConfigurationBakedLighting); //Back Face Culling
+
+                        //Copy Stencil
+                        // For eye volume we need to know the eye stencil.
+                        using (new ProfilingSample(cmd, "Clear and copy stencil texture", CustomSamplerId.ClearAndCopyStencilTexture.GetSampler()))
+                        {
+                            HDUtils.SetRenderTarget(cmd, hdCamera, m_CameraStencilBufferCopy, ClearFlag.Color, CoreUtils.clearColorAllBlack);
+                            HDUtils.DrawFullScreen(cmd, hdCamera, m_CopyStencilForEyeVolumes, m_CameraStencilBufferCopy, m_CameraDepthStencilBuffer, null, 0);
+                            cmd.SetGlobalTexture(HDShaderIDs._StencilTexture, m_CameraStencilBufferCopy);
+
+                            //Be sure to set back the forward RT.
+                            if (hdCamera.frameSettings.enableSubsurfaceScattering)
+                            {
+                                RenderTargetIdentifier[] m_MRTWithSSS = new RenderTargetIdentifier[2 + m_SSSBufferManager.sssBufferCount];
+                                m_MRTWithSSS[0] = m_CameraColorBuffer; // Store the specular color
+                                m_MRTWithSSS[1] = m_CameraSssDiffuseLightingBuffer;
+                                for (int i = 0; i < m_SSSBufferManager.sssBufferCount; ++i)
+                                {
+                                    m_MRTWithSSS[i + 2] = m_SSSBufferManager.GetSSSBuffer(i);
+                                }
+
+                                HDUtils.SetRenderTarget(cmd, hdCamera, m_MRTWithSSS, m_CameraDepthStencilBuffer);
+                            }
+                            else
+                            {
+                                HDUtils.SetRenderTarget(cmd, hdCamera, m_CameraColorBuffer, m_CameraDepthStencilBuffer);
+                            }
+                        }
+
+                        RenderOpaqueRenderList(cullResults, hdCamera, renderContext, cmd, m_EyeVolumeResolvePassNames, m_currentRendererConfigurationBakedLighting);  //Resolve
+                    }
+
                     if (debugSSTThisPass)
                         cmd.ClearRandomWriteTargets();
                 }
@@ -1632,13 +1682,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     var debugSSTThisPass = debugScreenSpaceTracing && (m_CurrentDebugDisplaySettings.lightingDebugSettings.debugLightingMode == DebugLightingMode.ScreenSpaceTracingRefraction);
                     if (debugSSTThisPass)
                         cmd.SetRandomWriteTarget(7, m_DebugScreenSpaceTracingData);
-                    RenderTransparentRenderList(cullResults, hdCamera, renderContext, cmd, m_AllTransparentPassNames, m_currentRendererConfigurationBakedLighting, pass == ForwardPass.PreRefraction ? HDRenderQueue.k_RenderQueue_PreRefraction : HDRenderQueue.k_RenderQueue_Transparent);
+                    RenderTransparentRenderList(cullResults, hdCamera, renderContext, cmd, m_AllTransparentPassNames, m_currentRendererConfigurationBakedLighting, pass == ForwardPass.PreRefraction ? HDRenderQueue.k_RenderQueue_PreRefraction : HDRenderQueue.k_RenderQueue_Transparent);         
                     if (debugSSTThisPass)
                         cmd.ClearRandomWriteTargets();
                 }
             }
         }
-
+      
         // This is use to Display legacy shader with an error shader
         [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
         void RenderForwardError(CullResults cullResults, HDCamera hdCamera, ScriptableRenderContext renderContext, CommandBuffer cmd)
