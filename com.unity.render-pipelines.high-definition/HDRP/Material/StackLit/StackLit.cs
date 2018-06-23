@@ -177,6 +177,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             PreIntegratedFGD.instance.Build(PreIntegratedFGD.FGDIndex.FGD_GGXAndDisneyDiffuse);
             LTCAreaLight.instance.Build();
+            SPTDistribution.instance.Build();
 
             m_isInit = false;
         }
@@ -185,6 +186,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             PreIntegratedFGD.instance.Cleanup(PreIntegratedFGD.FGDIndex.FGD_GGXAndDisneyDiffuse);
             LTCAreaLight.instance.Cleanup();
+            SPTDistribution.instance.Cleanup();
 
             m_isInit = false;
         }
@@ -203,6 +205,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             PreIntegratedFGD.instance.Bind(PreIntegratedFGD.FGDIndex.FGD_GGXAndDisneyDiffuse);
             LTCAreaLight.instance.Bind();
+            SPTDistribution.instance.Bind();
         }
     }
 }
