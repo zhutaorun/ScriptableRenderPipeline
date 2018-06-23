@@ -1700,8 +1700,10 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData b
         preLightData.layeredRoughnessT[1] = bsdfData.roughnessBT;
         preLightData.layeredRoughnessB[1] = bsdfData.roughnessBB;
 
-        preLightData.iblPerceptualRoughness[0] = bsdfData.perceptualRoughnessA;
-        preLightData.iblPerceptualRoughness[1] = bsdfData.perceptualRoughnessB;
+        preLightData.iblPerceptualRoughness[BASE_LOBEA_IDX] = bsdfData.perceptualRoughnessA;
+        preLightData.iblPerceptualRoughness[BASE_LOBEB_IDX] = bsdfData.perceptualRoughnessB;
+        preLightData.iblAnisotropy[0] = bsdfData.anisotropy;
+        preLightData.iblAnisotropy[1] = bsdfData.anisotropy;
 
         float3 f0forCalculatingFGD = bsdfData.fresnel0;
         if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_IRIDESCENCE))
@@ -1743,7 +1745,7 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData b
             // iblPerceptualRoughness is used as input and output here:
             GetGGXAnisotropicModifiedNormalAndRoughness(bsdfData.bitangentWS,
                 bsdfData.tangentWS,
-                N[BASE_NORMAL_IDX],
+                N[BASE_NORMAL_IDX], // N[] is sized one in this case here, so really N[0]
                 V,
                 preLightData.iblAnisotropy[0],
                 preLightData.iblPerceptualRoughness[BASE_LOBEA_IDX],
