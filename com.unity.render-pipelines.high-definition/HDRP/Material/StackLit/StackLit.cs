@@ -176,7 +176,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public override void Build(HDRenderPipelineAsset hdAsset)
         {
             PreIntegratedFGD.instance.Build(PreIntegratedFGD.FGDIndex.FGD_GGXAndDisneyDiffuse);
-            //LTCAreaLight.instance.Build();
+            LTCAreaLight.instance.Build();
 
             m_isInit = false;
         }
@@ -184,7 +184,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public override void Cleanup()
         {
             PreIntegratedFGD.instance.Cleanup(PreIntegratedFGD.FGDIndex.FGD_GGXAndDisneyDiffuse);
-            //LTCAreaLight.instance.Cleanup();
+            LTCAreaLight.instance.Cleanup();
 
             m_isInit = false;
         }
@@ -202,7 +202,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public override void Bind()
         {
             PreIntegratedFGD.instance.Bind(PreIntegratedFGD.FGDIndex.FGD_GGXAndDisneyDiffuse);
-            //LTCAreaLight.instance.Bind();
+            LTCAreaLight.instance.Bind();
         }
     }
 }
