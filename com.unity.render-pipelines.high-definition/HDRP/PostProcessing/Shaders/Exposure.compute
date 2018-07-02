@@ -17,6 +17,7 @@
 #pragma kernel KReduction_EvaluateCameraAuto    KREDUCTION=KReduction_EvaluateCameraAuto    EVALUATE_CAMERA_AUTO
 #pragma kernel KReduction_EvaluateCurve         KREDUCTION=KReduction_EvaluateCurve         EVALUATE_CURVE
 
+TEXTURE2D(_ExposureCurveTexture);
 TEXTURE2D(_InputTexture);
 RW_TEXTURE2D(float, _OutputTexture);
 
@@ -34,6 +35,8 @@ CBUFFER_END
 #define ParamISO                    _ExposureParams.w
 #define ParamSpeedDarkToLight       _ExposureAdaptationParams.x
 #define ParamSpeedLightToDark       _ExposureAdaptationParams.y
+#define ParamCurveMin               _ExposureParams.x
+#define ParamCurveMax               _ExposureParams.y
 
 // Fixed exposure
 // Doesn't do anything fancy, simply copies the exposure & clamp values set in the volume system
@@ -80,7 +83,7 @@ void KPREPASS(uint2 dispatchThreadId : SV_DispatchThreadID)
     _OutputTexture[dispatchThreadId] = logLuma;
 }
 
-// Average luminance 2nd & 3rd pass
+// Average luminance 2nd & 3rd pass + Evaluation
 //   - 2nd: Reduction 1024 -> 32
 //   - 3rd: Reduction 32 -> 1
 #define REDUCTION_GROUP_SIZE 16
@@ -121,17 +124,11 @@ void KREDUCTION(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThread
         {
             _OutputTexture[groupId.xy] = avgLuminance - ParamExposureCompensation;
         }
-        #elif EVALUATE_CAMERA_AP
-        {
-        }
-        #elif EVALUATE_CAMERA_SP
-        {
-        }
-        #elif EVALUATE_CAMERA_AUTO
-        {
-        }
         #elif EVALUATE_CURVE
         {
+            float remap = saturate((avgLuminance - ParamCurveMin) / (ParamCurveMax - ParamCurveMin));
+            float exposure = SAMPLE_TEXTURE2D_LOD(_ExposureCurveTexture, sampler_LinearClamp, float2(remap, 0.0), 0.0).x;
+            _OutputTexture[groupId.xy] = exposure;
         }
         #else
         {

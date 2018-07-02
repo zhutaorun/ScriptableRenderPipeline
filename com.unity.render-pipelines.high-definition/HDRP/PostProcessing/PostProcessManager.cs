@@ -26,6 +26,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RenderPipelineResources m_Resources;
         CameraControls m_Settings;
 
+        const int k_ExposureCurvePrecision = 128;
+        Color[] m_TempColorArray = new Color[k_ExposureCurvePrecision];
+
+        Texture2D m_ExposureCurveTexture;
         RTHandle m_TempTarget1024;
         RTHandle m_TempTarget32;
         RTHandle m_TempTarget1;
@@ -52,11 +56,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RTHandles.Release(m_TempTarget1024);
             RTHandles.Release(m_TempTarget32);
             RTHandles.Release(m_TempTarget1);
+            CoreUtils.Destroy(m_ExposureCurveTexture);
 
             exposureTexture = null;
             m_TempTarget1024 = null;
             m_TempTarget32 = null;
             m_TempTarget1 = null;
+            m_ExposureCurveTexture = null;
         }
 
         public void PushGlobalParams(CommandBuffer cmd)
@@ -97,6 +103,45 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 1, 1, colorFormat: RenderTextureFormat.RHalf,
                 sRGB: false, enableRandomWrite: true, name: "Average Luminance Temp 1"
             );
+        }
+
+        void PushExposureCurveData(CommandBuffer cmd, ComputeShader cs, int kernel)
+        {
+            if (m_ExposureCurveTexture == null)
+            {
+                m_ExposureCurveTexture = new Texture2D(k_ExposureCurvePrecision, 1, TextureFormat.RHalf, false, true)
+                {
+                    name = "Exposure Curve",
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp
+                };
+            }
+            
+            var curve = m_Settings.exposureCurveMap.value;
+            var pixels = m_TempColorArray;
+            float min = 0f, max = 0f;
+
+            // Fail safe in case the curve is deleted / has 0 point
+            if (curve == null || curve.length == 0)
+            {
+                for (int i = 0; i < k_ExposureCurvePrecision; i++)
+                    pixels[i] = Color.clear;
+            }
+            else
+            {
+                min = curve[0].time;
+                max = curve[curve.length - 1].time;
+                float step = (max - min) / (k_ExposureCurvePrecision - 1f);
+
+                for (int i = 0; i < k_ExposureCurvePrecision; i++)
+                    pixels[i] = new Color(curve.Evaluate(min + step * i), 0f, 0f, 0f);
+            }
+
+            m_ExposureCurveTexture.SetPixels(pixels);
+            m_ExposureCurveTexture.Apply();
+
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ExposureCurveTexture, m_ExposureCurveTexture);
+            cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(min, max));
         }
 
         void DoExposure(ref PostProcessParameters parameters)
@@ -157,6 +202,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 else if (m_Settings.exposureMode == ExposureMode.CurveMapping)
                 {
                     kernel = cs.FindKernel("KReduction_EvaluateCurve");
+                    PushExposureCurveData(cmd, cs, kernel);
                 }
 
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, m_TempTarget32);

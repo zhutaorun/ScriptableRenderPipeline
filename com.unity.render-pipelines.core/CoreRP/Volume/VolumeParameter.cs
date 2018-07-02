@@ -732,4 +732,13 @@ namespace UnityEngine.Experimental.Rendering
             }
         }
     }
+
+    [Serializable]
+    public sealed class AnimationCurveParameter : VolumeParameter<AnimationCurve>
+    {
+        public AnimationCurveParameter(AnimationCurve value, bool overrideState = false)
+            : base(value, overrideState) {}
+
+        // TODO: Curve interpolation
+    }
 }

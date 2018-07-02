@@ -389,6 +389,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public static readonly int _ExposureTexture                = Shader.PropertyToID("_ExposureTexture");
         public static readonly int _ExposureParams                 = Shader.PropertyToID("_ExposureParams");
+        public static readonly int _ExposureCurveTexture           = Shader.PropertyToID("_ExposureCurveTexture");
         public static readonly int _InputTexture                   = Shader.PropertyToID("_InputTexture");
         public static readonly int _OuputTexture                   = Shader.PropertyToID("_OutputTexture");
     }
