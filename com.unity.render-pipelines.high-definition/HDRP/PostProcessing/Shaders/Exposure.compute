@@ -1,0 +1,142 @@
+#include "CoreRP/ShaderLibrary/Common.hlsl"
+#include "CoreRP/ShaderLibrary/Color.hlsl"
+#include "CoreRP/ShaderLibrary/PhysicalCamera.hlsl"
+#include "HDRP/ShaderVariables.hlsl"
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+#pragma kernel KFixedExposure
+#pragma kernel KManualCameraExposure
+
+#pragma kernel KAvgLumaPrePass_Color            KPREPASS=KAvgLumaPrePass_Color              COLOR_BUFFER
+#pragma kernel KAvgLumaPrePass_Lighting         KPREPASS=KAvgLumaPrePass_Lighting           LIGHTING_BUFFER
+
+#pragma kernel KReduction                       KREDUCTION=KReduction
+#pragma kernel KReduction_EvaluateAuto          KREDUCTION=KReduction_EvaluateAuto          EVALUATE_AUTO
+#pragma kernel KReduction_EvaluateCameraAP      KREDUCTION=KReduction_EvaluateCameraAP      EVALUATE_CAMERA_AP
+#pragma kernel KReduction_EvaluateCameraSP      KREDUCTION=KReduction_EvaluateCameraSP      EVALUATE_CAMERA_SP
+#pragma kernel KReduction_EvaluateCameraAuto    KREDUCTION=KReduction_EvaluateCameraAuto    EVALUATE_CAMERA_AUTO
+#pragma kernel KReduction_EvaluateCurve         KREDUCTION=KReduction_EvaluateCurve         EVALUATE_CURVE
+
+TEXTURE2D(_InputTexture);
+RW_TEXTURE2D(float, _OutputTexture);
+
+SAMPLER(sampler_LinearClamp);
+
+CBUFFER_START(cb)
+    float4 _ExposureParams;
+    float4 _ExposureAdaptationParams;
+CBUFFER_END
+
+#define ParamEV100                  _ExposureParams.x
+#define ParamExposureCompensation   _ExposureParams.x
+#define ParamAperture               _ExposureParams.y
+#define ParamShutterSpeed           _ExposureParams.z
+#define ParamISO                    _ExposureParams.w
+#define ParamSpeedDarkToLight       _ExposureAdaptationParams.x
+#define ParamSpeedLightToDark       _ExposureAdaptationParams.y
+
+// Fixed exposure
+// Doesn't do anything fancy, simply copies the exposure & clamp values set in the volume system
+[numthreads(1,1,1)]
+void KFixedExposure(uint2 dispatchThreadId : SV_DispatchThreadID)
+{
+    _OutputTexture[dispatchThreadId] = ParamEV100;
+}
+
+// Manual camera exposure
+// Converts aperture / shutter speed / iso / compensation to EV100
+[numthreads(1,1,1)]
+void KManualCameraExposure(uint2 dispatchThreadId : SV_DispatchThreadID)
+{
+    float ev100 = ComputeEV100(ParamAperture, ParamShutterSpeed, ParamISO);
+    _OutputTexture[dispatchThreadId] = ev100 - ParamExposureCompensation;
+}
+
+// Average luminance pre-pass
+// Transforms the input to log luminance in a square-POT target
+[numthreads(8,8,1)]
+void KPREPASS(uint2 dispatchThreadId : SV_DispatchThreadID)
+{
+    float2 coords = float2(dispatchThreadId) / (1024.0).xx * _ScreenToTargetScale.xy;
+    float luma;
+
+    #if COLOR_BUFFER
+    {
+        float prevExposure = ConvertEV100ToExposure(LOAD_TEXTURE2D(_ExposureTexture, int2(0, 0)).x);
+        float3 color = SAMPLE_TEXTURE2D_LOD(_InputTexture, sampler_LinearClamp, coords, 0.0).xyz;
+        luma = Luminance(color / prevExposure);
+    }
+    #elif LIGHTING_BUFFER
+    {
+        luma = 1.0;
+    }
+    #else
+    {
+        luma = 1.0;
+    }
+    #endif
+
+    float logLuma = ComputeEV100FromAvgLuminance(max(luma, 1e-4));
+    _OutputTexture[dispatchThreadId] = logLuma;
+}
+
+// Average luminance 2nd & 3rd pass
+//   - 2nd: Reduction 1024 -> 32
+//   - 3rd: Reduction 32 -> 1
+#define REDUCTION_GROUP_SIZE 16
+#define REDUCTION_TOTAL_THREADS 256
+
+groupshared float4 gs_luminances[256];
+
+[numthreads(REDUCTION_GROUP_SIZE,REDUCTION_GROUP_SIZE,1)]
+void KREDUCTION(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID)
+{
+    uint threadIdx = groupThreadId.y * REDUCTION_GROUP_SIZE + groupThreadId.x;
+    uint2 sampleIdx = (groupId.xy * REDUCTION_GROUP_SIZE + groupThreadId.xy) * 2u;
+
+    // Store 4 pixels in the lds
+    float4 smp = 0.0;
+    smp.x = _InputTexture[sampleIdx + uint2(0u, 0u)].x;
+    smp.y = _InputTexture[sampleIdx + uint2(1u, 0u)].x;
+    smp.z = _InputTexture[sampleIdx + uint2(0u, 1u)].x;
+    smp.w = _InputTexture[sampleIdx + uint2(1u, 1u)].x;
+    gs_luminances[threadIdx] = smp;
+
+    GroupMemoryBarrierWithGroupSync();
+
+    [unroll(REDUCTION_TOTAL_THREADS)]
+    for(uint s = REDUCTION_TOTAL_THREADS / 2u; s > 0u; s >>= 1u)
+    {
+        if(threadIdx < s)
+            gs_luminances[threadIdx] += gs_luminances[threadIdx + s];
+
+        GroupMemoryBarrierWithGroupSync();
+    }
+
+    if(threadIdx == 0u)
+    {
+        float avgLuminance = dot(gs_luminances[0], 0.25) / REDUCTION_TOTAL_THREADS;
+
+        #if EVALUATE_AUTO
+        {
+            _OutputTexture[groupId.xy] = avgLuminance - ParamExposureCompensation;
+        }
+        #elif EVALUATE_CAMERA_AP
+        {
+        }
+        #elif EVALUATE_CAMERA_SP
+        {
+        }
+        #elif EVALUATE_CAMERA_AUTO
+        {
+        }
+        #elif EVALUATE_CURVE
+        {
+        }
+        #else
+        {
+            _OutputTexture[groupId.xy] = avgLuminance;
+        }
+        #endif
+    }
+}

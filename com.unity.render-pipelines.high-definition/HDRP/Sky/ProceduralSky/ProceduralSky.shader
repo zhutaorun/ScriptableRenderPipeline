@@ -8,7 +8,6 @@ Shader "Hidden/HDRenderPipeline/Sky/ProceduralSky"
     HLSLINCLUDE
 
     #pragma vertex Vert
-    #pragma fragment Frag
 
     #pragma target 4.5
     #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
@@ -16,8 +15,10 @@ Shader "Hidden/HDRenderPipeline/Sky/ProceduralSky"
     #pragma multi_compile _ _ENABLE_SUN_DISK
 
     #include "CoreRP/ShaderLibrary/Common.hlsl"
+    #include "HDRP/ShaderVariables.hlsl"
     #include "CoreRP/ShaderLibrary/Color.hlsl"
     #include "CoreRP/ShaderLibrary/CommonLighting.hlsl"
+    #include "CoreRP/ShaderLibrary/PhysicalCamera.hlsl"
 
     float4   _SkyParam; // x exposure, y multiplier, z rotation
     float4x4 _PixelCoordToViewDirWS; // Actually just 3x3, but Unity can only set 4x4
@@ -117,7 +118,7 @@ Shader "Hidden/HDRenderPipeline/Sky/ProceduralSky"
         return getMiePhase(-focusedEyeCos, focusedEyeCos * focusedEyeCos);
     }
 
-    float4 Frag(Varyings input) : SV_Target
+    float4 RenderSky(Varyings input)
     {
         // Points towards the camera
         float3 viewDirWS = normalize(mul(float3(input.positionCS.xy, 1.0), (float3x3)_PixelCoordToViewDirWS));
@@ -274,8 +275,25 @@ Shader "Hidden/HDRenderPipeline/Sky/ProceduralSky"
             col += sunColor * calcSunAttenuation(_SunDirection.xyz, eyeRay);
         }
     #endif
+        
+        float2 exposureData = LOAD_TEXTURE2D(_ExposureTexture, int2(0, 0)).xy;
 
-        return float4(col * exp2(_SkyParam.x), 1.0);
+        col *= exp2(_SkyParam.x);
+        //col *= exp2(exposureData.x);
+        //col = min(col, exposureData.yyy);
+        return float4(col, 1.0);
+    }
+
+    float4 FragBaking(Varyings input) : SV_Target
+    {
+        return RenderSky(input);
+    }
+
+    float4 FragRender(Varyings input) : SV_Target
+    {
+        float4 color = RenderSky(input);
+        color.rgb *= ConvertEV100ToExposure(LOAD_TEXTURE2D(_ExposureTexture, int2(0, 0)).x);
+        return color;
     }
 
     ENDHLSL
@@ -290,8 +308,8 @@ Shader "Hidden/HDRenderPipeline/Sky/ProceduralSky"
             Cull Off
 
             HLSLPROGRAM
+                #pragma fragment FragBaking
             ENDHLSL
-
         }
 
         Pass
@@ -302,6 +320,7 @@ Shader "Hidden/HDRenderPipeline/Sky/ProceduralSky"
             Cull Off
 
             HLSLPROGRAM
+                #pragma fragment FragRender
             ENDHLSL
         }
 

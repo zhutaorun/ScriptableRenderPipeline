@@ -68,6 +68,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         readonly DBufferManager m_DbufferManager;
         readonly SubsurfaceScatteringManager m_SSSBufferManager = new SubsurfaceScatteringManager();
         readonly NormalBufferManager m_NormalBufferManager = new NormalBufferManager();
+        readonly PostProcessManager m_PostProcessManager;
 
         // Renderer Bake configuration can vary depends on if shadow mask is enabled or no
         RendererConfiguration m_currentRendererConfigurationBakedLighting = HDUtils.k_RendererConfigurationBakedLighting;
@@ -237,6 +238,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_SSSBufferManager.Build(asset);
             m_NormalBufferManager.Build(asset);
+
+            m_PostProcessManager = new PostProcessManager(asset);
 
             // Initialize various compute shader resources
             m_applyDistortionKernel = m_applyDistortionCS.FindKernel("KMain");
@@ -524,6 +527,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_SkyManager.Cleanup();
             m_VolumetricLightingSystem.Cleanup();
             m_IBLFilterGGX.Cleanup();
+            m_PostProcessManager.Cleanup();
 
             HDCamera.ClearAll();
 
@@ -781,6 +785,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 using (new ProfilingSample(cmd, "HDRenderPipeline::Render", CustomSamplerId.HDRenderPipelineRender.GetSampler()))
                 {
+                    m_PostProcessManager.PushGlobalParams(cmd);
+
                     // Do anything we need to do upon a new frame.
                     m_LightLoop.NewFrame(currentFrameSettings);
 
@@ -1090,6 +1096,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                         AccumulateDistortion(m_CullResults, hdCamera, renderContext, cmd);
                         RenderDistortion(hdCamera, cmd, m_Asset.renderPipelineResources);
+
+                        //>>> -- TEMP
+                        var ppp = new PostProcessParameters
+                        {
+                            camera = hdCamera,
+                            cmd = cmd,
+                            colorBuffer = m_CameraColorBuffer,
+                            lightingBuffer = null // <- not available yet
+                        };
+                        m_PostProcessManager.Render(ref ppp);
+                        //<<<
 
                         StopStereoRendering(renderContext, hdCamera);
 

@@ -73,5 +73,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Shader shadowClearShader;
         public ComputeShader shadowBlurMoments;
         public Shader debugShadowMapShader;
+
+        // Post-processing
+        public ComputeShader exposureCS;
     }
 }

@@ -62,6 +62,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Misc
         VolumeUpdate,
 
+        // Post-processing
+        Exposure,
+
         Max
     }
 

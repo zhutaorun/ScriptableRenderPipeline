@@ -1,0 +1,68 @@
+using System;
+
+namespace UnityEngine.Experimental.Rendering.HDPipeline
+{
+    [Serializable]
+    public sealed class CameraControls : VolumeComponent
+    {
+        // Camera & lens settings
+        [Header("Camera & Lens")]
+        public ShootingModeParameter cameraShootingMode = new ShootingModeParameter(ShootingMode.Manual);
+        public IntParameter cameraIso = new IntParameter(200);
+        public MinFloatParameter cameraShutterSpeed = new MinFloatParameter(1f / 200f, 0f);
+        public MinFloatParameter lensAperture = new MinFloatParameter(11f, 0.7f);
+
+        // Exposure settings
+        [Header("Exposure")]
+        //public MeteringModeParameter exposureMeteringMode = new MeteringModeParameter(MeteringMode.CenterWeighted);
+        public ExposureModeParameter exposureMode = new ExposureModeParameter(ExposureMode.Fixed);
+        public FloatParameter fixedExposure = new FloatParameter(0f); // ev100
+        public FloatParameter exposureCompensation = new FloatParameter(0f);
+        //public MinFloatParameter absoluteExposureClamp = new MinFloatParameter(65472f, 0f);
+        public LuminanceSourceParameter luminanceSource = new LuminanceSourceParameter(LuminanceSource.ColorBuffer);
+
+    }
+
+    public enum ShootingMode
+    {
+        Manual,
+        //Automatic,
+        //AutomaticISO,
+        //AperturePriority,
+        //ShutterPriority
+    }
+
+    public enum ExposureMode
+    {
+        Fixed,
+        Automatic,
+        UseCameraSettings,
+        CurveMapping
+    }
+
+    public enum LuminanceSource
+    {
+        LightingBuffer,
+        ColorBuffer
+    }
+
+    //public enum MeteringMode
+    //{
+    //    Average,
+    //    Spot,
+    //    CenterWeighted,
+    //    Tracking
+    //}
+
+    [Serializable]
+    public sealed class ShootingModeParameter : VolumeParameter<ShootingMode> { public ShootingModeParameter(ShootingMode value, bool overriden = false) : base(value, overriden) {} }
+
+    [Serializable]
+    public sealed class ExposureModeParameter : VolumeParameter<ExposureMode> { public ExposureModeParameter(ExposureMode value, bool overriden = false) : base(value, overriden) {} }
+    
+    [Serializable]
+    public sealed class LuminanceSourceParameter : VolumeParameter<LuminanceSource> { public LuminanceSourceParameter(LuminanceSource value, bool overriden = false) : base(value, overriden) {} }
+
+    //[Serializable]
+    //public sealed class MeteringModeParameter : VolumeParameter<MeteringMode> { public MeteringModeParameter(MeteringMode value, bool overriden = false) : base(value, overriden) {} }
+}

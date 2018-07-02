@@ -3,14 +3,15 @@ Shader "Hidden/HDRenderPipeline/Sky/HDRISky"
     HLSLINCLUDE
 
     #pragma vertex Vert
-    #pragma fragment Frag
 
     #pragma target 4.5
     #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
-
+        
     #include "CoreRP/ShaderLibrary/Common.hlsl"
+    #include "HDRP/ShaderVariables.hlsl"
     #include "CoreRP/ShaderLibrary/Color.hlsl"
     #include "CoreRP/ShaderLibrary/CommonLighting.hlsl"
+    #include "CoreRP/ShaderLibrary/PhysicalCamera.hlsl"
 
     TEXTURECUBE(_Cubemap);
     SAMPLER(sampler_Cubemap);
@@ -35,7 +36,7 @@ Shader "Hidden/HDRenderPipeline/Sky/HDRISky"
         return output;
     }
 
-    float4 Frag(Varyings input) : SV_Target
+    float4 RenderSky(Varyings input)
     {
         // Points towards the camera
         float3 viewDirWS = normalize(mul(float3(input.positionCS.xy, 1.0), (float3x3)_PixelCoordToViewDirWS));
@@ -54,6 +55,18 @@ Shader "Hidden/HDRenderPipeline/Sky/HDRISky"
         return float4(skyColor, 1.0);
     }
 
+    float4 FragBaking(Varyings input) : SV_Target
+    {
+        return RenderSky(input);
+    }
+
+    float4 FragRender(Varyings input) : SV_Target
+    {
+        float4 color = RenderSky(input);
+        color.rgb *= ConvertEV100ToExposure(LOAD_TEXTURE2D(_ExposureTexture, int2(0, 0)).x);
+        return color;
+    }
+
     ENDHLSL
 
     SubShader
@@ -66,8 +79,8 @@ Shader "Hidden/HDRenderPipeline/Sky/HDRISky"
             Cull Off
 
             HLSLPROGRAM
+                #pragma fragment FragBaking
             ENDHLSL
-
         }
 
         Pass
@@ -78,6 +91,7 @@ Shader "Hidden/HDRenderPipeline/Sky/HDRISky"
             Cull Off
 
             HLSLPROGRAM
+                #pragma fragment FragRender
             ENDHLSL
         }
 

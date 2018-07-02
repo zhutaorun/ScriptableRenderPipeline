@@ -3,6 +3,7 @@
 
 #include "CoreRP/ShaderLibrary/VolumeRendering.hlsl"
 #include "CoreRP/ShaderLibrary/Filtering.hlsl"
+#include "CoreRP/ShaderLibrary/PhysicalCamera.hlsl"
 
 #include "AtmosphericScattering.cs.hlsl"
 #include "../SkyVariables.hlsl"
@@ -49,10 +50,12 @@ float3 GetFogColor(PositionInputs posInput)
     }
     else if (_FogColorMode == FOGCOLORMODE_SKY_COLOR)
     {
+        float exposure = ConvertEV100ToExposure(LOAD_TEXTURE2D(_ExposureTexture, int2(0, 0)).x);
+
         // Based on Uncharted 4 "Mip Sky Fog" trick: http://advances.realtimerendering.com/other/2016/naughty_dog/NaughtyDog_TechArt_Final.pdf
         float mipLevel = (1.0 - _MipFogMaxMip * saturate((posInput.linearDepth - _MipFogNear) / (_MipFogFar - _MipFogNear))) * _SkyTextureMipCount;
         float3 dir = -GetWorldSpaceNormalizeViewDir(posInput.positionWS);
-        return SampleSkyTexture(dir, mipLevel).rgb;
+        return SampleSkyTexture(dir, mipLevel).rgb * exposure;
     }
     else // Should not be possible.
         return  float3(0.0, 0.0, 0.0);

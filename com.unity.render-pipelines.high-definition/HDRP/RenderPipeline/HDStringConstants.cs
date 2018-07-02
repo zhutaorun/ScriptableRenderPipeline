@@ -386,5 +386,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Preintegrated texture name
         public static readonly int _PreIntegratedFGD_GGXDisneyDiffuse = Shader.PropertyToID("_PreIntegratedFGD_GGXDisneyDiffuse");
         public static readonly int _PreIntegratedFGD_CharlieAndCloth = Shader.PropertyToID("_PreIntegratedFGD_CharlieAndCloth");
+
+        public static readonly int _ExposureTexture                = Shader.PropertyToID("_ExposureTexture");
+        public static readonly int _ExposureParams                 = Shader.PropertyToID("_ExposureParams");
+        public static readonly int _InputTexture                   = Shader.PropertyToID("_InputTexture");
+        public static readonly int _OuputTexture                   = Shader.PropertyToID("_OutputTexture");
     }
 }

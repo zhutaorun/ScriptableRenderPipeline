@@ -72,6 +72,7 @@ struct LightLoopContext
     int sampleReflection;
     ShadowContext shadowContext;
     float contactShadow; // Currently we support only one contact shadow per view
+    float exposure;
 };
 
 //-----------------------------------------------------------------------------
