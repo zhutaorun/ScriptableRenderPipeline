@@ -390,9 +390,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return depthParams;
         }
 
-        void SetPreconvolvedAmbientLightProbe(CommandBuffer cmd, float anisotropy)
+        void SetPreconvolvedAmbientLightProbe(CommandBuffer cmd, float dimmer, float anisotropy)
         {
             SphericalHarmonicsL2 probeSH = SphericalHarmonicMath.UndoCosineRescaling(RenderSettings.ambientProbe);
+                                 probeSH = SphericalHarmonicMath.RescaleCoefficients(probeSH, dimmer);
             ZonalHarmonicsL2     phaseZH = ZonalHarmonicsL2.GetCornetteShanksPhaseFunction(anisotropy);
             SphericalHarmonicsL2 finalSH = SphericalHarmonicMath.PremultiplyCoefficients(SphericalHarmonicMath.Convolve(probeSH, phaseZH));
 
@@ -425,7 +426,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Get the interpolated anisotropy value.
             var fog = VolumeManager.instance.stack.GetComponent<VolumetricFog>();
 
-            SetPreconvolvedAmbientLightProbe(cmd, fog.anisotropy);
+            SetPreconvolvedAmbientLightProbe(cmd, fog.globalLightProbeDimmer, fog.anisotropy);
 
             var currFrameParams = hdCamera.vBufferParams[0];
             var prevFrameParams = hdCamera.vBufferParams[1];
@@ -543,13 +544,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 Matrix4x4 transform   = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(vFoV, resolution, hdCamera.viewMatrix, false);
 
                 Texture3D volumeAtlas = DensityVolumeManager.manager.volumeAtlas.volumeAtlas;
-                Vector3 volumeAtlasDimensions = new Vector3(0.0f, 0.0f, 0.0f);
+                Vector4 volumeAtlasDimensions = new Vector4(0.0f, 0.0f, 0.0f, 0.0f);
 
                 if (volumeAtlas != null)
                 {
-                    volumeAtlasDimensions.x = volumeAtlas.width / volumeAtlas.depth; // 1 / number of textures
-                    volumeAtlasDimensions.y = 1.0f / volumeAtlas.width;
-                    volumeAtlasDimensions.z = volumeAtlas.width;
+                    volumeAtlasDimensions.x = (float)volumeAtlas.width / volumeAtlas.depth; // 1 / number of textures
+                    volumeAtlasDimensions.y = volumeAtlas.width;
+                    volumeAtlasDimensions.z = volumeAtlas.depth;
+                    volumeAtlasDimensions.w = Mathf.Log(volumeAtlas.width, 2);              // Max LoD
+                }
+                else
+                {
+                    volumeAtlas = CoreUtils.blackVolumeTexture;
                 }
 
                 cmd.SetComputeTextureParam(m_VolumeVoxelizationCS, kernel, HDShaderIDs._VBufferDensity, m_DensityBufferHandle);

@@ -145,7 +145,7 @@ Shader "Hidden/HDRenderPipeline/Sky/ProceduralSky"
         float3 cameraPos = float3(0,kInnerRadius + kCameraHeight,0);    // The camera's current position
 
         // Get the ray from the camera to the vertex and its length (which is the far point of the ray passing through the atmosphere)
-        float3 eyeRay = dir; // normalize(mul((float3x3)UNITY_MATRIX_M, v.vertex.xyz));
+        float3 eyeRay = dir; // normalize(mul((float3x3)GetObjectToWorldMatrix(), v.vertex.xyz));
 
         float far = 0.0;
         float3 cIn = float3(0.0, 0.0, 0.0);
@@ -300,6 +300,7 @@ Shader "Hidden/HDRenderPipeline/Sky/ProceduralSky"
 
     SubShader
     {
+        // For cubemap
         Pass
         {
             ZWrite Off
@@ -312,6 +313,7 @@ Shader "Hidden/HDRenderPipeline/Sky/ProceduralSky"
             ENDHLSL
         }
 
+        // For fullscreen Sky
         Pass
         {
             ZWrite Off
