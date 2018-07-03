@@ -149,6 +149,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             foreach (var node in graph.GetNodes<INode>())
                 AddNode(node);
 
+            // TODO Adding the groups here as well.
+
             foreach (var edge in graph.edges)
                 AddEdge(edge);
 
@@ -273,6 +275,11 @@ namespace UnityEditor.ShaderGraph.Drawing
                 AddNode(node);
             }
 
+            foreach (GroupData groupData in m_Graph.addedGroups)
+            {
+                AddGroupData(groupData);
+            }
+
             foreach (var node in m_Graph.pastedNodes)
             {
                 var nodeView = m_GraphView.nodes.ToList().OfType<MaterialNodeView>().FirstOrDefault(p => p.node != null && p.node.guid == node.guid);
@@ -337,6 +344,21 @@ namespace UnityEditor.ShaderGraph.Drawing
                         return;
                     }
                 }
+            }
+        }
+
+        //void AddGroup(Group group)
+        public void AddGroupData(GroupData groupData)
+        {
+            m_GraphView.AddElement(groupData.group);
+
+            foreach (ISelectable selectable in m_GraphView.selection)
+            {
+                var node = selectable as Node;
+                if (node == null)
+                    continue;
+
+                groupData.group.AddElement(node);
             }
         }
 

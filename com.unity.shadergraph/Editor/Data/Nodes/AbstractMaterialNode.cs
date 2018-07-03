@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine;
 using UnityEditor.Graphing;
 
@@ -25,6 +26,12 @@ namespace UnityEditor.ShaderGraph
 
         [SerializeField]
         private string m_GuidSerialized;
+
+        [NonSerialized]
+        Guid m_GroupGuid;
+
+        [SerializeField]
+        string m_GroupGuidSerialized;
 
         [SerializeField]
         private string m_Name;
@@ -66,6 +73,11 @@ namespace UnityEditor.ShaderGraph
         public Guid guid
         {
             get { return m_Guid; }
+        }
+
+        public Guid groupGuid
+        {
+            get { return m_GroupGuid; }
         }
 
         public string name
@@ -171,6 +183,7 @@ namespace UnityEditor.ShaderGraph
         {
             m_DrawState.expanded = true;
             m_Guid = Guid.NewGuid();
+            //m_GroupGuid;
             version = 0;
         }
 
@@ -495,6 +508,12 @@ namespace UnityEditor.ShaderGraph
             return defaultVariableName;
         }
 
+        public void AddGroupOwner(Group group)
+        {
+            // If we already have an owner we should replace that GUID with the new one.
+
+        }
+
         public void AddSlot(ISlot slot)
         {
             if (!(slot is MaterialSlot))
@@ -594,6 +613,8 @@ namespace UnityEditor.ShaderGraph
         public virtual void OnBeforeSerialize()
         {
             m_GuidSerialized = m_Guid.ToString();
+            if (m_GroupGuid != Guid.Empty)
+                m_GroupGuidSerialized = m_GroupGuid.ToString();
             m_SerializableSlots = SerializationHelper.Serialize<ISlot>(m_Slots);
         }
 
@@ -603,6 +624,9 @@ namespace UnityEditor.ShaderGraph
                 m_Guid = new Guid(m_GuidSerialized);
             else
                 m_Guid = Guid.NewGuid();
+
+            //if (!string.IsNullOrEmpty(m_GroupGuidSerialized))
+            //    m_GroupGuid = new Guid(m_GroupGuidSerialized);
 
             m_Slots = SerializationHelper.Deserialize<ISlot>(m_SerializableSlots, GraphUtil.GetLegacyTypeRemapping());
             m_SerializableSlots = null;

@@ -9,7 +9,6 @@ using UnityEngine.Experimental.UIElements;
 using Edge = UnityEditor.Experimental.UIElements.GraphView.Edge;
 using Node = UnityEditor.Experimental.UIElements.GraphView.Node;
 using Object = UnityEngine.Object;
-using UnityEditor.Graphs;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
@@ -28,7 +27,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         protected override bool canCopySelection
         {
-            get { return selection.OfType<Node>().Any() || selection.OfType<GroupNode>().Any() || selection.OfType<BlackboardField>().Any(); }
+            get { return selection.OfType<Node>().Any() || selection.OfType<Group>().Any() || selection.OfType<BlackboardField>().Any(); }
         }
 
         public MaterialGraphView(AbstractMaterialGraph graph) : this()
@@ -79,6 +78,45 @@ namespace UnityEditor.ShaderGraph.Drawing
                 evt.menu.AppendAction("Convert To Sub-graph", ConvertToSubgraph, ConvertToSubgraphStatus);
                 evt.menu.AppendAction("Convert To Inline Node", ConvertToInlineNode, ConvertToInlineNodeStatus);
                 evt.menu.AppendAction("Convert To Property", ConvertToProperty, ConvertToPropertyStatus);
+
+                evt.menu.AppendAction("Group Selection", AddToGroupNode, (a) =>
+                    {
+                        List<ISelectable> filteredSelection = new List<ISelectable>();
+
+                        foreach (ISelectable selectedObject in selection)
+                        {
+                            if (selectedObject is Group)
+                                return ContextualMenu.MenuAction.StatusFlags.Disabled;
+                            VisualElement ve = selectedObject as VisualElement;
+                            if (ve.userData is AbstractMaterialNode)
+                                filteredSelection.Add(selectedObject);
+                        }
+
+                        if (filteredSelection.Count > 0)
+                            return ContextualMenu.MenuAction.StatusFlags.Normal;
+                        else
+                            return ContextualMenu.MenuAction.StatusFlags.Disabled;
+                    });
+
+                evt.menu.AppendAction("Ungroup Selection", RemoveFromGroupNode, (a) =>
+                    {
+                        List<ISelectable> filteredSelection = new List<ISelectable>();
+
+                        foreach (ISelectable selectedObject in selection)
+                        {
+                            if (selectedObject is Group)
+                                return ContextualMenu.MenuAction.StatusFlags.Disabled;
+                            VisualElement ve = selectedObject as VisualElement;
+                            if(ve.userData is AbstractMaterialNode)
+                                filteredSelection.Add(selectedObject);
+                        }
+
+                        if (filteredSelection.Count > 0)
+                            return ContextualMenu.MenuAction.StatusFlags.Normal;
+                        else
+                            return ContextualMenu.MenuAction.StatusFlags.Disabled;
+                    });
+
                 if (selection.OfType<MaterialNodeView>().Count() == 1)
                 {
                     evt.menu.AppendSeparator();
@@ -100,6 +138,59 @@ namespace UnityEditor.ShaderGraph.Drawing
                 evt.menu.AppendAction("Expand Previews", ExpandPreviews, ContextualMenu.MenuAction.StatusFlags.Normal);
                 evt.menu.AppendSeparator();
             }
+        }
+
+        void AddToGroupNode(ContextualMenu.MenuAction a)
+        {
+            graph.owner.RegisterCompleteObjectUndo("Creating Material Group");
+            Vector2 pos = a.eventInfo.localMousePosition;
+
+            Group graphGroup = CreateGroupNode("New Material Group", pos) as Group;
+
+            GroupData groupData = new GroupData(graphGroup);
+
+//            AddElement(graphGroup);
+//
+//            foreach (ISelectable selectable in selection)
+//            {
+//                var node = selectable as Node;
+//                if (node == null)
+//                    continue;
+//
+//                graphGroup.AddElement(node);
+//            }
+
+            //graph.AddGroup(graphGroup);
+            graph.AddGroupData(groupData);
+        }
+
+        void RemoveFromGroupNode(ContextualMenu.MenuAction a)
+        {
+            graph.owner.RegisterCompleteObjectUndo("Removing Material Group");
+            foreach (ISelectable selectable in selection)
+            {
+                var node = selectable as Node;
+                if(node == null)
+                    continue;
+
+                //Group group = node.GetContainingScope() as Group;
+                GroupData groupData = node.GetContainingScope() as GroupData;
+                if (groupData != null)
+                {
+                    groupData.group.RemoveElement(node);
+                    graph.RemoveGroupData(groupData);
+                }
+            }
+        }
+
+        GraphElement CreateGroupNode(string title, Vector2 pos)
+        {
+            Group graphGroupNode = new Group();
+
+            graphGroupNode.SetPosition(new Rect(pos.x, pos.y, 100, 100));
+            graphGroupNode.title = title;
+
+            return graphGroupNode;
         }
 
         void CollapsePreviews()

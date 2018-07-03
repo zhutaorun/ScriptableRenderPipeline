@@ -5,6 +5,9 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEditor.Graphing;
 using UnityEditor.Graphing.Util;
+using UnityEditor.Experimental.UIElements.GraphView;
+using Edge = UnityEditor.Graphing.Edge;
+using Group = UnityEditor.Experimental.UIElements.GraphView.Group;
 
 namespace UnityEditor.ShaderGraph
 {
@@ -105,6 +108,36 @@ namespace UnityEditor.ShaderGraph
 
         #endregion
 
+        #region Group Data
+
+        [SerializeField]
+        List<GroupData> m_Groups = new List<GroupData>();
+
+        public IEnumerable<Group> groups
+        {
+            get { return m_Groups; }
+        }
+
+        [NonSerialized]
+        List<GroupData> m_AddedGroups = new List<GroupData>();
+
+        public IEnumerable<GroupData> addedGroups
+        {
+            get { return m_AddedGroups; }
+        }
+
+        [NonSerialized]
+        List<GroupData> m_RemovedGroups = new List<GroupData>();
+
+        public IEnumerable<GroupData> removedGroups
+        {
+            get { return m_RemovedGroups; }
+        }
+
+        #endregion
+
+        //public List<SerializationHelper.JSONSerializedElement> serializableGroupNodes => Data;
+
         #region Edge data
 
         [NonSerialized]
@@ -170,6 +203,8 @@ namespace UnityEditor.ShaderGraph
             m_AddedNodes.Clear();
             m_RemovedNodes.Clear();
             m_PastedNodes.Clear();
+            m_AddedGroups.Clear();
+            m_RemovedGroups.Clear();
             m_AddedEdges.Clear();
             m_RemovedEdges.Clear();
             m_AddedProperties.Clear();
@@ -189,6 +224,27 @@ namespace UnityEditor.ShaderGraph
                 Debug.LogWarningFormat("Trying to add node {0} to Material graph, but it is not a {1}", node, typeof(AbstractMaterialNode));
             }
         }
+
+//        public void AddGroup(Group group)
+//        {
+//            m_Groups.Add(group);
+//            m_AddedGroups.Add(group);
+//        }
+
+        public void AddGroupData(GroupData groupData)
+        {
+            m_Groups.Add(groupData);
+            m_AddedGroups.Add(groupData);
+        }
+
+        public void RemoveGroupData(GroupData groupData)
+        {
+            m_RemovedGroups.Add(groupData);
+        }
+//        public void RemoveGroup(Group group)
+//        {
+//            m_RemovedGroups.Add(group);
+//        }
 
         void AddNodeNoValidate(INode node)
         {
@@ -670,6 +726,7 @@ namespace UnityEditor.ShaderGraph
         public void OnBeforeSerialize()
         {
             m_SerializableNodes = SerializationHelper.Serialize(GetNodes<INode>());
+            //m_Groups = SerializationHelper.Serialize<GroupData>(m_Groups);
             m_SerializableEdges = SerializationHelper.Serialize<IEdge>(m_Edges);
             m_SerializedProperties = SerializationHelper.Serialize<IShaderProperty>(m_Properties);
         }
@@ -678,6 +735,9 @@ namespace UnityEditor.ShaderGraph
         {
             // have to deserialize 'globals' before nodes
             m_Properties = SerializationHelper.Deserialize<IShaderProperty>(m_SerializedProperties, GraphUtil.GetLegacyTypeRemapping());
+            //m_Groups = SerializationHelper.Deserialize<Group>(m_SerializableGroups, GraphUtil.GetLegacyTypeRemapping());
+
+            Debug.Log("::::::::: " + m_Groups.Count);
             var nodes = SerializationHelper.Deserialize<INode>(m_SerializableNodes, GraphUtil.GetLegacyTypeRemapping());
             m_Nodes = new List<AbstractMaterialNode>(nodes.Count);
             m_NodeDictionary = new Dictionary<Guid, INode>(nodes.Count);
