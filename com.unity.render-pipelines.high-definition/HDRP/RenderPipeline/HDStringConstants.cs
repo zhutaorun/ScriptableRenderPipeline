@@ -388,8 +388,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _PreIntegratedFGD_CharlieAndCloth = Shader.PropertyToID("_PreIntegratedFGD_CharlieAndCloth");
 
         public static readonly int _ExposureTexture                = Shader.PropertyToID("_ExposureTexture");
+        public static readonly int _PreviousExposureTexture        = Shader.PropertyToID("_PreviousExposureTexture");
         public static readonly int _ExposureParams                 = Shader.PropertyToID("_ExposureParams");
         public static readonly int _ExposureCurveTexture           = Shader.PropertyToID("_ExposureCurveTexture");
+        public static readonly int _Variants                       = Shader.PropertyToID("_Variants");
         public static readonly int _InputTexture                   = Shader.PropertyToID("_InputTexture");
         public static readonly int _OuputTexture                   = Shader.PropertyToID("_OutputTexture");
     }

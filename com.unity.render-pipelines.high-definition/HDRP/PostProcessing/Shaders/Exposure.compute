@@ -1,31 +1,25 @@
 #include "CoreRP/ShaderLibrary/Common.hlsl"
 #include "CoreRP/ShaderLibrary/Color.hlsl"
 #include "CoreRP/ShaderLibrary/PhysicalCamera.hlsl"
-#include "HDRP/ShaderVariables.hlsl"
+
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
 #pragma kernel KFixedExposure
 #pragma kernel KManualCameraExposure
-
-#pragma kernel KAvgLumaPrePass_Color            KPREPASS=KAvgLumaPrePass_Color              COLOR_BUFFER
-#pragma kernel KAvgLumaPrePass_Lighting         KPREPASS=KAvgLumaPrePass_Lighting           LIGHTING_BUFFER
-
-#pragma kernel KReduction                       KREDUCTION=KReduction
-#pragma kernel KReduction_EvaluateAuto          KREDUCTION=KReduction_EvaluateAuto          EVALUATE_AUTO
-#pragma kernel KReduction_EvaluateCameraAP      KREDUCTION=KReduction_EvaluateCameraAP      EVALUATE_CAMERA_AP
-#pragma kernel KReduction_EvaluateCameraSP      KREDUCTION=KReduction_EvaluateCameraSP      EVALUATE_CAMERA_SP
-#pragma kernel KReduction_EvaluateCameraAuto    KREDUCTION=KReduction_EvaluateCameraAuto    EVALUATE_CAMERA_AUTO
-#pragma kernel KReduction_EvaluateCurve         KREDUCTION=KReduction_EvaluateCurve         EVALUATE_CURVE
+#pragma kernel KPrePass
+#pragma kernel KReduction
 
 TEXTURE2D(_ExposureCurveTexture);
+TEXTURE2D(_PreviousExposureTexture);
 TEXTURE2D(_InputTexture);
-RW_TEXTURE2D(float, _OutputTexture);
+
+RW_TEXTURE2D(float2, _OutputTexture);
 
 SAMPLER(sampler_LinearClamp);
 
 CBUFFER_START(cb)
     float4 _ExposureParams;
-    float4 _ExposureAdaptationParams;
+    uint4 _Variants;
 CBUFFER_END
 
 #define ParamEV100                  _ExposureParams.x
@@ -33,21 +27,79 @@ CBUFFER_END
 #define ParamAperture               _ExposureParams.y
 #define ParamShutterSpeed           _ExposureParams.z
 #define ParamISO                    _ExposureParams.w
-#define ParamSpeedDarkToLight       _ExposureAdaptationParams.x
-#define ParamSpeedLightToDark       _ExposureAdaptationParams.y
+#define ParamSpeedLightToDark       _ExposureParams.z
+#define ParamSpeedDarkToLight       _ExposureParams.w
 #define ParamCurveMin               _ExposureParams.x
 #define ParamCurveMax               _ExposureParams.y
+#define ParamSourceBuffer           _Variants.x
+#define ParamMeteringMode           _Variants.y
+#define ParamAdaptationMode         _Variants.z
+#define ParamEvaluateMode           _Variants.w
 
+float WeightSample(uint2 pixel)
+{
+    UNITY_BRANCH
+    switch (ParamMeteringMode)
+    {
+        case 1u:
+        {
+            // Spot metering
+            const float kRadius = 0.075 * 1024.0;
+            const float2 kCenter = (512.0).xx;
+            float d = length(kCenter - pixel) - kRadius;
+            return 1.0 - saturate(d);
+        }
+        case 2u:
+        {
+            // Center-weighted
+            const float2 kCenter = (512.0).xx;
+            return 1.0 - saturate(pow(length(kCenter - pixel) / 512.0, 1.0));
+        }
+        default:
+        {
+            // Global average
+            return 1.0;
+        }
+    }
+}
+
+float GetPreviousExposure()
+{
+    return _PreviousExposureTexture[uint2(0u, 0u)].x;
+}
+
+float AdaptExposure(float exposure)
+{
+    UNITY_BRANCH
+    switch (ParamAdaptationMode)
+    {
+        case 1u:
+        {
+            // Progressive
+            return ComputeLuminanceAdaptation(GetPreviousExposure(), exposure, ParamSpeedDarkToLight, ParamSpeedLightToDark);
+        }
+        default:
+        {
+            // Fixed
+            return exposure;
+        }
+    }
+}
+
+//
 // Fixed exposure
 // Doesn't do anything fancy, simply copies the exposure & clamp values set in the volume system
+//
 [numthreads(1,1,1)]
 void KFixedExposure(uint2 dispatchThreadId : SV_DispatchThreadID)
 {
     _OutputTexture[dispatchThreadId] = ParamEV100;
 }
 
+//
 // Manual camera exposure
 // Converts aperture / shutter speed / iso / compensation to EV100
+//
 [numthreads(1,1,1)]
 void KManualCameraExposure(uint2 dispatchThreadId : SV_DispatchThreadID)
 {
@@ -55,85 +107,116 @@ void KManualCameraExposure(uint2 dispatchThreadId : SV_DispatchThreadID)
     _OutputTexture[dispatchThreadId] = ev100 - ParamExposureCompensation;
 }
 
+//
 // Average luminance pre-pass
 // Transforms the input to log luminance in a square-POT target
+//
 [numthreads(8,8,1)]
-void KPREPASS(uint2 dispatchThreadId : SV_DispatchThreadID)
+void KPrePass(uint2 dispatchThreadId : SV_DispatchThreadID)
 {
     float2 coords = float2(dispatchThreadId) / (1024.0).xx * _ScreenToTargetScale.xy;
     float luma;
 
-    #if COLOR_BUFFER
+    UNITY_BRANCH
+    switch (ParamSourceBuffer)
     {
-        float prevExposure = ConvertEV100ToExposure(LOAD_TEXTURE2D(_ExposureTexture, int2(0, 0)).x);
-        float3 color = SAMPLE_TEXTURE2D_LOD(_InputTexture, sampler_LinearClamp, coords, 0.0).xyz;
-        luma = Luminance(color / prevExposure);
+        case 1u:
+        {
+            // Color buffer
+            float prevExposure = ConvertEV100ToExposure(GetPreviousExposure());
+            float3 color = SAMPLE_TEXTURE2D_LOD(_InputTexture, sampler_LinearClamp, coords, 0.0).xyz;
+            luma = Luminance(color / prevExposure);
+            break;
+        }
+        default:
+        {
+            // Lighting buffer
+            luma = 1.0;
+            break;
+        }
     }
-    #elif LIGHTING_BUFFER
-    {
-        luma = 1.0;
-    }
-    #else
-    {
-        luma = 1.0;
-    }
-    #endif
 
+    float weight = WeightSample(dispatchThreadId);
     float logLuma = ComputeEV100FromAvgLuminance(max(luma, 1e-4));
-    _OutputTexture[dispatchThreadId] = logLuma;
+    _OutputTexture[dispatchThreadId] = float2(logLuma, weight);
 }
 
+//
 // Average luminance 2nd & 3rd pass + Evaluation
 //   - 2nd: Reduction 1024 -> 32
 //   - 3rd: Reduction 32 -> 1
+//
 #define REDUCTION_GROUP_SIZE 16
 #define REDUCTION_TOTAL_THREADS 256
 
-groupshared float4 gs_luminances[256];
+groupshared float4 gs_luminances[REDUCTION_TOTAL_THREADS];
+groupshared float gs_weights[REDUCTION_TOTAL_THREADS];
 
 [numthreads(REDUCTION_GROUP_SIZE,REDUCTION_GROUP_SIZE,1)]
-void KREDUCTION(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID)
+void KReduction(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID)
 {
     uint threadIdx = groupThreadId.y * REDUCTION_GROUP_SIZE + groupThreadId.x;
     uint2 sampleIdx = (groupId.xy * REDUCTION_GROUP_SIZE + groupThreadId.xy) * 2u;
 
-    // Store 4 pixels in the lds
-    float4 smp = 0.0;
-    smp.x = _InputTexture[sampleIdx + uint2(0u, 0u)].x;
-    smp.y = _InputTexture[sampleIdx + uint2(1u, 0u)].x;
-    smp.z = _InputTexture[sampleIdx + uint2(0u, 1u)].x;
-    smp.w = _InputTexture[sampleIdx + uint2(1u, 1u)].x;
-    gs_luminances[threadIdx] = smp;
+    // Store 4 pixels & their weights in the lds
+    float2 p1 = _InputTexture[sampleIdx + uint2(0u, 0u)].xy;
+    float2 p2 = _InputTexture[sampleIdx + uint2(1u, 0u)].xy;
+    float2 p3 = _InputTexture[sampleIdx + uint2(0u, 1u)].xy;
+    float2 p4 = _InputTexture[sampleIdx + uint2(1u, 1u)].xy;
+
+    float4 smp = float4(p1.x, p2.x, p3.x, p4.x);
+    float4 weights = float4(p1.y, p2.y, p3.y, p4.y);
+
+    gs_luminances[threadIdx] = smp * weights;
+    gs_weights[threadIdx] = dot(weights, 1.0);
 
     GroupMemoryBarrierWithGroupSync();
 
-    [unroll(REDUCTION_TOTAL_THREADS)]
+    // Parallel reduction of luminances & weights
+    UNITY_UNROLL
     for(uint s = REDUCTION_TOTAL_THREADS / 2u; s > 0u; s >>= 1u)
     {
         if(threadIdx < s)
+        {
             gs_luminances[threadIdx] += gs_luminances[threadIdx + s];
+            gs_weights[threadIdx] += gs_weights[threadIdx + s];
+        }
 
         GroupMemoryBarrierWithGroupSync();
     }
 
+    // Evaluate on group thread 0
     if(threadIdx == 0u)
     {
-        float avgLuminance = dot(gs_luminances[0], 0.25) / REDUCTION_TOTAL_THREADS;
+        float avgLuminance = dot(gs_luminances[0], 0.25);
 
-        #if EVALUATE_AUTO
+        if (gs_weights[0] > 0.0)
+            avgLuminance /= (gs_weights[0] * 0.25);
+        
+        UNITY_BRANCH
+        switch (ParamEvaluateMode)
         {
-            _OutputTexture[groupId.xy] = avgLuminance - ParamExposureCompensation;
+            case 1u:
+            {
+                // Automatic
+                _OutputTexture[groupId.xy] = float2(AdaptExposure(avgLuminance - ParamExposureCompensation), 0.0);
+                break;
+            }
+            case 2u:
+            {
+                // Curve remapping
+                float remap = saturate((avgLuminance - ParamCurveMin) / (ParamCurveMax - ParamCurveMin));
+                float exposure = SAMPLE_TEXTURE2D_LOD(_ExposureCurveTexture, sampler_LinearClamp, float2(remap, 0.0), 0.0).x;
+                _OutputTexture[groupId.xy] = float2(AdaptExposure(exposure), 0.0);
+                break;
+            }
+            default:
+            {
+                // No evaluate - passthrough to next pass
+                // This is only used when going from 1024 to 32
+                _OutputTexture[groupId.xy] = float2(avgLuminance, gs_weights[0]);
+                break;
+            }
         }
-        #elif EVALUATE_CURVE
-        {
-            float remap = saturate((avgLuminance - ParamCurveMin) / (ParamCurveMax - ParamCurveMin));
-            float exposure = SAMPLE_TEXTURE2D_LOD(_ExposureCurveTexture, sampler_LinearClamp, float2(remap, 0.0), 0.0).x;
-            _OutputTexture[groupId.xy] = exposure;
-        }
-        #else
-        {
-            _OutputTexture[groupId.xy] = avgLuminance;
-        }
-        #endif
     }
 }

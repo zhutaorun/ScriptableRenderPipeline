@@ -17,7 +17,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public sealed class PostProcessManager
     {
         // 1x1 pixel, holds the current exposure value in EV100 in the red channel
-        public RTHandle exposureTexture { get; private set; }
+        public RTHandle exposureTexture { get { return m_ExposureTexture[m_ExposureTextureId]; } }
 
         // On some GPU/driver version combos, using a max fp16 value of 65504 will just warp around
         // and break everything so we want to use the first valid value before fp16_max
@@ -28,40 +28,53 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         const int k_ExposureCurvePrecision = 128;
         Color[] m_TempColorArray = new Color[k_ExposureCurvePrecision];
+        int[] m_ExposureVariants = new int[4];
+
+        bool m_FirstFrame = true;
 
         Texture2D m_ExposureCurveTexture;
         RTHandle m_TempTarget1024;
         RTHandle m_TempTarget32;
-        RTHandle m_TempTarget1;
+
+        // Ping-pong exposure textures used for adaptation
+        RTHandle[] m_ExposureTexture = new RTHandle[2];
+        int m_ExposureTextureId = 0;
 
         public PostProcessManager(HDRenderPipelineAsset hdAsset)
         {
             m_Resources = hdAsset.renderPipelineResources;
 
-            exposureTexture = RTHandles.Alloc(1, 1, colorFormat: RenderTextureFormat.RHalf,
-                sRGB: false, enableRandomWrite: true, name: "EV100 Exposure"
-            );
+            for (int i = 0; i < 2; i++)
+            {
+                m_ExposureTexture[i] = RTHandles.Alloc(1, 1, colorFormat: RenderTextureFormat.RGHalf,
+                    sRGB: false, enableRandomWrite: true, name: "EV100 Exposure"
+                );
+            }
 
-            // Setup a default exposure texture for the first frame
-            var tempTex = new Texture2D(1, 1, TextureFormat.RHalf, false, true);
+            // Setup a default exposure textures for the first frame
+            var tempTex = new Texture2D(1, 1, TextureFormat.RGHalf, false, true);
             tempTex.SetPixel(0, 0, Color.clear);
             tempTex.Apply();
-            Graphics.Blit(tempTex, exposureTexture);
+            Graphics.Blit(tempTex, m_ExposureTexture[0]);
+            Graphics.Blit(tempTex, m_ExposureTexture[1]);
             CoreUtils.Destroy(tempTex);
         }
 
         public void Cleanup()
         {
-            RTHandles.Release(exposureTexture);
-            RTHandles.Release(m_TempTarget1024);
-            RTHandles.Release(m_TempTarget32);
-            RTHandles.Release(m_TempTarget1);
-            CoreUtils.Destroy(m_ExposureCurveTexture);
+            for (int i = 0; i < 2; i++)
+            {
+                RTHandles.Release(m_ExposureTexture[i]);
+                m_ExposureTexture[i] = null;
+            }
 
-            exposureTexture = null;
+            RTHandles.Release(m_TempTarget1024);
             m_TempTarget1024 = null;
+
+            RTHandles.Release(m_TempTarget32);
             m_TempTarget32 = null;
-            m_TempTarget1 = null;
+
+            CoreUtils.Destroy(m_ExposureCurveTexture);
             m_ExposureCurveTexture = null;
         }
 
@@ -82,30 +95,30 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     DoExposure(ref parameters);
                 }
             }
+
+            m_FirstFrame = false;
         }
 
         #region Exposure
 
         void CheckAverageLuminanceTargets()
         {
-            if (m_TempTarget1 != null)
+            if (m_TempTarget1024 != null)
                 return;
-            
+
+            const RenderTextureFormat kFormat = RenderTextureFormat.RGHalf;
+
             m_TempTarget1024 = RTHandles.Alloc(
-                1024, 1024, colorFormat: RenderTextureFormat.RHalf,
-                sRGB: false, enableRandomWrite: true, name: "Average Luminance Temp 1024"
+                1024, 1024, colorFormat: kFormat, sRGB: false,
+                enableRandomWrite: true, name: "Average Luminance Temp 1024"
             );
             m_TempTarget32 = RTHandles.Alloc(
-                32, 32, colorFormat: RenderTextureFormat.RHalf,
-                sRGB: false, enableRandomWrite: true, name: "Average Luminance Temp 32"
-            );
-            m_TempTarget1 = RTHandles.Alloc(
-                1, 1, colorFormat: RenderTextureFormat.RHalf,
-                sRGB: false, enableRandomWrite: true, name: "Average Luminance Temp 1"
+                32, 32, colorFormat: kFormat, sRGB: false,
+                enableRandomWrite: true, name: "Average Luminance Temp 32"
             );
         }
 
-        void PushExposureCurveData(CommandBuffer cmd, ComputeShader cs, int kernel)
+        void PrepareExposureCurveData(out float min, out float max)
         {
             if (m_ExposureCurveTexture == null)
             {
@@ -119,11 +132,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             
             var curve = m_Settings.exposureCurveMap.value;
             var pixels = m_TempColorArray;
-            float min = 0f, max = 0f;
 
             // Fail safe in case the curve is deleted / has 0 point
             if (curve == null || curve.length == 0)
             {
+                min = 0f;
+                max = 0f;
+
                 for (int i = 0; i < k_ExposureCurvePrecision; i++)
                     pixels[i] = Color.clear;
             }
@@ -139,9 +154,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_ExposureCurveTexture.SetPixels(pixels);
             m_ExposureCurveTexture.Apply();
-
-            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ExposureCurveTexture, m_ExposureCurveTexture);
-            cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(min, max));
         }
 
         void DoExposure(ref PostProcessParameters parameters)
@@ -167,23 +179,33 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 CheckAverageLuminanceTargets();
 
-                int kernel;
-                RTHandle input;
+                // Setup variants
+                // TODO: bake array
+                var adaptationMode = m_Settings.adaptationMode.value;
 
-                if (m_Settings.luminanceSource == LuminanceSource.LightingBuffer)
-                {
-                    kernel = cs.FindKernel("KAvgLumaPrePass_Lighting");
-                    input = parameters.lightingBuffer;
-                }
-                else
-                {
-                    kernel = cs.FindKernel("KAvgLumaPrePass_Color");
-                    input = parameters.colorBuffer;
-                }
+                if (!Application.isPlaying || m_FirstFrame)
+                    adaptationMode = AdaptationMode.Fixed;
+                
+                m_ExposureVariants[0] = (int)m_Settings.luminanceSource.value;
+                m_ExposureVariants[1] = (int)m_Settings.exposureMeteringMode.value;
+                m_ExposureVariants[2] = (int)adaptationMode;
+                m_ExposureVariants[3] = 0;
+
+                // Ping pong exposure textures
+                int pp = m_ExposureTextureId;
+                var nextExposure = m_ExposureTexture[++pp % 2];
+                var prevExposure = m_ExposureTexture[++pp % 2];
+                m_ExposureTextureId = ++pp % 2;
 
                 // Pre-pass
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ExposureTexture, exposureTexture);
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, input);
+                var sourceTex = m_Settings.luminanceSource == LuminanceSource.LightingBuffer
+                    ? parameters.lightingBuffer
+                    : parameters.colorBuffer;
+
+                int kernel = cs.FindKernel("KPrePass");
+                cmd.SetComputeIntParams(cs, HDShaderIDs._Variants, m_ExposureVariants);
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._PreviousExposureTexture, prevExposure);
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, sourceTex);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, m_TempTarget1024);
                 cmd.DispatchCompute(cs, kernel, 1024 / 8, 1024 / 8, 1);
 
@@ -196,17 +218,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // Reduction: 2nd pass (32 -> 1) + evaluate exposure
                 if (m_Settings.exposureMode == ExposureMode.Automatic)
                 {
-                    kernel = cs.FindKernel("KReduction_EvaluateAuto");
-                    cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(m_Settings.exposureCompensation, 0f, 0f, 0f));
+                    cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ExposureCurveTexture, Texture2D.blackTexture);
+                    cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(m_Settings.exposureCompensation, 0f, m_Settings.adaptationSpeedDown, m_Settings.adaptationSpeedUp));
+                    m_ExposureVariants[3] = 1;
                 }
                 else if (m_Settings.exposureMode == ExposureMode.CurveMapping)
                 {
-                    kernel = cs.FindKernel("KReduction_EvaluateCurve");
-                    PushExposureCurveData(cmd, cs, kernel);
+                    float min, max;
+                    PrepareExposureCurveData(out min, out max);
+                    cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ExposureCurveTexture, m_ExposureCurveTexture);
+                    cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(min, max, m_Settings.adaptationSpeedDown, m_Settings.adaptationSpeedUp));
+                    m_ExposureVariants[3] = 2;
                 }
-
+                
+                cmd.SetComputeIntParams(cs, HDShaderIDs._Variants, m_ExposureVariants);
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._PreviousExposureTexture, prevExposure);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, m_TempTarget32);
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, exposureTexture);
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, nextExposure);
                 cmd.DispatchCompute(cs, kernel, 1, 1, 1);
             }
         }
