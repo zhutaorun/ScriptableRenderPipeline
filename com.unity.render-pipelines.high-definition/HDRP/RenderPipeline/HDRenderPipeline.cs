@@ -1796,12 +1796,24 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void ApplyDebugDisplaySettings(HDCamera hdCamera, CommandBuffer cmd)
         {
-            if (m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled() ||
-                m_CurrentDebugDisplaySettings.colorPickerDebugSettings.colorPickerMode != ColorPickerDebugMode.None)
+            // See ShaderPassForward.hlsl: for forward shaders, if DEBUG_DISPLAY is enabled and no DebugLightingMode or DebugMipMapMod 
+            // modes have been set, lighting is automatically escaped. This isn't so for shaders supporting deferred. Since the 
+            // colorPickerModes and false color don't need DEBUG_DISPLAY anyway, make those behave like for deferred materials 
+            // by disabling DEBUG_DISPLAY independently of those:
+            if (m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled())
             {
                 // enable globally the keyword DEBUG_DISPLAY on shader that support it with multicompile
                 cmd.EnableShaderKeyword("DEBUG_DISPLAY");
+            }
+            else
+            {
+                // TODO: Be sure that if there is no change in the state of this keyword, it doesn't imply any work on CPU side! else we will need to save the sate somewher
+                cmd.DisableShaderKeyword("DEBUG_DISPLAY");
+            }
 
+            if (m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled() ||
+                m_CurrentDebugDisplaySettings.colorPickerDebugSettings.colorPickerMode != ColorPickerDebugMode.None)
+            {
                 // This is for texture streaming
                 m_CurrentDebugDisplaySettings.UpdateMaterials();
 
@@ -1832,11 +1844,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 // The DebugNeedsExposure test allows us to set a neutral value if exposure is not needed. This way we don't need to make various tests inside shaders but only in this function.
                 cmd.SetGlobalFloat(HDShaderIDs._DebugExposure, m_CurrentDebugDisplaySettings.DebugNeedsExposure() ? lightingDebugSettings.debugExposure : 0.0f);
-            }
-            else
-            {
-                // TODO: Be sure that if there is no change in the state of this keyword, it doesn't imply any work on CPU side! else we will need to save the sate somewher
-                cmd.DisableShaderKeyword("DEBUG_DISPLAY");
             }
         }
 
