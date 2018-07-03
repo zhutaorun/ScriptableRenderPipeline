@@ -299,14 +299,11 @@ Shader "HDRenderPipeline/StackLit"
     #pragma shader_feature _USE_UV2
     #pragma shader_feature _USE_UV3
     #pragma shader_feature _USE_TRIPLANAR
-    // ...TODO: for surface gradient framework eg see litdata.hlsl,
-    // but we need it right away for toggle with LayerTexCoord mapping so we might need them
-    // from the Frag input right away. See also ShaderPass/StackLitSharePass.hlsl.
 
     // Keyword for transparent
     #pragma shader_feature _SURFACE_TYPE_TRANSPARENT
     #pragma shader_feature _ _BLENDMODE_ALPHA _BLENDMODE_ADD _BLENDMODE_PRE_MULTIPLY
-    #pragma shader_feature _BLENDMODE_PRESERVE_SPECULAR_LIGHTING // easily handled in material.hlsl, so adding this already.
+    #pragma shader_feature _BLENDMODE_PRESERVE_SPECULAR_LIGHTING // handled in material.hlsl
     #pragma shader_feature _ENABLE_FOG_ON_TRANSPARENT
 
     // MaterialFeature are used as shader feature to allow compiler to optimize properly

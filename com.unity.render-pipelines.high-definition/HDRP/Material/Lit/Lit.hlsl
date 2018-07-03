@@ -1964,6 +1964,10 @@ void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
 
     // If refraction is enable we use the transmittanceMask to lerp between current diffuse lighting and refraction value
     // Physically speaking, transmittanceMask should be 1, but for artistic reasons, we let the value vary
+    //
+    // Note we also transfer the refracted light (lighting.indirect.specularTransmitted) into diffuseLighting
+    // since we know it won't be further processed: it is called at the end of the LightLoop(), but doing this
+    // enables opacity to affect it (in ApplyBlendMode()) while the rest of specularLighting escapes it.
 #if HAS_REFRACTION
     diffuseLighting = lerp(diffuseLighting, lighting.indirect.specularTransmitted, bsdfData.transmittanceMask);
 #endif

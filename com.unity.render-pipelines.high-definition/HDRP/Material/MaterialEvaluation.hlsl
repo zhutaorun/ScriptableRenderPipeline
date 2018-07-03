@@ -100,7 +100,13 @@ void GetScreenSpaceAmbientOcclusionMultibounce(float2 positionSS, float NdotV, f
 void ApplyAmbientOcclusionFactor(AmbientOcclusionFactor aoFactor, inout BakeLightingData bakeLightingData, inout AggregateLighting lighting)
 {
     // Note: in case of Lit, bakeLightingData.bakeDiffuseLighting contain indirect diffuse + emissive,
-    // so Ambient occlusion is multiply by emissive which is wrong but not a big deal
+    // so Ambient occlusion is multiply by emissive which is wrong but not a big deal.
+    // Also, we have double occlusion for diffuse lighting: 
+    // The baked diffuse lighting part from builtinData.bakeDiffuseLighting = SampleBakedGI() already
+    // had precomputed (aka "FromData") AO applied, and will get double occluded from screen space AO
+    // (this was done to avoid storing AOFromData in the GBuffer, hence why GetScreenSpaceAmbientOcclusion*()
+    // is called with AOFromData = 1.0 in Lit:PostEvaluateBSDF(), hence why we only have SSAO in the aoFactor
+    // here)
     bakeLightingData.bakeDiffuseLighting *= aoFactor.indirectAmbientOcclusion;
     lighting.indirect.specularReflected *= aoFactor.indirectSpecularOcclusion;
     lighting.direct.diffuse *= aoFactor.directAmbientOcclusion;
