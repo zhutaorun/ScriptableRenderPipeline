@@ -1518,22 +1518,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             if(useNewPrepareLights)
             {
-                return PrepareLightsForGPU_NEW(cmd, camera, shadowSettings, cullResults, reflectionProbeCullResults, densityVolumes);
+                return PrepareLightsForGPU_NEW(cmd, hdCamera, shadowSettings, cullResults, reflectionProbeCullResults, densityVolumes);
             }
             else
             {
-                return PrepareLightsForGPU_OLD(cmd, camera, shadowSettings, cullResults, reflectionProbeCullResults, densityVolumes);
+                return PrepareLightsForGPU_OLD(cmd, hdCamera, shadowSettings, cullResults, reflectionProbeCullResults, densityVolumes);
             }
         }
 
-        public bool PrepareLightsForGPU_NEW(CommandBuffer cmd, Camera camera, ShadowSettings shadowSettings, CullResults cullResults,
+        public bool PrepareLightsForGPU_NEW(CommandBuffer cmd, HDCamera hdCamera, ShadowSettings shadowSettings, CullResults cullResults,
                                         ReflectionProbeCullResults reflectionProbeCullResults, DensityVolumeList densityVolumes)
         {
             using (new ProfilingSample(cmd, "Prepare Lights For GPU"))
             {
+                var camera = hdCamera.camera;
+
                 // If any light require it, we need to enabled bake shadow mask feature
                 m_enableBakeShadowMask = false;
-                m_maxShadowDistance = shadowSettings.maxShadowDistance;
 
                 m_lightList.Clear();
 
@@ -1772,7 +1773,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                     // Caution: 'DirectionalLightData.positionWS' is camera-relative after this point.
                                     int last = m_lightList.directionalLights.Count - 1;
                                     DirectionalLightData lightData = m_lightList.directionalLights[last];
-                                    lightData.positionWS -= camPosWS;
+                                    lightData.positionRWS -= camPosWS;
                                     m_lightList.directionalLights[last] = lightData;
                                 }
                             }
@@ -1809,7 +1810,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 // Caution: 'LightData.positionWS' is camera-relative after this point.
                                 int last = m_lightList.lights.Count - 1;
                                 LightData lightData = m_lightList.lights[last];
-                                lightData.positionWS -= camPosWS;
+                                lightData.positionRWS -= camPosWS;
                                 m_lightList.lights[last] = lightData;
                             }
                         }
@@ -1924,9 +1925,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 // Caution: 'EnvLightData.positionWS' is camera-relative after this point.
                                 int last = m_lightList.envLights.Count - 1;
                                 EnvLightData envLightData = m_lightList.envLights[last];
-                                envLightData.capturePositionWS -= camPosWS;
-                                envLightData.influencePositionWS -= camPosWS;
-                                envLightData.proxyPositionWS -= camPosWS;
+                                envLightData.capturePositionRWS -= camPosWS;
+                                envLightData.influencePositionRWS -= camPosWS;
+                                envLightData.proxyPositionRWS -= camPosWS;
                                 m_lightList.envLights[last] = envLightData;
                             }
                         }
@@ -1987,17 +1988,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 Profiling.Profiler.BeginSample("PrepareLightsForGPU_UpdateDataBuffers");
                 UpdateDataBuffers();
                 Profiling.Profiler.EndSample();
+            }
 
+            m_enableBakeShadowMask = m_enableBakeShadowMask && hdCamera.frameSettings.enableShadowMask;
                 return m_enableBakeShadowMask;
             }
-        }
 
-        public bool PrepareLightsForGPU_OLD(CommandBuffer cmd, Camera camera, ShadowSettings shadowSettings, CullResults cullResults,
+        public bool PrepareLightsForGPU_OLD(CommandBuffer cmd, HDCamera hdCamera, ShadowSettings shadowSettings, CullResults cullResults,
                                         ReflectionProbeCullResults reflectionProbeCullResults, DensityVolumeList densityVolumes)
         {
             using (new ProfilingSample(cmd, "Prepare Lights For GPU"))
             {
-                Camera camera = hdCamera.camera;
+                var camera = hdCamera.camera;
 
                 // If any light require it, we need to enabled bake shadow mask feature
                 m_enableBakeShadowMask = false;

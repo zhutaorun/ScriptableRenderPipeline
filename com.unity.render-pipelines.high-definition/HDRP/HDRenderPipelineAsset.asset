@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Name: HDRenderPipelineAsset
   m_EditorClassIdentifier: 
   version: 1
-  m_RenderPipelineResources: {fileID: 11400000, guid: 3ce144cff5783da45aa5d4fdc2da14b7, type: 2}
+  m_RenderPipelineResources: {fileID: 11400000, guid: 3ce144cff5783da45aa5d4fdc2da14b7,
+    type: 2}
   m_FrameSettings:
     enableShadow: 1
     enableContactShadows: 1
@@ -49,7 +50,7 @@ MonoBehaviour:
       enableBigTilePrepass: 1
       isFptlEnabled: 1
   renderPipelineSettings:
-    supportShadowMask: 0
+    supportShadowMask: 1
     supportSSR: 1
     supportSSAO: 1
     supportSubsurfaceScattering: 1
@@ -90,4 +91,5 @@ MonoBehaviour:
       atlasWidth: 4096
       atlasHeight: 4096
   allowShaderVariantStripping: 1
-  diffusionProfileSettings: {fileID: 11400000, guid: 404820c4cf36ad944862fa59c56064f0, type: 2}
+  diffusionProfileSettings: {fileID: 11400000, guid: 34b8db50bb936404eac9e1cc40c342ec,
+    type: 2}
