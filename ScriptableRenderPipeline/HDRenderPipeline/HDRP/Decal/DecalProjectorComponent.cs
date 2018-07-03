@@ -83,6 +83,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
+// sample-game begin: dont call update when in standanlone
+#if !UNITY_STANDALONE
         public void Update()
         {
             if (m_Handle != null)
@@ -94,6 +96,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
             }
         }
+#endif
+// sample-game end
 
         private void DrawGizmo(bool selected)
         {

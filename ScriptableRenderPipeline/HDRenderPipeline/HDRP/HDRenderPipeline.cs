@@ -897,11 +897,29 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {
                         if (m_FrameSettings.enableDBuffer)
                         {
+// sample-game begin: adding profilers
+                            Profiling.Profiler.BeginSample("DecalSystem.instance.EndCull");
                             DecalSystem.instance.EndCull();
+                            Profiling.Profiler.EndSample();
+
                             m_DbufferManager.vsibleDecalCount = DecalSystem.m_DecalsVisibleThisFrame;
+                            Profiling.Profiler.BeginSample("DecalSystem.instance.UpdateCachedMaterialData");
                             DecalSystem.instance.UpdateCachedMaterialData();    // textures, alpha or fade distances could've changed
+                            Profiling.Profiler.EndSample();
+
+                            Profiling.Profiler.BeginSample("DecalSystem.instance.CreateDrawData");
                             DecalSystem.instance.CreateDrawData();              // prepare data is separate from draw
+                            Profiling.Profiler.EndSample();
+// sample-game end
+
+// sample-game begin: commenting out as no transparent decals
+                            if(false)   //TODO: if(transparent_decals_enables) or whatever it is going to be called
+                            { 
+                                Profiling.Profiler.BeginSample("DecalSystem.instance.UpdateTextureAtlas");
                             DecalSystem.instance.UpdateTextureAtlas(cmd);       // as this is only used for transparent pass, would've been nice not to have to do this if no transparent renderers are visible, needs to happen after CreateDrawData
+                                Profiling.Profiler.EndSample();
+                            }
+// sample-game end
                         }
                     }
                     renderContext.SetupCameraProperties(camera, m_FrameSettings.enableStereo);
