@@ -1427,14 +1427,6 @@ void PreLightData_SetupNormals(BSDFData bsdfData, inout PreLightData preLightDat
 #endif
 }
 
-void PreLightData_SetupAreaLightBasis(float3 V, float3 N, int normalIdx, inout PreLightData preLightData)
-{
-    // Construct a right-handed view-dependent orthogonal basis around the normal
-    preLightData.orthoBasisViewNormal[normalIdx][0] = normalize(V - N * preLightData.NdotV[normalIdx]); // Do not clamp NdotV here
-    preLightData.orthoBasisViewNormal[normalIdx][2] = N;
-    preLightData.orthoBasisViewNormal[normalIdx][1] = cross(preLightData.orthoBasisViewNormal[normalIdx][2], preLightData.orthoBasisViewNormal[normalIdx][0]);
-}
-
 void PreLightData_LoadLtcTransformSpecular(float2 uv, int lobeIdx, inout PreLightData preLightData)
 {
     // Get the inverse LTC matrix for GGX
@@ -1454,8 +1446,9 @@ void PreLightData_SetupAreaLights(BSDFData bsdfData, float3 V, float3 N[NB_NORMA
     // and one will be pruned out:
     theta[COAT_NORMAL_IDX] =  FastACosPos(NdotV[COAT_NORMAL_IDX]);
     theta[BASE_NORMAL_IDX] =  FastACosPos(NdotV[BASE_NORMAL_IDX]);
-    PreLightData_SetupAreaLightBasis(V, N[COAT_NORMAL_IDX], COAT_NORMAL_IDX, preLightData);
-    PreLightData_SetupAreaLightBasis(V, N[BASE_NORMAL_IDX], BASE_NORMAL_IDX, preLightData);
+
+    preLightData.orthoBasisViewNormal[COAT_NORMAL_IDX] = GetOrthoBasisViewNormal(V, N[COAT_NORMAL_IDX], preLightData.NdotV[COAT_NORMAL_IDX]);
+    preLightData.orthoBasisViewNormal[BASE_NORMAL_IDX] = GetOrthoBasisViewNormal(V, N[BASE_NORMAL_IDX], preLightData.NdotV[BASE_NORMAL_IDX]);
 
     if( IsVLayeredEnabled(bsdfData) )
     {

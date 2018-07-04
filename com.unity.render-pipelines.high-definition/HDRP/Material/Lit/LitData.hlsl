@@ -5,18 +5,9 @@
 #include "../MaterialUtilities.hlsl"
 #include "../Decal/DecalUtilities.hlsl"
 
-// TODO: move this function to commonLighting.hlsl once validated it work correctly
-float GetSpecularOcclusionFromBentAO(float3 V, float3 bentNormalWS, SurfaceData surfaceData)
-{
-    // Retrieve cone angle
-    // Ambient occlusion is cosine weighted, thus use following equation. See slide 129
-    float cosAv = sqrt(1.0 - surfaceData.ambientOcclusion);
-    float roughness = max(PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness), 0.01); // Clamp to 0.01 to avoid edge cases
-    float cosAs = exp2((-log(10.0)/log(2.0)) * Sq(roughness));
-    float cosB = dot(bentNormalWS, reflect(-V, surfaceData.normalWS));
+#include "HDRP/Material/SphericalCapPivot/SPTDistribution.hlsl"
+#define SPECULAR_OCCLUSION_USE_SPTD
 
-    return SphericalCapIntersectionSolidArea(cosAv, cosAs, cosB) / (TWO_PI * (1.0 - cosAs));
-}
 
 // Struct that gather UVMapping info of all layers + common calculation
 // This is use to abstract the mapping that can differ on layers
@@ -208,8 +199,15 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     // By default we use the ambient occlusion with Tri-ace trick (apply outside) for specular occlusion.
     // If user provide bent normal then we process a better term
 #if defined(_BENTNORMALMAP) && defined(_ENABLESPECULAROCCLUSION)
-    // If we have bent normal and ambient occlusion, process a specular occlusion
-    surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData);
+
+    // If we have bent normal and ambient occlusion, process a specular occlusion with either SPTD or cone-cone method
+#ifdef SPECULAR_OCCLUSION_USE_SPTD
+    surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAOPivot(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
+#else
+    surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
+
+#endif
+
 #elif defined(_MASKMAP)
     surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
 #else
