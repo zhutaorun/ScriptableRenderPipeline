@@ -77,10 +77,15 @@ void ScreenBoundsAABB(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupI
             GetHullQuad(q0, q1, q2, q3, boxX, boxY, boxZ, center, scaleXY, sideIndex);
 
 
-            const float4 vP0 = mul(g_mProjection, float4(q0, 1));
-            const float4 vP1 = mul(g_mProjection, float4(q1, 1));
-            const float4 vP2 = mul(g_mProjection, float4(q2, 1));
-            const float4 vP3 = mul(g_mProjection, float4(q3, 1));
+            float4 vP0 = mul(g_mProjection, float4(q0, 1));
+            float4 vP1 = mul(g_mProjection, float4(q1, 1));
+            float4 vP2 = mul(g_mProjection, float4(q2, 1));
+            float4 vP3 = mul(g_mProjection, float4(q3, 1));
+
+            vP0.w = abs(vP0.w);
+            vP1.w = abs(vP1.w);
+            vP2.w = abs(vP2.w);
+            vP3.w = abs(vP3.w);
 
             // test vertices of one quad (of the convex hull) for intersection
             const unsigned int uFlag0 = GetClip(vP0);
