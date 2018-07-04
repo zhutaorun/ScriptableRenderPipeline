@@ -119,7 +119,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var settings = VolumeManager.instance.stack.GetComponent<CameraControls>();
             
             RTHandle prevExposure, nextExposure;
-            GrabExposureHistoryTexture(camera, out prevExposure, out nextExposure);
+            GrabExposureHistoryTextures(camera, out prevExposure, out nextExposure);
 
             int kernel = 0;
 
@@ -147,7 +147,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             );
         }
 
-        void GrabExposureHistoryTexture(HDCamera camera, out RTHandle previous, out RTHandle next)
+        void GrabExposureHistoryTextures(HDCamera camera, out RTHandle previous, out RTHandle next)
         {
             // We rely on the RT history system that comes with HDCamera, but because it is swapped
             // at the beginning of the frame and exposure is applied with a one-frame delay it means
@@ -219,7 +219,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var settings = VolumeManager.instance.stack.GetComponent<CameraControls>();
 
             RTHandle prevExposure, nextExposure;
-            GrabExposureHistoryTexture(camera, out prevExposure, out nextExposure);
+            GrabExposureHistoryTextures(camera, out prevExposure, out nextExposure);
 
             CheckAverageLuminanceTargets();
 
