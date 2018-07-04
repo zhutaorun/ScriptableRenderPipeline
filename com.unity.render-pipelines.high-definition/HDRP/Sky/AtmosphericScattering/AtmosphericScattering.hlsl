@@ -10,8 +10,10 @@
 #include "../../ShaderVariables.hlsl"
 #include "../../Lighting/Volumetrics/VBuffer.hlsl"
 
-#if (SHADEROPTIONS_VOLUMETRIC_LIGHTING_PRESET != 0)
 TEXTURE3D(_VBufferLighting);
+
+#ifdef DEBUG_DISPLAY
+#include "../../Debug/DebugDisplay.hlsl"
 #endif
 
 CBUFFER_START(AtmosphericScattering)
@@ -67,6 +69,12 @@ float4 EvaluateAtmosphericScattering(PositionInputs posInput)
     float3 fogColor = 0;
     float  fogFactor = 0;
 
+#ifdef DEBUG_DISPLAY
+    // Don't sample atmospheric scattering when lighting debug more are enabled so fog is not visible
+    if (_DebugLightingMode == DEBUGLIGHTINGMODE_DIFFUSE_LIGHTING || _DebugLightingMode == DEBUGLIGHTINGMODE_SPECULAR_LIGHTING || _DebugLightingMode == DEBUGLIGHTINGMODE_LUX_METER)
+        return float4(0, 0, 0, 0);
+#endif
+
     switch (_AtmosphericScatteringType)
     {
         case FOGTYPE_LINEAR:
@@ -85,7 +93,6 @@ float4 EvaluateAtmosphericScattering(PositionInputs posInput)
         }
         case FOGTYPE_VOLUMETRIC:
         {
-        #if (SHADEROPTIONS_VOLUMETRIC_LIGHTING_PRESET != 0)
             float4 volFog = SampleVolumetricLighting(TEXTURE3D_PARAM(_VBufferLighting, s_linear_clamp_sampler),
                                                      posInput.positionNDC,
                                                      posInput.linearDepth,
@@ -99,7 +106,6 @@ float4 EvaluateAtmosphericScattering(PositionInputs posInput)
 
             fogFactor = 1 - volFog.a;                              // Opacity from transmittance
             fogColor  = volFog.rgb * min(rcp(fogFactor), FLT_MAX); // Un-premultiply, clamp to avoid (0 * INF = NaN)
-        #endif
             break;
         }
     }
