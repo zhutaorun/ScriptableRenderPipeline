@@ -78,6 +78,7 @@ namespace UnityEditor.ShaderGraph
         public Guid groupGuid
         {
             get { return m_GroupGuid; }
+            set { m_GroupGuid = value; }
         }
 
         public string name
@@ -625,8 +626,8 @@ namespace UnityEditor.ShaderGraph
             else
                 m_Guid = Guid.NewGuid();
 
-            //if (!string.IsNullOrEmpty(m_GroupGuidSerialized))
-            //    m_GroupGuid = new Guid(m_GroupGuidSerialized);
+            if (!string.IsNullOrEmpty(m_GroupGuidSerialized))
+                m_GroupGuid = new Guid(m_GroupGuidSerialized);
 
             m_Slots = SerializationHelper.Deserialize<ISlot>(m_SerializableSlots, GraphUtil.GetLegacyTypeRemapping());
             m_SerializableSlots = null;

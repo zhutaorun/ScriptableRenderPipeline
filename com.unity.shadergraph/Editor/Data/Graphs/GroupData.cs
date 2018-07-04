@@ -27,26 +27,24 @@ namespace UnityEditor.ShaderGraph
         public string title
         {
             get{ return m_Title; }
+            set { m_Title = value; }
         }
 
-        public GroupData(string title)
+        [SerializeField]
+        Vector2 m_Position;
+
+        public Vector2 position
+        {
+            get{ return m_Position; }
+            set { m_Position = value; }
+        }
+
+        public GroupData(string title, Vector2 position)
         {
             m_Guid = Guid.NewGuid();
             m_Title = title;
+            m_Position = position;
         }
-//        [NonSerialized]
-//        Group m_Group;
-//
-//        public Group group
-//        {
-//            get { return m_Group; }
-//        }
-//
-//        public GroupData(Group group)
-//        {
-//            m_Guid = Guid.NewGuid();
-//            m_Group = group;
-//        }
 
         public void OnBeforeSerialize()
         {

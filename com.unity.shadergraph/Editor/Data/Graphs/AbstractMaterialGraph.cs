@@ -130,6 +130,15 @@ namespace UnityEditor.ShaderGraph
         }
 
         [NonSerialized]
+        List<GroupData> m_LoadedGroups = new List<GroupData>();
+
+        public IEnumerable<GroupData> loadedGroups
+        {
+            get { return m_LoadedGroups; }
+        }
+
+
+        [NonSerialized]
         List<GroupData> m_RemovedGroups = new List<GroupData>();
 
         public IEnumerable<GroupData> removedGroups
@@ -242,6 +251,7 @@ namespace UnityEditor.ShaderGraph
 
         public void RemoveGroupData(GroupData groupData)
         {
+            m_Groups.Remove(groupData);
             m_RemovedGroups.Add(groupData);
         }
 //        public void RemoveGroup(Group group)
@@ -729,21 +739,16 @@ namespace UnityEditor.ShaderGraph
         public void OnBeforeSerialize()
         {
             m_SerializableNodes = SerializationHelper.Serialize(GetNodes<INode>());
-            //m_SerializableGroups = SerializationHelper.Serialize<GroupData>(m_Groups);
             m_SerializableEdges = SerializationHelper.Serialize<IEdge>(m_Edges);
             m_SerializedProperties = SerializationHelper.Serialize<IShaderProperty>(m_Properties);
         }
 
         public virtual void OnAfterDeserialize()
         {
+            m_AddedGroups.Clear();
             // have to deserialize 'globals' before nodes
             m_Properties = SerializationHelper.Deserialize<IShaderProperty>(m_SerializedProperties, GraphUtil.GetLegacyTypeRemapping());
-            //m_Groups = SerializationHelper.Deserialize<Group>(m_SerializableGroups, GraphUtil.GetLegacyTypeRemapping());
 
-            if(m_Groups.Any())
-                Debug.Log(m_Groups[0].guid);
-
-            Debug.Log("::::::::: " + m_Groups.Count);
             var nodes = SerializationHelper.Deserialize<INode>(m_SerializableNodes, GraphUtil.GetLegacyTypeRemapping());
             m_Nodes = new List<AbstractMaterialNode>(nodes.Count);
             m_NodeDictionary = new Dictionary<Guid, INode>(nodes.Count);
@@ -762,6 +767,12 @@ namespace UnityEditor.ShaderGraph
             m_SerializableEdges = null;
             foreach (var edge in m_Edges)
                 AddEdgeToNodeEdges(edge);
+
+            foreach (GroupData groupData in m_Groups)
+            {
+                //Debug.Log(groupData.title);
+                m_AddedGroups.Add(groupData);
+            }
         }
 
         public void OnEnable()

@@ -145,10 +145,10 @@ namespace UnityEditor.ShaderGraph.Drawing
             graph.owner.RegisterCompleteObjectUndo("Creating Material Group");
             Vector2 pos = a.eventInfo.localMousePosition;
 
-            Group graphGroup = CreateGroupNode("New Material Group", pos) as Group;
+            string title = "New Material Group";
+            GroupData groupData = new GroupData(title, pos);
 
-            GroupData groupData = new GroupData(graphGroup.title);
-            Debug.Log("CREATED GROUPDATA:: " + graphGroup.title);
+            //Debug.Log("CREATED GROUPDATA:: " + graphGroup.title);
 
 //            AddElement(graphGroup);
 //
@@ -168,6 +168,9 @@ namespace UnityEditor.ShaderGraph.Drawing
         void RemoveFromGroupNode(ContextualMenu.MenuAction a)
         {
             graph.owner.RegisterCompleteObjectUndo("Removing Material Group");
+
+            //graph.RemoveGroupData();
+
             foreach (ISelectable selectable in selection)
             {
                 var node = selectable as Node;
@@ -185,16 +188,16 @@ namespace UnityEditor.ShaderGraph.Drawing
                 }
             }
         }
-
-        GraphElement CreateGroupNode(string title, Vector2 pos)
-        {
-            Group graphGroupNode = new Group();
-
-            graphGroupNode.SetPosition(new Rect(pos.x, pos.y, 100, 100));
-            graphGroupNode.title = title;
-
-            return graphGroupNode;
-        }
+//
+//        GraphElement CreateGroupNode(string title, Vector2 pos)
+//        {
+//            Group graphGroupNode = new Group();
+//
+//            graphGroupNode.SetPosition(new Rect(pos.x, pos.y, 100, 100));
+//            graphGroupNode.title = title;
+//
+//            return graphGroupNode;
+//        }
 
         void CollapsePreviews()
         {
