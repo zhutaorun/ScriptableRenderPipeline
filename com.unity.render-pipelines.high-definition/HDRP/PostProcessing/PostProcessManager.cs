@@ -16,15 +16,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     // lighting/surface effect like SSR/AO
     public sealed class PostProcessManager
     {
-        // 1x1 pixel, holds the current exposure value in EV100 in the red channel
-        public RTHandle exposureTexture { get { return m_ExposureTexture[m_ExposureTextureId]; } }
-
         // On some GPU/driver version combos, using a max fp16 value of 65504 will just warp around
         // and break everything so we want to use the first valid value before fp16_max
         const float k_HalfMaxMinusOne = 65472f; // (2 - 2^-9) * 2^15
 
         RenderPipelineResources m_Resources;
-        CameraControls m_Settings;
 
         const int k_ExposureCurvePrecision = 128;
         Color[] m_TempColorArray = new Color[k_ExposureCurvePrecision];
@@ -33,66 +29,64 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         bool m_FirstFrame = true;
 
         Texture2D m_ExposureCurveTexture;
-        RTHandle m_TempTarget1024;
-        RTHandle m_TempTarget32;
-
-        // Ping-pong exposure textures used for adaptation
-        RTHandle[] m_ExposureTexture = new RTHandle[2];
-        int m_ExposureTextureId = 0;
+        RTHandle m_TempTexture1024;
+        RTHandle m_TempTexture32;
+        RTHandle m_EmptyExposureTexture;
 
         public PostProcessManager(HDRenderPipelineAsset hdAsset)
         {
             m_Resources = hdAsset.renderPipelineResources;
+            
+            // Setup a default exposure textures
+            m_EmptyExposureTexture = RTHandles.Alloc(1, 1, colorFormat: RenderTextureFormat.RGHalf,
+                sRGB: false, enableRandomWrite: true, name: "Empty EV100 Exposure"
+            );
 
-            for (int i = 0; i < 2; i++)
-            {
-                m_ExposureTexture[i] = RTHandles.Alloc(1, 1, colorFormat: RenderTextureFormat.RGHalf,
-                    sRGB: false, enableRandomWrite: true, name: "EV100 Exposure"
-                );
-            }
-
-            // Setup a default exposure textures for the first frame
             var tempTex = new Texture2D(1, 1, TextureFormat.RGHalf, false, true);
             tempTex.SetPixel(0, 0, Color.clear);
             tempTex.Apply();
-            Graphics.Blit(tempTex, m_ExposureTexture[0]);
-            Graphics.Blit(tempTex, m_ExposureTexture[1]);
+            Graphics.Blit(tempTex, m_EmptyExposureTexture);
             CoreUtils.Destroy(tempTex);
         }
 
         public void Cleanup()
         {
-            for (int i = 0; i < 2; i++)
-            {
-                RTHandles.Release(m_ExposureTexture[i]);
-                m_ExposureTexture[i] = null;
-            }
+            RTHandles.Release(m_EmptyExposureTexture);
+            m_EmptyExposureTexture = null;
 
-            RTHandles.Release(m_TempTarget1024);
-            m_TempTarget1024 = null;
+            RTHandles.Release(m_TempTexture1024);
+            m_TempTexture1024 = null;
 
-            RTHandles.Release(m_TempTarget32);
-            m_TempTarget32 = null;
+            RTHandles.Release(m_TempTexture32);
+            m_TempTexture32 = null;
 
             CoreUtils.Destroy(m_ExposureCurveTexture);
             m_ExposureCurveTexture = null;
         }
 
-        public void PushGlobalParams(CommandBuffer cmd)
+        public void BeginFrame(CommandBuffer cmd, HDCamera camera)
         {
-            cmd.SetGlobalTexture(HDShaderIDs._ExposureTexture, exposureTexture);
+            if (IsExposureFixed())
+            {
+                using (new ProfilingSample(cmd, "Fixed Exposure", CustomSamplerId.Exposure.GetSampler()))
+                {
+                    DoFixedExposure(cmd, camera);
+                }
+            }
+            
+            cmd.SetGlobalTexture(HDShaderIDs._ExposureTexture, GetExposureTexture(camera));
         }
 
-        public void Render(ref PostProcessParameters parameters)
+        public void Render(CommandBuffer cmd, HDCamera camera, RTHandle colorBuffer, RTHandle lightingBuffer)
         {
-            m_Settings = VolumeManager.instance.stack.GetComponent<CameraControls>();
-            var cmd = parameters.cmd;
-
             using (new ProfilingSample(cmd, "Post-processing", CustomSamplerId.PostProcessing.GetSampler()))
             {
-                using (new ProfilingSample(cmd, "Exposure", CustomSamplerId.Exposure.GetSampler()))
+                if (!IsExposureFixed())
                 {
-                    DoExposure(ref parameters);
+                    using (new ProfilingSample(cmd, "Dynamic Exposure", CustomSamplerId.Exposure.GetSampler()))
+                    {
+                        DoDynamicExposure(cmd, camera, colorBuffer, lightingBuffer);
+                    }
                 }
             }
 
@@ -101,24 +95,88 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         #region Exposure
 
+        public RTHandle GetExposureTexture(HDCamera camera)
+        {
+            // 1x1 pixel, holds the current exposure value in EV100 in the red channel
+            // One frame delay + history RTs being flipped at the beginning of the frame means we
+            // have to grab the exposure marked as "previous"
+            var rt = camera.GetPreviousFrameRT((int)HDCameraFrameHistoryType.Exposure);
+            return rt ?? m_EmptyExposureTexture;
+        }
+
+        bool IsExposureFixed(CameraControls settings = null)
+        {
+            if (settings == null)
+                settings = VolumeManager.instance.stack.GetComponent<CameraControls>();
+
+            return settings.exposureMode == ExposureMode.Fixed
+                || (settings.exposureMode == ExposureMode.UseCameraSettings && settings.cameraShootingMode == ShootingMode.Manual);
+        }
+
+        void DoFixedExposure(CommandBuffer cmd, HDCamera camera)
+        {
+            var cs = m_Resources.exposureCS;
+            var settings = VolumeManager.instance.stack.GetComponent<CameraControls>();
+            
+            RTHandle prevExposure, nextExposure;
+            GrabExposureHistoryTexture(camera, out prevExposure, out nextExposure);
+
+            int kernel = 0;
+
+            if (settings.exposureMode == ExposureMode.Fixed)
+            {
+                kernel = cs.FindKernel("KFixedExposure");
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(settings.fixedExposure, 0f, 0f, 0f));
+            }
+            else if (settings.exposureMode == ExposureMode.UseCameraSettings && settings.cameraShootingMode == ShootingMode.Manual)
+            {
+                kernel = cs.FindKernel("KManualCameraExposure");
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(settings.exposureCompensation, settings.lensAperture, settings.cameraShutterSpeed, settings.cameraIso));
+            }
+            
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, prevExposure);
+            cmd.DispatchCompute(cs, kernel, 1, 1, 1);
+        }
+
+        RTHandle ExposureHistoryAllocator(string id, int frameIndex, RTHandleSystem rtHandleSystem)
+        {
+            // R: Exposure in EV100
+            // G: Discard
+            return rtHandleSystem.Alloc(1, 1, colorFormat: RenderTextureFormat.RGHalf,
+                sRGB: false, enableRandomWrite: true, name: string.Format("EV100 Exposure ({0}) {1}", id, frameIndex)
+            );
+        }
+
+        void GrabExposureHistoryTexture(HDCamera camera, out RTHandle previous, out RTHandle next)
+        {
+            // We rely on the RT history system that comes with HDCamera, but because it is swapped
+            // at the beginning of the frame and exposure is applied with a one-frame delay it means
+            // that 'current' and 'previous' are swapped
+            next = camera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.Exposure)
+                ?? camera.AllocHistoryFrameRT((int)HDCameraFrameHistoryType.Exposure, ExposureHistoryAllocator);
+            previous = camera.GetPreviousFrameRT((int)HDCameraFrameHistoryType.Exposure);
+        }
+
         void CheckAverageLuminanceTargets()
         {
-            if (m_TempTarget1024 != null)
+            if (m_TempTexture1024 != null)
                 return;
-
+            
+            // R: Exposure in EV100
+            // G: Weight (used for metering modes when downscaling)
             const RenderTextureFormat kFormat = RenderTextureFormat.RGHalf;
 
-            m_TempTarget1024 = RTHandles.Alloc(
+            m_TempTexture1024 = RTHandles.Alloc(
                 1024, 1024, colorFormat: kFormat, sRGB: false,
                 enableRandomWrite: true, name: "Average Luminance Temp 1024"
             );
-            m_TempTarget32 = RTHandles.Alloc(
+            m_TempTexture32 = RTHandles.Alloc(
                 32, 32, colorFormat: kFormat, sRGB: false,
                 enableRandomWrite: true, name: "Average Luminance Temp 32"
             );
         }
 
-        void PrepareExposureCurveData(out float min, out float max)
+        void PrepareExposureCurveData(AnimationCurve curve, out float min, out float max)
         {
             if (m_ExposureCurveTexture == null)
             {
@@ -129,8 +187,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     wrapMode = TextureWrapMode.Clamp
                 };
             }
-            
-            var curve = m_Settings.exposureCurveMap.value;
+
             var pixels = m_TempColorArray;
 
             // Fail safe in case the curve is deleted / has 0 point
@@ -156,87 +213,66 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_ExposureCurveTexture.Apply();
         }
 
-        void DoExposure(ref PostProcessParameters parameters)
+        void DoDynamicExposure(CommandBuffer cmd, HDCamera camera, RTHandle colorBuffer, RTHandle lightingBuffer)
         {
             var cs = m_Resources.exposureCS;
-            var cmd = parameters.cmd;
+            var settings = VolumeManager.instance.stack.GetComponent<CameraControls>();
 
-            if (m_Settings.exposureMode == ExposureMode.Fixed)
+            RTHandle prevExposure, nextExposure;
+            GrabExposureHistoryTexture(camera, out prevExposure, out nextExposure);
+
+            CheckAverageLuminanceTargets();
+
+            // Setup variants
+            var adaptationMode = settings.adaptationMode.value;
+
+            if (!Application.isPlaying || m_FirstFrame)
+                adaptationMode = AdaptationMode.Fixed;
+            
+            m_ExposureVariants[0] = (int)settings.luminanceSource.value;
+            m_ExposureVariants[1] = (int)settings.exposureMeteringMode.value;
+            m_ExposureVariants[2] = (int)adaptationMode;
+            m_ExposureVariants[3] = 0;
+
+            // Pre-pass
+            var sourceTex = settings.luminanceSource == LuminanceSource.LightingBuffer
+                ? lightingBuffer
+                : colorBuffer;
+
+            int kernel = cs.FindKernel("KPrePass");
+            cmd.SetComputeIntParams(cs, HDShaderIDs._Variants, m_ExposureVariants);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._PreviousExposureTexture, prevExposure);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, sourceTex);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, m_TempTexture1024);
+            cmd.DispatchCompute(cs, kernel, 1024 / 8, 1024 / 8, 1);
+
+            // Reduction: 1st pass (1024 -> 32)
+            kernel = cs.FindKernel("KReduction");
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ExposureCurveTexture, Texture2D.blackTexture);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, m_TempTexture1024);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, m_TempTexture32);
+            cmd.DispatchCompute(cs, kernel, 32, 32, 1);
+
+            // Reduction: 2nd pass (32 -> 1) + evaluate exposure
+            if (settings.exposureMode == ExposureMode.Automatic)
             {
-                int kernel = cs.FindKernel("KFixedExposure");
-                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(m_Settings.fixedExposure, 0f, 0f, 0f));
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, exposureTexture);
-                cmd.DispatchCompute(cs, kernel, 1, 1, 1);
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(settings.exposureCompensation, 0f, settings.adaptationSpeedDown, settings.adaptationSpeedUp));
+                m_ExposureVariants[3] = 1;
             }
-            else if (m_Settings.exposureMode == ExposureMode.UseCameraSettings && m_Settings.cameraShootingMode == ShootingMode.Manual)
+            else if (settings.exposureMode == ExposureMode.CurveMapping)
             {
-                int kernel = cs.FindKernel("KManualCameraExposure");
-                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(m_Settings.exposureCompensation, m_Settings.lensAperture, m_Settings.cameraShutterSpeed, m_Settings.cameraIso));
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, exposureTexture);
-                cmd.DispatchCompute(cs, kernel, 1, 1, 1);
+                float min, max;
+                PrepareExposureCurveData(settings.exposureCurveMap.value, out min, out max);
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ExposureCurveTexture, m_ExposureCurveTexture);
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(min, max, settings.adaptationSpeedDown, settings.adaptationSpeedUp));
+                m_ExposureVariants[3] = 2;
             }
-            else
-            {
-                CheckAverageLuminanceTargets();
-
-                // Setup variants
-                // TODO: bake array
-                var adaptationMode = m_Settings.adaptationMode.value;
-
-                if (!Application.isPlaying || m_FirstFrame)
-                    adaptationMode = AdaptationMode.Fixed;
-                
-                m_ExposureVariants[0] = (int)m_Settings.luminanceSource.value;
-                m_ExposureVariants[1] = (int)m_Settings.exposureMeteringMode.value;
-                m_ExposureVariants[2] = (int)adaptationMode;
-                m_ExposureVariants[3] = 0;
-
-                // Ping pong exposure textures
-                int pp = m_ExposureTextureId;
-                var nextExposure = m_ExposureTexture[++pp % 2];
-                var prevExposure = m_ExposureTexture[++pp % 2];
-                m_ExposureTextureId = ++pp % 2;
-
-                // Pre-pass
-                var sourceTex = m_Settings.luminanceSource == LuminanceSource.LightingBuffer
-                    ? parameters.lightingBuffer
-                    : parameters.colorBuffer;
-
-                int kernel = cs.FindKernel("KPrePass");
-                cmd.SetComputeIntParams(cs, HDShaderIDs._Variants, m_ExposureVariants);
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._PreviousExposureTexture, prevExposure);
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, sourceTex);
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, m_TempTarget1024);
-                cmd.DispatchCompute(cs, kernel, 1024 / 8, 1024 / 8, 1);
-
-                // Reduction: 1st pass (1024 -> 32)
-                kernel = cs.FindKernel("KReduction");
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, m_TempTarget1024);
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, m_TempTarget32);
-                cmd.DispatchCompute(cs, kernel, 32, 32, 1);
-
-                // Reduction: 2nd pass (32 -> 1) + evaluate exposure
-                if (m_Settings.exposureMode == ExposureMode.Automatic)
-                {
-                    cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ExposureCurveTexture, Texture2D.blackTexture);
-                    cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(m_Settings.exposureCompensation, 0f, m_Settings.adaptationSpeedDown, m_Settings.adaptationSpeedUp));
-                    m_ExposureVariants[3] = 1;
-                }
-                else if (m_Settings.exposureMode == ExposureMode.CurveMapping)
-                {
-                    float min, max;
-                    PrepareExposureCurveData(out min, out max);
-                    cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ExposureCurveTexture, m_ExposureCurveTexture);
-                    cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(min, max, m_Settings.adaptationSpeedDown, m_Settings.adaptationSpeedUp));
-                    m_ExposureVariants[3] = 2;
-                }
-                
-                cmd.SetComputeIntParams(cs, HDShaderIDs._Variants, m_ExposureVariants);
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._PreviousExposureTexture, prevExposure);
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, m_TempTarget32);
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, nextExposure);
-                cmd.DispatchCompute(cs, kernel, 1, 1, 1);
-            }
+            
+            cmd.SetComputeIntParams(cs, HDShaderIDs._Variants, m_ExposureVariants);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._PreviousExposureTexture, prevExposure);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, m_TempTexture32);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, nextExposure);
+            cmd.DispatchCompute(cs, kernel, 1, 1, 1);
         }
 
         #endregion

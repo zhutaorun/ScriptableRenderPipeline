@@ -22,7 +22,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public LuminanceSourceParameter luminanceSource = new LuminanceSourceParameter(LuminanceSource.ColorBuffer);
         public AnimationCurveParameter exposureCurveMap = new AnimationCurveParameter(AnimationCurve.Linear(-10f, -10f, 20f, 20f));
         public AdaptationModeParameter adaptationMode = new AdaptationModeParameter(AdaptationMode.Progressive);
-        public MinFloatParameter adaptationSpeedUp = new MinFloatParameter(2f, 0.001f);
+        public MinFloatParameter adaptationSpeedUp = new MinFloatParameter(3f, 0.001f);
         public MinFloatParameter adaptationSpeedDown = new MinFloatParameter(1f, 0.001f);
     }
 

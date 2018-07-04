@@ -1,5 +1,3 @@
-using UnityEngine.Serialization;
-
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     public enum HDCameraFrameHistoryType
@@ -7,6 +5,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         DepthPyramid,
         ColorPyramid,
         VolumetricLighting,
+        Exposure,
         Count
     }
 }

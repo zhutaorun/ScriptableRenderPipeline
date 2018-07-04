@@ -785,8 +785,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 using (new ProfilingSample(cmd, "HDRenderPipeline::Render", CustomSamplerId.HDRenderPipelineRender.GetSampler()))
                 {
-                    m_PostProcessManager.PushGlobalParams(cmd);
-
                     // Do anything we need to do upon a new frame.
                     m_LightLoop.NewFrame(currentFrameSettings);
 
@@ -862,6 +860,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     hdCamera.Update(currentFrameSettings, postProcessLayer, m_VolumetricLightingSystem);
 
                     Resize(hdCamera);
+
+                    m_PostProcessManager.BeginFrame(cmd, hdCamera);
 
                     ApplyDebugDisplaySettings(hdCamera, cmd);
                     UpdateShadowSettings(hdCamera);
@@ -1098,14 +1098,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         RenderDistortion(hdCamera, cmd, m_Asset.renderPipelineResources);
 
                         //>>> -- TEMP
-                        var ppp = new PostProcessParameters
-                        {
-                            camera = hdCamera,
-                            cmd = cmd,
-                            colorBuffer = m_CameraColorBuffer,
-                            lightingBuffer = null // <- not available yet
-                        };
-                        m_PostProcessManager.Render(ref ppp);
+                        m_PostProcessManager.Render(
+                            cmd: cmd,
+                            camera: hdCamera,
+                            colorBuffer: m_CameraColorBuffer,
+                            lightingBuffer: null
+                        );
                         //<<<
 
                         StopStereoRendering(renderContext, hdCamera);
