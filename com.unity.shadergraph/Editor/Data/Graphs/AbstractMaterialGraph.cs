@@ -113,10 +113,13 @@ namespace UnityEditor.ShaderGraph
         [SerializeField]
         List<GroupData> m_Groups = new List<GroupData>();
 
-        public IEnumerable<Group> groups
+        public IEnumerable<GroupData> groups
         {
             get { return m_Groups; }
         }
+
+        [SerializeField]
+        List<SerializationHelper.JSONSerializedElement> m_SerializableGroups = new List<SerializationHelper.JSONSerializedElement>();
 
         [NonSerialized]
         List<GroupData> m_AddedGroups = new List<GroupData>();
@@ -726,7 +729,7 @@ namespace UnityEditor.ShaderGraph
         public void OnBeforeSerialize()
         {
             m_SerializableNodes = SerializationHelper.Serialize(GetNodes<INode>());
-            //m_Groups = SerializationHelper.Serialize<GroupData>(m_Groups);
+            //m_SerializableGroups = SerializationHelper.Serialize<GroupData>(m_Groups);
             m_SerializableEdges = SerializationHelper.Serialize<IEdge>(m_Edges);
             m_SerializedProperties = SerializationHelper.Serialize<IShaderProperty>(m_Properties);
         }
@@ -736,6 +739,9 @@ namespace UnityEditor.ShaderGraph
             // have to deserialize 'globals' before nodes
             m_Properties = SerializationHelper.Deserialize<IShaderProperty>(m_SerializedProperties, GraphUtil.GetLegacyTypeRemapping());
             //m_Groups = SerializationHelper.Deserialize<Group>(m_SerializableGroups, GraphUtil.GetLegacyTypeRemapping());
+
+            if(m_Groups.Any())
+                Debug.Log(m_Groups[0].guid);
 
             Debug.Log("::::::::: " + m_Groups.Count);
             var nodes = SerializationHelper.Deserialize<INode>(m_SerializableNodes, GraphUtil.GetLegacyTypeRemapping());

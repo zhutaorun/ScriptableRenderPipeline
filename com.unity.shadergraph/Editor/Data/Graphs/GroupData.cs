@@ -5,11 +5,12 @@ using System.Collections.Generic;
 using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine;
 
-namespace UnityEditor.Graphing
+namespace UnityEditor.ShaderGraph
 {
-    public class GroupData : Group
+    [Serializable]
+    public class GroupData : ISerializationCallbackReceiver
     {
-        [SerializeField]
+        [NonSerialized]
         Guid m_Guid;
 
         public Guid guid
@@ -17,18 +18,47 @@ namespace UnityEditor.Graphing
             get { return m_Guid; }
         }
 
-        [NonSerialized]
-        Group m_Group;
+        [SerializeField]
+        string m_GuidSerialized;
 
-        public Group group
+        [SerializeField]
+        string m_Title;
+
+        public string title
         {
-            get { return m_Group; }
+            get{ return m_Title; }
         }
 
-        public GroupData(Group group)
+        public GroupData(string title)
         {
             m_Guid = Guid.NewGuid();
-            m_Group = group;
+            m_Title = title;
+        }
+//        [NonSerialized]
+//        Group m_Group;
+//
+//        public Group group
+//        {
+//            get { return m_Group; }
+//        }
+//
+//        public GroupData(Group group)
+//        {
+//            m_Guid = Guid.NewGuid();
+//            m_Group = group;
+//        }
+
+        public void OnBeforeSerialize()
+        {
+            m_GuidSerialized = guid.ToString();
+        }
+
+        public void OnAfterDeserialize()
+        {
+            if (!string.IsNullOrEmpty(m_GuidSerialized))
+            {
+                m_Guid = new Guid(m_GuidSerialized);
+            }
         }
     }
 }

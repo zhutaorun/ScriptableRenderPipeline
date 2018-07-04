@@ -350,6 +350,8 @@ namespace UnityEditor.ShaderGraph.Drawing
         //void AddGroup(Group group)
         public void AddGroupData(GroupData groupData)
         {
+            Debug.Log("CREATED GUID:: " + groupData.guid);
+            // create the groupnode here
             m_GraphView.AddElement(groupData.group);
 
             foreach (ISelectable selectable in m_GraphView.selection)

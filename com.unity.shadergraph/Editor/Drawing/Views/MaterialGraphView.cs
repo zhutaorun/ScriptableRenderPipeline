@@ -147,7 +147,8 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             Group graphGroup = CreateGroupNode("New Material Group", pos) as Group;
 
-            GroupData groupData = new GroupData(graphGroup);
+            GroupData groupData = new GroupData(graphGroup.title);
+            Debug.Log("CREATED GROUPDATA:: " + graphGroup.title);
 
 //            AddElement(graphGroup);
 //
@@ -174,11 +175,13 @@ namespace UnityEditor.ShaderGraph.Drawing
                     continue;
 
                 //Group group = node.GetContainingScope() as Group;
-                GroupData groupData = node.GetContainingScope() as GroupData;
-                if (groupData != null)
+                Group group = node.GetContainingScope() as Group;
+                if (group != null)
                 {
-                    groupData.group.RemoveElement(node);
-                    graph.RemoveGroupData(groupData);
+                    group.RemoveElement(node);
+
+                    //TODO: need to figure out how to do this nicely
+                    //graph.RemoveGroupData(groupData);
                 }
             }
         }
