@@ -116,6 +116,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_GraphView.groupTitleChanged = OnGroupTitleChanged;
                 m_GraphView.elementsAddedToGroup = OnElementsAddedToGroup;
                 m_GraphView.elementsRemovedFromGroup = OnElementsRemovedFromGroup;
+                //m_GraphView.deleteSelection += OnDeleteSelection;
                 content.Add(m_GraphView);
 
                 m_BlackboardProvider = new BlackboardProvider(graph);
@@ -158,6 +159,14 @@ namespace UnityEditor.ShaderGraph.Drawing
 //                AddGroupData(addedGroup);
 //
 //            AddNodesToGroups(m_GraphGroups);
+
+            // Group Handling
+//            foreach (GroupData groupData in m_Graph.addedGroups)
+//            {
+//                AddNewGroupNode(groupData);
+//            }
+//
+//            AddNodesToGroups(m_GraphGroups);
             // TODO Adding the groups here as well.
 
             foreach (var edge in graph.edges)
@@ -165,6 +174,8 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             Add(content);
         }
+
+
 
         void OnSpaceDown(KeyDownEvent evt)
         {
@@ -249,6 +260,11 @@ namespace UnityEditor.ShaderGraph.Drawing
                             nodesToUpdate.Add(materialNodeView);
                     }
                 }
+
+                foreach (var group in graphViewChange.elementsToRemove.OfType<Group>())
+                {
+                    Debug.Log(group.title);
+                }
             }
 
             foreach (var node in nodesToUpdate)
@@ -271,20 +287,38 @@ namespace UnityEditor.ShaderGraph.Drawing
         void OnElementsAddedToGroup(Group graphGroup, IEnumerable<GraphElement> element)
         {
             var groupData = graphGroup.userData as GroupData;
-            foreach (var selected in m_GraphView.selection)
+            if (groupData != null)
             {
-                var materialNodeView = selected as MaterialNodeView;
-                materialNodeView.node.groupGuid = groupData.guid;
+                foreach (var selected in m_GraphView.selection)
+                {
+                    var materialNodeView = selected as MaterialNodeView;
+                    if(materialNodeView != null)
+                        materialNodeView.node.groupGuid = groupData.guid;
+                }
             }
         }
+
+
 
         void OnElementsRemovedFromGroup(Group graphGroup, IEnumerable<GraphElement> element)
         {
             foreach (var selected in m_GraphView.selection)
             {
                 var materialNodeView = selected as MaterialNodeView;
-                materialNodeView.node.groupGuid = Guid.Empty;
-                Debug.Log(materialNodeView.node.groupGuid);
+                if (materialNodeView != null)
+                {
+                    materialNodeView.node.groupGuid = Guid.Empty;
+                }
+            }
+        }
+
+
+        void OnDeleteSelection(string operationname, GraphView.AskUser askuser)
+        {
+            Debug.Log("Muppets");
+            foreach (ISelectable selectable in m_GraphView.selection)
+            {
+
             }
         }
 
@@ -408,20 +442,24 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void AddNewGroupNode(GroupData groupData)
         {
+
             Group graphGroup = CreateGroupNode(groupData) as Group;
-            m_GraphView.AddElement(graphGroup);
-
-            foreach (ISelectable selectable in m_GraphView.selection)
+            if (!m_GraphGroups.Contains(graphGroup))
             {
-                if (selectable is MaterialNodeView)
-                {
-                    MaterialNodeView materialNodeView = selectable as MaterialNodeView;
-                    AbstractMaterialNode abstractMaterialNode = materialNodeView.node;
-                    abstractMaterialNode.groupGuid = groupData.guid;
-                }
-            }
+                m_GraphView.AddElement(graphGroup);
 
-            m_GraphGroups.Add(graphGroup);
+                foreach (ISelectable selectable in m_GraphView.selection)
+                {
+                    if (selectable is MaterialNodeView)
+                    {
+                        MaterialNodeView materialNodeView = selectable as MaterialNodeView;
+                        AbstractMaterialNode abstractMaterialNode = materialNodeView.node;
+                        abstractMaterialNode.groupGuid = groupData.guid;
+                    }
+                }
+
+                m_GraphGroups.Add(graphGroup);
+            }
         }
 
         public void AddNodesToGroups(List<Group> graphGroups)
@@ -430,19 +468,46 @@ namespace UnityEditor.ShaderGraph.Drawing
             foreach (Group graphGroup in graphGroups)
             {
                 GroupData groupData = graphGroup.userData as GroupData;
+                Debug.Log("Group Title: " + groupData.title);
                 foreach (MaterialNodeView materialNodeView in allNodes)
                 {
                     AbstractMaterialNode abstractMaterialNode = materialNodeView.node;
-
+                    Debug.Log("Node: " + abstractMaterialNode.name);
                     if (abstractMaterialNode.groupGuid == groupData.guid && !graphGroup.ContainsElement(materialNodeView))
                     {
                         graphGroup.AddElement(materialNodeView);
+                        //allNodes.
                     }
                 }
             }
 
             graphGroups.Clear();
         }
+
+        /*
+        public void AddNodesToGroups(List<Group> graphGroups)
+        {
+            List<Node> allNodes = m_GraphView.nodes.ToList();//.OfType<MaterialNodeView>();
+            foreach (Group graphGroup in graphGroups)
+            {
+                GroupData groupData = graphGroup.userData as GroupData;
+                Debug.Log(groupData.title);
+                foreach (MaterialNodeView materialNodeView in allNodes.OfType<MaterialNodeView>())
+                {
+                    AbstractMaterialNode abstractMaterialNode = materialNodeView.node;
+                    Debug.Log("Node: " + abstractMaterialNode.name);
+                    if (abstractMaterialNode.groupGuid == groupData.guid && !graphGroup.ContainsElement(materialNodeView))
+                    {
+                        graphGroup.AddElement(materialNodeView);
+                        allNodes.Remove(materialNodeView);
+                    }
+                }
+            }
+
+            graphGroups.Clear();
+        }
+        */
+
 
         /*
         void RemoveFromGroupNode(ContextualMenu.MenuAction a)

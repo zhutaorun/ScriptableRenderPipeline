@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor.Experimental.UIElements.GraphView;
+using UnityEditor.ShaderGraph;
 
 namespace UnityEditor.Graphing
 {
@@ -23,6 +25,7 @@ namespace UnityEditor.Graphing
         IEnumerable<INode> removedNodes { get; }
         IEnumerable<IEdge> addedEdges { get; }
         IEnumerable<IEdge> removedEdges { get; }
+        IEnumerable<GroupData> groups { get; }
         void ClearChanges();
     }
 

@@ -654,6 +654,18 @@ namespace UnityEditor.ShaderGraph
             foreach (var edge in other.edges)
                 ConnectNoValidate(edge.outputSlot, edge.inputSlot);
 
+
+            foreach (GroupData groupData in other.groups)
+                AddGroupData(groupData);
+
+//            foreach (var groupData in other.groups)
+//            {
+//                if (!m_AddedGroups.Contains(groupData))
+//                {
+//                    //m_Groups.Add(groupData);
+//                    m_AddedGroups.Add(groupData);
+//                }
+//            }
             ValidateGraph();
         }
 
