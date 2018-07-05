@@ -148,20 +148,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             string title = "New Material Group";
             GroupData groupData = new GroupData(title, pos);
 
-            //Debug.Log("CREATED GROUPDATA:: " + graphGroup.title);
-
-//            AddElement(graphGroup);
-//
-//            foreach (ISelectable selectable in selection)
-//            {
-//                var node = selectable as Node;
-//                if (node == null)
-//                    continue;
-//
-//                graphGroup.AddElement(node);
-//            }
-
-            //graph.AddGroup(graphGroup);
             graph.AddGroupData(groupData);
         }
 
@@ -169,35 +155,19 @@ namespace UnityEditor.ShaderGraph.Drawing
         {
             graph.owner.RegisterCompleteObjectUndo("Removing Material Group");
 
-            //graph.RemoveGroupData();
-
             foreach (ISelectable selectable in selection)
             {
                 var node = selectable as Node;
                 if(node == null)
                     continue;
 
-                //Group group = node.GetContainingScope() as Group;
                 Group group = node.GetContainingScope() as Group;
                 if (group != null)
                 {
                     group.RemoveElement(node);
-
-                    //TODO: need to figure out how to do this nicely
-                    //graph.RemoveGroupData(groupData);
                 }
             }
         }
-//
-//        GraphElement CreateGroupNode(string title, Vector2 pos)
-//        {
-//            Group graphGroupNode = new Group();
-//
-//            graphGroupNode.SetPosition(new Rect(pos.x, pos.y, 100, 100));
-//            graphGroupNode.title = title;
-//
-//            return graphGroupNode;
-//        }
 
         void CollapsePreviews()
         {

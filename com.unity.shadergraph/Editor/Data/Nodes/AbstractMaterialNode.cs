@@ -614,8 +614,7 @@ namespace UnityEditor.ShaderGraph
         public virtual void OnBeforeSerialize()
         {
             m_GuidSerialized = m_Guid.ToString();
-            if (m_GroupGuid != Guid.Empty)
-                m_GroupGuidSerialized = m_GroupGuid.ToString();
+            m_GroupGuidSerialized = m_GroupGuid.ToString();
             m_SerializableSlots = SerializationHelper.Serialize<ISlot>(m_Slots);
         }
 

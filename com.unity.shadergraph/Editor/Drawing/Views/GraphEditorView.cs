@@ -114,7 +114,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_GraphView.AddManipulator(new ClickSelector());
                 m_GraphView.RegisterCallback<KeyDownEvent>(OnSpaceDown);
                 m_GraphView.groupTitleChanged = OnGroupTitleChanged;
-                //m_GraphView.elementsAddedToGroup = OnElementsAddedToGroup;
+                m_GraphView.elementsAddedToGroup = OnElementsAddedToGroup;
+                m_GraphView.elementsRemovedFromGroup = OnElementsRemovedFromGroup;
                 content.Add(m_GraphView);
 
                 m_BlackboardProvider = new BlackboardProvider(graph);
@@ -197,6 +198,22 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             if (graphViewChange.movedElements != null)
             {
+                List<GraphElement> nodesInsideGroup = new List<GraphElement>();
+                foreach (var element in graphViewChange.movedElements)
+                {
+                    var groupNode = element as Group;
+                    if (groupNode == null)
+                        continue;
+
+                    foreach (GraphElement graphElement in groupNode.containedElements)
+                    {
+                        nodesInsideGroup.Add(graphElement);
+                    }
+                }
+
+                if(nodesInsideGroup.Any())
+                    graphViewChange.movedElements.AddRange(nodesInsideGroup);
+
                 foreach (var element in graphViewChange.movedElements)
                 {
                     var node = element.userData as INode;
@@ -204,7 +221,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                         continue;
 
                     var drawState = node.drawState;
-                    drawState.position = element.GetPosition();
+                    drawState.position = element.parent.ChangeCoordinatesTo(m_GraphView.contentViewContainer, element.GetPosition());
                     node.drawState = drawState;
                 }
             }
@@ -257,8 +274,17 @@ namespace UnityEditor.ShaderGraph.Drawing
             foreach (var selected in m_GraphView.selection)
             {
                 var materialNodeView = selected as MaterialNodeView;
-                Debug.Log("TJOHOOO " + materialNodeView.name);
                 materialNodeView.node.groupGuid = groupData.guid;
+            }
+        }
+
+        void OnElementsRemovedFromGroup(Group graphGroup, IEnumerable<GraphElement> element)
+        {
+            foreach (var selected in m_GraphView.selection)
+            {
+                var materialNodeView = selected as MaterialNodeView;
+                materialNodeView.node.groupGuid = Guid.Empty;
+                Debug.Log(materialNodeView.node.groupGuid);
             }
         }
 
@@ -347,7 +373,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             // Group Handling
             foreach (GroupData groupData in m_Graph.addedGroups)
             {
-                //AddGroupData(groupData);
                 AddNewGroupNode(groupData);
             }
 
@@ -361,7 +386,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_GraphView.AddElement(nodeView);
             nodeView.Initialize(node as AbstractMaterialNode, m_PreviewManager, m_EdgeConnectorListener);
             node.RegisterCallback(OnNodeChanged);
-            Debug.Log("NODE GROUP GUID:::::::::::: " + nodeView.node.groupGuid);
+
             nodeView.MarkDirtyRepaint();
 
             if (m_SearchWindowProvider.nodeNeedsRepositioning && m_SearchWindowProvider.targetSlotReference.nodeGuid.Equals(node.guid))
@@ -393,40 +418,11 @@ namespace UnityEditor.ShaderGraph.Drawing
                     MaterialNodeView materialNodeView = selectable as MaterialNodeView;
                     AbstractMaterialNode abstractMaterialNode = materialNodeView.node;
                     abstractMaterialNode.groupGuid = groupData.guid;
-
-//                    graphGroup.AddElement(materialNodeView);
                 }
             }
 
             m_GraphGroups.Add(graphGroup);
         }
-
-        //void AddGroup(Group group)
-        public void AddGroupData(GroupData groupData)
-        {
-
-            //Debug.Log("CREATED GUID:: " + groupData.guid);
-            // create the groupnode here
-            Group graphGroup = CreateGroupNode(groupData) as Group;
-
-            m_GraphView.AddElement(graphGroup);
-
-            foreach (ISelectable selectable in m_GraphView.selection)
-            {
-                if (selectable is MaterialNodeView)
-                {
-                    MaterialNodeView materialNodeView = selectable as MaterialNodeView;
-                    AbstractMaterialNode abstractMaterialNode = materialNodeView.node;
-                    abstractMaterialNode.groupGuid = groupData.guid;
-
-//                    graphGroup.AddElement(materialNodeView);
-                }
-
-            }
-
-            m_GraphGroups.Add(graphGroup);
-        }
-
 
         public void AddNodesToGroups(List<Group> graphGroups)
         {
@@ -437,14 +433,9 @@ namespace UnityEditor.ShaderGraph.Drawing
                 foreach (MaterialNodeView materialNodeView in allNodes)
                 {
                     AbstractMaterialNode abstractMaterialNode = materialNodeView.node;
-                    //Debug.Log("NODE GROUP GUID:: " + abstractMaterialNode.groupGuid);
-                    //Debug.Log("GROUP DATA GUID:: " + groupData.guid);
+
                     if (abstractMaterialNode.groupGuid == groupData.guid && !graphGroup.ContainsElement(materialNodeView))
                     {
-                        Debug.Log(groupData.guid);
-                        Debug.Log(groupData.title);
-                        Debug.Log(materialNodeView.title);
-
                         graphGroup.AddElement(materialNodeView);
                     }
                 }
@@ -452,31 +443,6 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             graphGroups.Clear();
         }
-
-        // Check all abstractmaterialnodes and check if they have the UID for a group node
-            // If they have we add them to the group node
-
-        /*
-        {
-            var allNodes = m_GraphView.nodes.ToList().OfType<MaterialNodeView>();
-            foreach (MaterialNodeView materialNodeView in allNodes)
-            {
-                AbstractMaterialNode abstractMaterialNode = materialNodeView.node;
-                Debug.Log("NODE GROUP GUID:: " + abstractMaterialNode.groupGuid);
-                Debug.Log("GROUP DATA GUID:: " + groupData.guid);
-                if (abstractMaterialNode.groupGuid == groupData.guid && !graphGroup.ContainsElement(materialNodeView))
-                {
-                    Debug.Log(groupData.guid);
-                    Debug.Log(groupData.title);
-                    Debug.Log(materialNodeView.title);
-
-                    graphGroup.AddElement(materialNodeView);
-                }
-            }
-
-        }*/
-
-
 
         /*
         void RemoveFromGroupNode(ContextualMenu.MenuAction a)
@@ -501,7 +467,6 @@ namespace UnityEditor.ShaderGraph.Drawing
         }
         */
 
-        //GraphElement CreateGroupNode(AbstractMaterialNode abstractMaterialNode, string title, Vector2 pos)
         GraphElement CreateGroupNode(GroupData groupData)
         {
             Group graphGroupNode = new Group();
@@ -510,12 +475,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             graphGroupNode.SetPosition(new Rect(groupData.position.x, groupData.position.y, 100, 100));
             graphGroupNode.title = groupData.title;
 
-            //graphGroupNode.RegisterCallback(OnGroupChanged);
-            //graphGroupNode.RegisterCallback<FocusOutEvent>( e => Debug.Log("mupp"));
             return graphGroupNode;
         }
-
-
 
         static void RepositionNode(GeometryChangedEvent evt)
         {

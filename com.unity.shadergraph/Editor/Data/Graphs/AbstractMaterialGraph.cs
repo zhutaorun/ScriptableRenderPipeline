@@ -118,9 +118,6 @@ namespace UnityEditor.ShaderGraph
             get { return m_Groups; }
         }
 
-        [SerializeField]
-        List<SerializationHelper.JSONSerializedElement> m_SerializableGroups = new List<SerializationHelper.JSONSerializedElement>();
-
         [NonSerialized]
         List<GroupData> m_AddedGroups = new List<GroupData>();
 
@@ -136,7 +133,6 @@ namespace UnityEditor.ShaderGraph
         {
             get { return m_LoadedGroups; }
         }
-
 
         [NonSerialized]
         List<GroupData> m_RemovedGroups = new List<GroupData>();
@@ -237,12 +233,6 @@ namespace UnityEditor.ShaderGraph
             }
         }
 
-//        public void AddGroup(Group group)
-//        {
-//            m_Groups.Add(group);
-//            m_AddedGroups.Add(group);
-//        }
-
         public void AddGroupData(GroupData groupData)
         {
             m_Groups.Add(groupData);
@@ -254,10 +244,6 @@ namespace UnityEditor.ShaderGraph
             m_Groups.Remove(groupData);
             m_RemovedGroups.Add(groupData);
         }
-//        public void RemoveGroup(Group group)
-//        {
-//            m_RemovedGroups.Add(group);
-//        }
 
         void AddNodeNoValidate(INode node)
         {
@@ -770,7 +756,6 @@ namespace UnityEditor.ShaderGraph
 
             foreach (GroupData groupData in m_Groups)
             {
-                //Debug.Log(groupData.title);
                 m_AddedGroups.Add(groupData);
             }
         }
