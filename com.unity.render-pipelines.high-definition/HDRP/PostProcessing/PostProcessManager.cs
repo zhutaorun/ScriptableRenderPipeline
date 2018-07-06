@@ -133,7 +133,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 kernel = cs.FindKernel("KManualCameraExposure");
                 cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(settings.exposureCompensation, settings.lensAperture, settings.cameraShutterSpeed, settings.cameraIso));
             }
-            
+
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._PreviousExposureTexture, prevExposure);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, prevExposure);
             cmd.DispatchCompute(cs, kernel, 1, 1, 1);
         }
