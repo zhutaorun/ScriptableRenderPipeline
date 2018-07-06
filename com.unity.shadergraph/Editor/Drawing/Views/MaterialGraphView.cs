@@ -319,7 +319,9 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
 
             graph.owner.RegisterCompleteObjectUndo(operationName);
-            graph.RemoveElements(selection.OfType<MaterialNodeView>().Where(v => !(v.node is SubGraphOutputNode)).Select(x => (INode)x.node), selection.OfType<Edge>().Select(x => x.userData).OfType<IEdge>());
+            graph.RemoveElements(selection.OfType<MaterialNodeView>().Where(v => !(v.node is SubGraphOutputNode)).Select(x => (INode)x.node),
+                selection.OfType<Edge>().Select(x => x.userData).OfType<IEdge>(),
+                selection.OfType<Group>().Select(x => x.userData).OfType<GroupData>());
 
             foreach (var selectable in selection)
             {

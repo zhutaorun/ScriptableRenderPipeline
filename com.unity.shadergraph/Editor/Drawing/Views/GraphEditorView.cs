@@ -10,6 +10,7 @@ using UnityEngine.Experimental.UIElements.StyleEnums;
 using UnityEngine.Experimental.UIElements.StyleSheets;
 using UnityEngine.Rendering;
 using Edge = UnityEditor.Experimental.UIElements.GraphView.Edge;
+using Node = UnityEditor.Graphs.Node;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor.ShaderGraph.Drawing
@@ -22,10 +23,14 @@ namespace UnityEditor.ShaderGraph.Drawing
         public Vector2 masterPreviewSize = new Vector2(400, 400);
     }
 
+
+
     public class GraphEditorView : VisualElement, IDisposable
     {
         MaterialGraphView m_GraphView;
         MasterPreviewView m_MasterPreviewView;
+        EditorWindow m_EditorWindow;
+        public EditorWindow window { get { return m_EditorWindow; } }
 
         AbstractMaterialGraph m_Graph;
         PreviewManager m_PreviewManager;
@@ -71,6 +76,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public GraphEditorView(EditorWindow editorWindow, AbstractMaterialGraph graph)
         {
+            m_EditorWindow = editorWindow;
             m_Graph = graph;
             AddStyleSheetPath("Styles/GraphEditorView");
             previewManager = new PreviewManager(graph);
@@ -244,7 +250,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             {
                 m_Graph.owner.RegisterCompleteObjectUndo("Remove Elements");
                 m_Graph.RemoveElements(graphViewChange.elementsToRemove.OfType<MaterialNodeView>().Select(v => (INode)v.node),
-                    graphViewChange.elementsToRemove.OfType<Edge>().Select(e => (IEdge)e.userData));
+                    graphViewChange.elementsToRemove.OfType<Edge>().Select(e => (IEdge)e.userData),
+                    graphViewChange.elementsToRemove.OfType<Group>().Select(g => (GroupData)g.userData));
                 foreach (var edge in graphViewChange.elementsToRemove.OfType<Edge>())
                 {
                     if (edge.input != null)
@@ -261,10 +268,10 @@ namespace UnityEditor.ShaderGraph.Drawing
                     }
                 }
 
-                foreach (var group in graphViewChange.elementsToRemove.OfType<Group>())
-                {
-                    Debug.Log(group.title);
-                }
+//                foreach (var group in graphViewChange.elementsToRemove.OfType<Group>())
+//                {
+//                    ElementDeletedCallback(group);
+//                }
             }
 
             foreach (var node in nodesToUpdate)
@@ -274,6 +281,14 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             return graphViewChange;
         }
+
+//        void ElementDeletedCallback(VisualElement ve)
+//        {
+//            if (ve.userData is GroupData)
+//            {
+//                m_GraphView.window.
+//            }
+//        }
 
         void OnGroupTitleChanged(Group graphGroup, string title)
         {
@@ -297,8 +312,6 @@ namespace UnityEditor.ShaderGraph.Drawing
                 }
             }
         }
-
-
 
         void OnElementsRemovedFromGroup(Group graphGroup, IEnumerable<GraphElement> element)
         {
@@ -342,9 +355,44 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public void HandleGraphChanges()
         {
+            // Group Handling
+            foreach (GroupData groupData in m_Graph.removedGroups)
+            {
+                // Need to get all the Groups in the scene
+                var groups = m_GraphView.graphElements.ToList().OfType<Group>();
+                foreach (var group in groups)
+                {
+                    if (group.userData == groupData)
+                    {
+                        foreach (GraphElement element in group.containedElements)
+                        {
+                            Debug.Log("DELETING NODE::: " + (element.userData as INode).name);
+                            var node = element.userData as INode;
+                            if (node == null)
+                                continue;
+                            m_Graph.RemoveNode(node);
+                        }
+
+                        group.userData = null;
+                        m_GraphView.RemoveElement(group);
+                    }
+                }
+            }
+            
             previewManager.HandleGraphChanges();
             previewManager.RenderPreviews();
             m_BlackboardProvider.HandleGraphChanges();
+
+
+
+
+            foreach (GroupData groupData in m_Graph.addedGroups)
+            {
+                AddNewGroupNode(groupData);
+            }
+
+            AddNodesToGroups(m_GraphGroups);
+
 
             foreach (var node in m_Graph.removedNodes)
             {
@@ -404,13 +452,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             UpdateEdgeColors(nodesToUpdate);
 
-            // Group Handling
-            foreach (GroupData groupData in m_Graph.addedGroups)
-            {
-                AddNewGroupNode(groupData);
-            }
 
-            AddNodesToGroups(m_GraphGroups);
         }
 
         void AddNode(INode node)
@@ -542,6 +584,19 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             return graphGroupNode;
         }
+
+        GraphElement AddGroupNode(GroupData groupData)
+        {
+            Group graphGroupNode = new Group();
+
+            graphGroupNode.userData = groupData;
+            graphGroupNode.SetPosition(new Rect(groupData.position.x, groupData.position.y, 100, 100));
+            graphGroupNode.title = groupData.title;
+
+            return graphGroupNode;
+        }
+
+
 
         static void RepositionNode(GeometryChangedEvent evt)
         {

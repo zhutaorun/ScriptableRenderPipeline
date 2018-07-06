@@ -416,7 +416,8 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             graphObject.graph.RemoveElements(
                 graphView.selection.OfType<MaterialNodeView>().Select(x => x.node as INode),
-                Enumerable.Empty<IEdge>());
+                Enumerable.Empty<IEdge>(),
+                Enumerable.Empty<GroupData>());
             graphObject.graph.ValidateGraph();
         }
 

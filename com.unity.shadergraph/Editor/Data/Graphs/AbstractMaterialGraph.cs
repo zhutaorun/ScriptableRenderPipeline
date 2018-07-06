@@ -126,13 +126,13 @@ namespace UnityEditor.ShaderGraph
             get { return m_AddedGroups; }
         }
 
-        [NonSerialized]
-        List<GroupData> m_LoadedGroups = new List<GroupData>();
-
-        public IEnumerable<GroupData> loadedGroups
-        {
-            get { return m_LoadedGroups; }
-        }
+//        [NonSerialized]
+//        List<GroupData> m_LoadedGroups = new List<GroupData>();
+//
+//        public IEnumerable<GroupData> loadedGroups
+//        {
+//            get { return m_LoadedGroups; }
+//        }
 
         [NonSerialized]
         List<GroupData> m_RemovedGroups = new List<GroupData>();
@@ -356,7 +356,7 @@ namespace UnityEditor.ShaderGraph
             ValidateGraph();
         }
 
-        public void RemoveElements(IEnumerable<INode> nodes, IEnumerable<IEdge> edges)
+        public void RemoveElements(IEnumerable<INode> nodes, IEnumerable<IEdge> edges, IEnumerable<GroupData> groups)
         {
             foreach (var edge in edges.ToArray())
                 RemoveEdgeNoValidate(edge);
@@ -364,6 +364,10 @@ namespace UnityEditor.ShaderGraph
             foreach (var serializableNode in nodes.ToArray())
                 RemoveNodeNoValidate(serializableNode);
 
+            foreach (var groupData in groups)
+            {
+                RemoveGroupData(groupData);
+            }
             ValidateGraph();
         }
 
