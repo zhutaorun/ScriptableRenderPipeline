@@ -2,6 +2,7 @@
 using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEditor.Graphing;
 using UnityEngine;
@@ -16,19 +17,28 @@ namespace UnityEditor.ShaderGraph
             this.AddManipulator(new ContextualMenuManipulator(BuildContextualMenu));
         }
 
-        void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+        public virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
             if (evt.target is MaterialGraphGroup)
             {
-                evt.menu.AppendAction("Convert To Sub-graph", PrintAllNodesInsideGroup, ContextualMenu.MenuAction.AlwaysEnabled);
+                evt.menu.AppendAction("Ungroup All Nodes", RemoveNodesInsideGroup, ContextualMenu.MenuAction.AlwaysEnabled);
             }
         }
 
-        void PrintAllNodesInsideGroup(ContextualMenu.MenuAction obj)
+        void RemoveNodesInsideGroup(ContextualMenu.MenuAction obj)
         {
-            foreach (GraphElement element in containedElements)
+            var elements = containedElements.ToList();
+            foreach (GraphElement element in elements)
             {
-                Debug.Log((element.userData as INode).name);
+                var node = element.userData as INode;
+                if (node == null)
+                    continue;
+
+                //if (element.userData is INode)
+                //{
+                    Debug.Log((element.userData as INode).name);
+                    RemoveElement(element);
+                //}
             }
         }
     }

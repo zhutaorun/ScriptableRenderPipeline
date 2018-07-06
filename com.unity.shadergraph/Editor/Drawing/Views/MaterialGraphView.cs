@@ -153,7 +153,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void RemoveFromGroupNode(ContextualMenu.MenuAction a)
         {
-            graph.owner.RegisterCompleteObjectUndo("Removing Material Group");
+            graph.owner.RegisterCompleteObjectUndo("Removing From Material Group");
 
             foreach (ISelectable selectable in selection)
             {
