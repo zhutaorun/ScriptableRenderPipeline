@@ -13,6 +13,12 @@ namespace UnityEditor.Experimental.Rendering
         static void RenderGizmo(ReflectionProbe reflectionProbe, GizmoType gizmoType)
         {
             var e = GetEditorFor(reflectionProbe);
+            if (e == null)
+                return;
+
+            var reflectionData = reflectionProbe.GetComponent<HDAdditionalReflectionData>();
+            Gizmos_CapturePoint(reflectionProbe, reflectionData, e);
+
             if (!e.sceneViewEditing)
                 return;
 
