@@ -9,6 +9,8 @@ namespace UnityEditor.Experimental.Rendering
 {
     partial class HDReflectionProbeEditor
     {
+        internal static float k_CapturePointSize = .08f;
+
         internal static Color k_GizmoThemeColorExtent = new Color(255f / 255f, 229f / 255f, 148f / 255f, 80f / 255f);
         internal static Color k_GizmoThemeColorExtentFace = new Color(255f / 255f, 229f / 255f, 148f / 255f, 45f / 255f);
         internal static Color k_GizmoThemeColorInfluenceBlend = new Color(83f / 255f, 255f / 255f, 95f / 255f, 75f / 255f);

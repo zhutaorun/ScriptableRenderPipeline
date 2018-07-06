@@ -27,6 +27,7 @@ namespace UnityEditor.Experimental.Rendering
         internal SerializedProperty nearClip;
         internal SerializedProperty farClip;
         internal SerializedProperty boxProjection;
+        internal SerializedProperty proxyOffsetCapturePoint;
 
         internal SerializedProperty influenceShape;
         internal SerializedProperty influenceSphereRadius;
@@ -78,6 +79,7 @@ namespace UnityEditor.Experimental.Rendering
             boxProjection = so.FindProperty("m_BoxProjection");
             legacyBlendDistance = so.FindProperty("m_BlendDistance");
 
+            proxyOffsetCapturePoint = addso.Find((HDAdditionalReflectionData d) => d.proxyOffsetCapturePoint);
             influenceShape = addso.Find((HDAdditionalReflectionData d) => d.influenceShape);
             influenceSphereRadius = addso.Find((HDAdditionalReflectionData d) => d.influenceSphereRadius);
             useSeparateProjectionVolume = addso.Find((HDAdditionalReflectionData d) => d.useSeparateProjectionVolume);

@@ -1329,7 +1329,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 envIndex = m_ReflectionProbeCache.FetchSlice(cmd, probe.texture);
                 envIndex = envIndex << 1 | (int)EnvCacheType.Cubemap;
-                capturePosition = (Vector3)influenceToWorld.GetColumn(3) - probe.reflectionProbe.center;
+                capturePosition = probe.capturePoint;
+                //(Vector3)influenceToWorld.GetColumn(3) - probe.reflectionProbe.center;
             }
             // -1 means that the texture is not ready yet (ie not convolved/compressed yet)
             if (envIndex == -1)

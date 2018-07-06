@@ -49,6 +49,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public abstract Matrix4x4 proxyToWorld { get; }
         public abstract Vector3 proxyExtents { get; }
         public abstract bool infiniteProjection { get; }
+        
+        public abstract Vector3 capturePoint { get; }
     }
 
     class VisibleReflectionProbeWrapper : ProbeWrapper
@@ -152,6 +154,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     : influenceToWorld;
             }
         }
+
+        public override Vector3 capturePoint { get { return additional.capturePoint; } }
     }
 
     class PlanarReflectionProbeWrapper : ProbeWrapper
@@ -193,5 +197,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public override ReflectionProbeMode mode { get { return planarReflectionProbe.mode; } }
 
         public override Matrix4x4 proxyToWorld { get { return planarReflectionProbe.proxyToWorld; } }
+
+        public override Vector3 capturePoint { get { return Vector3.zero; } }
     }
 }

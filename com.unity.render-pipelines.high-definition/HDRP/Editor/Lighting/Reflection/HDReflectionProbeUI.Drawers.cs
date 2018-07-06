@@ -84,6 +84,14 @@ namespace UnityEditor.Experimental.Rendering
         {
             var renderPipelineAsset = (HDRenderPipelineAsset)GraphicsSettings.renderPipelineAsset;
             p.resolution.intValue = (int)renderPipelineAsset.GetRenderPipelineSettings().lightLoopSettings.reflectionCubemapSize;
+            GUILayout.BeginHorizontal();
+            EditorGUILayout.PropertyField(p.proxyOffsetCapturePoint, CoreEditorUtils.GetContent("Capture Point|Relative to Proxy center."));
+            if (GUILayout.Button(toolbar_Contents[3], GUILayout.Width(28f), GUILayout.Height(EditorGUIUtility.singleLineHeight + 3)))
+            {
+                EditMode.ChangeEditMode(EditMode.SceneViewEditMode.ReflectionProbeOrigin, GetBoundsGetter(p)(), owner);
+            }
+            GUILayout.EndHorizontal();
+
             EditorGUILayout.LabelField(CoreEditorUtils.GetContent("Resolution"), CoreEditorUtils.GetContent(p.resolution.intValue.ToString()));
 
             EditorGUILayout.PropertyField(p.shadowDistance, CoreEditorUtils.GetContent("Shadow Distance"));

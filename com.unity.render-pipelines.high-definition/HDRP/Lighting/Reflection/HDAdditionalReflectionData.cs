@@ -27,6 +27,7 @@ namespace UnityEngine.Experimental.Rendering
         public Vector3 blendNormalDistanceNegative = Vector3.zero;
         public Vector3 boxSideFadePositive = Vector3.one;
         public Vector3 boxSideFadeNegative = Vector3.one;
+        public Vector3 proxyOffsetCapturePoint = Vector3.zero;
 
         //editor value that need to be saved for easy passing from simplified to advanced and vice et versa
         // /!\ must not be used outside editor code
@@ -44,6 +45,7 @@ namespace UnityEngine.Experimental.Rendering
         public Vector3 boxBlendSizeOffset { get { return -(blendDistancePositive + blendDistanceNegative); } }
         public Vector3 boxBlendNormalCenterOffset { get { return (blendNormalDistanceNegative - blendNormalDistancePositive) * 0.5f; } }
         public Vector3 boxBlendNormalSizeOffset { get { return -(blendNormalDistancePositive + blendNormalDistanceNegative); } }
+        public Vector3 capturePoint { get { return proxyVolumeComponent == null ? transform.position + proxyOffsetCapturePoint : proxyVolumeComponent.transform.position + proxyOffsetCapturePoint; } }
 
 
         public float sphereBlendRadiusOffset { get { return -blendDistancePositive.x; } }
