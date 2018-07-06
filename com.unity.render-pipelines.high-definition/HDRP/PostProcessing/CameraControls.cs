@@ -18,6 +18,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public ExposureModeParameter exposureMode = new ExposureModeParameter(ExposureMode.Automatic);
         public FloatParameter fixedExposure = new FloatParameter(0f);
         public FloatParameter exposureCompensation = new FloatParameter(0f);
+        public FloatParameter exposureLimitMin = new FloatParameter(-10f);
+        public FloatParameter exposureLimitMax = new FloatParameter(20f);
         //public MinFloatParameter absoluteExposureClamp = new MinFloatParameter(65472f, 0f);
         public LuminanceSourceParameter luminanceSource = new LuminanceSourceParameter(LuminanceSource.ColorBuffer);
         public AnimationCurveParameter exposureCurveMap = new AnimationCurveParameter(AnimationCurve.Linear(-10f, -10f, 20f, 20f));

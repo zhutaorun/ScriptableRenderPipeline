@@ -256,7 +256,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Reduction: 2nd pass (32 -> 1) + evaluate exposure
             if (settings.exposureMode == ExposureMode.Automatic)
             {
-                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(settings.exposureCompensation, 0f, settings.adaptationSpeedDown, settings.adaptationSpeedUp));
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(settings.exposureCompensation, settings.exposureLimitMin, settings.exposureLimitMax, 0f));
                 m_ExposureVariants[3] = 1;
             }
             else if (settings.exposureMode == ExposureMode.CurveMapping)
@@ -264,10 +264,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 float min, max;
                 PrepareExposureCurveData(settings.exposureCurveMap.value, out min, out max);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ExposureCurveTexture, m_ExposureCurveTexture);
-                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(min, max, settings.adaptationSpeedDown, settings.adaptationSpeedUp));
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(settings.exposureCompensation, min, max, 0f));
                 m_ExposureVariants[3] = 2;
             }
-            
+
+            cmd.SetComputeVectorParam(cs, HDShaderIDs._AdaptationParams, new Vector4(settings.adaptationSpeedDown, settings.adaptationSpeedUp, 0f, 0f));
             cmd.SetComputeIntParams(cs, HDShaderIDs._Variants, m_ExposureVariants);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._PreviousExposureTexture, prevExposure);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, m_TempTexture32);

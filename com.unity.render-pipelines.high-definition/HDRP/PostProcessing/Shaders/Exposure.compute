@@ -19,6 +19,7 @@ SAMPLER(sampler_LinearClamp);
 
 CBUFFER_START(cb)
     float4 _ExposureParams;
+    float4 _AdaptationParams;
     uint4 _Variants;
 CBUFFER_END
 
@@ -27,10 +28,12 @@ CBUFFER_END
 #define ParamAperture               _ExposureParams.y
 #define ParamShutterSpeed           _ExposureParams.z
 #define ParamISO                    _ExposureParams.w
-#define ParamSpeedLightToDark       _ExposureParams.z
-#define ParamSpeedDarkToLight       _ExposureParams.w
-#define ParamCurveMin               _ExposureParams.x
-#define ParamCurveMax               _ExposureParams.y
+#define ParamSpeedLightToDark       _AdaptationParams.x
+#define ParamSpeedDarkToLight       _AdaptationParams.y
+#define ParamExposureLimitMin       _ExposureParams.y
+#define ParamExposureLimitMax       _ExposureParams.z
+#define ParamCurveMin               _ExposureParams.y
+#define ParamCurveMax               _ExposureParams.z
 #define ParamSourceBuffer           _Variants.x
 #define ParamMeteringMode           _Variants.y
 #define ParamAdaptationMode         _Variants.z
@@ -199,7 +202,9 @@ void KReduction(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThread
             case 1u:
             {
                 // Automatic
-                _OutputTexture[groupId.xy] = float2(AdaptExposure(avgLuminance - ParamExposureCompensation), 0.0);
+                float exposure = AdaptExposure(avgLuminance - ParamExposureCompensation);
+                exposure = clamp(exposure, ParamExposureLimitMin, ParamExposureLimitMax);
+                _OutputTexture[groupId.xy] = float2(exposure, 0.0);
                 break;
             }
             case 2u:
@@ -207,7 +212,7 @@ void KReduction(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThread
                 // Curve remapping
                 float remap = saturate((avgLuminance - ParamCurveMin) / (ParamCurveMax - ParamCurveMin));
                 float exposure = SAMPLE_TEXTURE2D_LOD(_ExposureCurveTexture, sampler_LinearClamp, float2(remap, 0.0), 0.0).x;
-                _OutputTexture[groupId.xy] = float2(AdaptExposure(exposure), 0.0);
+                _OutputTexture[groupId.xy] = float2(AdaptExposure(exposure - ParamExposureCompensation), 0.0);
                 break;
             }
             default:
