@@ -17,7 +17,7 @@ namespace UnityEditor.Experimental.Rendering
                 return;
 
             var reflectionData = reflectionProbe.GetComponent<HDAdditionalReflectionData>();
-            Gizmos_CapturePoint(reflectionProbe, reflectionData, e);
+            //Gizmos_CapturePoint(reflectionProbe, reflectionData, e);
 
             if (!e.sceneViewEditing)
                 return;
@@ -191,7 +191,6 @@ namespace UnityEditor.Experimental.Rendering
             {
                 Material mat = renderer.material;
                 mat.SetVector("_CaptureOffset", a.capturePoint - p.transform.position);
-                Debug.Log(a.capturePoint - p.transform.position);
             }
         }
     }
