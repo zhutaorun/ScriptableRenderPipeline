@@ -3,6 +3,8 @@ using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
+    // TODO: Fix RTHandle resizing support
+
     using RTHandle = RTHandleSystem.RTHandle;
 
     [Serializable]
