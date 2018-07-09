@@ -14,7 +14,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
     // Main class for all post-processing related features - only includes camera effects, no
     // lighting/surface effect like SSR/AO
-    public sealed class PostProcessManager
+    public sealed class PostProcessSystem
     {
         // On some GPU/driver version combos, using a max fp16 value of 65504 will just warp around
         // and break everything so we want to use the first valid value before fp16_max
@@ -33,7 +33,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RTHandle m_TempTexture32;
         RTHandle m_EmptyExposureTexture;
 
-        public PostProcessManager(HDRenderPipelineAsset hdAsset)
+        public PostProcessSystem(HDRenderPipelineAsset hdAsset)
         {
             m_Resources = hdAsset.renderPipelineResources;
             

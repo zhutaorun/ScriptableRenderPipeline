@@ -68,7 +68,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         readonly DBufferManager m_DbufferManager;
         readonly SubsurfaceScatteringManager m_SSSBufferManager = new SubsurfaceScatteringManager();
         readonly NormalBufferManager m_NormalBufferManager = new NormalBufferManager();
-        readonly PostProcessManager m_PostProcessManager;
+        readonly PostProcessSystem m_PostProcessSystem;
 
         // Renderer Bake configuration can vary depends on if shadow mask is enabled or no
         RendererConfiguration m_currentRendererConfigurationBakedLighting = HDUtils.k_RendererConfigurationBakedLighting;
@@ -239,7 +239,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_SSSBufferManager.Build(asset);
             m_NormalBufferManager.Build(asset);
 
-            m_PostProcessManager = new PostProcessManager(asset);
+            m_PostProcessSystem = new PostProcessSystem(asset);
             m_AmbientOcclusionSystem = new AmbientOcclusionSystem(asset);
 
             // Initialize various compute shader resources
@@ -522,7 +522,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_SkyManager.Cleanup();
             m_VolumetricLightingSystem.Cleanup();
             m_IBLFilterGGX.Cleanup();
-            m_PostProcessManager.Cleanup();
+            m_PostProcessSystem.Cleanup();
             m_AmbientOcclusionSystem.Cleanup();
 
             HDCamera.ClearAll();
@@ -857,7 +857,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                     Resize(hdCamera);
 
-                    m_PostProcessManager.BeginFrame(cmd, hdCamera);
+                    m_PostProcessSystem.BeginFrame(cmd, hdCamera);
 
                     ApplyDebugDisplaySettings(hdCamera, cmd);
                     UpdateShadowSettings(hdCamera);
@@ -1091,7 +1091,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         RenderDistortion(hdCamera, cmd, m_Asset.renderPipelineResources);
 
                         //>>> -- TEMP
-                        m_PostProcessManager.Render(
+                        m_PostProcessSystem.Render(
                             cmd: cmd,
                             camera: hdCamera,
                             colorBuffer: m_CameraColorBuffer,
