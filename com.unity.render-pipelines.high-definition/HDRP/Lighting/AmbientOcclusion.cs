@@ -191,19 +191,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     m_Heights[i] = (m_Heights[0] + (div - 1)) / div;
                 }
 
+                // Grab current viewport scale factor - needed to handle RTHandle auto resizing
+                var viewport = camera.doubleBufferedViewportScale;
+
                 // Render logic
                 PushDownsampleCommands(cmd, camera, depthMap);
 
                 float tanHalfFovH = CalculateTanHalfFovHeight(camera);
-                PushRenderCommands(cmd, m_TiledDepth1Tex, m_Occlusion1Tex, settings, GetSizeArray(MipLevel.L3), tanHalfFovH);
-                PushRenderCommands(cmd, m_TiledDepth2Tex, m_Occlusion2Tex, settings, GetSizeArray(MipLevel.L4), tanHalfFovH);
-                PushRenderCommands(cmd, m_TiledDepth3Tex, m_Occlusion3Tex, settings, GetSizeArray(MipLevel.L5), tanHalfFovH);
-                PushRenderCommands(cmd, m_TiledDepth4Tex, m_Occlusion4Tex, settings, GetSizeArray(MipLevel.L6), tanHalfFovH);
+                PushRenderCommands(cmd, viewport, m_TiledDepth1Tex, m_Occlusion1Tex, settings, GetSizeArray(MipLevel.L3), tanHalfFovH);
+                PushRenderCommands(cmd, viewport, m_TiledDepth2Tex, m_Occlusion2Tex, settings, GetSizeArray(MipLevel.L4), tanHalfFovH);
+                PushRenderCommands(cmd, viewport, m_TiledDepth3Tex, m_Occlusion3Tex, settings, GetSizeArray(MipLevel.L5), tanHalfFovH);
+                PushRenderCommands(cmd, viewport, m_TiledDepth4Tex, m_Occlusion4Tex, settings, GetSizeArray(MipLevel.L6), tanHalfFovH);
 
-                PushUpsampleCommands(cmd, m_LowDepth4Tex, m_Occlusion4Tex, m_LowDepth3Tex,   m_Occlusion3Tex, m_Combined3Tex,        settings, GetSize(MipLevel.L4), GetSize(MipLevel.L3));
-                PushUpsampleCommands(cmd, m_LowDepth3Tex, m_Combined3Tex,  m_LowDepth2Tex,   m_Occlusion2Tex, m_Combined2Tex,        settings, GetSize(MipLevel.L3), GetSize(MipLevel.L2));
-                PushUpsampleCommands(cmd, m_LowDepth2Tex, m_Combined2Tex,  m_LowDepth1Tex,   m_Occlusion1Tex, m_Combined1Tex,        settings, GetSize(MipLevel.L2), GetSize(MipLevel.L1));
-                PushUpsampleCommands(cmd, m_LowDepth1Tex, m_Combined1Tex,  m_LinearDepthTex, null,            m_AmbientOcclusionTex, settings, GetSize(MipLevel.L1), GetSize(MipLevel.Original));
+                PushUpsampleCommands(cmd, viewport, m_LowDepth4Tex, m_Occlusion4Tex, m_LowDepth3Tex,   m_Occlusion3Tex, m_Combined3Tex,        settings, GetSize(MipLevel.L4), GetSize(MipLevel.L3));
+                PushUpsampleCommands(cmd, viewport, m_LowDepth3Tex, m_Combined3Tex,  m_LowDepth2Tex,   m_Occlusion2Tex, m_Combined2Tex,        settings, GetSize(MipLevel.L3), GetSize(MipLevel.L2));
+                PushUpsampleCommands(cmd, viewport, m_LowDepth2Tex, m_Combined2Tex,  m_LowDepth1Tex,   m_Occlusion1Tex, m_Combined1Tex,        settings, GetSize(MipLevel.L2), GetSize(MipLevel.L1));
+                PushUpsampleCommands(cmd, viewport, m_LowDepth1Tex, m_Combined1Tex,  m_LinearDepthTex, null,            m_AmbientOcclusionTex, settings, GetSize(MipLevel.L1), GetSize(MipLevel.Original));
 
                 cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, m_AmbientOcclusionTex);
                 cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, new Vector4(settings.color.value.r, settings.color.value.g, settings.color.value.b, settings.directLightingStrength.value));
@@ -299,7 +302,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.DispatchCompute(cs, kernel, m_Widths[(int)MipLevel.L6], m_Heights[(int)MipLevel.L6], 1);
         }
 
-        void PushRenderCommands(CommandBuffer cmd, RTHandle source, RTHandle destination, AmbientOcclusion settings, Vector3 sourceSize, float tanHalfFovH)
+        void PushRenderCommands(CommandBuffer cmd, Vector4 viewport, RTHandle source, RTHandle destination, AmbientOcclusion settings, Vector3 sourceSize, float tanHalfFovH)
         {
             // Here we compute multipliers that convert the center depth value into (the reciprocal
             // of) sphere thicknesses at each sample location. This assumes a maximum sample radius
@@ -369,7 +372,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             cmd.SetComputeFloatParams(cs, "gInvThicknessTable", m_InvThicknessTable);
             cmd.SetComputeFloatParams(cs, "gSampleWeightTable", m_SampleWeightTable);
-            cmd.SetComputeVectorParam(cs, "gInvSliceDimension", new Vector2(1f / sourceSize.x, 1f / sourceSize.y));
+            cmd.SetComputeVectorParam(cs, "gInvSliceDimension", new Vector2(1f / sourceSize.x * viewport.x, 1f / sourceSize.y * viewport.y));
             cmd.SetComputeVectorParam(cs, "AdditionalParams", new Vector2(-1f / settings.thicknessModifier.value, settings.intensity.value));
             cmd.SetComputeTextureParam(cs, kernel, "DepthTex", source);
             cmd.SetComputeTextureParam(cs, kernel, "Occlusion", destination);
@@ -386,7 +389,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             );
         }
 
-        void PushUpsampleCommands(CommandBuffer cmd, RTHandle lowResDepth, RTHandle interleavedAO, RTHandle highResDepth, RTHandle highResAO, RTHandle dest, AmbientOcclusion settings, Vector3 lowResDepthSize, Vector2 highResDepthSize)
+        void PushUpsampleCommands(CommandBuffer cmd, Vector4 viewport, RTHandle lowResDepth, RTHandle interleavedAO, RTHandle highResDepth, RTHandle highResAO, RTHandle dest, AmbientOcclusion settings, Vector3 lowResDepthSize, Vector2 highResDepthSize)
         {
             var cs = m_Resources.aoUpsample;
             int kernel = cs.FindKernel(highResAO == null ? "main_invert" : "main_blendout");
@@ -397,8 +400,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             float uTolerance = Mathf.Pow(10f, settings.upsampleTolerance.value);
             float noiseFilterWeight = 1f / (Mathf.Pow(10f, settings.noiseFilterTolerance.value) + uTolerance);
 
-            cmd.SetComputeVectorParam(cs, "InvLowResolution", new Vector2(1f / lowResDepthSize.x, 1f / lowResDepthSize.y));
-            cmd.SetComputeVectorParam(cs, "InvHighResolution", new Vector2(1f / highResDepthSize.x, 1f / highResDepthSize.y));
+            cmd.SetComputeVectorParam(cs, "InvLowResolution", new Vector2(1f / lowResDepthSize.x * viewport.x, 1f / lowResDepthSize.y * viewport.y));
+            cmd.SetComputeVectorParam(cs, "InvHighResolution", new Vector2(1f / highResDepthSize.x * viewport.x, 1f / highResDepthSize.y * viewport.y));
             cmd.SetComputeVectorParam(cs, "AdditionalParams", new Vector4(noiseFilterWeight, stepSize, bTolerance, uTolerance));
 
             cmd.SetComputeTextureParam(cs, kernel, "LoResDB", lowResDepth);
