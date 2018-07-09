@@ -27,6 +27,7 @@ namespace UnityEditor.ShaderGraph
 
         void RemoveNodesInsideGroup(ContextualMenu.MenuAction obj)
         {
+            //graph.owner.RegisterCompleteObjectUndo("Removing Material Group");
             var elements = containedElements.ToList();
             foreach (GraphElement element in elements)
             {
@@ -36,7 +37,7 @@ namespace UnityEditor.ShaderGraph
 
                 //if (element.userData is INode)
                 //{
-                    Debug.Log((element.userData as INode).name);
+                    Debug.Log("Removing Element:: " + (element.userData as INode).name);
                     RemoveElement(element);
                 //}
             }

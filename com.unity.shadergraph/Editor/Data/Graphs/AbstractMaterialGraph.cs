@@ -235,6 +235,8 @@ namespace UnityEditor.ShaderGraph
 
         public void AddGroupData(GroupData groupData)
         {
+            if (m_Groups.Contains(groupData))
+                return;
             m_Groups.Add(groupData);
             m_AddedGroups.Add(groupData);
         }
@@ -634,6 +636,19 @@ namespace UnityEditor.ShaderGraph
 
             // Current tactic is to remove all nodes and edges and then re-add them, such that depending systems
             // will re-initialize with new references.
+
+            using (var removedGroupsPooledObject = ListPool<GroupData>.GetDisposable())
+            {
+                var removedGroupDatas = removedGroupsPooledObject.value;
+                removedGroupDatas.AddRange(m_Groups);
+                foreach (var groupData in removedGroupDatas)
+                {
+                    Debug.Log("REplaceWith GroupData:: " + groupData.title);
+                    RemoveGroupData(groupData);
+                    //m_RemovedGroups.Add(groupData);
+                }
+            }
+
             using (var pooledList = ListPool<IEdge>.GetDisposable())
             {
                 var removedNodeEdges = pooledList.value;
@@ -650,6 +665,8 @@ namespace UnityEditor.ShaderGraph
                     RemoveNodeNoValidate(m_NodeDictionary[nodeGuid]);
             }
 
+
+
             ValidateGraph();
 
             foreach (var node in other.GetNodes<INode>())
@@ -660,7 +677,10 @@ namespace UnityEditor.ShaderGraph
 
 
             foreach (GroupData groupData in other.groups)
+            {
+                Debug.Log("Adding NEW GroupData:: " + groupData.title);
                 AddGroupData(groupData);
+            }
 
 //            foreach (var groupData in other.groups)
 //            {
@@ -770,6 +790,8 @@ namespace UnityEditor.ShaderGraph
             foreach (var edge in m_Edges)
                 AddEdgeToNodeEdges(edge);
 
+            Debug.Log(path);
+            Debug.Log("Count: " + m_Groups.Count);
             foreach (GroupData groupData in m_Groups)
             {
                 m_AddedGroups.Add(groupData);
