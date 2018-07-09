@@ -186,14 +186,13 @@ namespace UnityEditor.Experimental.Rendering
 
         static void Gizmos_CapturePoint(ReflectionProbe p, HDAdditionalReflectionData a, HDReflectionProbeEditor e)
         {
-            Color color = Gizmos.color;
-            Gizmos.color = Color.green;
-            Matrix4x4 mat = Gizmos.matrix;
-            var t = a.proxyVolumeComponent != null ? a.proxyVolumeComponent.transform : p.transform;
-            Gizmos.matrix = Matrix4x4.TRS(t.position, t.rotation, Vector3.one);
-            Gizmos.DrawSphere(a.proxyOffsetCapturePoint, HandleUtility.GetHandleSize(a.proxyOffsetCapturePoint) * k_CapturePointSize);
-            Gizmos.matrix = mat;
-            Gizmos.color = color;
+            Renderer renderer = p.GetComponent<Renderer>();
+            if (renderer && renderer.material)
+            {
+                Material mat = renderer.material;
+                mat.SetVector("_CaptureOffset", a.capturePoint - p.transform.position);
+                Debug.Log(a.capturePoint - p.transform.position);
+            }
         }
     }
 }
