@@ -119,6 +119,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 newAsset.shadowBlurMoments = Load<ComputeShader>(CorePath + "Shadow/ShadowBlurMoments.compute");
                 newAsset.debugShadowMapShader = Load<Shader>(CorePath + "Shadow/DebugDisplayShadowMap.shader");
 
+                // Ambient occlusion
+                newAsset.aoDownsample1 = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/AODownsample1.compute");
+                newAsset.aoDownsample2 = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/AODownsample2.compute");
+                newAsset.aoRender = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/AORender.compute");
+                newAsset.aoUpsample = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/AOUpsample.compute");
+
                 // Post-processing
                 newAsset.exposureCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/Exposure.compute");
 

@@ -106,7 +106,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         RTHandleSystem.RTHandle m_VelocityBuffer;
         RTHandleSystem.RTHandle m_DeferredShadowBuffer;
-        RTHandleSystem.RTHandle m_AmbientOcclusionBuffer;
         RTHandleSystem.RTHandle m_DistortionBuffer;
 
         // The pass "SRPDefaultUnlit" is a fall back to legacy unlit rendering and is required to support unity 2d + unity UI that render in the scene.
@@ -166,6 +165,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         readonly LightLoop m_LightLoop = new LightLoop();
         readonly ShadowSettings m_ShadowSettings = new ShadowSettings();
         readonly VolumetricLightingSystem m_VolumetricLightingSystem = new VolumetricLightingSystem();
+        readonly AmbientOcclusionSystem m_AmbientOcclusionSystem;
 
         // Debugging
         MaterialPropertyBlock m_SharedPropertyBlock = new MaterialPropertyBlock();
@@ -240,6 +240,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_NormalBufferManager.Build(asset);
 
             m_PostProcessManager = new PostProcessManager(asset);
+            m_AmbientOcclusionSystem = new AmbientOcclusionSystem(asset);
 
             // Initialize various compute shader resources
             m_applyDistortionKernel = m_applyDistortionCS.FindKernel("KMain");
@@ -303,11 +304,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Technically we won't need this buffer in some cases, but nothing that we can determine at init time.
             m_CameraStencilBufferCopy = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.None, colorFormat: RenderTextureFormat.R8, sRGB: false, filterMode: FilterMode.Point, enableMSAA: true, name: "CameraStencilCopy"); // DXGI_FORMAT_R8_UINT is not supported by Unity
 
-            if (m_Asset.renderPipelineSettings.supportSSAO)
-            {
-                m_AmbientOcclusionBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Bilinear, colorFormat: RenderTextureFormat.R8, sRGB: false, enableRandomWrite: true, name: "AmbientOcclusion");
-            }
-
             if (m_Asset.renderPipelineSettings.supportMotionVectors)
             {
                 m_VelocityBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetVelocityBufferFormat(), sRGB: Builtin.GetVelocityBufferSRGBFlag(), enableMSAA: true, name: "Velocity");
@@ -338,7 +334,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RTHandles.Release(m_CameraDepthBufferCopy);
             RTHandles.Release(m_CameraStencilBufferCopy);
 
-            RTHandles.Release(m_AmbientOcclusionBuffer);
             RTHandles.Release(m_VelocityBuffer);
             RTHandles.Release(m_DistortionBuffer);
             RTHandles.Release(m_DeferredShadowBuffer);
@@ -528,6 +523,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_VolumetricLightingSystem.Cleanup();
             m_IBLFilterGGX.Cleanup();
             m_PostProcessManager.Cleanup();
+            m_AmbientOcclusionSystem.Cleanup();
 
             HDCamera.ClearAll();
 
@@ -981,11 +977,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {
                         StartStereoRendering(renderContext, hdCamera);
 
-                        using (new ProfilingSample(cmd, "Render SSAO", CustomSamplerId.RenderSSAO.GetSampler()))
-                        {
-                            // TODO: Everything here (SSAO, Shadow, Build light list, deferred shadow, material and light classification can be parallelize with Async compute)
-                            RenderSSAO(cmd, hdCamera, renderContext, postProcessLayer);
-                        }
+                        // TODO: Everything here (SSAO, Shadow, Build light list, deferred shadow, material and light classification can be parallelize with Async compute)
+                        m_AmbientOcclusionSystem.Render(cmd, hdCamera, GetDepthTexture());
 
                         // Clear and copy the stencil texture needs to be moved to before we invoke the async light list build,
                         // otherwise the async compute queue can end up using that texture before the graphics queue is done with it.
@@ -1506,31 +1499,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     HDUtils.BlitCameraTexture(cmd, hdCamera, m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget);
                 }
             }
-        }
-
-        void RenderSSAO(CommandBuffer cmd, HDCamera hdCamera, ScriptableRenderContext renderContext, PostProcessLayer postProcessLayer)
-        {
-            var camera = hdCamera.camera;
-
-            // Apply SSAO from PostProcessLayer
-            if (hdCamera.frameSettings.enableSSAO && postProcessLayer != null && postProcessLayer.enabled)
-            {
-                var settings = postProcessLayer.GetSettings<AmbientOcclusion>();
-
-                if (settings.IsEnabledAndSupported(null))
-                {
-                    postProcessLayer.BakeMSVOMap(cmd, camera, m_AmbientOcclusionBuffer, GetDepthTexture(), true);
-
-                    cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, m_AmbientOcclusionBuffer);
-                    cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, new Vector4(settings.color.value.r, settings.color.value.g, settings.color.value.b, settings.directLightingStrength.value));
-                    PushFullScreenDebugTexture(hdCamera, cmd, m_AmbientOcclusionBuffer, FullScreenDebugMode.SSAO);
-                    return;
-                }
-            }
-
-            // No AO applied - neutral is black, see the comment in the shaders
-            cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, RuntimeUtilities.blackTexture);
-            cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, Vector4.zero);
         }
 
         void RenderDeferredLighting(HDCamera hdCamera, CommandBuffer cmd)

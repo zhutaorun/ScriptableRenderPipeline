@@ -74,6 +74,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public ComputeShader shadowBlurMoments;
         public Shader debugShadowMapShader;
 
+        // Ambient occlusion
+        public ComputeShader aoDownsample1;
+        public ComputeShader aoDownsample2;
+        public ComputeShader aoRender;
+        public ComputeShader aoUpsample;
+
         // Post-processing
         public ComputeShader exposureCS;
     }
