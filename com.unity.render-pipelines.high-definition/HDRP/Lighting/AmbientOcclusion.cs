@@ -4,18 +4,25 @@ using UnityEngine.Rendering;
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     // TODO: Fix RTHandle resizing support
+    // TODO: User HDShaderIDs instead of strings to lower CPU usage
 
     using RTHandle = RTHandleSystem.RTHandle;
 
     [Serializable]
     public sealed class AmbientOcclusion : VolumeComponent
     {
+        [Tooltip("Degree of darkness added by ambient occlusion.")]
         public ClampedFloatParameter intensity = new ClampedFloatParameter(0f, 0f, 4f);
+
+        [Tooltip("Modifies thickness of occluders. This increases dark areas but also introduces dark halo around objects.")]
         public ClampedFloatParameter thicknessModifier = new ClampedFloatParameter(1f, 1f, 10f);
+
+        [Tooltip("Defines how much of the occlusion should be affected by ambient lighting.")]
         public ClampedFloatParameter directLightingStrength = new ClampedFloatParameter(1f, 0f, 1f);
 
         // Only used if GTAOMultiBounce is active
         // TODO: Custom editor needed to filter this option out if GTAOMultiBounce is active
+        [Tooltip("Custom color to use for the ambient occlusion.")]
         public ColorParameter color = new ColorParameter(Color.black, false, false, true);
 
         // Hidden parameters

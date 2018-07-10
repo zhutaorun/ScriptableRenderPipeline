@@ -4,14 +4,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     using RTHandle = RTHandleSystem.RTHandle;
 
-    public struct PostProcessParameters
-    {
-        public HDCamera camera;
-        public CommandBuffer cmd;
-        public RTHandle colorBuffer;
-        public RTHandle lightingBuffer;
-    }
-
     // Main class for all post-processing related features - only includes camera effects, no
     // lighting/surface effect like SSR/AO
     public sealed class PostProcessSystem
