@@ -200,13 +200,23 @@ namespace UnityEditor.Experimental.Rendering
             {
                 material = new Material(Shader.Find("Debug/ReflectionProbePreview"));
             }
-            Graphics.DrawMesh(sphere, Matrix4x4.TRS(a.capturePoint, Quaternion.identity, Vector3.one), material, 0);
-            //Renderer renderer = p.GetComponent<Renderer>();
-            //if (renderer && renderer.material)
-            //{
-            //    Material mat = renderer.material;
-            //    mat.SetVector("_CaptureOffset", a.capturePoint - p.transform.position);
-            //}
+            bool inside;
+            if(a.proxyVolumeComponent == null)
+            {
+                Bounds bounds = new Bounds(Vector3.zero, a.size);
+                Vector3 relativePosition = Quaternion.Inverse(p.transform.rotation) * (a.capturePoint - p.transform.position);
+                inside = bounds.Contains(relativePosition);
+            }
+            else
+            {
+                Bounds bounds = new Bounds(Vector3.zero, a.proxyVolumeComponent.proxyVolume.extents * 2f);
+                Vector3 relativePosition = Quaternion.Inverse(a.proxyVolumeComponent.transform.rotation) * (a.capturePoint - a.proxyVolumeComponent.transform.position);
+                inside = bounds.Contains(relativePosition);
+            }
+            material.color = inside ? Color.white : Color.red;
+            material.SetTexture("_Cubemap", p.texture);
+            material.SetPass(0);
+            Graphics.DrawMeshNow(sphere, Matrix4x4.TRS(a.capturePoint, Quaternion.identity, Vector3.one));
         }
     }
 }

@@ -6,7 +6,7 @@ Shader "Debug/ReflectionProbePreview"
         _CameraWorldPosition("_CameraWorldPosition", Vector) = (1,1,1,1)
         _MipLevel("_MipLevel", Range(0.0,7.0)) = 0.0
         _Exposure("_Exposure", Range(-10.0,10.0)) = 0.0
-        _CaptureOffset("_CaptureOffset", Vector) = (0,0,0,1)
+        _Color("Main Color", Color) = (1,1,1,1)
     }
 
     SubShader
@@ -43,8 +43,8 @@ Shader "Debug/ReflectionProbePreview"
             TEXTURECUBE(_Cubemap);
             SAMPLER(sampler_Cubemap);
 
+            float4 _Color;
             float3 _CameraWorldPosition;
-            float3 _CaptureOffset;
             float _MipLevel;
             float _Exposure;
 
@@ -52,7 +52,7 @@ Shader "Debug/ReflectionProbePreview"
             {
                 v2f o;
                 // Transform local to world before custom vertex code
-                o.positionWS = TransformObjectToWorld(v.positionOS.xyz) + _CaptureOffset.xyz;
+                o.positionWS = TransformObjectToWorld(v.positionOS.xyz);
                 o.positionCS = TransformWorldToHClip(o.positionWS);
                 o.normalWS = TransformObjectToWorldNormal(v.normalOS);
 
@@ -61,12 +61,11 @@ Shader "Debug/ReflectionProbePreview"
 
             float4 frag(v2f i) : SV_Target
             {
-                //float3 view = normalize(i.worldpos - _CameraWorldPosition);
                 float3 V = normalize(i.positionWS - GetPrimaryCameraPosition());
                 float3 R = reflect(V, i.normalWS);
                 float4 color = SAMPLE_TEXTURECUBE_LOD(_Cubemap, sampler_Cubemap, R, _MipLevel).rgba;
                 color = color * exp2(_Exposure);
-                return float4(color);
+                return float4(_Color.r*color.r, _Color.g*color.g, _Color.b*color.b, color.a);
             }
             ENDHLSL
         }

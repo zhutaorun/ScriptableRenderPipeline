@@ -50,5 +50,18 @@ namespace UnityEngine.Experimental.Rendering
 
         public float sphereBlendRadiusOffset { get { return -blendDistancePositive.x; } }
         public float sphereBlendNormalRadiusOffset { get { return -blendNormalDistancePositive.x; } }
+
+        public Vector3 size
+        {
+            get
+            {
+                switch (influenceShape)
+                {
+                    default: return Vector3.one;
+                    case ShapeType.Box: return GetComponent<ReflectionProbe>().size;
+                    case ShapeType.Sphere: return Vector3.one * (influenceSphereRadius * 2f);
+                }
+            }
+        }
     }
 }
