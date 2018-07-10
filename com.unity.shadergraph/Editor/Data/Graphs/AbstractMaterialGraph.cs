@@ -241,6 +241,13 @@ namespace UnityEditor.ShaderGraph
             m_AddedGroups.Add(groupData);
         }
 
+        public void AddGroup(GroupData groupData)
+        {
+            if (m_Groups.Contains(groupData))
+                return;
+            m_Groups.Add(groupData);
+        }
+
         public void RemoveGroupData(GroupData groupData)
         {
             m_Groups.Remove(groupData);
@@ -617,7 +624,7 @@ namespace UnityEditor.ShaderGraph
             var otherMg = other as AbstractMaterialGraph;
             if (otherMg == null)
                 throw new ArgumentException("Can only replace with another AbstractMaterialGraph", "other");
-            
+
             using (var removedPropertiesPooledObject = ListPool<Guid>.GetDisposable())
             {
                 var removedPropertyGuids = removedPropertiesPooledObject.value;

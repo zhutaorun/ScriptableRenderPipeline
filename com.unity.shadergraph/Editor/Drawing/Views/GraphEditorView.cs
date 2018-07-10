@@ -436,7 +436,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                             var node = element.userData as INode;
                             if (node == null)
                                 continue;
-                            //m_Graph.RemoveNode(node);
+                            // TODO: this doesnt work, need to remove all nodes inside the group, somehow
+                            m_Graph.RemoveNode(node);
                             // m_GraphView.RemoveElement();
                         }
 

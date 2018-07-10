@@ -148,8 +148,69 @@ namespace UnityEditor.ShaderGraph.Drawing
             string title = "New Material Group";
             GroupData groupData = new GroupData(title, pos);
 
-            graph.AddGroupData(groupData);
+            // This works...
+            graph.AddGroup(groupData);
+
+
+
+//
+//
+//            var groupNode = ScriptableObject.CreateInstance<MathGroupNode>();
+//
+//            groupNode.m_Title = "New Group";
+//
+//            m_SimpleGraphViewWindow.AddNode(groupNode);
+//
+//            var graphGroup = m_SimpleGraphViewWindow.CreateNode(groupNode) as Group;
+//
+//            AddElement(graphGroup);
+//
+//            foreach (ISelectable s in selection)
+//            {
+//                var node = s as Node;
+//
+//                // Do not add edges
+//                if (node == null)
+//                    continue;
+//
+//                graphGroup.AddElement(node);
+//            }
+//
+//
+//
+//
+            MaterialGraphGroup graphGroup = CreateGroupNode(groupData) as MaterialGraphGroup;
+            AddElement(graphGroup);
+//
+                foreach (ISelectable selectable in selection)
+                {
+                    if (selectable is MaterialNodeView)
+                    {
+                        MaterialNodeView materialNodeView = selectable as MaterialNodeView;
+                        AbstractMaterialNode abstractMaterialNode = materialNodeView.node;
+                        abstractMaterialNode.groupGuid = groupData.guid;
+                        graphGroup.AddElement(materialNodeView);
+                    }
+                }
+//
+//                //m_GraphGroups.Add(graphGroup);
+            }
+
+        GraphElement CreateGroupNode(GroupData groupData)
+        {
+            MaterialGraphGroup graphGroupNode = new MaterialGraphGroup();
+
+            graphGroupNode.userData = groupData;
+            graphGroupNode.SetPosition(new Rect(groupData.position.x, groupData.position.y, 100, 100));
+            graphGroupNode.title = groupData.title;
+
+            return graphGroupNode;
         }
+
+
+       // }
+
+
 
         void RemoveFromGroupNode(ContextualMenu.MenuAction a)
         {
