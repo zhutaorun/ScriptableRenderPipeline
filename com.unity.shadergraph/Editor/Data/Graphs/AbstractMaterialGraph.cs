@@ -613,10 +613,11 @@ namespace UnityEditor.ShaderGraph
 
         public void ReplaceWith(IGraph other)
         {
+
             var otherMg = other as AbstractMaterialGraph;
             if (otherMg == null)
                 throw new ArgumentException("Can only replace with another AbstractMaterialGraph", "other");
-
+            
             using (var removedPropertiesPooledObject = ListPool<Guid>.GetDisposable())
             {
                 var removedPropertyGuids = removedPropertiesPooledObject.value;
