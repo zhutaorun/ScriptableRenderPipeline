@@ -4,11 +4,15 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
+using System.Linq;
 
 namespace UnityEditor.Experimental.Rendering
 {
     partial class HDReflectionProbeEditor
     {
+        static Mesh sphere;
+        static Material material;
+
         [DrawGizmo(GizmoType.Active)]
         static void RenderGizmo(ReflectionProbe reflectionProbe, GizmoType gizmoType)
         {
@@ -186,12 +190,23 @@ namespace UnityEditor.Experimental.Rendering
 
         static void Gizmos_CapturePoint(ReflectionProbe p, HDAdditionalReflectionData a, HDReflectionProbeEditor e)
         {
-            Renderer renderer = p.GetComponent<Renderer>();
-            if (renderer && renderer.material)
+            if(sphere == null)
             {
-                Material mat = renderer.material;
-                mat.SetVector("_CaptureOffset", a.capturePoint - p.transform.position);
+                var assets = AssetDatabase.LoadAllAssetsAtPath("Library/unity default resources")
+                         .Where(i => typeof(Mesh).IsAssignableFrom(i.GetType())).Cast<Mesh>().ToList();
+                sphere = assets.Where(i => i.name == "Sphere").First(); //icosphere icosahedron
             }
+            if(material == null)
+            {
+                material = new Material(Shader.Find("Debug/ReflectionProbePreview"));
+            }
+            Graphics.DrawMesh(sphere, Matrix4x4.TRS(a.capturePoint, Quaternion.identity, Vector3.one), material, 0);
+            //Renderer renderer = p.GetComponent<Renderer>();
+            //if (renderer && renderer.material)
+            //{
+            //    Material mat = renderer.material;
+            //    mat.SetVector("_CaptureOffset", a.capturePoint - p.transform.position);
+            //}
         }
     }
 }
