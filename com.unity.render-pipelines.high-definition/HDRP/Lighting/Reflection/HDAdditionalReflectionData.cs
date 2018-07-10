@@ -45,7 +45,17 @@ namespace UnityEngine.Experimental.Rendering
         public Vector3 boxBlendSizeOffset { get { return -(blendDistancePositive + blendDistanceNegative); } }
         public Vector3 boxBlendNormalCenterOffset { get { return (blendNormalDistanceNegative - blendNormalDistancePositive) * 0.5f; } }
         public Vector3 boxBlendNormalSizeOffset { get { return -(blendNormalDistancePositive + blendNormalDistanceNegative); } }
-        public Vector3 capturePoint { get { return proxyVolumeComponent == null ? transform.position + proxyOffsetCapturePoint : proxyVolumeComponent.transform.position + proxyOffsetCapturePoint; } }
+        public Vector3 capturePoint
+        {
+            get
+            {
+                return proxyVolumeComponent == null ? transform.position + proxyOffsetCapturePoint : proxyVolumeComponent.transform.position + proxyOffsetCapturePoint;
+            }
+            set
+            {
+                proxyOffsetCapturePoint = value - (proxyVolumeComponent == null ? transform.position : proxyVolumeComponent.transform.position);
+            }
+        }
 
 
         public float sphereBlendRadiusOffset { get { return -blendDistancePositive.x; } }

@@ -86,7 +86,7 @@ namespace UnityEditor.Experimental.Rendering
             p.resolution.intValue = (int)renderPipelineAsset.GetRenderPipelineSettings().lightLoopSettings.reflectionCubemapSize;
             GUILayout.BeginHorizontal();
             EditorGUILayout.PropertyField(p.proxyOffsetCapturePoint, CoreEditorUtils.GetContent("Capture Point|Relative to Proxy center."));
-            if (GUILayout.Button(toolbar_Contents[3], GUILayout.Width(28f), GUILayout.Height(EditorGUIUtility.singleLineHeight + 3)))
+            if (GUILayout.Button(toolbarCapture_Contents[0], GUILayout.Width(28f), GUILayout.Height(EditorGUIUtility.singleLineHeight + 3)))
             {
                 EditMode.ChangeEditMode(EditMode.SceneViewEditMode.ReflectionProbeOrigin, GetBoundsGetter(p)(), owner);
             }
@@ -168,9 +168,9 @@ namespace UnityEditor.Experimental.Rendering
                 maxBlendDistance,
                 CoreEditorUtils.GetContent("Blend Distance|Area around the probe where it is blended with other probes. Only used in deferred probes.")
                 );
-            if (GUILayout.Button(toolbar_Contents[1], GUILayout.ExpandHeight(true), GUILayout.Width(28f), GUILayout.MinHeight(22f), GUILayout.MaxHeight((advanced ? 3 : 1) * (EditorGUIUtility.singleLineHeight + 3))))
+            if (GUILayout.Button(toolbarInfluence_Contents[1], GUILayout.ExpandHeight(true), GUILayout.Width(28f), GUILayout.MinHeight(22f), GUILayout.MaxHeight((advanced ? 3 : 1) * (EditorGUIUtility.singleLineHeight + 3))))
             {
-                EditMode.ChangeEditMode(k_Toolbar_SceneViewEditModes[1], GetBoundsGetter(p)(), owner);
+                EditMode.ChangeEditMode(k_ToolbarInfluence_SceneViewEditModes[1], GetBoundsGetter(p)(), owner);
             }
             EditorGUILayout.EndHorizontal();
 
@@ -181,9 +181,9 @@ namespace UnityEditor.Experimental.Rendering
                 maxBlendDistance,
                 CoreEditorUtils.GetContent("Blend Normal Distance|Area around the probe where the normals influence the probe. Only used in deferred probes.")
                 );
-            if (GUILayout.Button(toolbar_Contents[2], GUILayout.ExpandHeight(true), GUILayout.Width(28f), GUILayout.MinHeight(22f), GUILayout.MaxHeight((advanced ? 3 : 1) * (EditorGUIUtility.singleLineHeight + 3))))
+            if (GUILayout.Button(toolbarInfluence_Contents[2], GUILayout.ExpandHeight(true), GUILayout.Width(28f), GUILayout.MinHeight(22f), GUILayout.MaxHeight((advanced ? 3 : 1) * (EditorGUIUtility.singleLineHeight + 3))))
             {
-                EditMode.ChangeEditMode(k_Toolbar_SceneViewEditModes[2], GetBoundsGetter(p)(), owner);
+                EditMode.ChangeEditMode(k_ToolbarInfluence_SceneViewEditModes[2], GetBoundsGetter(p)(), owner);
             }
             EditorGUILayout.EndHorizontal();
 
@@ -258,9 +258,9 @@ namespace UnityEditor.Experimental.Rendering
                 p.blendDistancePositive.vector3Value = Vector3.one * blendDistance;
                 p.blendDistanceNegative.vector3Value = Vector3.one * blendDistance;
             }
-            if (GUILayout.Button(toolbar_Contents[1], GUILayout.Width(28f), GUILayout.Height(EditorGUIUtility.singleLineHeight + 3)))
+            if (GUILayout.Button(toolbarInfluence_Contents[1], GUILayout.Width(28f), GUILayout.Height(EditorGUIUtility.singleLineHeight + 3)))
             {
-                EditMode.ChangeEditMode(k_Toolbar_SceneViewEditModes[1], GetBoundsGetter(p)(), owner);
+                EditMode.ChangeEditMode(k_ToolbarInfluence_SceneViewEditModes[1], GetBoundsGetter(p)(), owner);
             }
             EditorGUILayout.EndHorizontal();
 
@@ -274,9 +274,9 @@ namespace UnityEditor.Experimental.Rendering
                 p.blendNormalDistancePositive.vector3Value = Vector3.one * blendNormalDistance;
                 p.blendNormalDistanceNegative.vector3Value = Vector3.one * blendNormalDistance;
             }
-            if (GUILayout.Button(toolbar_Contents[2], GUILayout.Width(28f), GUILayout.Height(EditorGUIUtility.singleLineHeight + 3)))
+            if (GUILayout.Button(toolbarInfluence_Contents[2], GUILayout.Width(28f), GUILayout.Height(EditorGUIUtility.singleLineHeight + 3)))
             {
-                EditMode.ChangeEditMode(k_Toolbar_SceneViewEditModes[2], GetBoundsGetter(p)(), owner);
+                EditMode.ChangeEditMode(k_ToolbarInfluence_SceneViewEditModes[2], GetBoundsGetter(p)(), owner);
             }
             EditorGUILayout.EndHorizontal();
             EditorGUI.showMixedValue = false;
@@ -356,7 +356,7 @@ namespace UnityEditor.Experimental.Rendering
         {
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.PropertyField(p.boxSize, CoreEditorUtils.GetContent("Box Size|The size of the box in which the reflections will be applied to objects. The value is not affected by the Transform of the Game Object."));
-            if (GUILayout.Button(toolbar_Contents[0], GUILayout.Width(28f), GUILayout.Height(EditorGUIUtility.singleLineHeight + 3)))
+            if (GUILayout.Button(toolbarInfluence_Contents[0], GUILayout.Width(28f), GUILayout.Height(EditorGUIUtility.singleLineHeight + 3)))
             {
                 EditMode.ChangeEditMode(EditMode.SceneViewEditMode.ReflectionProbeBox, GetBoundsGetter(p)(), owner);
             }
@@ -367,7 +367,7 @@ namespace UnityEditor.Experimental.Rendering
         {
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.PropertyField(p.influenceSphereRadius, CoreEditorUtils.GetContent("Radius"));
-            if (GUILayout.Button(toolbar_Contents[0], GUILayout.ExpandHeight(true), GUILayout.Width(28f), GUILayout.Height(EditorGUIUtility.singleLineHeight + 3)))
+            if (GUILayout.Button(toolbarInfluence_Contents[0], GUILayout.ExpandHeight(true), GUILayout.Width(28f), GUILayout.Height(EditorGUIUtility.singleLineHeight + 3)))
             {
                 EditMode.ChangeEditMode(EditMode.SceneViewEditMode.ReflectionProbeBox, GetBoundsGetter(p)(), owner);
             }
@@ -399,27 +399,46 @@ namespace UnityEditor.Experimental.Rendering
         #endregion
 
         #region Toolbar
-        static readonly EditMode.SceneViewEditMode[] k_Toolbar_SceneViewEditModes =
+        static readonly EditMode.SceneViewEditMode[] k_ToolbarInfluence_SceneViewEditModes =
         {
             EditMode.SceneViewEditMode.ReflectionProbeBox,
             EditMode.SceneViewEditMode.GridBox,
-            EditMode.SceneViewEditMode.Collider,
-            EditMode.SceneViewEditMode.ReflectionProbeOrigin
+            EditMode.SceneViewEditMode.Collider
         };
-        static GUIContent[] s_Toolbar_Contents = null;
-        static GUIContent[] toolbar_Contents
+
+        static GUIContent[] s_ToolbarInfluance_Contents = null;
+
+        static GUIContent[] toolbarInfluence_Contents
         {
             get
             {
-                return s_Toolbar_Contents ?? (s_Toolbar_Contents = new[]
+                return s_ToolbarInfluance_Contents ?? (s_ToolbarInfluance_Contents = new[]
                 {
                     EditorGUIUtility.IconContent("EditCollider", "|Modify the extents of the reflection probe. (SHIFT+1)"),
                     EditorGUIUtility.IconContent("PreMatCube", "|Modify the influence volume of the reflection probe. (SHIFT+2)"),
-                    EditorGUIUtility.IconContent("SceneViewOrtho", "|Modify the influence normal volume of the reflection probe. (SHIFT+3)"),
-                    EditorGUIUtility.IconContent("MoveTool", "|Move the selected objects.")
+                    EditorGUIUtility.IconContent("SceneViewOrtho", "|Modify the influence normal volume of the reflection probe. (SHIFT+3)")
                 });
             }
         }
+
+        static readonly EditMode.SceneViewEditMode[] k_ToolbarCapture_SceneViewEditModes =
+        {
+            EditMode.SceneViewEditMode.ReflectionProbeOrigin
+        };
+        
+        static GUIContent[] s_ToolbarCapture_Contents = null;
+
+        static GUIContent[] toolbarCapture_Contents
+        {
+            get
+            {
+                return s_ToolbarCapture_Contents ?? (s_ToolbarCapture_Contents = new[]
+                {
+                    EditorGUIUtility.IconContent("MoveTool", "|Move the CapturePoint.")
+                });
+            }
+        }
+
         static void Drawer_Toolbar(HDReflectionProbeUI s, SerializedHDReflectionProbe p, Editor owner)
         {
             if (p.so.targetObjects.Length > 1)
@@ -431,7 +450,8 @@ namespace UnityEditor.Experimental.Rendering
             GUI.changed = false;
             var oldEditMode = EditMode.editMode;
 
-            EditMode.DoInspectorToolbar(k_Toolbar_SceneViewEditModes, toolbar_Contents, GetBoundsGetter(p), owner);
+            EditMode.DoInspectorToolbar(k_ToolbarInfluence_SceneViewEditModes, toolbarInfluence_Contents, GetBoundsGetter(p), owner);
+            EditMode.DoInspectorToolbar(k_ToolbarCapture_SceneViewEditModes, toolbarCapture_Contents, GetBoundsGetter(p), owner);
 
             //if (GUILayout.Button(EditorGUIUtility.IconContent("Navigation", "|Fit the reflection probe volume to the surrounding colliders.")))
             //    s.AddOperation(Operation.FitVolumeToSurroundings);
@@ -481,9 +501,9 @@ namespace UnityEditor.Experimental.Rendering
             {
                 if (evt.keyCode == k_ShortCutKeys[i])
                 {
-                    var mode = EditMode.editMode == k_Toolbar_SceneViewEditModes[i]
+                    var mode = EditMode.editMode == k_ToolbarInfluence_SceneViewEditModes[i]
                         ? EditMode.SceneViewEditMode.None
-                        : k_Toolbar_SceneViewEditModes[i];
+                        : k_ToolbarInfluence_SceneViewEditModes[i];
                     EditMode.ChangeEditMode(mode, GetBoundsGetter(p)(), o);
                     evt.Use();
                     break;

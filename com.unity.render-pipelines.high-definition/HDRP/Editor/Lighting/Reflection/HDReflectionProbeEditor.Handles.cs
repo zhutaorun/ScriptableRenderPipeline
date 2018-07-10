@@ -1,4 +1,5 @@
 using System;
+using UnityEditor.Experimental.Rendering.HDPipeline;
 using UnityEditor.IMGUI.Controls;
 using UnityEditorInternal;
 using UnityEngine;
@@ -229,8 +230,6 @@ namespace UnityEditor.Experimental.Rendering
                             sp.target.center = center;
                             sp.target.size = size;
 
-                            //ApplyConstraintsOnTargets(s, sp, o);
-
                             EditorUtility.SetDirty(sp.target);
                             EditorUtility.SetDirty(sp.targetData);
                         }
@@ -258,8 +257,6 @@ namespace UnityEditor.Experimental.Rendering
 
                             sp.targetData.influenceSphereRadius = influenceRadius;
 
-                            //ApplyConstraintsOnTargets(s, sp, o);
-
                             EditorUtility.SetDirty(sp.target);
                             EditorUtility.SetDirty(sp.targetData);
                         }
@@ -270,10 +267,10 @@ namespace UnityEditor.Experimental.Rendering
             Handles.color = col;
         }
 
-        static void Handle_OriginEditing(HDReflectionProbeUI s, SerializedHDReflectionProbe sp, Editor o)
+        static void Handle_OriginEditing(HDReflectionProbeUI s, SerializedHDReflectionProbe sp, HDReflectionProbeEditor o)
         {
             var p = (ReflectionProbe)sp.so.targetObject;
-            var transformPosition = p.transform.position;
+            var transformPosition = sp.targetData.capturePoint;
             var size = p.size;
 
             EditorGUI.BeginChangeCheck();
@@ -285,14 +282,11 @@ namespace UnityEditor.Experimental.Rendering
             {
                 var localNewPosition = s.oldLocalSpace.inverse.MultiplyPoint3x4(newPostion);
 
-                var b = new Bounds(p.center, size);
-                localNewPosition = b.ClosestPoint(localNewPosition);
-
                 Undo.RecordObject(p.transform, "Modified Reflection Probe Origin");
-                p.transform.position = s.oldLocalSpace.MultiplyPoint3x4(localNewPosition);
-
-                Undo.RecordObject(p, "Modified Reflection Probe Origin");
-                p.center = HDReflectionProbeEditorUtility.GetLocalSpace(p).inverse.MultiplyPoint3x4(s.oldLocalSpace.MultiplyPoint3x4(p.center));
+                sp.targetData.capturePoint = s.oldLocalSpace.MultiplyPoint3x4(localNewPosition);
+                //p.center = sp.targetData.capturePoint - p.transform.position;
+                Debug.Log(p.center);
+                Gizmos_CapturePoint(p, sp.targetData, o);
 
                 EditorUtility.SetDirty(p);
 

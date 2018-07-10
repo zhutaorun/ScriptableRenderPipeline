@@ -140,6 +140,8 @@ namespace UnityEditor.Experimental.Rendering
                 var p = (ReflectionProbe)sp.so.targetObjects[i];
                 var tr = p.GetComponent<Transform>();
                 hash ^= tr.position.GetHashCode();
+                //var addp = (HDAdditionalReflectionData)sp.addso.targetObjects[i];
+                //hash ^= addp.capturePoint.GetHashCode();
             }
 
             if (hash != m_PositionHash)

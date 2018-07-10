@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 using System.Linq;
+using UnityEditor.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering
 {
@@ -17,15 +18,10 @@ namespace UnityEditor.Experimental.Rendering
         static void RenderGizmo(ReflectionProbe reflectionProbe, GizmoType gizmoType)
         {
             var e = GetEditorFor(reflectionProbe);
-            if (e == null)
+            if (e == null || !e.sceneViewEditing)
                 return;
 
             var reflectionData = reflectionProbe.GetComponent<HDAdditionalReflectionData>();
-            //Gizmos_CapturePoint(reflectionProbe, reflectionData, e);
-
-            if (!e.sceneViewEditing)
-                return;
-
 
             switch (EditMode.editMode)
             {
@@ -40,6 +36,10 @@ namespace UnityEditor.Experimental.Rendering
                 // Influence normal fade editing
                 case EditMode.SceneViewEditMode.Collider:
                     Gizmos_InfluenceFade(reflectionProbe, reflectionData, e, InfluenceType.Normal, true);
+                    break;
+                case EditMode.SceneViewEditMode.ReflectionProbeOrigin:
+                    if (reflectionData.proxyVolumeComponent != null)
+                        ProxyVolumeUI.DrawGizmos_EditNone(reflectionData.proxyVolumeComponent.transform, reflectionData.proxyVolumeComponent.proxyVolume);
                     break;
             }
         }
@@ -56,7 +56,6 @@ namespace UnityEditor.Experimental.Rendering
             //Gizmos_Influence(reflectionProbe, reflectionData, e, false);
             Gizmos_InfluenceFade(reflectionProbe, reflectionData, null, InfluenceType.Standard, false);
             Gizmos_InfluenceFade(reflectionProbe, reflectionData, null, InfluenceType.Normal, false);
-
 
             DrawVerticalRay(reflectionProbe.transform);
             HDReflectionProbeEditorUtility.ChangeVisibility(reflectionProbe, true);

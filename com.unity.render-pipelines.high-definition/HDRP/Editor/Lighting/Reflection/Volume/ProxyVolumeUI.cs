@@ -145,20 +145,20 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             Handles.matrix = mat;
         }
 
-        public static void DrawGizmos_EditNone(Transform transform, ProxyVolume proxyVolume, ProxyVolumeUI ui, Object sourceAsset)
+        public static void DrawGizmos_EditNone(Transform transform, ProxyVolume proxyVolume)
         {
             switch (proxyVolume.shapeType)
             {
                 case ShapeType.Box:
-                    Gizmos_EditNone_Box(transform, proxyVolume, ui, sourceAsset);
+                    Gizmos_EditNone_Box(transform, proxyVolume);
                     break;
                 case ShapeType.Sphere:
-                    Gizmos_EditNone_Sphere(transform, proxyVolume, ui, sourceAsset);
+                    Gizmos_EditNone_Sphere(transform, proxyVolume);
                     break;
             }
         }
 
-        static void Gizmos_EditNone_Sphere(Transform t, ProxyVolume d, ProxyVolumeUI s, Object o)
+        static void Gizmos_EditNone_Sphere(Transform t, ProxyVolume d)
         {
             var mat = Gizmos.matrix;
             Gizmos.matrix = t.localToWorldMatrix;
@@ -169,7 +169,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             Gizmos.matrix = mat;
         }
 
-        static void Gizmos_EditNone_Box(Transform t, ProxyVolume d, ProxyVolumeUI s, Object o)
+        static void Gizmos_EditNone_Box(Transform t, ProxyVolume d)
         {
             var mat = Gizmos.matrix;
             Gizmos.matrix = t.localToWorldMatrix;
