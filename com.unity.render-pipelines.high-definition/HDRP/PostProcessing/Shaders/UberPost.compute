@@ -1,5 +1,6 @@
 #include "CoreRP/ShaderLibrary/Common.hlsl"
 #include "CoreRP/ShaderLibrary/Color.hlsl"
+#include "../../ShaderVariables.hlsl"
 #include "UberPostFeatures.cs.hlsl"
 
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
@@ -55,7 +56,7 @@ void MAIN(uint2 id : SV_DispatchThreadID)
         float2 diff = end - uv;
         int samples = clamp(int(length(_TexelSize.xy * diff / 2.0)), 3, maxSamples);
         float2 delta = diff / samples;
-        float2 pos = uv;
+        float2 pos = uv * _ScreenToTargetScale.xy;
         float4 sum = 0.0, filterSum = 0.0;
 
         for (int i = 0; i < samples; i++)

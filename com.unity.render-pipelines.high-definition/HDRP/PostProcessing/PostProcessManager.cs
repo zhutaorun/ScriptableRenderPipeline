@@ -25,6 +25,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Texture2D m_InternalSpectralLut;
 
         // Misc (re-usable)
+        RTHandle m_TempFullSize;
         RTHandle m_TempTexture1024;
         RTHandle m_TempTexture32;
 
@@ -52,6 +53,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             tempTex.Apply();
             Graphics.Blit(tempTex, m_EmptyExposureTexture);
             CoreUtils.Destroy(tempTex);
+
+            // TODO: Remove me
+            m_TempFullSize = RTHandles.Alloc(Vector2.one,
+                depthBufferBits: DepthBits.None,
+                filterMode: FilterMode.Bilinear,
+                colorFormat: RenderTextureFormat.RGB111110Float
+            );
         }
 
         public void Cleanup()
@@ -70,6 +78,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             CoreUtils.Destroy(m_InternalSpectralLut);
             m_InternalSpectralLut = null;
+
+            RTHandles.Release(m_TempFullSize);
+            m_TempFullSize = null;
         }
 
         public void BeginFrame(CommandBuffer cmd, HDCamera camera)
@@ -114,14 +125,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         DoVignette(cmd, cs, kernel, featureFlags);
                         
                         // TODO: Review this and remove the temporary target & blit once the whole stack is done
-                        int tempRemoveMe = Shader.PropertyToID("_TempTargetRemoveMe");
-                        cmd.GetTemporaryRT(tempRemoveMe, camera.actualWidth, camera.actualHeight, 0, FilterMode.Bilinear, RenderTextureFormat.RGB111110Float);
-                        cmd.Blit(colorBuffer, tempRemoveMe);
+                        cmd.Blit(colorBuffer, m_TempFullSize);
                         cmd.SetComputeVectorParam(cs, HDShaderIDs._TexelSize, new Vector4(camera.actualWidth, camera.actualHeight, 1f / camera.actualWidth, 1f / camera.actualHeight));
-                        cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, tempRemoveMe);
+                        cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, m_TempFullSize);
                         cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, colorBuffer);
                         cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 9) / 8, (camera.actualHeight + 9) / 8, 1);
-                        cmd.ReleaseTemporaryRT(tempRemoveMe);
                     }
                 }
             }
