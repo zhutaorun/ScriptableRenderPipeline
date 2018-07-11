@@ -405,5 +405,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _VignetteParams2                = Shader.PropertyToID("_VignetteParams2");
         public static readonly int _VignetteColor                  = Shader.PropertyToID("_VignetteColor");
         public static readonly int _VignetteMask                   = Shader.PropertyToID("_VignetteMask");
+        
+        public static readonly int _DistortionParams1              = Shader.PropertyToID("_DistortionParams1");
+        public static readonly int _DistortionParams2              = Shader.PropertyToID("_DistortionParams2");
     }
 }

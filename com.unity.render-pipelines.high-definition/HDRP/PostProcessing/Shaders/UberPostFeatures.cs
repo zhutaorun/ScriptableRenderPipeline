@@ -6,8 +6,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     [GenerateHLSL, Flags]
     public enum UberPostFeatureFlags
     {
-        None,
-        ChromaticAberration,
-        Vignette
+        None                      = 0,
+        ChromaticAberration       = 1 << 0,
+        Vignette                  = 1 << 1,
+        LensDistortion            = 1 << 2
     }
 }

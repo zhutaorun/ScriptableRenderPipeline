@@ -41,7 +41,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             PushUberFeature(UberPostFeatureFlags.None);
             PushUberFeature(UberPostFeatureFlags.ChromaticAberration);
             PushUberFeature(UberPostFeatureFlags.Vignette);
+            PushUberFeature(UberPostFeatureFlags.LensDistortion);
             PushUberFeature(UberPostFeatureFlags.ChromaticAberration | UberPostFeatureFlags.Vignette);
+            PushUberFeature(UberPostFeatureFlags.ChromaticAberration | UberPostFeatureFlags.LensDistortion);
+            PushUberFeature(UberPostFeatureFlags.Vignette | UberPostFeatureFlags.LensDistortion);
+            PushUberFeature(UberPostFeatureFlags.ChromaticAberration | UberPostFeatureFlags.Vignette | UberPostFeatureFlags.LensDistortion);
 
             // Setup a default exposure textures
             m_EmptyExposureTexture = RTHandles.Alloc(1, 1, colorFormat: RenderTextureFormat.RGHalf,
@@ -121,6 +125,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {
                         int kernel = GetUberKernel(cs, featureFlags);
 
+                        DoLensDistortion(cmd, cs, kernel, featureFlags);
                         DoChromaticAberration(cmd, cs, kernel, featureFlags);
                         DoVignette(cmd, cs, kernel, featureFlags);
                         
@@ -163,6 +168,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (VolumeManager.instance.stack.GetComponent<Vignette>().IsActive())
                 flags |= UberPostFeatureFlags.Vignette;
+
+            if (VolumeManager.instance.stack.GetComponent<LensDistortion>().IsActive())
+                flags |= UberPostFeatureFlags.LensDistortion;
 
             return flags;
         }
@@ -350,6 +358,28 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, m_TempTexture32);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, nextExposure);
             cmd.DispatchCompute(cs, kernel, 1, 1, 1);
+        }
+
+        #endregion
+
+        #region Lens Distortion
+
+        void DoLensDistortion(CommandBuffer cmd, ComputeShader cs, int kernel, UberPostFeatureFlags flags)
+        {
+            if ((flags & UberPostFeatureFlags.LensDistortion) != UberPostFeatureFlags.LensDistortion)
+                return;
+            
+            var settings = VolumeManager.instance.stack.GetComponent<LensDistortion>();
+
+            float amount = 1.6f * Mathf.Max(Mathf.Abs(settings.intensity.value * 100f), 1f);
+            float theta = Mathf.Deg2Rad * Mathf.Min(160f, amount);
+            float sigma = 2f * Mathf.Tan(theta * 0.5f);
+            var center = settings.center.value * 2f - Vector2.one;
+            var p1 = new Vector4(center.x, center.y, Mathf.Max(settings.xMultiplier.value, 1e-4f), Mathf.Max(settings.yMultiplier.value, 1e-4f));
+            var p2 = new Vector4(settings.intensity.value >= 0f ? theta : 1f / theta, sigma, 1f / settings.scale.value, settings.intensity.value * 100f);
+            
+            cmd.SetComputeVectorParam(cs, HDShaderIDs._DistortionParams1, p1);
+            cmd.SetComputeVectorParam(cs, HDShaderIDs._DistortionParams2, p2);
         }
 
         #endregion

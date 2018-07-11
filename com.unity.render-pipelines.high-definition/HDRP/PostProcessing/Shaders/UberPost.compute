@@ -5,14 +5,14 @@
 
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
-// None
 #pragma kernel KMain_Variant0 MAIN=KMain_Variant0 VARIANT=0
-// Chromatic aberration
 #pragma kernel KMain_Variant1 MAIN=KMain_Variant1 VARIANT=1
-// Vignette
 #pragma kernel KMain_Variant2 MAIN=KMain_Variant2 VARIANT=2
-// CHromatic aberration + Vignette
 #pragma kernel KMain_Variant3 MAIN=KMain_Variant3 VARIANT=3
+#pragma kernel KMain_Variant4 MAIN=KMain_Variant4 VARIANT=4
+#pragma kernel KMain_Variant5 MAIN=KMain_Variant5 VARIANT=5
+#pragma kernel KMain_Variant6 MAIN=KMain_Variant6 VARIANT=6
+#pragma kernel KMain_Variant7 MAIN=KMain_Variant7 VARIANT=7
 
 TEXTURE2D(_InputTexture);
 TEXTURE2D(_ChromaSpectralLut);
@@ -24,13 +24,49 @@ SAMPLER(sampler_LinearClamp);
 SAMPLER(sampler_ChromaSpectralLut);
 SAMPLER(sampler_VignetteMask);
 
-CBUFFER_START(cb)
+CBUFFER_START(cb0)
     float4 _TexelSize;              // x: width, y: height, z: 1 / width, w: 1 / height
     float4 _ChromaParams;           // x: amount, y: max samples, zw: unused
     float4 _VignetteParams1;        // xy: center, z: mode, w: unused
     float4 _VignetteParams2;        // x: intensity, y: smoothness, z: roundness, w: rounded
     float4 _VignetteColor;          // xyz: color, a: opacity
+    float4 _DistortionParams1;      // xy: center, zw: axis intensity
+    float4 _DistortionParams2;      // x: theta, y: sigma, z: scale, w: intensity
 CBUFFER_END
+
+float2 DistortUV(float2 uv)
+{
+    // Lens distortion
+    // Note: this variant should never be set with XR
+    if (VARIANT & UBERPOSTFEATUREFLAGS_LENS_DISTORTION)
+    {
+        const float2 center = _DistortionParams1.xy;
+        const float2 axisIntensity = _DistortionParams1.zw;
+        const float theta = _DistortionParams2.x;
+        const float sigma = _DistortionParams2.y;
+        const float scale = _DistortionParams2.z;
+        const float intensity = _DistortionParams2.w;
+
+        uv = (uv - 0.5) * scale + 0.5;
+        float2 ruv = axisIntensity * (uv - 0.5 - center);
+        float ru = length(float2(ruv));
+
+        UNITY_BRANCH
+        if (intensity > 0.0)
+        {
+            float wu = ru * theta;
+            ru = tan(wu) * (1.0 / (ru * sigma));
+            uv = uv + ruv * (ru - 1.0);
+        }
+        else
+        {
+            ru = (1.0 / ru) * theta * atan(ru * sigma);
+            uv = uv + ruv * (ru - 1.0);
+        }
+    }
+
+    return uv;
+}
 
 [numthreads(8,8,1)]
 void MAIN(uint2 id : SV_DispatchThreadID)
@@ -39,13 +75,12 @@ void MAIN(uint2 id : SV_DispatchThreadID)
         return; // Out of bounds, discard
 
     float2 uv = id * _TexelSize.zw;
+    float2 uvDistorted = DistortUV(uv);
     float4 color = 0.0;
 
-    //
     // Chromatic aberration    
     // Inspired by the method described in "Rendering Inside" [Playdead 2016]
     // https://twitter.com/pixelmager/status/717019757766123520
-    //
     if (VARIANT & UBERPOSTFEATUREFLAGS_CHROMATIC_ABERRATION)
     {
         const float amount = _ChromaParams.x;
@@ -62,7 +97,7 @@ void MAIN(uint2 id : SV_DispatchThreadID)
         for (int i = 0; i < samples; i++)
         {
             float t = (i + 0.5) / samples;
-            float4 s = SAMPLE_TEXTURE2D_LOD(_InputTexture, sampler_LinearClamp, pos, 0);
+            float4 s = SAMPLE_TEXTURE2D_LOD(_InputTexture, sampler_LinearClamp, DistortUV(pos), 0);
             float4 filter = float4(SAMPLE_TEXTURE2D_LOD(_ChromaSpectralLut, sampler_ChromaSpectralLut, float2(t, 0.0), 0).rgb, 1.0);
 
             sum += s * filter;
@@ -74,37 +109,33 @@ void MAIN(uint2 id : SV_DispatchThreadID)
     }
     else
     {
-        color = _InputTexture[id];
+        color = SAMPLE_TEXTURE2D_LOD(_InputTexture, sampler_LinearClamp, uvDistorted, 0);
     }
 
-    //
     // Vignette
-    //
     if (VARIANT & UBERPOSTFEATUREFLAGS_VIGNETTE)
     {
         const uint mode = _VignetteParams1.z;
 
         UNITY_BRANCH
-        if (mode == 0u)
+        if (mode == 0u) // Procedural
         {
-            // Procedural vignette
             const float2 center = _VignetteParams1.xy;
             const float intensity = _VignetteParams2.x;
             const float smoothness = _VignetteParams2.y;
             const float roundness = _VignetteParams2.z;
             const float rounded = _VignetteParams2.w;
 
-            float2 d = abs(uv - center) * intensity;
+            float2 d = abs(uvDistorted - center) * intensity;
             d.x *= lerp(1.0, _TexelSize.x / _TexelSize.y, rounded);
             d = pow(saturate(d), roundness);
             float vfactor = pow(saturate(1.0 - dot(d, d)),smoothness);
             color.rgb *= lerp(_VignetteColor.xyz, (1.0).xxx, vfactor);
             color.a = lerp(1.0, color.a, vfactor);
         }
-        else
+        else // Masked
         {
-            // Masked vignette
-            float vfactor = SAMPLE_TEXTURE2D_LOD(_VignetteMask, sampler_VignetteMask, uv, 0).a;
+            float vfactor = SAMPLE_TEXTURE2D_LOD(_VignetteMask, sampler_VignetteMask, uvDistorted, 0).a;
             vfactor = FastSRGBToLinear(vfactor);
             float3 newColor = color.rgb * lerp(_VignetteColor.xyz, (1.0).xxx, vfactor);
             color.rgb = lerp(color.rgb, newColor, _VignetteColor.a);
