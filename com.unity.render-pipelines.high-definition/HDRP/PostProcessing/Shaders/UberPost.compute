@@ -91,13 +91,13 @@ void MAIN(uint2 id : SV_DispatchThreadID)
         float2 diff = end - uv;
         int samples = clamp(int(length(_TexelSize.xy * diff / 2.0)), 3, maxSamples);
         float2 delta = diff / samples;
-        float2 pos = uv * _ScreenToTargetScale.xy;
+        float2 pos = uv;
         float4 sum = 0.0, filterSum = 0.0;
 
         for (int i = 0; i < samples; i++)
         {
             float t = (i + 0.5) / samples;
-            float4 s = SAMPLE_TEXTURE2D_LOD(_InputTexture, sampler_LinearClamp, DistortUV(pos), 0);
+            float4 s = SAMPLE_TEXTURE2D_LOD(_InputTexture, sampler_LinearClamp, DistortUV(pos) * _ScreenToTargetScale.xy, 0);
             float4 filter = float4(SAMPLE_TEXTURE2D_LOD(_ChromaSpectralLut, sampler_ChromaSpectralLut, float2(t, 0.0), 0).rgb, 1.0);
 
             sum += s * filter;
@@ -109,7 +109,7 @@ void MAIN(uint2 id : SV_DispatchThreadID)
     }
     else
     {
-        color = SAMPLE_TEXTURE2D_LOD(_InputTexture, sampler_LinearClamp, uvDistorted, 0);
+        color = SAMPLE_TEXTURE2D_LOD(_InputTexture, sampler_LinearClamp, uvDistorted * _ScreenToTargetScale.xy, 0);
     }
 
     // Vignette
