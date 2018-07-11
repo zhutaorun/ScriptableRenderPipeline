@@ -84,6 +84,7 @@ namespace UnityEditor.Experimental.Rendering
             m_Parameters = new List<SerializedDataParameter>();
 
             // Grab all valid serializable field on the VolumeComponent
+            // TODO: Should only be done when needed / on demand as this can potentially be wasted CPU when a custom editor is in use
             var fields = target.GetType()
                 .GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                 .Where(t => t.FieldType.IsSubclassOf(typeof(VolumeParameter)))

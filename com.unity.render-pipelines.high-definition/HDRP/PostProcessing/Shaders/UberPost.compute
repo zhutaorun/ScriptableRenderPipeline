@@ -1,0 +1,121 @@
+#include "CoreRP/ShaderLibrary/Common.hlsl"
+#include "CoreRP/ShaderLibrary/Color.hlsl"
+#include "UberPostFeatures.cs.hlsl"
+
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+// None
+#pragma kernel KMain_Variant0 MAIN=KMain_Variant0 VARIANT=0
+// Chromatic aberration
+#pragma kernel KMain_Variant1 MAIN=KMain_Variant1 VARIANT=1
+// Vignette
+#pragma kernel KMain_Variant2 MAIN=KMain_Variant2 VARIANT=2
+// CHromatic aberration + Vignette
+#pragma kernel KMain_Variant3 MAIN=KMain_Variant3 VARIANT=3
+
+TEXTURE2D(_InputTexture);
+TEXTURE2D(_ChromaSpectralLut);
+TEXTURE2D(_VignetteMask);
+
+RW_TEXTURE2D(float4, _OutputTexture);
+
+SAMPLER(sampler_LinearClamp);
+SAMPLER(sampler_ChromaSpectralLut);
+SAMPLER(sampler_VignetteMask);
+
+CBUFFER_START(cb)
+    float4 _TexelSize;              // x: width, y: height, z: 1 / width, w: 1 / height
+    float4 _ChromaParams;           // x: amount, y: max samples, zw: unused
+    float4 _VignetteParams1;        // xy: center, z: mode, w: unused
+    float4 _VignetteParams2;        // x: intensity, y: smoothness, z: roundness, w: rounded
+    float4 _VignetteColor;          // xyz: color, a: opacity
+CBUFFER_END
+
+[numthreads(8,8,1)]
+void MAIN(uint2 id : SV_DispatchThreadID)
+{
+    if (any(id > uint2(_TexelSize.xy)))
+        return; // Out of bounds, discard
+
+    float2 uv = id * _TexelSize.zw;
+    float4 color = 0.0;
+
+    //
+    // Chromatic aberration    
+    // Inspired by the method described in "Rendering Inside" [Playdead 2016]
+    // https://twitter.com/pixelmager/status/717019757766123520
+    //
+    if (VARIANT & UBERPOSTFEATUREFLAGS_CHROMATIC_ABERRATION)
+    {
+        const float amount = _ChromaParams.x;
+        const int maxSamples = int(_ChromaParams.y);
+
+        float2 coords = 2.0 * uv - 1.0;
+        float2 end = uv - coords * dot(coords, coords) * amount;
+        float2 diff = end - uv;
+        int samples = clamp(int(length(_TexelSize.xy * diff / 2.0)), 3, maxSamples);
+        float2 delta = diff / samples;
+        float2 pos = uv;
+        float4 sum = 0.0, filterSum = 0.0;
+
+        for (int i = 0; i < samples; i++)
+        {
+            float t = (i + 0.5) / samples;
+            float4 s = SAMPLE_TEXTURE2D_LOD(_InputTexture, sampler_LinearClamp, pos, 0);
+            float4 filter = float4(SAMPLE_TEXTURE2D_LOD(_ChromaSpectralLut, sampler_ChromaSpectralLut, float2(t, 0.0), 0).rgb, 1.0);
+
+            sum += s * filter;
+            filterSum += filter;
+            pos += delta;
+        }
+
+        color = sum / filterSum;
+    }
+    else
+    {
+        color = _InputTexture[id];
+    }
+
+    //
+    // Vignette
+    //
+    if (VARIANT & UBERPOSTFEATUREFLAGS_VIGNETTE)
+    {
+        const uint mode = _VignetteParams1.z;
+
+        UNITY_BRANCH
+        if (mode == 0u)
+        {
+            // Procedural vignette
+            const float2 center = _VignetteParams1.xy;
+            const float intensity = _VignetteParams2.x;
+            const float smoothness = _VignetteParams2.y;
+            const float roundness = _VignetteParams2.z;
+            const float rounded = _VignetteParams2.w;
+
+            float2 d = abs(uv - center) * intensity;
+            d.x *= lerp(1.0, _TexelSize.x / _TexelSize.y, rounded);
+            d = pow(saturate(d), roundness);
+            float vfactor = pow(saturate(1.0 - dot(d, d)),smoothness);
+            color.rgb *= lerp(_VignetteColor.xyz, (1.0).xxx, vfactor);
+            color.a = lerp(1.0, color.a, vfactor);
+        }
+        else
+        {
+            // Masked vignette
+            float vfactor = SAMPLE_TEXTURE2D_LOD(_VignetteMask, sampler_VignetteMask, uv, 0).a;
+            vfactor = FastSRGBToLinear(vfactor);
+            float3 newColor = color.rgb * lerp(_VignetteColor.xyz, (1.0).xxx, vfactor);
+            color.rgb = lerp(color.rgb, newColor, _VignetteColor.a);
+            color.a = lerp(1.0, color.a, vfactor);
+        }
+    }
+
+    _OutputTexture[id] = color;
+
+    // Can't happen unless something goes horribly wrong
+    if (VARIANT & UBERPOSTFEATUREFLAGS_NONE)
+    {
+        _OutputTexture[id] = _InputTexture[id];
+    }
+}

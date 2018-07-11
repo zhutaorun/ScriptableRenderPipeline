@@ -74,6 +74,23 @@ namespace UnityEditor.Experimental.Rendering
         }
 
         // UI Helpers
+        
+        public static void DrawFixMeBox(string text, Action action)
+        {
+            EditorGUILayout.HelpBox(text, MessageType.Warning);
+
+            GUILayout.Space(-32);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.FlexibleSpace();
+
+                if (GUILayout.Button("Fix", GUILayout.Width(60)))
+                    action();
+
+                GUILayout.Space(8);
+            }
+            GUILayout.Space(11);
+        }
 
         public static void DrawMultipleFields(string label, SerializedProperty[] ppts, GUIContent[] lbls)
         {

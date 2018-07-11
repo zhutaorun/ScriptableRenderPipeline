@@ -1090,15 +1090,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         AccumulateDistortion(m_CullResults, hdCamera, renderContext, cmd);
                         RenderDistortion(hdCamera, cmd, m_Asset.renderPipelineResources);
 
-                        //>>> -- TEMP
-                        m_PostProcessSystem.Render(
-                            cmd: cmd,
-                            camera: hdCamera,
-                            colorBuffer: m_CameraColorBuffer,
-                            lightingBuffer: null
-                        );
-                        //<<<
-
                         StopStereoRendering(renderContext, hdCamera);
 
                         PushFullScreenDebugTexture(hdCamera, cmd, m_CameraColorBuffer, FullScreenDebugMode.NanTracker);
@@ -1108,6 +1099,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         // Postprocess system (that doesn't use cmd.Blit) handle it with configuration (and do not flip in SceneView) or it is automatically done in Blit
 
                         StartStereoRendering(renderContext, hdCamera);
+
+                        //>>> -- TEMP
+                        m_PostProcessSystem.Render(
+                            cmd: cmd,
+                            camera: hdCamera,
+                            colorBuffer: m_CameraColorBuffer,
+                            lightingBuffer: null
+                        );
+                        //<<<
 
                         // Final blit
                         if (hdCamera.frameSettings.enablePostprocess)

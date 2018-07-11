@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
@@ -8,27 +10,38 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     // lighting/surface effect like SSR/AO
     public sealed class PostProcessSystem
     {
-        // On some GPU/driver version combos, using a max fp16 value of 65504 will just warp around
-        // and break everything so we want to use the first valid value before fp16_max
-        const float k_HalfMaxMinusOne = 65472f; // (2 - 2^-9) * 2^15
-
         RenderPipelineResources m_Resources;
-
-        const int k_ExposureCurvePrecision = 128;
-        Color[] m_TempColorArray = new Color[k_ExposureCurvePrecision];
-        int[] m_ExposureVariants = new int[4];
-
         bool m_FirstFrame = true;
 
+        // Exposure data
+        const int k_ExposureCurvePrecision = 128;
+        Color[] m_ExposureCurveColorArray = new Color[k_ExposureCurvePrecision];
+        int[] m_ExposureVariants = new int[4];
+
         Texture2D m_ExposureCurveTexture;
+        RTHandle m_EmptyExposureTexture;
+
+        // Chromatic aberration data
+        Texture2D m_InternalSpectralLut;
+
+        // Misc (re-usable)
         RTHandle m_TempTexture1024;
         RTHandle m_TempTexture32;
-        RTHandle m_EmptyExposureTexture;
+
+        // Uber feature map to workaround the lack of multi_compile in compute shaders
+        readonly Dictionary<int, string> m_UberPostFeatureMap = new Dictionary<int, string>();
 
         public PostProcessSystem(HDRenderPipelineAsset hdAsset)
         {
             m_Resources = hdAsset.renderPipelineResources;
-            
+
+            // Feature maps
+            // Must be kept in sync with variants defined in UberPost.compute
+            PushUberFeature(UberPostFeatureFlags.None);
+            PushUberFeature(UberPostFeatureFlags.ChromaticAberration);
+            PushUberFeature(UberPostFeatureFlags.Vignette);
+            PushUberFeature(UberPostFeatureFlags.ChromaticAberration | UberPostFeatureFlags.Vignette);
+
             // Setup a default exposure textures
             m_EmptyExposureTexture = RTHandles.Alloc(1, 1, colorFormat: RenderTextureFormat.RGHalf,
                 sRGB: false, enableRandomWrite: true, name: "Empty EV100 Exposure"
@@ -54,6 +67,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             CoreUtils.Destroy(m_ExposureCurveTexture);
             m_ExposureCurveTexture = null;
+
+            CoreUtils.Destroy(m_InternalSpectralLut);
+            m_InternalSpectralLut = null;
         }
 
         public void BeginFrame(CommandBuffer cmd, HDCamera camera)
@@ -73,6 +89,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             using (new ProfilingSample(cmd, "Post-processing", CustomSamplerId.PostProcessing.GetSampler()))
             {
+                // Start with exposure - will be applied in the next frame
                 if (!IsExposureFixed())
                 {
                     using (new ProfilingSample(cmd, "Dynamic Exposure", CustomSamplerId.Exposure.GetSampler()))
@@ -80,9 +97,66 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         DoDynamicExposure(cmd, camera, colorBuffer, lightingBuffer);
                     }
                 }
+
+                // Combined post-processing stack
+                // Feature flags are passed to all effects and it's their reponsability to check if
+                // they are used or not so they can set default values if needed
+                var cs = m_Resources.uberPostCS;
+                var featureFlags = GetUberFeatureFlags();
+
+                if (featureFlags != UberPostFeatureFlags.None)
+                {
+                    using (new ProfilingSample(cmd, "Uber", CustomSamplerId.UberPost.GetSampler()))
+                    {
+                        int kernel = GetUberKernel(cs, featureFlags);
+
+                        DoChromaticAberration(cmd, cs, kernel, featureFlags);
+                        DoVignette(cmd, cs, kernel, featureFlags);
+                        
+                        // TODO: Review this and remove the temporary target & blit once the whole stack is done
+                        int tempRemoveMe = Shader.PropertyToID("_TempTargetRemoveMe");
+                        cmd.GetTemporaryRT(tempRemoveMe, camera.actualWidth, camera.actualHeight, 0, FilterMode.Bilinear, RenderTextureFormat.ARGBHalf);
+                        cmd.Blit(colorBuffer, tempRemoveMe);
+                        cmd.SetComputeVectorParam(cs, HDShaderIDs._TexelSize, new Vector4(camera.actualWidth, camera.actualHeight, 1f / camera.actualWidth, 1f / camera.actualHeight));
+                        cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, tempRemoveMe);
+                        cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, colorBuffer);
+                        cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 9) / 8, (camera.actualHeight + 9) / 8, 1);
+                        cmd.ReleaseTemporaryRT(tempRemoveMe);
+                    }
+                }
             }
 
             m_FirstFrame = false;
+        }
+
+        void PushUberFeature(UberPostFeatureFlags flags)
+        {
+            // Use an int for the key instead of the enum itself to avoid GC pressure due to the
+            // lack of a default comparer
+            int iflags = (int)flags;
+            m_UberPostFeatureMap.Add(iflags, "KMain_Variant" + iflags);
+        }
+
+        int GetUberKernel(ComputeShader cs, UberPostFeatureFlags flags)
+        {
+            string kernelName;
+            bool success = m_UberPostFeatureMap.TryGetValue((int)flags, out kernelName);
+            Assert.IsTrue(success);
+            return cs.FindKernel(kernelName);
+        }
+
+        // Grabs all active feature flags
+        UberPostFeatureFlags GetUberFeatureFlags()
+        {
+            var flags = UberPostFeatureFlags.None;
+
+            if (VolumeManager.instance.stack.GetComponent<ChromaticAberration>().IsActive())
+                flags |= UberPostFeatureFlags.ChromaticAberration;
+
+            if (VolumeManager.instance.stack.GetComponent<Vignette>().IsActive())
+                flags |= UberPostFeatureFlags.Vignette;
+
+            return flags;
         }
 
         #region Exposure
@@ -181,7 +255,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 };
             }
 
-            var pixels = m_TempColorArray;
+            var pixels = m_ExposureCurveColorArray;
 
             // Fail safe in case the curve is deleted / has 0 point
             if (curve == null || curve.length == 0)
@@ -267,6 +341,79 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, m_TempTexture32);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, nextExposure);
             cmd.DispatchCompute(cs, kernel, 1, 1, 1);
+        }
+
+        #endregion
+
+        #region Chromatic Aberration
+
+        void DoChromaticAberration(CommandBuffer cmd, ComputeShader cs, int kernel, UberPostFeatureFlags flags)
+        {
+            if ((flags & UberPostFeatureFlags.ChromaticAberration) != UberPostFeatureFlags.ChromaticAberration)
+                return;
+            
+            var settings = VolumeManager.instance.stack.GetComponent<ChromaticAberration>();
+            var spectralLut = settings.spectralLut.value;
+
+            // If no spectral lut is set, use a pre-generated one
+            if (spectralLut == null)
+            {
+                if (m_InternalSpectralLut == null)
+                {
+                    m_InternalSpectralLut = new Texture2D(3, 1, TextureFormat.RGB24, false)
+                    {
+                        name = "Chromatic Aberration Spectral LUT",
+                        filterMode = FilterMode.Bilinear,
+                        wrapMode = TextureWrapMode.Clamp,
+                        anisoLevel = 0,
+                        hideFlags = HideFlags.DontSave
+                    };
+
+                    m_InternalSpectralLut.SetPixels(new []
+                    {
+                        new Color(1f, 0f, 0f),
+                        new Color(0f, 1f, 0f),
+                        new Color(0f, 0f, 1f)
+                    });
+
+                    m_InternalSpectralLut.Apply();
+                }
+
+                spectralLut = m_InternalSpectralLut;
+            }
+
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ChromaSpectralLut, spectralLut);
+            cmd.SetComputeVectorParam(cs, HDShaderIDs._ChromaParams, new Vector4(settings.intensity * 0.05f, settings.maxSamples, 0f, 0f));
+        }
+
+        #endregion
+
+        #region Vignette
+
+        void DoVignette(CommandBuffer cmd, ComputeShader cs, int kernel, UberPostFeatureFlags flags)
+        {
+            if ((flags & UberPostFeatureFlags.Vignette) != UberPostFeatureFlags.Vignette)
+                return;
+
+            var settings = VolumeManager.instance.stack.GetComponent<Vignette>();
+
+            if (settings.mode.value == VignetteMode.Procedural)
+            {
+                float roundness = (1f - settings.roundness.value) * 6f + settings.roundness.value;
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._VignetteParams1, new Vector4(settings.center.value.x, settings.center.value.y, 0f, 0f));
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._VignetteParams2, new Vector4(settings.intensity.value * 3f, settings.smoothness.value * 5f, roundness, settings.rounded.value ? 1f : 0f));
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._VignetteColor, settings.color.value);
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._VignetteMask, Texture2D.blackTexture);
+            }
+            else // Masked
+            {
+                var color = settings.color.value;
+                color.a = Mathf.Clamp01(settings.opacity.value);
+
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._VignetteParams1, new Vector4(0f, 0f, 1f, 0f));
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._VignetteColor, color);
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._VignetteMask, settings.mask.value);
+            }
         }
 
         #endregion

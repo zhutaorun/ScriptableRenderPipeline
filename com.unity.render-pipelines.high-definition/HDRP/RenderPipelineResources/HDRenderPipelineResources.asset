@@ -94,3 +94,4 @@ MonoBehaviour:
   aoRender: {fileID: 7200000, guid: bdc1a70dcf8706247be8c321b8f9cdac, type: 3}
   aoUpsample: {fileID: 7200000, guid: 52d2cfce57d98ca4b93049a7a6686ec6, type: 3}
   exposureCS: {fileID: 7200000, guid: 976d7bce54fae534fb9ec67e9c18570c, type: 3}
+  uberPostCS: {fileID: 7200000, guid: f1bf52f7c71bffd4f91e6cd90d12a4f7, type: 3}

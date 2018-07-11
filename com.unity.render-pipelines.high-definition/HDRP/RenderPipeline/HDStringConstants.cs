@@ -395,5 +395,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _Variants                       = Shader.PropertyToID("_Variants");
         public static readonly int _InputTexture                   = Shader.PropertyToID("_InputTexture");
         public static readonly int _OuputTexture                   = Shader.PropertyToID("_OutputTexture");
+
+        public static readonly int _TexelSize                      = Shader.PropertyToID("_TexelSize");
+
+        public static readonly int _ChromaSpectralLut              = Shader.PropertyToID("_ChromaSpectralLut");
+        public static readonly int _ChromaParams                   = Shader.PropertyToID("_ChromaParams");
+
+        public static readonly int _VignetteParams1                = Shader.PropertyToID("_VignetteParams1");
+        public static readonly int _VignetteParams2                = Shader.PropertyToID("_VignetteParams2");
+        public static readonly int _VignetteColor                  = Shader.PropertyToID("_VignetteColor");
+        public static readonly int _VignetteMask                   = Shader.PropertyToID("_VignetteMask");
     }
 }
