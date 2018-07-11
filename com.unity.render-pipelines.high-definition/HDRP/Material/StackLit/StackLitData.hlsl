@@ -21,7 +21,7 @@
 struct TextureUVMapping
 {
     float2 texcoords[TEXCOORD_INDEX_COUNT][2];
-#ifdef _USE_TRIPLANAR
+#ifdef _MAPPING_TRIPLANAR
     float3 triplanarWeights[2];
 #endif
 
@@ -54,7 +54,7 @@ void InitializeMappingData(FragInputs input, out TextureUVMapping uvMapping)
     uvMapping.texcoords[TEXCOORD_INDEX_PLANAR_YZ][1] = uvZY;
     uvMapping.texcoords[TEXCOORD_INDEX_PLANAR_ZX][1] = uvXZ;
 
-#ifdef _USE_TRIPLANAR
+#ifdef _MAPPING_TRIPLANAR
     float3 vertexNormal = input.worldToTangent[2].xyz;
     uvMapping.triplanarWeights[0] = ComputeTriplanarWeights(vertexNormal);
     // If we use local planar mapping, convert to local space
@@ -90,7 +90,7 @@ float4 SampleTexture2DScaleBias(TEXTURE2D_ARGS(textureName, samplerName), float 
 // If we use triplanar on any of the properties, then we enable the triplanar path
 float4 SampleTexture2DTriplanarScaleBias(TEXTURE2D_ARGS(textureName, samplerName), float textureNameUV, float textureNameUVLocal, float4 textureNameST, TextureUVMapping uvMapping)
 {
-#ifdef _USE_TRIPLANAR
+#ifdef _MAPPING_TRIPLANAR
     if (textureNameUV == TEXCOORD_INDEX_TRIPLANAR)
     {
         float4 val = float4(0.0, 0.0, 0.0, 0.0);
@@ -106,9 +106,9 @@ float4 SampleTexture2DTriplanarScaleBias(TEXTURE2D_ARGS(textureName, samplerName
     }
     else
     {
-#endif // _USE_TRIPLANAR
+#endif // _MAPPING_TRIPLANAR
         return SampleTexture2DScaleBias(TEXTURE2D_PARAM(textureName, samplerName), textureNameUV, textureNameUVLocal, textureNameST, uvMapping);
-#ifdef _USE_TRIPLANAR
+#ifdef _MAPPING_TRIPLANAR
     }
 #endif
 }
@@ -129,7 +129,7 @@ float4 SampleTexture2DTriplanarNormalScaleBias(TEXTURE2D_ARGS(textureName, sampl
     }
     else
     {
-#ifdef _USE_TRIPLANAR
+#ifdef _MAPPING_TRIPLANAR
         if (textureNameUV == TEXCOORD_INDEX_TRIPLANAR)
         {
             float2 derivXplane;
@@ -188,6 +188,8 @@ float4 SampleTexture2DTriplanarNormalScaleBias(TEXTURE2D_ARGS(textureName, sampl
 
 #define SAMPLE_TEXTURE2D_SCALE_BIAS(name) SampleTexture2DTriplanarScaleBias(name, sampler##name, name##UV, name##UVLocal, name##_ST, uvMapping)
 #define SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(name, scale, objSpace) SampleTexture2DTriplanarNormalScaleBias(name, sampler##name, name##UV, name##UVLocal, name##_ST, objSpace, uvMapping, scale)
+#define SAMPLE_TEXTURE2D_NORMAL_PROPNAME_SCALE_BIAS(name, propname, scale, objSpace) SampleTexture2DTriplanarNormalScaleBias(name, sampler##propname, propname##UV, propname##UVLocal, propname##_ST, objSpace, uvMapping, scale)
+//...permits referencing all properties from another texture name
 
 //-----------------------------------------------------------------------------
 // GetSurfaceAndBuiltinData
@@ -205,7 +207,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 {
     ApplyDoubleSidedFlipOrMirror(input); // Apply double sided flip on the vertex normal.
 
-    TextureUVMapping uvMapping;
+    TextureUVMapping uvMapping; // Note this identifier is directly referenced in the SAMPLE_TEXTURE2D_* macros above
     InitializeMappingData(input, uvMapping);
 
     // -------------------------------------------------------------
@@ -223,7 +225,15 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.baseColor = SAMPLE_TEXTURE2D_SCALE_BIAS(_BaseColorMap).rgb * _BaseColor.rgb;
 
     float4 gradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_NormalMap, _NormalScale, _NormalMapObjSpace);
-    //TODO: bentNormalTS
+
+    float4 bentGradient = float4(0.0, 0.0, 0.0, 1.0f);
+    // ...last value is for normal map filtering (average normal length). Unused for bent normal for now, but
+    // could be used to tilt back the bent normal to the normal and/or enlarge the visibility cone as bent visibility
+    // can alias like everything else.
+    // TODO
+#ifdef _BENTNORMALMAP
+    bentGradient = SAMPLE_TEXTURE2D_NORMAL_PROPNAME_SCALE_BIAS(_BentNormalMap, _NormalMap, _NormalScale, _NormalMapObjSpace);
+#endif
 
     surfaceData.perceptualSmoothnessA = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_SmoothnessAMap), _SmoothnessAMapChannelMask);
     surfaceData.perceptualSmoothnessA = lerp(_SmoothnessAMapRange.x, _SmoothnessAMapRange.y, surfaceData.perceptualSmoothnessA);
@@ -327,12 +337,15 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.thickness = 1.0;
 #endif
 
-#ifdef _USE_DETAILMAP
+#ifdef _DETAILMAP
     float detailMask = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_DetailMaskMap), _DetailMaskMapChannelMask);
 
     float4 detailGradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_DetailNormalMap, _DetailNormalScale, 0.0);
     gradient += detailGradient * detailMask;
     gradient.w *= 0.5; // Take mean of average normal length
+
+    bentGradient += detailGradient * detailMask;
+    bentGradient.w *= 0.5; // Take mean of average normal length
 
     float detailPerceptualSmoothness = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_DetailSmoothnessMap), _DetailSmoothnessMapChannelMask);
     detailPerceptualSmoothness = lerp(_DetailSmoothnessMapRange.x, _DetailSmoothnessMapRange.y, detailPerceptualSmoothness);
@@ -360,6 +373,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.geomNormalWS = input.worldToTangent[2];
     // Convert back to world space normal
     surfaceData.normalWS = SurfaceGradientResolveNormal(input.worldToTangent[2], gradient.xyz);
+    surfaceData.bentNormalWS = SurfaceGradientResolveNormal(input.worldToTangent[2], bentGradient.xyz);
     surfaceData.coatNormalWS = SurfaceGradientResolveNormal(input.worldToTangent[2], coatGradient.xyz);
 
     surfaceData.tangentWS = Orthonormalize(surfaceData.tangentWS, surfaceData.normalWS);

@@ -278,31 +278,38 @@ SphereCap GetBentVisibility(float3 bentNormalWS, float ambientOcclusion, int alg
     return GetSphereCap(bentNormalWS, cosAv);
 }
 
-float GetSpecularOcclusionFromBentAOPivot(float3 V, float3 bentNormalWS, float3 normalWS, float ambientOcclusion, float perceptualRoughness)
+float GetSpecularOcclusionFromBentAOPivot(float3 V, float3 bentNormalWS, float3 normalWS, float ambientOcclusion, float perceptualRoughness, int bentconeAlgorithm = BENT_VISIBILITY_FROM_AO_COS,
+                                          bool useGivenBasis = false, float3x3 orthoBasisViewNormal = (float3x3)(0), bool useExtraCap = false, SphereCap extraCap = (SphereCap)(0))
 {
-    SphereCap bentVisibility = GetBentVisibility(bentNormalWS, ambientOcclusion);
+    SphereCap bentVisibility = GetBentVisibility(bentNormalWS, ambientOcclusion, bentconeAlgorithm);
 
     //bentNormalWS = lerp(bentNormalWS, normalWS, pow((1.0-ambientOcclusion),5)); // TEST TODO, the bent direction becomes meaningless with AO = 0.
     //bentVisibility.dir = normalize(bentNormalWS);
 
     //perceptualRoughness = max(perceptualRoughness, 0.01);
-    //float3x3 orthoBasisViewNormal = GetOrthoBasisViewNormal(V, normalWS, dot(normalWS, V), true); // true => avoid singularity when V == N by returning arbitrary tangent/bitangents
-    float3x3 orthoBasisViewNormal = GetOrthoBasisViewNormal(V, normalWS, dot(normalWS, V));
+
+    if (useGivenBasis == false) 
+    {
+        //orthoBasisViewNormal = GetOrthoBasisViewNormal(V, normalWS, dot(normalWS, V), true); // true => avoid singularity when V == N by returning arbitrary tangent/bitangents
+        orthoBasisViewNormal = GetOrthoBasisViewNormal(V, normalWS, dot(normalWS, V));
+    }
+
     float Vs = ComputeVs(bentVisibility,
                          ClampNdotV(dot(normalWS, V)),
                          perceptualRoughness,
                          orthoBasisViewNormal,
-                         false, // true => clip with a second spherical cap, here the visible hemisphere:
-                         GetSphereCap(normalWS, 0.0));
+                         useExtraCap, //false, // true => clip with a second spherical cap, eg here the visible hemisphere:
+                         extraCap);   //GetSphereCap(normalWS, 0.0));
     return Vs;
 }
 
-// Test: different tweaks to the cone-cone method:
-float GetSpecularOcclusionFromBentAOTest(float3 V, float3 bentNormalWS, float3 normalWS, float ambientOcclusion, float perceptualRoughness)
+// Different tweaks to the cone-cone method:
+float GetSpecularOcclusionFromBentAOConeCone(float3 V, float3 bentNormalWS, float3 normalWS, float ambientOcclusion, float perceptualRoughness, int bentconeAlgorithm = BENT_VISIBILITY_FROM_AO_COS)
 {
     // Retrieve cone angle
     // Ambient occlusion is cosine weighted, thus use following equation. See slide 129
-    SphereCap bentVisibility = GetBentVisibility(bentNormalWS, ambientOcclusion, BENT_VISIBILITY_FROM_AO_COS);
+    //SphereCap bentVisibility = GetBentVisibility(bentNormalWS, ambientOcclusion, BENT_VISIBILITY_FROM_AO_COS);
+    SphereCap bentVisibility = GetBentVisibility(bentNormalWS, ambientOcclusion, bentconeAlgorithm);
 
     float cosAv = bentVisibility.cosA;
     float roughness = max(PerceptualRoughnessToRoughness(perceptualRoughness), 0.01); // Clamp to 0.01 to avoid edge cases

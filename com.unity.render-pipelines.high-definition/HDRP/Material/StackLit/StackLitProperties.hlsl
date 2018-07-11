@@ -21,6 +21,8 @@ SAMPLER(sampler_SmoothnessAMap);
 TEXTURE2D(_NormalMap);
 SAMPLER(sampler_NormalMap);
 
+TEXTURE2D(_BentNormalMap); // reuses the normal map sampler
+
 TEXTURE2D(_CoatNormalMap);
 SAMPLER(sampler_CoatNormalMap);
 
@@ -92,6 +94,7 @@ float4 _SmoothnessAMapRange;
 float4 _DebugEnvLobeMask;
 float4 _DebugLobeMask;
 float4 _DebugAniso;
+float4 _DebugSpecularOcclusion;
 
 float _NormalScale;
 float _NormalMapUV;

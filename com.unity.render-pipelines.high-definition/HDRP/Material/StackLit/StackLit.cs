@@ -53,6 +53,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             [SurfaceDataAttributes(new string[] {"Coat Normal", "Coat Normal View Space"}, true)]
             public Vector3 coatNormalWS;
 
+            [SurfaceDataAttributes(new string[] {"Bent Normal", "Bent Normal View Space"}, true)]
+            public Vector3 bentNormalWS;
+
             [SurfaceDataAttributes("Smoothness A")]
             public float perceptualSmoothnessA;
 
@@ -124,6 +127,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             [SurfaceDataAttributes(new string[] {"Coat Normal", "Coat Normal View Space"}, true)]
             public Vector3 coatNormalWS;
+
+            [SurfaceDataAttributes(new string[] {"Bent Normal", "Bent Normal View Space"}, true)]
+            public Vector3 bentNormalWS;
 
             public float perceptualRoughnessA;
 

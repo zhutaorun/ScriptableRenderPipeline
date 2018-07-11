@@ -61,6 +61,12 @@ Shader "HDRenderPipeline/StackLit"
         _DebugEnvLobeMask("DebugEnvLobeMask", Vector) = (1, 1, 1, 1)
         _DebugLobeMask("DebugLobeMask", Vector) = (1, 1, 1, 1)
         _DebugAniso("DebugAniso", Vector) = (1, 0, 0, 1000.0)
+        _DebugSpecularOcclusion("DebugSpecularOcclusion", Vector) = (2, 2, 1, 2)
+        // .x = {0 = fromAO, 1 = conecone, 2 = SPTD} .y = bentao algo {0 = uniform, cos, bent cos}, .z = use hemisphere clipping, 
+        // .w = {-1.0 => show SO algo used with tint, 
+        //        1.0 to 4.0 => used with DEBUGLIGHTINGMODE_INDIRECT_SPECULAR_OCCLUSION
+        //        1.0, 2.0, 3.0 show SO for COAT LOBE, BASE LOBEA and BASE LOBEB, 
+        //        4.0 show the source screen space occlusion instead of specular occlusion.}
 
         // TODO: TangentMap, AnisotropyMap and CoatIorMap (SmoothnessMap ?)
 
@@ -106,6 +112,18 @@ Shader "HDRenderPipeline/StackLit"
         _NormalMapUVLocal("NormalMapUV Local", Float) = 0.0
         _NormalMapObjSpace("NormalMapObjSpace", Float) = 0.0
         _NormalScale("Normal Scale", Range(0.0, 2.0)) = 1
+
+        [HideInInspector] _BentNormalMapShow("Bent NormalMap Show", Float) = 0.0
+        _BentNormalMap("Bent NormalMap", 2D) = "bump" {}     // Tangent space bent normal map
+        //_BentNormalMapUV("Bent NormalMapUV", Float) = 0.0
+        //_BentNormalMapUVLocal("Bent NormalMapUV Local", Float) = 0.0
+        //_BentNormalMapObjSpace("Bent NormalMap ObjSpace", Float) = 0.0
+        //_BentNormalScale("Bent NormalMap Scale", Range(0.0, 2.0)) = 1
+        // Bent normal should reuse the mapping and scale of the normal map as their direction 
+        // should be intimately tied on the user's (generation/artist pipeline) side
+
+        // This will control SO whether bent normals are there or not (cf Lit where only bent normals have effect with the associated keyword)
+        [ToggleUI] _EnableSpecularOcclusion("Enable Specular Occlusion", Float) = 0.0
 
         [HideInInspector] _AmbientOcclusionMapShow("AmbientOcclusion Map Show", Float) = 0
         _AmbientOcclusion("AmbientOcclusion", Range(0.0, 1.0)) = 1
@@ -295,10 +313,13 @@ Shader "HDRenderPipeline/StackLit"
     #pragma shader_feature _ALPHATEST_ON
     #pragma shader_feature _DOUBLESIDED_ON
 
-    #pragma shader_feature _USE_DETAILMAP
-    #pragma shader_feature _USE_UV2
-    #pragma shader_feature _USE_UV3
-    #pragma shader_feature _USE_TRIPLANAR
+    #pragma shader_feature _DETAILMAP
+    #pragma shader_feature _BENTNORMALMAP
+    #pragma shader_feature _ENABLESPECULAROCCLUSION // This will control SO whether bent normals are there or not (cf Lit where only bent normals have effect with this keyword)
+
+    //#pragma shader_feature _REQUIRE_UV2
+    //#pragma shader_feature _REQUIRE_UV3
+    #pragma shader_feature _MAPPING_TRIPLANAR // This shader makes use of TRIPLANAR mapping, we reuse the Lit keyword _MAPPING_TRIPLANAR
 
     // Keyword for transparent
     #pragma shader_feature _SURFACE_TYPE_TRANSPARENT

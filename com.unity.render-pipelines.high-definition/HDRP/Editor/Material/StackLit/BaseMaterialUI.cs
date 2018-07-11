@@ -441,32 +441,37 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             public bool m_IsNormalMap;
 
-            public TextureProperty(BaseMaterialGUI parent, string propertyName, string constantPropertyName, string guiText, bool useConstantAsTint, bool isMandatory = true, bool isNormalMap = false, Func<object, bool> isVisible = null)
-                : this(parent, propertyName, constantPropertyName, guiText, string.Empty, useConstantAsTint, isMandatory, isNormalMap, isVisible)
+            public bool m_ShowScaleOffset;
+
+            public TextureOneLineProperty m_SlaveTexOneLineProp;
+
+            public TextureProperty(BaseMaterialGUI parent, string propertyName, string constantPropertyName, string guiText, bool pairConstantWithTexture, bool isMandatory = true, bool isNormalMap = false, bool showScaleOffset = true, TextureOneLineProperty slaveTexOneLineProp = null, Func<object, bool> isVisible = null)
+                : this(parent, propertyName, constantPropertyName, guiText, string.Empty, pairConstantWithTexture, isMandatory, isNormalMap, showScaleOffset, slaveTexOneLineProp, isVisible)
             {
             }
 
-            public TextureProperty(BaseMaterialGUI parent, string propertyName, string constantPropertyName, string guiText, string toolTip, bool useConstantAsTint, bool isMandatory = true, bool isNormalMap = false, Func<object, bool> isVisible = null)
+            public TextureProperty(BaseMaterialGUI parent, string propertyName, string constantPropertyName, string guiText, string toolTip, bool pairConstantWithTexture, bool isMandatory = true, bool isNormalMap = false, bool showScaleOffset = true, TextureOneLineProperty slaveTexOneLineProp = null, Func < object, bool> isVisible = null)
                 : base(parent, propertyName, guiText, toolTip, isMandatory, isVisible)
             {
                 m_IsNormalMap = isNormalMap;
+                m_ShowScaleOffset = showScaleOffset;
+                m_SlaveTexOneLineProp = slaveTexOneLineProp;
 
                 m_ConstantPropertyName = constantPropertyName;
 
                 m_Show = new Property(parent, propertyName + "Show", "", isMandatory);
 
-                if (useConstantAsTint == false)
+                if (pairConstantWithTexture == false)
                 {
                     m_ConstantProperty = new Property(parent, constantPropertyName, guiText, toolTip, isMandatory);
                 }
 
-                m_TextureProperty = new TextureOneLineProperty(parent, propertyName, useConstantAsTint ? constantPropertyName : string.Empty, guiText, toolTip, isMandatory);
+                m_TextureProperty = new TextureOneLineProperty(parent, propertyName, pairConstantWithTexture ? constantPropertyName : string.Empty, guiText, toolTip, isMandatory);
 
                 m_UvSetProperty = new ComboProperty(parent, propertyName + "UV", "UV Mapping", Enum.GetNames(typeof(UVMapping)), false);
                 m_LocalOrWorldProperty = new ComboProperty(parent, propertyName + "UVLocal", "Local or world", Enum.GetNames(typeof(PlanarSpace)), false);
 
                 m_NormalSpaceProperty = new ComboProperty(parent, propertyName + "ObjSpace", "Normal space", Enum.GetNames(typeof(NormalSpace)), false);
-
 
                 m_ChannelProperty = new ComboProperty(parent, propertyName + "Channel", "Channel", Enum.GetNames(typeof(Channel)), false);
 
@@ -511,14 +516,18 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                         m_TextureProperty.OnGUI();
 
-                        if (m_TextureProperty.TextureValue != null)
+                        if (m_TextureProperty.TextureValue != null
+                            || ((m_SlaveTexOneLineProp != null) && (m_SlaveTexOneLineProp.TextureValue != null)) )
                         {
                             m_UvSetProperty.OnGUI();
                             m_ChannelProperty.OnGUI();
 
-                            Parent.m_MaterialEditor.TextureScaleOffsetProperty(m_TextureProperty.m_MaterialProperty);
+                            if (m_ShowScaleOffset)
+                            {
+                                Parent.m_MaterialEditor.TextureScaleOffsetProperty(m_TextureProperty.m_MaterialProperty);
+                            }
 
-                            if (m_UvSetProperty.FloatValue >= (float)UVMapping.PlanarXY)
+                            if (m_UvSetProperty.IsValid && m_UvSetProperty.FloatValue >= (float)UVMapping.PlanarXY)
                             {
                                 m_LocalOrWorldProperty.OnGUI();
                             }

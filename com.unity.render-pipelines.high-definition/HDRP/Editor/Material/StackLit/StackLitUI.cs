@@ -36,6 +36,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string k_NormalMapUV = "_NormalMapUV";
         protected const string k_NormalScale = "_NormalScale";
 
+        protected const string k_BentNormalMap = "_BentNormalMap";
+
+        protected const string k_EnableSpecularOcclusion = "_EnableSpecularOcclusion";
+
         protected const string k_AmbientOcclusion = "_AmbientOcclusion";
         protected const string k_AmbientOcclusionMap = "_AmbientOcclusionMap";
         protected const string k_AmbientOcclusionMapUV = "_AmbientOcclusionMapUV";
@@ -128,12 +132,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         private readonly GroupProperty _materialProperties = null;
 
         private Property EnableDetails;
+        private Property EnableSpecularOcclusion;
         private Property EnableSSS;
         private Property EnableTransmission;
         private Property EnableCoat;
         private Property EnableCoatNormalMap;
         private Property EnableAnisotropy;
-        private Property EnableDualSpecularLobe;        
+        private Property EnableDualSpecularLobe;
         private Property EnableIridescence;
 
         private Property EnableGeometricNormalFiltering;
@@ -149,6 +154,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             //
             EnableDetails = new Property(this, k_EnableDetails, "Enable Details", "Enable Detail", true);
+            EnableSpecularOcclusion = new Property(this, k_EnableSpecularOcclusion, "Enable Specular Occlusion", "Enable Specular Occlusion", true);
             EnableSSS = new Property(this, k_EnableSubsurfaceScattering, "Enable Subsurface Scattering", "Enable Subsurface Scattering", true);
             EnableTransmission = new Property(this, k_EnableTransmission, "Enable Transmission", "Enable Transmission", true);
             EnableCoat = new Property(this, k_EnableCoat, "Enable Coat", "Enable coat layer with true vertical physically based BSDF mixing", true);
@@ -163,11 +169,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // All material properties
             // All GroupPropery below need to define a
             // [HideInInspector] _XXXShow("_XXXShow", Float) = 0.0 parameter in the StackLit.shader to work
+            var BentNormalTexProp = new TextureProperty(this, k_BentNormalMap, "", "Bent Normal Map", "Bent Normal Map", pairConstantWithTexture: true, isMandatory: false, isNormalMap: true, showScaleOffset: false);
+
             _materialProperties = new GroupProperty(this, "_Material", new BaseProperty[]
             {
                 new GroupProperty(this, "_MaterialFeatures", "Material Features", new BaseProperty[]
                 {
                     EnableDetails,
+                    EnableSpecularOcclusion,
                     EnableDualSpecularLobe,
                     EnableAnisotropy,
                     EnableCoat,
@@ -183,7 +192,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     new TextureProperty(this, k_MetallicMap, k_Metallic, "Metallic", "Metallic", false, false),
                     new Property(this, k_DielectricIor, "DieletricIor", "IOR use for dielectric material (i.e non metallic material)", false),
                     new TextureProperty(this, k_SmoothnessAMap, k_SmoothnessA, "Smoothness", "Smoothness", false, false),
-                    new TextureProperty(this, k_NormalMap, k_NormalScale, "Normal", "Normal Map", true, false, true),
+                    new TextureProperty(this, k_NormalMap, k_NormalScale, "Normal Map", "Normal Map", pairConstantWithTexture:true, isMandatory:false, isNormalMap:true, showScaleOffset:true, slaveTexOneLineProp:BentNormalTexProp.m_TextureProperty),
+                    BentNormalTexProp,
+                    //new TextureProperty(this, k_BentNormalMap, "", "Bent Normal Map", "Bent Normal Map", pairConstantWithTexture:true, isMandatory:false, isNormalMap:true, showScaleOffset:false),
                     new TextureProperty(this, k_AmbientOcclusionMap, k_AmbientOcclusion, "AmbientOcclusion", "AmbientOcclusion Map", false, false),
                 }),
 
@@ -209,7 +220,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 new GroupProperty(this, "_Coat", "Coat", new BaseProperty[]
                 {
                     new TextureProperty(this, k_CoatSmoothnessMap, k_CoatSmoothness, "Coat smoothness", "Coat smoothness", false),
-                    new TextureProperty(this, k_CoatNormalMap, k_CoatNormalScale, "Coat Normal Map", "Coat Normal Map", true, false, true,  _ => EnableCoatNormalMap.BoolValue == true),
+                    new TextureProperty(this, k_CoatNormalMap, k_CoatNormalScale, "Coat Normal Map", "Coat Normal Map", 
+                                        pairConstantWithTexture:true, isMandatory:false, isNormalMap:true, showScaleOffset:true, slaveTexOneLineProp:null, isVisible: _ => EnableCoatNormalMap.BoolValue == true),
                     new Property(this, "_CoatIor", "Coat IOR", "Index of refraction", false),
                     new Property(this, "_CoatThickness", "Coat Thickness", "Coat thickness", false),
                     new Property(this, "_CoatExtinction", "Coat Absorption", "Coat absorption tint (the thicker the coat, the more that color is removed)", false),
@@ -258,6 +270,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     new Property(this, "_DebugEnvLobeMask", "DebugEnvLobeMask", "xyz is Environments Lobe 0 1 2 Enable, w is Enable VLayering", false),
                     new Property(this, "_DebugLobeMask", "DebugLobeMask", "xyz is Analytical Lobe 0 1 2 Enable", false),
                     new Property(this, "_DebugAniso", "DebugAniso", "x is Hack Enable, y is factor", false),
+                    new Property(this, "_DebugSpecularOcclusion", "DebugSpecularOcclusion", "eg (2,2,1,0), .x = {0 = fromAO, 1 = conecone, 2 = SPTD} .y = bentao algo {0 = uniform, cos, bent cos}, .z = use hemisphere clipping", false),
                }),
             });
         }
@@ -457,10 +470,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 //requireUv3 = requireUv3 || uvIndices[i] == TextureProperty.UVMapping.UV3;
                 requireTriplanar = requireTriplanar || uvIndices[i] == TextureProperty.UVMapping.Triplanar;
             }
-            CoreUtils.SetKeyword(material, "_USE_TRIPLANAR", requireTriplanar);
+            CoreUtils.SetKeyword(material, "_MAPPING_TRIPLANAR", requireTriplanar);
 
             bool detailsEnabled = material.HasProperty(k_EnableDetails) && material.GetFloat(k_EnableDetails) > 0.0f;
-            CoreUtils.SetKeyword(material, "_USE_DETAILMAP", detailsEnabled);
+            CoreUtils.SetKeyword(material, "_DETAILMAP", detailsEnabled);
+
+            bool bentNormalMapPresent = material.HasProperty(k_BentNormalMap) && material.GetTexture(k_BentNormalMap);
+            CoreUtils.SetKeyword(material, "_BENTNORMALMAP", bentNormalMapPresent);
+
+            bool specularOcclusionEnabled = material.HasProperty(k_EnableSpecularOcclusion) && material.GetFloat(k_EnableSpecularOcclusion) > 0.0f;
+            CoreUtils.SetKeyword(material, "_ENABLESPECULAROCCLUSION", specularOcclusionEnabled);
 
             bool dualSpecularLobeEnabled = material.HasProperty(k_EnableDualSpecularLobe) && material.GetFloat(k_EnableDualSpecularLobe) > 0.0f;
             CoreUtils.SetKeyword(material, "_MATERIAL_FEATURE_DUAL_SPECULAR_LOBE", dualSpecularLobeEnabled);

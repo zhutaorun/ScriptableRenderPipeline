@@ -97,10 +97,50 @@ void GetScreenSpaceAmbientOcclusionMultibounce(float2 positionSS, float NdotV, f
     aoFactor.directAmbientOcclusion = GTAOMultiBounce(directAmbientOcclusion, diffuseColor);
 }
 
+// Get screen space ambient occlusion only:
+float GetScreenSpaceDiffuseOcclusion(float2 positionSS)
+{
+    // Note: When we ImageLoad outside of texture size, the value returned by Load is 0 (Note: On Metal maybe it clamp to value of texture which is also fine)
+    // We use this property to have a neutral value for AO that doesn't consume a sampler and work also with compute shader (i.e use ImageLoad)
+    // We store inverse AO so neutral is black. So either we sample inside or outside the texture it return 0 in case of neutral
+
+    // Ambient occlusion use for indirect lighting (reflection probe, baked diffuse lighting)
+#ifndef _SURFACE_TYPE_TRANSPARENT
+    float indirectAmbientOcclusion = 1.0 - LOAD_TEXTURE2D(_AmbientOcclusionTexture, positionSS).x;
+#else
+    float indirectAmbientOcclusion = 1.0;
+#endif
+    return indirectAmbientOcclusion;
+}
+
+// Get ambient occlusion (indirect) from given data and screenspace one (using high quality GTAOMultiBounce version):
+float3 GetDiffuseOcclusion(float3 diffuseColor, float diffuseOcclusionFromData, float screenSpaceDiffuseOcclusion)
+{
+    return GTAOMultiBounce(min(diffuseOcclusionFromData, screenSpaceDiffuseOcclusion), diffuseColor);
+}
+
+// Get and Apply screen space diffuse occlusion only from SSAO on direct lighting
+// (Note: mostly artistic parameter, also no data-based AO is used):
+void GetApplyScreenSpaceDiffuseOcclusionForDirect(float3 diffuseColor, float screenSpaceDiffuseOcclusion, out float3 directAmbientOcclusion, inout AggregateLighting lighting)
+{
+    // Ambient occlusion use for direct lighting (directional, punctual, area)
+    float directDiffuseOcclusion = lerp(1.0, screenSpaceDiffuseOcclusion, _AmbientOcclusionParam.w);
+    directAmbientOcclusion = GTAOMultiBounce(directDiffuseOcclusion, diffuseColor);
+    lighting.direct.diffuse *= directAmbientOcclusion;
+}
+
+// Get/fill aoFactor from field values
+void GetAmbientOcclusionFactor(float3 indirectAmbientOcclusion, float3 indirectSpecularOcclusion, float3 directAmbientOcclusion, out AmbientOcclusionFactor aoFactor)
+{
+    aoFactor.indirectAmbientOcclusion = indirectAmbientOcclusion;
+    aoFactor.indirectSpecularOcclusion = indirectSpecularOcclusion;
+    aoFactor.directAmbientOcclusion = directAmbientOcclusion;
+}
+
 void ApplyAmbientOcclusionFactor(AmbientOcclusionFactor aoFactor, inout BakeLightingData bakeLightingData, inout AggregateLighting lighting)
 {
-    // Note: in case of Lit, bakeLightingData.bakeDiffuseLighting contain indirect diffuse + emissive,
-    // so Ambient occlusion is multiply by emissive which is wrong but not a big deal.
+    // Note: In case of Lit, bakeLightingData.bakeDiffuseLighting contain indirect diffuse + emissive,
+    // so ambient occlusion is multiplied by emissive which is wrong but not a big deal.
     // Also, we have double occlusion for diffuse lighting: 
     // The baked diffuse lighting part from builtinData.bakeDiffuseLighting = SampleBakedGI() already
     // had precomputed (aka "FromData") AO applied, and will get double occluded from screen space AO
