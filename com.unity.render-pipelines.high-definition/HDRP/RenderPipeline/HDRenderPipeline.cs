@@ -253,7 +253,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_CopyStencilForNoLighting.SetInt(HDShaderIDs._StencilMask, (int)StencilBitMask.LightingMask);
 
             m_CopyStencilForEyeVolumes = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.copyStencilBuffer);
-            m_CopyStencilForEyeVolumes.SetInt(HDShaderIDs._StencilRef,  (int)1);
+            m_CopyStencilForEyeVolumes.SetInt(HDShaderIDs._StencilRef,  (int)129);
             m_CopyStencilForEyeVolumes.SetInt(HDShaderIDs._StencilMask, (int)255);
 
             m_CameraMotionVectorsMaterial = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.cameraMotionVectors);
