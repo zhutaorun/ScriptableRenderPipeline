@@ -68,6 +68,22 @@ real4 LinearToGamma22(real4 c)
 }
 
 // sRGB
+real SRGBToLinear(real c)
+{
+    real linearRGBLo  = c / 12.92;
+    real linearRGBHi  = PositivePow((c + 0.055) / 1.055, 2.4);
+    real linearRGB    = (c <= 0.04045) ? linearRGBLo : linearRGBHi;
+    return linearRGB;
+}
+
+real2 SRGBToLinear(real2 c)
+{
+    real2 linearRGBLo  = c / 12.92;
+    real2 linearRGBHi  = PositivePow((c + 0.055) / 1.055, real2(2.4, 2.4));
+    real2 linearRGB    = (c <= 0.04045) ? linearRGBLo : linearRGBHi;
+    return linearRGB;
+}
+
 real3 SRGBToLinear(real3 c)
 {
     real3 linearRGBLo  = c / 12.92;
@@ -79,6 +95,22 @@ real3 SRGBToLinear(real3 c)
 real4 SRGBToLinear(real4 c)
 {
     return real4(SRGBToLinear(c.rgb), c.a);
+}
+
+real LinearToSRGB(real c)
+{
+    real sRGBLo = c * 12.92;
+    real sRGBHi = (PositivePow(c, 1.0/2.4) * 1.055) - 0.055;
+    real sRGB   = (c <= 0.0031308) ? sRGBLo : sRGBHi;
+    return sRGB;
+}
+
+real2 LinearToSRGB(real2 c)
+{
+    real2 sRGBLo = c * 12.92;
+    real2 sRGBHi = (PositivePow(c, real2(1.0/2.4, 1.0/2.4)) * 1.055) - 0.055;
+    real2 sRGB   = (c <= 0.0031308) ? sRGBLo : sRGBHi;
+    return sRGB;
 }
 
 real3 LinearToSRGB(real3 c)
@@ -96,6 +128,16 @@ real4 LinearToSRGB(real4 c)
 
 // TODO: Seb - To verify and refit!
 // Ref: http://chilliant.blogspot.com.au/2012/08/srgb-approximations-for-hlsl.html?m=1
+real FastSRGBToLinear(real c)
+{
+    return c * (c * (c * 0.305306011 + 0.682171111) + 0.012522878);
+}
+
+real2 FastSRGBToLinear(real2 c)
+{
+    return c * (c * (c * 0.305306011 + 0.682171111) + 0.012522878);
+}
+
 real3 FastSRGBToLinear(real3 c)
 {
     return c * (c * (c * 0.305306011 + 0.682171111) + 0.012522878);
@@ -104,6 +146,16 @@ real3 FastSRGBToLinear(real3 c)
 real4 FastSRGBToLinear(real4 c)
 {
     return real4(FastSRGBToLinear(c.rgb), c.a);
+}
+
+real FastLinearToSRGB(real c)
+{
+    return saturate(1.055 * PositivePow(c, 0.416666667) - 0.055);
+}
+
+real2 FastLinearToSRGB(real2 c)
+{
+    return saturate(1.055 * PositivePow(c, 0.416666667) - 0.055);
 }
 
 real3 FastLinearToSRGB(real3 c)
