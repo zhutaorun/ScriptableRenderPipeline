@@ -110,7 +110,10 @@ namespace UnityEngine.Experimental.Rendering
             {
                 int hash = 17;
                 hash = hash * 23 + overrideState.GetHashCode();
-                hash = hash * 23 + value.GetHashCode();
+
+                if (value != null)
+                    hash = hash * 23 + value.GetHashCode();
+
                 return hash;
             }
         }

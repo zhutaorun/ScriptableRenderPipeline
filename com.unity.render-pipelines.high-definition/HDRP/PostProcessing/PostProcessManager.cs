@@ -115,7 +115,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         
                         // TODO: Review this and remove the temporary target & blit once the whole stack is done
                         int tempRemoveMe = Shader.PropertyToID("_TempTargetRemoveMe");
-                        cmd.GetTemporaryRT(tempRemoveMe, camera.actualWidth, camera.actualHeight, 0, FilterMode.Bilinear, RenderTextureFormat.ARGBHalf);
+                        cmd.GetTemporaryRT(tempRemoveMe, camera.actualWidth, camera.actualHeight, 0, FilterMode.Bilinear, RenderTextureFormat.RGB111110Float);
                         cmd.Blit(colorBuffer, tempRemoveMe);
                         cmd.SetComputeVectorParam(cs, HDShaderIDs._TexelSize, new Vector4(camera.actualWidth, camera.actualHeight, 1f / camera.actualWidth, 1f / camera.actualHeight));
                         cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, tempRemoveMe);
@@ -315,6 +315,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Reduction: 1st pass (1024 -> 32)
             kernel = cs.FindKernel("KReduction");
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._PreviousExposureTexture, prevExposure);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ExposureCurveTexture, Texture2D.blackTexture);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, m_TempTexture1024);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OuputTexture, m_TempTexture32);

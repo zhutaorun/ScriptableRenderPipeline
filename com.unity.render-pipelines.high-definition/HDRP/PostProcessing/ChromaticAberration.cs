@@ -12,7 +12,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public ClampedFloatParameter intensity = new ClampedFloatParameter(0f, 0f, 1f);
 
         [Tooltip("Maximum amount of samples used to render the effect. Lower count means better performance.")]
-        public ClampedIntParameter maxSamples = new ClampedIntParameter(8, 3, 16);
+        public ClampedIntParameter maxSamples = new ClampedIntParameter(8, 3, 24);
 
         public bool IsActive()
         {
