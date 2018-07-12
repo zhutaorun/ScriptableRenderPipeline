@@ -5,7 +5,7 @@
 
 float shadergraph_HDSampleSceneDepth(float2 uv)
 {
-#if defined(REQUIRE_DEPTH_TEXTURE) || defined(REQUIRE_DEPTH_TEXTURE_FLOAT)
+#if defined(REQUIRE_DEPTH_TEXTURE)
     float rawDepth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, uv);
 	return Linear01Depth(rawDepth, _ZBufferParams);
 #endif

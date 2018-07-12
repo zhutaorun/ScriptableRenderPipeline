@@ -9,28 +9,25 @@
     TEXTURE2D_ARRAY(_CameraDepthTexture);
 #else
     TEXTURE2D(_CameraDepthTexture);
-    SAMPLER(sampler_CameraDepthTexture);
 #endif
-#elif defined(REQUIRE_DEPTH_TEXTURE_FLOAT)
-#if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
-    TEXTURE2D_ARRAY_FLOAT(_CameraDepthTexture);
-#else
-    TEXTURE2D_FLOAT(_CameraDepthTexture);
     SAMPLER(sampler_CameraDepthTexture);
 #endif // REQUIRE_DEPTH_TEXTURE
-#endif
 
 #if defined(REQUIRE_OPAQUE_TEXTURE)
     TEXTURE2D(_CameraOpaqueTexture);
     SAMPLER(sampler_CameraOpaqueTexture);
-#endif
+#endif // REQUIRE_OPAQUE_TEXTURE
 
 float shadergraph_LWSampleSceneDepth(float2 uv)
 {
-#if defined(REQUIRE_DEPTH_TEXTURE) || defined(REQUIRE_DEPTH_TEXTURE_FLOAT)
+#if defined(REQUIRE_DEPTH_TEXTURE)
+#if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
+    float rawDepth = SAMPLE_TEXTURE2D_ARRAY(_CameraDepthTexture, sampler_CameraDepthTexture, i.texcoord.xy, unity_StereoEyeIndex).r;
+#else
     float rawDepth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, uv);
-	return Linear01Depth(rawDepth, _ZBufferParams);
 #endif
+	return Linear01Depth(rawDepth, _ZBufferParams);
+#endif // REQUIRE_DEPTH_TEXTURE
     return 0;
 }
 
