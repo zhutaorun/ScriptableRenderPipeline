@@ -146,7 +146,6 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void AddToGroupNode(ContextualMenu.MenuAction a)
         {
-            //graph.owner.RegisterCompleteObjectUndo("Creating Material Group");
             Vector2 pos = a.eventInfo.localMousePosition;
 
             string title = "New Material Group";
@@ -155,50 +154,21 @@ namespace UnityEditor.ShaderGraph.Drawing
             // This works...
             graph.AddGroup(groupData);
 
-
-
-//
-//
-//            var groupNode = ScriptableObject.CreateInstance<MathGroupNode>();
-//
-//            groupNode.m_Title = "New Group";
-//
-//            m_SimpleGraphViewWindow.AddNode(groupNode);
-//
-//            var graphGroup = m_SimpleGraphViewWindow.CreateNode(groupNode) as Group;
-//
-//            AddElement(graphGroup);
-//
-//            foreach (ISelectable s in selection)
-//            {
-//                var node = s as Node;
-//
-//                // Do not add edges
-//                if (node == null)
-//                    continue;
-//
-//                graphGroup.AddElement(node);
-//            }
-//
-//
-//
-//
             MaterialGraphGroup graphGroup = CreateGroupNode(groupData) as MaterialGraphGroup;
             AddElement(graphGroup);
-//
-                foreach (ISelectable selectable in selection)
+
+            foreach (ISelectable selectable in selection)
+            {
+                if (selectable is MaterialNodeView)
                 {
-                    if (selectable is MaterialNodeView)
-                    {
-                        MaterialNodeView materialNodeView = selectable as MaterialNodeView;
-                        AbstractMaterialNode abstractMaterialNode = materialNodeView.node;
-                        abstractMaterialNode.groupGuid = groupData.guid;
-                        graphGroup.AddElement(materialNodeView);
-                    }
+                    MaterialNodeView materialNodeView = selectable as MaterialNodeView;
+                    AbstractMaterialNode abstractMaterialNode = materialNodeView.node;
+                    abstractMaterialNode.groupGuid = groupData.guid;
+                    graphGroup.AddElement(materialNodeView);
                 }
-//
-//                //m_GraphGroups.Add(graphGroup);
             }
+
+        }
 
         GraphElement CreateGroupNode(GroupData groupData)
         {
@@ -212,15 +182,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             return graphGroupNode;
         }
 
-
-       // }
-
-
-
         void RemoveFromGroupNode(ContextualMenu.MenuAction a)
         {
-            //graph.owner.RegisterCompleteObjectUndo("Removing From Material Group");
-
             foreach (ISelectable selectable in selection)
             {
                 var node = selectable as Node;

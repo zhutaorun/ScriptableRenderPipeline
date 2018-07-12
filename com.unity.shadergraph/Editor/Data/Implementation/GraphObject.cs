@@ -80,7 +80,6 @@ namespace UnityEditor.Graphing
         {
             if (m_DeserializedGraph != null)
             {
-                Debug.Log(Undo.GetCurrentGroupName());
                 graph.ReplaceWith(m_DeserializedGraph);
                 m_DeserializedGraph = null;
             }

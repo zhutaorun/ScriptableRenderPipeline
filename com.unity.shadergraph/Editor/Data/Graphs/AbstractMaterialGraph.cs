@@ -126,14 +126,6 @@ namespace UnityEditor.ShaderGraph
             get { return m_AddedGroups; }
         }
 
-//        [NonSerialized]
-//        List<GroupData> m_LoadedGroups = new List<GroupData>();
-//
-//        public IEnumerable<GroupData> loadedGroups
-//        {
-//            get { return m_LoadedGroups; }
-//        }
-
         [NonSerialized]
         List<GroupData> m_RemovedGroups = new List<GroupData>();
 
@@ -144,7 +136,6 @@ namespace UnityEditor.ShaderGraph
 
         #endregion
 
-        //public List<SerializationHelper.JSONSerializedElement> serializableGroupNodes => Data;
 
         #region Edge data
 
@@ -653,7 +644,6 @@ namespace UnityEditor.ShaderGraph
                 {
                     Debug.Log("REplaceWith GroupData:: " + groupData.title);
                     RemoveGroupData(groupData);
-                    //m_RemovedGroups.Add(groupData);
                 }
             }
 
@@ -673,8 +663,6 @@ namespace UnityEditor.ShaderGraph
                     RemoveNodeNoValidate(m_NodeDictionary[nodeGuid]);
             }
 
-
-
             ValidateGraph();
 
             foreach (var node in other.GetNodes<INode>())
@@ -683,21 +671,11 @@ namespace UnityEditor.ShaderGraph
             foreach (var edge in other.edges)
                 ConnectNoValidate(edge.outputSlot, edge.inputSlot);
 
-
             foreach (GroupData groupData in other.groups)
             {
-                Debug.Log("Adding NEW GroupData:: " + groupData.title);
                 AddGroupData(groupData);
             }
 
-//            foreach (var groupData in other.groups)
-//            {
-//                if (!m_AddedGroups.Contains(groupData))
-//                {
-//                    //m_Groups.Add(groupData);
-//                    m_AddedGroups.Add(groupData);
-//                }
-//            }
             ValidateGraph();
         }
 
