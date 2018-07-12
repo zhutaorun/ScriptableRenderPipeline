@@ -24,7 +24,7 @@ ${Culling}
 ${Defines}
     #include "LWRP/ShaderLibrary/Core.hlsl"
     #include "LWRP/ShaderLibrary/Lighting.hlsl"
-    #include "ShaderGraphLibrary/Functions.hlsl"
+    #include "LWRP/ShaderLibrary/GraphFunctions.hlsl"
     #include "CoreRP/ShaderLibrary/Color.hlsl"
 
 ${Graph}
@@ -117,7 +117,7 @@ ${Culling}
 ${Defines}
     #include "LWRP/ShaderLibrary/Core.hlsl"
     #include "LWRP/ShaderLibrary/Lighting.hlsl"
-    #include "ShaderGraphLibrary/Functions.hlsl"
+    #include "LWRP/ShaderLibrary/GraphFunctions.hlsl"
     #include "CoreRP/ShaderLibrary/Color.hlsl"
 
 ${Graph}
