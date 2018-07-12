@@ -798,8 +798,6 @@ namespace UnityEditor.ShaderGraph
             foreach (var edge in m_Edges)
                 AddEdgeToNodeEdges(edge);
 
-            Debug.Log(path);
-            Debug.Log("Count: " + m_Groups.Count);
             foreach (GroupData groupData in m_Groups)
             {
                 m_AddedGroups.Add(groupData);

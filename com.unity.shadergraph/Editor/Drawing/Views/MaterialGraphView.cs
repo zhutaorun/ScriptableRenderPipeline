@@ -107,8 +107,12 @@ namespace UnityEditor.ShaderGraph.Drawing
                             if (selectedObject is Group)
                                 return ContextualMenu.MenuAction.StatusFlags.Disabled;
                             VisualElement ve = selectedObject as VisualElement;
-                            if(ve.userData is AbstractMaterialNode)
-                                filteredSelection.Add(selectedObject);
+                            if (ve.userData is AbstractMaterialNode)
+                            {
+                                var selectedNode = selectedObject as Node;
+                                if( selectedNode.GetContainingScope() is Group )
+                                    filteredSelection.Add(selectedObject);
+                            }
                         }
 
                         if (filteredSelection.Count > 0)
@@ -142,7 +146,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void AddToGroupNode(ContextualMenu.MenuAction a)
         {
-            graph.owner.RegisterCompleteObjectUndo("Creating Material Group");
+            //graph.owner.RegisterCompleteObjectUndo("Creating Material Group");
             Vector2 pos = a.eventInfo.localMousePosition;
 
             string title = "New Material Group";
@@ -198,6 +202,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         GraphElement CreateGroupNode(GroupData groupData)
         {
+            graph.owner.RegisterCompleteObjectUndo("Creating Group Node");
             MaterialGraphGroup graphGroupNode = new MaterialGraphGroup();
 
             graphGroupNode.userData = groupData;
@@ -214,7 +219,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void RemoveFromGroupNode(ContextualMenu.MenuAction a)
         {
-            graph.owner.RegisterCompleteObjectUndo("Removing From Material Group");
+            //graph.owner.RegisterCompleteObjectUndo("Removing From Material Group");
 
             foreach (ISelectable selectable in selection)
             {
@@ -382,7 +387,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             graph.owner.RegisterCompleteObjectUndo(operationName);
             graph.RemoveElements(selection.OfType<MaterialNodeView>().Where(v => !(v.node is SubGraphOutputNode)).Select(x => (INode)x.node),
                 selection.OfType<Edge>().Select(x => x.userData).OfType<IEdge>(),
-                selection.OfType<Group>().Select(x => x.userData).OfType<GroupData>());
+                selection.OfType<MaterialGraphGroup>().Select(x => x.userData).OfType<GroupData>());
 
             foreach (var selectable in selection)
             {

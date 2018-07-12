@@ -301,8 +301,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void OnElementsAddedToGroup(Group graphGroup, IEnumerable<GraphElement> element)
         {
-            m_Graph.owner.RegisterCompleteObjectUndo("Adding to Group");
-            Debug.Log("Adding to GROUP");
+
 
             // Need to check that everything exists.
 
@@ -310,9 +309,11 @@ namespace UnityEditor.ShaderGraph.Drawing
             var groupData = graphGroup.userData as GroupData;
             if (groupData != null)
             {
+                //m_Graph.owner.RegisterCompleteObjectUndo("Adding to Group");
+                //Debug.Log("Adding to GROUP");
                 foreach (var materialNodeView in element.Select(e => e).OfType<MaterialNodeView>())
                 {
-                    Debug.Log("Adding " + materialNodeView.node.name + "TO GROUP :::: " + graphGroup.title);
+                    //Debug.Log("Adding " + materialNodeView.node.name + "TO GROUP :::: " + graphGroup.title);
                     materialNodeView.node.groupGuid = groupData.guid;
                 }
             }
@@ -334,18 +335,19 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void OnElementsRemovedFromGroup(Group graphGroup, IEnumerable<GraphElement> element)
         {
-            m_Graph.owner.RegisterCompleteObjectUndo("Removing from Group");
-            Debug.Log("Removing from GROUP");
+
 
 
             var groupData = graphGroup.userData as GroupData;
             if (groupData != null)
             {
+                //m_Graph.owner.RegisterCompleteObjectUndo("Removing from Group");
+                //Debug.Log("Removing from GROUP");
                 foreach (var materialNodeView in element.Select(e => e).OfType<MaterialNodeView>())
                 {
                     if (materialNodeView.node != null)
                     {
-                        Debug.Log("Removing " + materialNodeView.node.name + "from GROUP :::: " + graphGroup.title);
+                       // Debug.Log("Removing " + materialNodeView.node.name + "from GROUP :::: " + graphGroup.title);
                         materialNodeView.node.groupGuid = Guid.Empty;
                     }
                 }
@@ -361,6 +363,8 @@ namespace UnityEditor.ShaderGraph.Drawing
 //                    materialNodeView.node.groupGuid = Guid.Empty;
 //                }
 //            }
+
+            RemoveEmptyGroups();
         }
 
 
@@ -390,24 +394,40 @@ namespace UnityEditor.ShaderGraph.Drawing
         }
 
 
-//        public void RemoveEmptyGroups()
-//        {
-//            graphView.schedule.Execute(a =>
-//            {
-//                foreach (GraphElement element in graphView.graphElements.ToList())
-//                {
-//                    Scope scope = element as Scope;
-//
-//                    if (scope != null && !(scope is Group) && scope.containedElements.Count() == 0)
+        public void RemoveEmptyGroups()
+        {
+            graphView.schedule.Execute(a =>
+            {
+                foreach (GraphElement element in graphView.graphElements.ToList())
+                {
+                    Group group = element as Group;
+
+                    if (group != null && !group.containedElements.Any())
+                    {
+                        m_Graph.owner.RegisterCompleteObjectUndo("Deleting Empty Group Node");
+                        graphView.RemoveElement(group);
+                        //DestroyNode();
+                    }
+//                    if (group != null && !(group is Group) && group.containedElements.Count() == 0)
 //                    {
-//                        MathNode mathNode = scope.userData as MathNode;
+//                        MathNode mathNode = group.userData as GroupData;
 //
 //                        DestroyNode(mathNode);
 //
-//                        graphView.RemoveElement(scope);
+//                        graphView.RemoveElement(group);
 //                    }
-//                }
-//            });
+                }
+            });
+        }
+
+//        public void DestroyNode(MathNode mathNode)
+//        {
+//            if (mathNode != null)
+//            {
+//                m_MathBook.Remove(mathNode);
+//                mathNode.groupNode = null;
+//                UnityEngine.Object.DestroyImmediate(mathNode, true);
+//            }
 //        }
 
         HashSet<MaterialNodeView> m_NodeViewHashSet = new HashSet<MaterialNodeView>();
@@ -436,8 +456,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                             var node = element.userData as INode;
                             if (node == null)
                                 continue;
-                            // TODO: this doesnt work, need to remove all nodes inside the group, somehow
-                            m_Graph.RemoveNode(node);
+                            // TODO: this doesnt work, when undoing due to temp id and previewmanager
+                            // m_Graph.RemoveNode(node);
                             // m_GraphView.RemoveElement();
                         }
 
