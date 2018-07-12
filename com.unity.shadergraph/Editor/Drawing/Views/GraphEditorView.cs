@@ -338,7 +338,6 @@ namespace UnityEditor.ShaderGraph.Drawing
         public void HandleGraphChanges()
         {
 
-
             previewManager.HandleGraphChanges();
             previewManager.RenderPreviews();
             m_BlackboardProvider.HandleGraphChanges();
@@ -353,26 +352,51 @@ namespace UnityEditor.ShaderGraph.Drawing
                 {
                     if (group.userData == groupData)
                     {
+                        List<INode> removeNodes = new List<INode>();
                         foreach (GraphElement element in group.containedElements)
                         {
                             //Debug.Log("DELETING NODE::: " + (element.userData as INode).name);
                             var node = element.userData as INode;
                             if (node == null)
                                 continue;
+                            removeNodes.Add(node);
                             // TODO: this doesnt work, when undoing due to temp id and previewmanager
-                            // m_Graph.RemoveNode(node);
+                            Debug.Log("Removing::" + node.name);
+
+
+                            //group.RemoveElement(element as AbstractMaterialNode);
+
+                            //m_Graph.elementsToRemove. (node);
+                            //m_Graph.RemoveNodeNoValidate(node);
+
+                            //m_Graph.RemoveNode(node);
                             // m_GraphView.RemoveElement();
                         }
 
-                        group.userData = null;
+//                        if (removeNodes.Any())
+//                        {
+//                            foreach (INode removeNode in removeNodes)
+//                            {
+//                                //m_Graph.removedNodes.Append(removeNode);
+//                                m_Graph.RemoveNode(removeNode);
+//                            }
+//                        }
+
+//                        if(removeNodes.Any())
+//                            m_Graph.RemoveElements( removeNodes ,
+//                                Enumerable.Empty<IEdge>(),
+//                                Enumerable.Empty<GroupData>() );
+
+                        //group.userData = null;
                         m_GraphView.RemoveElement(group);
                     }
                 }
             }
 
+
             foreach (var node in m_Graph.removedNodes)
             {
-                m_GraphView.selection.Clear();
+                //m_GraphView.selection.Clear();
                 node.UnregisterCallback(OnNodeChanged);
                 var nodeView = m_GraphView.nodes.ToList().OfType<MaterialNodeView>().FirstOrDefault(p => p.node != null && p.node.guid == node.guid);
                 if (nodeView != null)
@@ -385,6 +409,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             foreach (var node in m_Graph.addedNodes)
             {
+                Debug.Log("ADDING::" + node.name);
                 AddNode(node);
             }
 
