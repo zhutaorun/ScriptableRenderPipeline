@@ -39,6 +39,9 @@ namespace UnityEditor.ShaderGraph
         protected struct Vector1
         {}
 
+        protected struct Integer
+        {}
+
         protected struct Texture2D
         {}
 
@@ -154,6 +157,10 @@ namespace UnityEditor.ShaderGraph
             {
                 return SlotValueType.Vector1;
             }
+            if (t == typeof(Integer))
+            {
+                return SlotValueType.Vector1;
+            }
             if (t == typeof(Vector2))
             {
                 return SlotValueType.Vector2;
@@ -250,7 +257,9 @@ namespace UnityEditor.ShaderGraph
                 var name = GraphUtil.ConvertCamelCase(par.Name, true);
 
                 MaterialSlot s;
-                if (attribute.binding == Binding.None && !par.IsOut && par.ParameterType == typeof(Color))
+                if (attribute.binding == Binding.None && !par.IsOut && par.ParameterType == typeof(Integer))
+                    s = new IntegerMaterialSlot(attribute.slotId, name, par.Name, SlotType.Input, attribute.defaultValue ?? Vector4.zero, stageCapability: attribute.stageCapability, hidden: attribute.hidden);
+                else if (attribute.binding == Binding.None && !par.IsOut && par.ParameterType == typeof(Color))
                     s = new ColorRGBAMaterialSlot(attribute.slotId, name, par.Name, SlotType.Input, attribute.defaultValue ?? Vector4.zero, stageCapability: attribute.stageCapability, hidden: attribute.hidden);
                 else if (attribute.binding == Binding.None && !par.IsOut && par.ParameterType == typeof(ColorRGBA))
                     s = new ColorRGBAMaterialSlot(attribute.slotId, name, par.Name, SlotType.Input, attribute.defaultValue ?? Vector4.zero, stageCapability: attribute.stageCapability, hidden: attribute.hidden);

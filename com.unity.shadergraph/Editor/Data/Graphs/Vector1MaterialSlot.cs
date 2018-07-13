@@ -47,6 +47,12 @@ namespace UnityEditor.ShaderGraph
             set { m_Value = value; }
         }
 
+        public string[] labels 
+        {
+            get { return m_Labels; }
+            set { m_Labels = value; }
+        }
+
         public override VisualElement InstantiateControl()
         {
             return new MultiFloatSlotControlView(owner, m_Labels, () => new Vector4(value, 0f, 0f, 0f), (newValue) => value = newValue.x);

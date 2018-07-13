@@ -1,0 +1,16 @@
+IntegerSlotControlView {
+    flex-direction: row;
+    align-items: center;
+}
+
+IntegerSlotControlView > #dummy > Label {
+    margin-left: 0;
+    margin-right: 0;
+    cursor: slide-arrow;
+}
+
+IntegerSlotControlView > IntegerField {
+    width: 30;
+    margin-left: 0;
+    margin-right: 0;
+}
