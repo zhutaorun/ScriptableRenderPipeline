@@ -4,6 +4,7 @@
 #define SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv) shadergraph_LWSampleSceneDepth(uv);
 #define SHADERGRAPH_SAMPLE_SCENE_COLOR(uv) shadergraph_LWSampleSceneColor(uv);
 #define SHADERGRAPH_MAIN_LIGHT(attenuation, direction, color) shadergraph_LWMainLight(attenuation, direction, color);
+#define SHADERGRAPH_ADDITIONAL_LIGHT(index, positionWS, attenuation, direction, color) shadergraph_LWAdditionalLight(index, positionWS, attenuation, direction, color);
 
 #if defined(REQUIRE_DEPTH_TEXTURE)
 #if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
@@ -43,6 +44,14 @@ float3 shadergraph_LWSampleSceneColor(float2 uv)
 void shadergraph_LWMainLight(out float attenutation, out float3 direction, out float3 color)
 {
     Light light = GetMainLight();
+    attenutation = light.attenuation;
+    direction = light.direction;
+    color = light.color;
+}
+
+void shadergraph_LWAdditionalLight(float index, float3 positionWS, out float attenutation, out float3 direction, out float3 color)
+{
+    Light light = GetLight(index, positionWS);
     attenutation = light.attenuation;
     direction = light.direction;
     color = light.color;

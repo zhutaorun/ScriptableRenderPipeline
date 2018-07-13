@@ -44,6 +44,10 @@ struct Gradient
     #define SHADERGRAPH_MAIN_LIGHT(attenuation, direction, color) shadergraph_MainLight(attenuation, direction, color);
 #endif
 
+#ifndef SHADERGRAPH_ADDITIONAL_LIGHT
+    #define SHADERGRAPH_ADDITIONAL_LIGHT(index, positionWS, attenuation, direction, color) shadergraph_AdditionalLight(index, positionWS, attenuation, direction, color);
+#endif
+
 float shadergraph_SampleSceneDepth(float2 uv)
 {
     return 1;
@@ -56,9 +60,16 @@ float3 shadergraph_SampleSceneColor(float2 uv)
 
 void shadergraph_MainLight(out float attenutation, out float3 direction, out float3 color)
 {
-    attenutation = 0;
-    direction = 0;
-    color = 0;
+    attenutation = 1;
+    direction = float3(-0.5, 0.5, -0.5);
+    color = 1;
+}
+
+void shadergraph_AdditionalLight(float index, float3 positionWS, out float attenutation, out float3 direction, out float3 color)
+{
+    attenutation = 1;
+    direction = float3(-0.5, 0.5, -0.5);
+    color = 1;
 }
 
 #endif // UNITY_GRAPHFUNCTIONS_INCLUDED
