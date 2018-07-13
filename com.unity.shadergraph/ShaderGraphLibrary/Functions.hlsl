@@ -40,6 +40,10 @@ struct Gradient
     #define SHADERGRAPH_SAMPLE_SCENE_COLOR(uv) shadergraph_SampleSceneColor(uv);
 #endif
 
+#ifndef SHADERGRAPH_MAIN_LIGHT
+    #define SHADERGRAPH_MAIN_LIGHT(attenuation, direction, color) shadergraph_MainLight(attenuation, direction, color);
+#endif
+
 float shadergraph_SampleSceneDepth(float2 uv)
 {
     return 1;
@@ -48,6 +52,13 @@ float shadergraph_SampleSceneDepth(float2 uv)
 float3 shadergraph_SampleSceneColor(float2 uv)
 {
     return 0;
+}
+
+void shadergraph_MainLight(out float attenutation, out float3 direction, out float3 color)
+{
+    attenutation = 0;
+    direction = 0;
+    color = 0;
 }
 
 #endif // UNITY_GRAPHFUNCTIONS_INCLUDED
