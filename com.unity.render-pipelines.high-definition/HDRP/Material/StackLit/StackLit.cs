@@ -17,6 +17,26 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             StackLitSubsurfaceScattering    = 1 << 5,
             StackLitTransmission            = 1 << 6,
             StackLitCoatNormalMap           = 1 << 7,
+            StackLitSpecularColor           = 1 << 8,
+            StackLitHazyGloss               = 1 << 9,
+        };
+
+        // We will use keywords no need for [GenerateHLSL] as we don't test in HLSL such a value
+        public enum BaseParametrization
+        {
+            BaseMetallic = 0,
+            SpecularColor = 1, // MaterialFeatureFlags.StackLitSpecularColor
+        };
+
+        // We will use keywords no need for [GenerateHLSL] as we don't test in HLSL such a value
+        public enum DualSpecularLobeParametrization
+        {
+            Direct = 0,
+            HazyGloss = 1, // MaterialFeatureFlags.StackLitHazyGloss
+            // Pascal Barla, Romain Pacanowski, Peter Vangorp. A Composite BRDF Model for Hazy Gloss.
+            // Computer Graphics Forum, Wiley, 2018, 37, <10.1111/cgf.13475>. <hal-01818666v2>
+            // https://hal.inria.fr/hal-01818666v2
+            // Submitted on 6 Jul 2018
         };
 
         //-----------------------------------------------------------------------------
@@ -44,6 +64,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             [SurfaceDataAttributes("IOR")]
             public float dielectricIor;
 
+            [SurfaceDataAttributes("Specular Color", false, true)]
+            public Vector3 specularColor;
+
             [SurfaceDataAttributes(new string[] {"Normal", "Normal View Space"}, true)]
             public Vector3 normalWS;
 
@@ -59,14 +82,49 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             [SurfaceDataAttributes("Smoothness A")]
             public float perceptualSmoothnessA;
 
-            // Dual specular lobe
+            // Dual specular lobe: Direct parametrization (engine parameters)
             [SurfaceDataAttributes("Smoothness B")]
             public float perceptualSmoothnessB;
 
             [SurfaceDataAttributes("Lobe Mixing")]
             public float lobeMix;
 
-            // Anisotropic
+            // Dual specular lobe: DualSpecularLobeParametrization == HazyGloss parametrization.
+            //
+            // Lobe B is the haze.
+            //
+            // In that mode, perceptual parameters of "haziness" and "hazeExtent" are used.
+            // The base layer f0 parameter when the DualSpecularLobeParametrization was == "Direct"
+            // is now also a perceptual parameter corresponding to a pseudo-f0 term, Fc(0) or
+            // "coreFresnel0" (r_c in the paper). Although an intermediate value, this original
+            // fresnel0 never reach the engine side (BSDFData). 
+            //
+            // [ Without the HazyGloss parametrization, the original base layer f0 is directly inferred
+            // as f0 = f(baseColor, metallic) when the BaseParametrization is BaseMetallic
+            // or directly given via f0 = SpecularColor when the BaseParametrization == SpecularColor.
+            //
+            // When the DualSpecularLobeParametrization is "HazyGloss", this base layer f0 is
+            // now reinterpreted as the perceptual "core lobe reflectivity" or Fc(0) or r_c in
+            // the paper.]
+            //
+            // From these perceptual parameters, the engine-used lobeMix, fresnel0 (SpecularColor)
+            // and SmoothnessB parameters are set.
+            //
+            // [ TODO: We could actually scrap metallic and dielectricIor here and update specularColor
+            // to always hold the f0 intermediate value (r_c), although you could then go further and
+            // put the final "engine input" f0 in there, and other perceptuals like haziness and 
+            // hazeExtent and update directly lobeMix here. For now we keep the shader mostly organized
+            // like Lit ]
+            [SurfaceDataAttributes("Haziness")]
+            public float haziness;
+
+            [SurfaceDataAttributes("Haze Extent")]
+            public float hazeExtent;
+
+            [SurfaceDataAttributes("Cap Haziness To Agree With Metallic")]
+            public bool capHazinessWrtMetallic;
+
+            // Anisotropy
             [SurfaceDataAttributes("Tangent", true)]
             public Vector3 tangentWS;
 

@@ -78,8 +78,8 @@ TEXTURE2D(_GBufferTexture0);
 #endif
 
 #define VLAYERED_DIFFUSE_ENERGY_HACKED_TERM
-//#define VLAYERED_ANISOTROPY_IBL_DESTRETCH
 
+//#define VLAYERED_ANISOTROPY_IBL_DESTRETCH
 #define VLAYERED_ANISOTROPY_SCALAR_ROUGHNESS
 #define VLAYERED_ANISOTROPY_SCALAR_ROUGHNESS_CORRECTANISO
 
@@ -333,6 +333,94 @@ NormalData ConvertSurfaceDataToNormalData(SurfaceData surfaceData)
 }
 
 //-----------------------------------------------------------------------------
+// Conversion function for hazy gloss parametrization
+//-----------------------------------------------------------------------------
+
+//
+// Outputs:
+//    bsdfData.fresnel0
+//    bsdfData.lobeMix
+//    bsdfData.perceptualRoughnessB
+//    bsdfData.roughnessBT
+//    bsdfData.roughnessBB
+//
+// TODOTODO: capHazinessWrtMetallic and secondary anisotropy
+//
+void HazeMapping(float3 fresnel0, float roughnessAT, float roughnessAB, float haziness, float hazeExtent, float hazeExtentAnisotropy /* TODOTODO */, inout BSDFData bsdfData)
+{
+    float w = 10.0; // interpolation steepness weight (Bezier weight of central point)
+    bool useBezierToMapKh = true; 
+
+    float3 r_c = fresnel0;
+    float2 alpha_n = float2(roughnessAT, roughnessAB);
+    float alpha_n_xy = alpha_n.x * alpha_n.y;
+    float beta_h = haziness;
+    float2 lambda_h; // hazeExtent anisotropic
+    //ConvertValueAnisotropyToValueTB(hazeExtent, hazeExtentAnisotropy, lambda_h.x, lambda_h.y);
+    ConvertValueAnisotropyToValueTB(hazeExtent, 0.0, lambda_h.x, lambda_h.y);
+
+    float2 alpha_w = saturate(alpha_n + lambda_h * sqrt(alpha_n_xy)); // wide lobe (haze) roughness
+    // We saturate here as hazeExtent is scaled arbitrarily (Ideally, a max scale depends on the
+    // maximum core roughness and since this primary roughness (of lobe A) can be textured, we
+    // don't know it).
+    float p = alpha_n_xy/(alpha_w.x * alpha_w.y); // peak ratio formula at theta_d = 0 (ie p is in the paper := P(0))
+    
+    float r_c_max = Max3(r_c.r, r_c.g, r_c.b);
+    float k_h_max = 0.0;
+
+    if (r_c_max <= FLT_EPS)
+    {
+        bsdfData.lobeMix = 0.0;
+    }
+    else 
+    {
+        if (useBezierToMapKh)
+        {
+            // Smooth out C1 discontinuity at k_h = p with a Bezier curve
+            // (loose some hazeExtent in the process).
+  
+            float b = 2*(r_c_max*(1-w)+w*p);
+            float u; // parametric coordinate for rational Bezier curve
+            if (abs(2*(b-1)) <= FLT_EPS)
+            {
+                // use Taylor expansion around singularity
+                u = (2*w*p-1- (4*Sq(w)*Sq(p)-4*Sq(w)*p+1)*(r_c_max-(0.5-w*p)/(1-w)) ) / (2*(w-1));
+            }
+            else
+            {
+                float D = Sq(b) - 4*(b-1)*r_c_max;
+                u = (b-sqrt(D)) / (2*(b-1));
+            }
+            k_h_max =  (2*(1-u)*u*w*beta_h)/(Sq(1-u)+2*(1-u)*u*w+Sq(u)); // rational Bezier curve
+        }
+        else
+        {
+            // Interpolation between 0 and positivity and energy constraints: these are lines
+            // but form a triangle so there's a discontinuity at k_h := K_h(0) = p, hence the
+            // branch here:
+            k_h_max = (r_c_max > p) ? beta_h*(1-r_c_max)/(1-p) : beta_h*r_c_max/p; 
+        }
+  
+        float r_max = r_c_max + (1-p)*k_h_max; // compound reflectivity (max color channel)
+        float3 chromaVec = r_c/r_c_max;
+  
+        bsdfData.fresnel0 = r_max*chromaVec;
+        bsdfData.lobeMix = k_h_max / r_max;
+        //bsdfData.lobeMix = 0.5;
+
+        float anisotropyB; // TODOTODO
+        float roughnessB;
+        ConvertRoughnessToAnisotropy(alpha_w.x, alpha_w.y, anisotropyB);
+        ConvertRoughnessTAndAnisotropyToRoughness(alpha_w.x, anisotropyB, roughnessB);
+  
+        bsdfData.perceptualRoughnessB = RoughnessToPerceptualRoughness(roughnessB);
+        bsdfData.roughnessBT = alpha_w.x;
+        bsdfData.roughnessBB = alpha_w.y;
+    }
+}
+
+
+//-----------------------------------------------------------------------------
 // conversion function for forward
 //-----------------------------------------------------------------------------
 
@@ -352,16 +440,12 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
     bsdfData.perceptualRoughnessA = PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothnessA);
     bsdfData.perceptualRoughnessB = PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothnessB);
 
-    bsdfData.lobeMix = surfaceData.lobeMix;
-
-    // There is no metallic with SSS and specular color mode
-    float metallic = HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_SUBSURFACE_SCATTERING | MATERIALFEATUREFLAGS_STACK_LIT_TRANSMISSION) ? 0.0 : surfaceData.metallic;
+    // We set metallic to 0 with SSS and specular color mode
+    float metallic = HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_SPECULAR_COLOR | MATERIALFEATUREFLAGS_STACK_LIT_SUBSURFACE_SCATTERING | MATERIALFEATUREFLAGS_STACK_LIT_TRANSMISSION) ? 0.0 : surfaceData.metallic;
 
     bsdfData.diffuseColor = ComputeDiffuseColor(surfaceData.baseColor, metallic);
-    bsdfData.fresnel0 = ComputeFresnel0(surfaceData.baseColor, surfaceData.metallic, IorToFresnel0(surfaceData.dielectricIor));
+    bsdfData.fresnel0 = HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_SPECULAR_COLOR) ? surfaceData.specularColor : ComputeFresnel0(surfaceData.baseColor, surfaceData.metallic, IorToFresnel0(surfaceData.dielectricIor));
 
-    // Kind of obsolete without gbuffer, ie could use _MATERIAL_FEATURE* shader_features directly, but
-    // if anything, makes the code more readable.
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_SUBSURFACE_SCATTERING))
     {
         // Assign profile id and overwrite fresnel0
@@ -377,6 +461,27 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_ANISOTROPY))
     {
         FillMaterialAnisotropy(surfaceData.anisotropy, surfaceData.tangentWS, cross(surfaceData.normalWS, surfaceData.tangentWS), bsdfData);
+    }
+
+    // Extract T & B anisotropies
+    ConvertAnisotropyToRoughness(bsdfData.perceptualRoughnessA, bsdfData.anisotropy, bsdfData.roughnessAT, bsdfData.roughnessAB);
+    ConvertAnisotropyToRoughness(bsdfData.perceptualRoughnessB, bsdfData.anisotropy, bsdfData.roughnessBT, bsdfData.roughnessBB);
+    bsdfData.lobeMix = surfaceData.lobeMix;
+
+    // Note that if we're using the hazy gloss parametrization, these will all be changed again:
+    // fresnel0, lobeMix, perceptualRoughnessB, roughnessBT, roughnessBB.
+    //
+    // The fresnel0 is the only one used and needed in that case but it's ok, since materialFeatures are
+    // statically known, the compiler will prune the useless computations for the rest of the terms above
+    // when MATERIALFEATUREFLAGS_STACK_LIT_HAZY_GLOSS is set.
+    //
+    // It is important to deal with the hazy gloss parametrization after we have fresnel0 for the base but
+    // before the effect of the coat is applied on it. When hazy gloss is used, the current fresnel0 at this
+    // point is reinterpreted as a pseudo-f0 ("core lobe reflectivity" or Fc(0) or r_c in the paper)
+    // 
+    if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_HAZY_GLOSS))
+    {
+        HazeMapping(bsdfData.fresnel0, bsdfData.roughnessAT, bsdfData.roughnessAB, surfaceData.haziness, surfaceData.hazeExtent, bsdfData.anisotropy /* TODOTODO */, bsdfData);
     }
 
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_IRIDESCENCE))
@@ -402,10 +507,8 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
         // We have a coat top layer: change the base fresnel0 accordingdly:
         bsdfData.fresnel0 = ConvertF0ForAirInterfaceToF0ForNewTopIor(bsdfData.fresnel0, bsdfData.coatIor);
 
-        // Dont clamp the roughnesses for now, ComputeAdding() will use those directly:
+        // We dont clamp the roughnesses for now, ComputeAdding() will use those directly, unclamped.
         // (don't forget to call ClampRoughnessForAnalyticalLights after though)
-        ConvertAnisotropyToRoughness(bsdfData.perceptualRoughnessA, bsdfData.anisotropy, bsdfData.roughnessAT, bsdfData.roughnessAB);
-        ConvertAnisotropyToRoughness(bsdfData.perceptualRoughnessB, bsdfData.anisotropy, bsdfData.roughnessBT, bsdfData.roughnessBB);
         bsdfData.coatRoughness = PerceptualRoughnessToRoughness(bsdfData.coatPerceptualRoughness);
     }
     else
@@ -413,8 +516,10 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
         // roughnessT and roughnessB are clamped, and are meant to be used with punctual and directional lights.
         // perceptualRoughness is not clamped, and is meant to be used for IBL.
         // TODO: add tangent map for anisotropy;
-        ConvertAnisotropyToClampRoughness(bsdfData.perceptualRoughnessA, bsdfData.anisotropy, bsdfData.roughnessAT, bsdfData.roughnessAB);
-        ConvertAnisotropyToClampRoughness(bsdfData.perceptualRoughnessB, bsdfData.anisotropy, bsdfData.roughnessBT, bsdfData.roughnessBB);
+        bsdfData.roughnessAT = ClampRoughnessForAnalyticalLights(bsdfData.roughnessAT);
+        bsdfData.roughnessAB = ClampRoughnessForAnalyticalLights(bsdfData.roughnessAB);
+        bsdfData.roughnessBT = ClampRoughnessForAnalyticalLights(bsdfData.roughnessBT);
+        bsdfData.roughnessBB = ClampRoughnessForAnalyticalLights(bsdfData.roughnessBB);
     }
 
     bsdfData.ambientOcclusion = surfaceData.ambientOcclusion;
@@ -1494,6 +1599,7 @@ float3 PreLightData_GetSpecularOcclusion(BSDFData bsdfData, // PreLightData preL
                                          int bentVisibilityAlgorithm, bool useHemisphereClip, float3 fresnel0)
 {
     SphereCap hemiSphere = GetSphereCap(normalWS, 0.0);
+    //test: SphereCap hemiSphere = GetSphereCap(normalWS, cos(HALF_PI*0.4));
     float ambientOcclusionFromData = bsdfData.ambientOcclusion;
     float roughness = PerceptualRoughnessToRoughness(perceptualRoughness);
 
@@ -1528,8 +1634,15 @@ float3 PreLightData_GetSpecularOcclusion(BSDFData bsdfData, // PreLightData preL
 
 // Call after LTC so orthoBasisViewNormal[] are setup along with other preLightData fields:
 //
-// Makes use of ComputeAdding modified iblPerceptualRoughness, vLayerEnergyCoeff (if vlayered)
+// Makes use of ComputeAdding modified (if vlayered) iblPerceptualRoughness, vLayerEnergyCoeff
 // and fresnelIridforCalculatingFGD (if not vlayered) if iridescence is enabled.
+//
+// Note: We make use of iblPerceptualRoughness[] even while at the point where we call _SetupOcclusion, we will have 
+// modified those in case of anisotropy (it is modified by vlayering if present and not clamped, and then by an empirical
+// formula in case anisotropy is present too specifically for the IBL hack). 
+// Since specular occlusion is not anisotropic anyways, we use these as-is, instead of a version 
+// "pre-GetGGXAnisotropicModifiedNormalAndRoughness".
+//
 void PreLightData_SetupOcclusion(PositionInputs posInput, BSDFData bsdfData, float3 V, float3 N[NB_NORMALS], float NdotV[NB_NORMALS] /* clamped */, inout PreLightData preLightData)
 {
     float screenSpaceSpecularOcclusion[TOTAL_NB_LOBES];

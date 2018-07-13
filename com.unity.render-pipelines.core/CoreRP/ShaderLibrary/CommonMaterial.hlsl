@@ -48,9 +48,22 @@ void ConvertAnisotropyToRoughness(real perceptualRoughness, real anisotropy, out
     roughnessB = roughness * (1 - anisotropy);
 }
 
+void ConvertRoughnessTAndAnisotropyToRoughness(real roughnessT, real anisotropy, out real roughness)
+{
+    roughness = roughnessT / (1 + anisotropy);
+}
+
+void ConvertValueAnisotropyToValueTB(real value, real anisotropy, out real valueT, out real valueB)
+{
+    // Use the parametrization of Sony Imageworks.
+    // Ref: Revisiting Physically Based Shading at Imageworks, p. 15.
+    valueT = value * (1 + anisotropy);
+    valueB = value * (1 - anisotropy);
+}
+
 void ConvertRoughnessToAnisotropy(real roughnessT, real roughnessB, out real anisotropy)
 {
-    anisotropy = ((roughnessT - roughnessB) / (roughnessT + roughnessB + 0.0001));
+    anisotropy = ((roughnessT - roughnessB) / max(roughnessT + roughnessB, 0.0001));
 }
 
 // Same as ConvertAnisotropyToRoughness but

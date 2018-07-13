@@ -423,6 +423,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             public Property m_ConstantProperty;
 
+            public Property m_RangeScaleProperty;
+
             public TextureOneLineProperty m_TextureProperty;
 
             public ComboProperty m_UvSetProperty;
@@ -466,6 +468,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     m_ConstantProperty = new Property(parent, constantPropertyName, guiText, toolTip, isMandatory);
                 }
 
+                m_RangeScaleProperty = new Property(parent, propertyName + "RangeScale", "Range Multiplier", false);
+
                 m_TextureProperty = new TextureOneLineProperty(parent, propertyName, pairConstantWithTexture ? constantPropertyName : string.Empty, guiText, toolTip, isMandatory);
 
                 m_UvSetProperty = new ComboProperty(parent, propertyName + "UV", "UV Mapping", Enum.GetNames(typeof(UVMapping)), false);
@@ -488,6 +492,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 {
                     m_ConstantProperty.OnFindProperty(props);
                 }
+                m_RangeScaleProperty.OnFindProperty(props);
                 m_TextureProperty.OnFindProperty(props);
                 m_UvSetProperty.OnFindProperty(props);
                 m_LocalOrWorldProperty.OnFindProperty(props);
@@ -508,6 +513,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     if (m_Show.BoolValue)
                     {
                         EditorGUI.indentLevel++;
+
+                        if (m_RangeScaleProperty.IsValid)
+                        {
+                            m_RangeScaleProperty.OnGUI();
+                        }
+
                         if (m_ConstantProperty != null && m_ConstantProperty.IsValid
                             && m_TextureProperty.TextureValue == null)
                         {

@@ -16,6 +16,8 @@ Shader "HDRenderPipeline/StackLit"
         _BaseColorMapUV("BaseColor Map UV", Float) = 0.0
         _BaseColorMapUVLocal("BaseColorMap UV Local", Float) = 0.0
 
+        [Enum(Disney BaseColor and Metallic, 0, BaseColor as Diffuse and SpecularColor aka f0, 1)] _BaseParametrization("Base Parametrization", Float) = 0
+
         [HideInInspector] _MetallicMapShow("Metallic Map Show", Float) = 0
         _Metallic("Metallic", Range(0.0, 1.0)) = 0
         _MetallicMap("Metallic Map", 2D) = "black" {}
@@ -29,6 +31,13 @@ Shader "HDRenderPipeline/StackLit"
 
         _DielectricIor("DielectricIor IOR", Range(1.0, 2.5)) = 1.5
 
+        _SpecularColor("SpecularColor", Color) = (1,1,1,1)
+        _SpecularColorMap("SpecularColor Map", 2D) = "white" {}
+        [HideInInspector] _SpecularColorMapShow("SpecularColor Map Show", Float) = 0
+        _SpecularColorMapUV("SpecularColor Map UV", Float) = 0.0
+        _SpecularColorMapUVLocal("SpecularColorMap UV Local", Float) = 0.0
+        [ToggleUI] _EnergyConservingSpecularColor("_EnergyConservingSpecularColor", Float) = 1.0
+
         [HideInInspector] _SmoothnessAMapShow("SmoothnessA Map Show", Float) = 0
         _SmoothnessA("SmoothnessA", Range(0.0, 1.0)) = 1.0
         _SmoothnessAMap("SmoothnessA Map", 2D) = "white" {}
@@ -40,6 +49,8 @@ Shader "HDRenderPipeline/StackLit"
         _SmoothnessAMapRemap("SmoothnessA Remap", Vector)  = (0, 1, 0, 0)
         [ToggleUI] _SmoothnessAMapRemapInverted("Invert SmoothnessA Remap", Float) = 0.0
         [HideInInspector] _SmoothnessAMapRange("SmoothnessA Range", Vector) = (0, 1, 0, 0)
+
+        [Enum(Direct Parameter Control, 0, Hazy Gloss Parametrization of Barla Pacanowski Vangorp, 1)] _DualSpecularLobeParametrization("Dual Specular Lobe Parametrization", Float) = 0
 
         [ToggleUI] _EnableDualSpecularLobe("Enable Dual Specular Lobe", Float) = 0.0 // UI only
         [HideInInspector] _SmoothnessBMapShow("SmoothnessB Map Show", Float) = 0
@@ -53,7 +64,45 @@ Shader "HDRenderPipeline/StackLit"
         _SmoothnessBMapRemap("SmoothnessB Remap", Vector) = (0, 1, 0, 0)
         [ToggleUI] _SmoothnessBMapRemapInverted("Invert SmoothnessB Remap", Float) = 0.0
         [HideInInspector] _SmoothnessBMapRange("SmoothnessB Range", Vector) = (0, 1, 0, 0)
-        _LobeMix("Lobe Mix", Range(0.0, 1.0)) = 0
+
+        [HideInInspector] _LobeMixMapShow("LobeMix Map Show", Float) = 0
+        _LobeMix("LobeMix", Range(0.0, 1.0)) = 0
+        _LobeMixMap("LobeMix Map", 2D) = "white" {}
+        _LobeMixUseMap("LobeMix Use Map", Float) = 0
+        _LobeMixMapUV("LobeMix Map UV", Float) = 0.0
+        _LobeMixMapUVLocal("_LobeMix Map UV Local", Float) = 0.0
+        _LobeMixMapChannel("LobeMix Map Channel", Float) = 0.0
+        [HideInInspector] _LobeMixMapChannelMask("LobeMix Map Channel Mask", Vector) = (1, 0, 0, 0)
+        _LobeMixMapRemap("LobeMix Remap", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _LobeMixMapRemapInverted("Invert LobeMix Remap", Float) = 0.0
+        [HideInInspector] _LobeMixMapRange("LobeMix Range", Vector) = (0, 1, 0, 0)
+
+        [HideInInspector] _HazinessMapShow("Haziness Map Show", Float) = 0
+        _Haziness("Haziness", Range(0.0, 1.0)) = 0
+        _HazinessMap("Haziness Map", 2D) = "white" {}
+        _HazinessUseMap("Haziness Use Map", Float) = 0
+        _HazinessMapUV("Haziness Map UV", Float) = 0.0
+        _HazinessMapUVLocal("_Haziness Map UV Local", Float) = 0.0
+        _HazinessMapChannel("Haziness Map Channel", Float) = 0.0
+        [HideInInspector] _HazinessMapChannelMask("Haziness Map Channel Mask", Vector) = (1, 0, 0, 0)
+        _HazinessMapRemap("Haziness Remap", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _HazinessMapRemapInverted("Invert Haziness Remap", Float) = 0.0
+        [HideInInspector] _HazinessMapRange("Haziness Range", Vector) = (0, 1, 0, 0)
+
+        [ToggleUI] _CapHazinessWrtMetallic("Cap Haziness Wrt Metallic", Float) = 0.0
+
+        [HideInInspector] _HazeExtentMapShow("HazeExtent Map Show", Float) = 0
+        _HazeExtentMapRangeScale("HazeExtent Range Scale", Float) = 8.0
+        _HazeExtent("HazeExtent", Range(0.0, 1.0)) = 0
+        _HazeExtentMap("HazeExtent Map", 2D) = "white" {}
+        _HazeExtentUseMap("HazeExtent Use Map", Float) = 0
+        _HazeExtentMapUV("HazeExtent Map UV", Float) = 0.0
+        _HazeExtentMapUVLocal("_HazeExtent Map UV Local", Float) = 0.0
+        _HazeExtentMapChannel("HazeExtent Map Channel", Float) = 0.0
+        [HideInInspector] _HazeExtentMapChannelMask("HazeExtent Map Channel Mask", Vector) = (1, 0, 0, 0)
+        _HazeExtentMapRemap("HazeExtent Remap", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _HazeExtentMapRemapInverted("Invert HazeExtent Remap", Float) = 0.0
+        [HideInInspector] _HazeExtentMapRange("HazeExtent Range", Vector) = (0, 1, 0, 0)
 
         [ToggleUI] _VlayerRecomputePerLight("Vlayer Recompute Per Light", Float) = 0.0 // UI only
         [ToggleUI] _VlayerUseRefractedAnglesForBase("Vlayer Use Refracted Angles For Base", Float) = 0.0 // UI only
@@ -335,6 +384,8 @@ Shader "HDRenderPipeline/StackLit"
     #pragma shader_feature _MATERIAL_FEATURE_IRIDESCENCE
     #pragma shader_feature _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
     #pragma shader_feature _MATERIAL_FEATURE_TRANSMISSION
+    #pragma shader_feature _MATERIAL_FEATURE_SPECULAR_COLOR
+    #pragma shader_feature _MATERIAL_FEATURE_HAZY_GLOSS
 
     #pragma shader_feature _VLAYERED_RECOMPUTE_PERLIGHT
     #pragma shader_feature _VLAYERED_USE_REFRACTED_ANGLES_FOR_BASE

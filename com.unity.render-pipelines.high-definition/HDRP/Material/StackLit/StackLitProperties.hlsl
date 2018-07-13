@@ -9,6 +9,9 @@ SAMPLER(sampler_DistortionVectorMap);
 TEXTURE2D(_BaseColorMap);
 SAMPLER(sampler_BaseColorMap);
 
+TEXTURE2D(_SpecularColorMap);
+SAMPLER(sampler_SpecularColorMap);
+
 TEXTURE2D(_AmbientOcclusionMap);
 SAMPLER(sampler_AmbientOcclusionMap);
 
@@ -28,6 +31,15 @@ SAMPLER(sampler_CoatNormalMap);
 
 TEXTURE2D(_SmoothnessBMap);
 SAMPLER(sampler_SmoothnessBMap);
+
+TEXTURE2D(_LobeMixMap);
+SAMPLER(sampler_LobeMixMap);
+
+TEXTURE2D(_HazinessMap);
+SAMPLER(sampler_HazinessMap);
+
+TEXTURE2D(_HazeExtentMap);
+SAMPLER(sampler_HazeExtentMap);
 
 TEXTURE2D(_AnisotropyMap);
 SAMPLER(sampler_AnisotropyMap);
@@ -68,6 +80,14 @@ float4 _BaseColorMap_TexelSize;
 float4 _BaseColorMap_MipInfo;
 float _BaseColorMapUV;
 float _BaseColorMapUVLocal;
+
+float4 _SpecularColor;
+float4 _SpecularColorMap_ST;
+float4 _SpecularColorMap_TexelSize;
+float4 _SpecularColorMap_MipInfo;
+float _SpecularColorMapUV;
+float _SpecularColorMapUVLocal;
+float _EnergyConservingSpecularColor;
 
 float _Metallic;
 float _MetallicUseMap;
@@ -123,7 +143,39 @@ float4 _SmoothnessBMap_TexelSize;
 float4 _SmoothnessBMap_MipInfo;
 float4 _SmoothnessBMapChannelMask;
 float4 _SmoothnessBMapRange;
+
 float _LobeMix;
+float _LobeMixUseMap;
+float _LobeMixMapUV;
+float _LobeMixMapUVLocal;
+float4 _LobeMixMap_ST;
+float4 _LobeMixMap_TexelSize;
+float4 _LobeMixMap_MipInfo;
+float4 _LobeMixMapChannelMask;
+float4 _LobeMixMapRange;
+
+float _Haziness;
+float _HazinessUseMap;
+float _HazinessMapUV;
+float _HazinessMapUVLocal;
+float4 _HazinessMap_ST;
+float4 _HazinessMap_TexelSize;
+float4 _HazinessMap_MipInfo;
+float4 _HazinessMapChannelMask;
+float4 _HazinessMapRange;
+
+float _CapHazinessWrtMetallic;
+
+float _HazeExtent;
+float _HazeExtentUseMap;
+float _HazeExtentMapUV;
+float _HazeExtentMapUVLocal;
+float4 _HazeExtentMap_ST;
+float4 _HazeExtentMap_TexelSize;
+float4 _HazeExtentMap_MipInfo;
+float4 _HazeExtentMapChannelMask;
+float4 _HazeExtentMapRange;
+float _HazeExtentMapRangeScale;
 
 float _Anisotropy;
 float _AnisotropyUseMap;

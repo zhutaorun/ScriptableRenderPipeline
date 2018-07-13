@@ -221,6 +221,9 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     DoAlphaTest(alpha, _AlphaCutoff);
 #endif
 
+    // These static material feature allow compile time optimization
+    surfaceData.materialFeatures = MATERIALFEATUREFLAGS_STACK_LIT_STANDARD;
+
     // Standard
     surfaceData.baseColor = SAMPLE_TEXTURE2D_SCALE_BIAS(_BaseColorMap).rgb * _BaseColor.rgb;
 
@@ -239,30 +242,63 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.perceptualSmoothnessA = lerp(_SmoothnessAMapRange.x, _SmoothnessAMapRange.y, surfaceData.perceptualSmoothnessA);
     surfaceData.perceptualSmoothnessA = lerp(_SmoothnessA, surfaceData.perceptualSmoothnessA, _SmoothnessAUseMap);
 
+    // Metallic / specular color
+    surfaceData.dielectricIor = _DielectricIor; // shouldn't be needed if _MATERIAL_FEATURE_SPECULAR_COLOR
+    surfaceData.specularColor = float3(1.0, 1.0, 1.0);
+    surfaceData.metallic = 0.0;
+#ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
+    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_SPECULAR_COLOR;
+    
+    surfaceData.specularColor = SAMPLE_TEXTURE2D_SCALE_BIAS(_SpecularColorMap).rgb * _SpecularColor.rgb;
+    // Reproduce the energy conservation done in legacy Unity. Not ideal but better for compatibility and users can unchek it
+    surfaceData.baseColor *= _EnergyConservingSpecularColor > 0.0 ? (1.0 - Max3(surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b)) : 1.0;
+#else
     surfaceData.metallic = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_MetallicMap), _MetallicMapChannelMask);
     surfaceData.metallic = lerp(_MetallicMapRange.x, _MetallicMapRange.y, surfaceData.metallic);
     surfaceData.metallic = lerp(_Metallic, surfaceData.metallic, _MetallicUseMap);
+#endif
 
-    surfaceData.dielectricIor = _DielectricIor;
-
+    // Ambient Occlusion
     surfaceData.ambientOcclusion = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_AmbientOcclusionMap), _AmbientOcclusionMapChannelMask);
     surfaceData.ambientOcclusion = lerp(_AmbientOcclusionMapRange.x, _AmbientOcclusionMapRange.y, surfaceData.ambientOcclusion);
     surfaceData.ambientOcclusion = lerp(_AmbientOcclusion, surfaceData.ambientOcclusion, _AmbientOcclusionUseMap);
 
-    // These static material feature allow compile time optimization
-    surfaceData.materialFeatures = MATERIALFEATUREFLAGS_STACK_LIT_STANDARD;
+    // Dual specular lobe
+    surfaceData.lobeMix = 0.0;
+    surfaceData.perceptualSmoothnessB = 1.0;
+    surfaceData.haziness = 0.0;
+    surfaceData.hazeExtent = 0.0;
+    surfaceData.capHazinessWrtMetallic = false;
 
-    // Feature dependent data
 #ifdef _MATERIAL_FEATURE_DUAL_SPECULAR_LOBE
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_DUAL_SPECULAR_LOBE;
-    surfaceData.lobeMix = _LobeMix;
+#ifdef _MATERIAL_FEATURE_HAZY_GLOSS
+    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_HAZY_GLOSS;
+
+    surfaceData.haziness = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_HazinessMap), _HazinessMapChannelMask);
+    surfaceData.haziness = lerp(_HazinessMapRange.x, _HazinessMapRange.y, surfaceData.haziness);
+    surfaceData.haziness = lerp(_Haziness, surfaceData.haziness, _HazinessUseMap);
+
+    surfaceData.hazeExtent = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_HazeExtentMap), _HazeExtentMapChannelMask);
+    surfaceData.hazeExtent = lerp(_HazeExtentMapRange.x, _HazeExtentMapRange.y, surfaceData.hazeExtent);
+    surfaceData.hazeExtent = lerp(_HazeExtent, surfaceData.hazeExtent, _HazeExtentUseMap);
+    surfaceData.hazeExtent *= _HazeExtentMapRangeScale;
+#ifndef _MATERIAL_FEATURE_SPECULAR_COLOR
+    // base parametrization is baseColor + metallic, check option regarding how high can hazeExtent go:
+    surfaceData.capHazinessWrtMetallic = (_CapHazinessWrtMetallic == 1.0);
+#endif
+
+#else // else not def _MATERIAL_FEATURE_HAZY_GLOSS
+    surfaceData.lobeMix = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_LobeMixMap), _LobeMixMapChannelMask);
+    surfaceData.lobeMix = lerp(_LobeMixMapRange.x, _LobeMixMapRange.y, surfaceData.lobeMix);
+    surfaceData.lobeMix = lerp(_LobeMix, surfaceData.lobeMix, _LobeMixUseMap);
+
     surfaceData.perceptualSmoothnessB = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_SmoothnessBMap), _SmoothnessBMapChannelMask);
     surfaceData.perceptualSmoothnessB = lerp(_SmoothnessBMapRange.x, _SmoothnessBMapRange.y, surfaceData.perceptualSmoothnessB);
     surfaceData.perceptualSmoothnessB = lerp(_SmoothnessB, surfaceData.perceptualSmoothnessB, _SmoothnessBUseMap);
-#else
-    surfaceData.lobeMix = 0.0;
-    surfaceData.perceptualSmoothnessB = 1.0;
-#endif
+#endif // _MATERIAL_FEATURE_HAZY_GLOSS
+#endif // _MATERIAL_FEATURE_DUAL_SPECULAR_LOBE
+
 
 #ifdef _MATERIAL_FEATURE_ANISOTROPY
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_ANISOTROPY;
@@ -358,7 +394,9 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.perceptualSmoothnessA = lerp(surfaceData.perceptualSmoothnessA, saturate(smoothnessOverlay), detailMask);
 
     #ifdef _MATERIAL_FEATURE_DUAL_SPECULAR_LOBE
-   // Use overlay blend mode for detail abledo: (base < 0.5 ? (2.0 * base * blend) : (1.0 - 2.0 * (1.0 - base) * (1.0 - blend)))
+    // TODOTODO: Note that this will be ignored when using Hazy Gloss parametrization. This could be translated to apply to hazeExtent instead.
+    
+    // Use overlay blend mode for detail abledo: (base < 0.5 ? (2.0 * base * blend) : (1.0 - 2.0 * (1.0 - base) * (1.0 - blend)))
     smoothnessOverlay = (detailPerceptualSmoothness < 0.5) ?
                                 surfaceData.perceptualSmoothnessB * PositivePow(2.0 * detailPerceptualSmoothness, _DetailSmoothnessScale) :
                                 1.0 - (1.0 - surfaceData.perceptualSmoothnessB) * PositivePow(2.0 * (1.0 - detailPerceptualSmoothness), _DetailSmoothnessScale);
