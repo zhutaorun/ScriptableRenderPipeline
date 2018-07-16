@@ -2,7 +2,7 @@ using System;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
-    [Serializable]
+    [Serializable, VolumeComponentMenu("Post-processing/Lens Distortion")]
     public sealed class LensDistortion : VolumeComponent
     {
         [Tooltip("Total distortion amount.")]

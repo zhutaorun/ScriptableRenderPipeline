@@ -8,7 +8,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Masked
     }
 
-    [Serializable]
+    [Serializable, VolumeComponentMenu("Post-processing/Vignette")]
     public sealed class Vignette : VolumeComponent
     {
         [Tooltip("Use the \"Procedural\" mode for parametric controls. Use the \"Masked\" mode to use your own texture mask.")]
