@@ -138,6 +138,7 @@ struct BSDFData
     float iridescenceThickness;
     float iridescenceMask;
     float coatRoughness;
+    float3 emissiveColor;
     float ior;
     float3 absorptionCoefficient;
     float transmittanceMask;

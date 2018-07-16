@@ -363,7 +363,7 @@ void UpdateSurfaceDataFromNormalData(uint2 positionSS, inout BSDFData bsdfData)
 // conversion function for forward
 //-----------------------------------------------------------------------------
 
-BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
+BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData, float3 emission = float3(0, 0, 0))
 {
     BSDFData bsdfData;
     ZERO_INITIALIZE(BSDFData, bsdfData);
@@ -388,6 +388,8 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
 
     bsdfData.diffuseColor = ComputeDiffuseColor(surfaceData.baseColor, metallic);
     bsdfData.fresnel0     = HasFeatureFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR) ? surfaceData.specularColor : ComputeFresnel0(surfaceData.baseColor, surfaceData.metallic, DEFAULT_SPECULAR_VALUE);
+
+    bsdfData.emissiveColor = emission;
 
     // Note: we have ZERO_INITIALIZE the struct so bsdfData.anisotropy == 0.0
     // Note: DIFFUSION_PROFILE_NEUTRAL_ID is 0
@@ -1077,7 +1079,7 @@ float3 GetBakedDiffuseLighting(SurfaceData surfaceData, BuiltinData builtinData,
 #endif
 
     // Premultiply bake diffuse lighting information with DisneyDiffuse pre-integration
-    return builtinData.bakeDiffuseLighting * preLightData.diffuseFGD * surfaceData.ambientOcclusion * bsdfData.diffuseColor + builtinData.emissiveColor;
+    return builtinData.bakeDiffuseLighting * preLightData.diffuseFGD * surfaceData.ambientOcclusion * bsdfData.diffuseColor + 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -2207,6 +2209,7 @@ void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
 #endif
 
     ApplyAmbientOcclusionFactor(aoFactor, bakeLightingData, lighting);
+    bakeLightingData.bakeDiffuseLighting += bsdfData.emissiveColor;
 
     // Subsurface scattering mdoe
     uint   texturingMode        = (bsdfData.materialFeatures >> MATERIAL_FEATURE_FLAGS_SSS_TEXTURING_MODE_OFFSET) & 3;

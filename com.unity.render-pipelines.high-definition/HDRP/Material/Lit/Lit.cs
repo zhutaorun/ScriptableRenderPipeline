@@ -172,6 +172,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public float coatRoughness; // Automatically fill
 
             // Forward property only
+            public Vector3 emissiveColor;
 
             // Transparency
             public float ior;
