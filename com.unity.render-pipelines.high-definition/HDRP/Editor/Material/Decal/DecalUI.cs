@@ -19,6 +19,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static GUIContent decalBlendText = new GUIContent("Decal Blend", "Whole decal blend");
             public static GUIContent BlendText = new GUIContent("Decal Blend", "Whole decal blend");
             public static GUIContent AlbedoModeText = new GUIContent("Albedo contribution", "Base color + Blend, Blend only");
+            public static GUIContent DrawOrderText = new GUIContent("Draw order", "Controls draw order of decal projectors");
         }
 
         enum BlendSource
@@ -66,6 +67,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected MaterialProperty maskmapSmoothness = new MaterialProperty();
         protected const string kMaskmapSmoothness = "_MaskmapSmoothness";
 
+        protected MaterialProperty drawOrder = new MaterialProperty();
+        protected const string kDrawOrder = "_DrawOrder";
+
         protected MaterialEditor m_MaterialEditor;
 
         // This is call by the inspector
@@ -84,7 +88,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             maskmapMetal = FindProperty(kMaskmapMetal, props);
             maskmapAO = FindProperty(kMaskmapAO, props);
             maskmapSmoothness = FindProperty(kMaskmapSmoothness, props);
-            
+            drawOrder = FindProperty(kDrawOrder, props);
+
+
             // always instanced
             SerializedProperty instancing = m_MaterialEditor.serializedObject.FindProperty("m_EnableInstancingVariants");
             instancing.boolValue = true;
@@ -217,6 +223,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                             maskBlendFlags |= Decal.MaskBlendFlags.Smoothness;
                     }
                 }
+                m_MaterialEditor.ShaderProperty(drawOrder, Styles.DrawOrderText);
                 m_MaterialEditor.ShaderProperty(decalBlend, Styles.decalBlendText);
                 EditorGUI.indentLevel--;
             }
