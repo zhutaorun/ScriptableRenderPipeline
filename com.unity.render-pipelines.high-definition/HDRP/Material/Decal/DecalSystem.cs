@@ -8,10 +8,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public class DecalSystem
     {
         public const int kInvalidIndex = -1;
-        public const int kNullMaterialIndex = int.MaxValue;
+        public const Int64 kNullMaterialIndex = Int64.MaxValue;
         public class DecalHandle
         {
-            public DecalHandle(int index, int materialID)
+            public DecalHandle(int index, Int64 materialID)
             {
                 m_MaterialID = materialID;
                 m_Index = index;
@@ -26,7 +26,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return true;
             }
 
-            public int m_MaterialID;    // identifies decal set
+            public Int64 m_MaterialID;    // identifies decal set
             public int m_Index;         // identifies decal within the set
         }
 
@@ -109,7 +109,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         static public float[] m_BoundingDistances = new float[1];
 
-        private Dictionary<int, DecalSet> m_DecalSets = new Dictionary<int, DecalSet>();
+        private SortedDictionary<Int64, DecalSet> m_DecalSets = new SortedDictionary<Int64, DecalSet>();
 
         // current camera
         private Camera m_Camera;
@@ -227,7 +227,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_BoundingSpheres[index] = GetDecalProjectBoundingSphere(m_CachedDecalToWorld[index]);
             }
 
-            public DecalHandle AddDecal(Transform transform, float drawDistance, float fadeScale, Vector4 uvScaleBias, bool affectsTransparency, int materialID)
+            public DecalHandle AddDecal(Transform transform, float drawDistance, float fadeScale, Vector4 uvScaleBias, bool affectsTransparency, Int64 materialID)
             {
                 // increase array size if no space left
                 if (m_DecalsCount == m_Handles.Length)
@@ -533,7 +533,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             private Vector4 m_BaseColor;
             private Vector3 m_BlendParams;
             
-
             TextureScaleBias m_Diffuse = new TextureScaleBias();
             TextureScaleBias m_Normal = new TextureScaleBias();
             TextureScaleBias m_Mask = new TextureScaleBias();
@@ -542,7 +541,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public DecalHandle AddDecal(Transform transform, float drawDistance, float fadeScale, Vector4 uvScaleBias, bool affectsTransparency, Material material)
         {
             DecalSet decalSet = null;
-            int key = material != null ? material.GetInstanceID() : kNullMaterialIndex;
+            Int64 key = material != null ? (Int64)material.GetInstanceID() | (Int64)material.GetInt("_DrawOrder") << 32 : kNullMaterialIndex;
             if (!m_DecalSets.TryGetValue(key, out decalSet))
             {
                 decalSet = new DecalSet(material);
@@ -557,7 +556,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return;
 
             DecalSet decalSet = null;
-            int key = handle.m_MaterialID;
+            Int64 key = handle.m_MaterialID;
             if (m_DecalSets.TryGetValue(key, out decalSet))
             {
                 decalSet.RemoveDecal(handle);
@@ -574,7 +573,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return;
 
             DecalSet decalSet = null;
-            int key = handle.m_MaterialID;
+            Int64 key = handle.m_MaterialID;
             if (m_DecalSets.TryGetValue(key, out decalSet))
             {
                 decalSet.UpdateCachedData(transform, drawDistance, fadeScale, uvScaleBias, affectsTransparency, handle);
