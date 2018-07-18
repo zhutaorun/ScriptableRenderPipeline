@@ -344,26 +344,43 @@ NormalData ConvertSurfaceDataToNormalData(SurfaceData surfaceData)
 //    bsdfData.roughnessBT
 //    bsdfData.roughnessBB
 //
-// TODOTODO: capHazinessWrtMetallic and secondary anisotropy
+// TODOTODO: hazyGlossMaxf0 and secondary anisotropy
 //
-void HazeMapping(float3 fresnel0, float roughnessAT, float roughnessAB, float haziness, float hazeExtent, float hazeExtentAnisotropy /* TODOTODO */, inout BSDFData bsdfData)
+void HazeMapping(float3 fresnel0, float roughnessAT, float roughnessAB, float haziness, float hazeExtent, float hazeExtentAnisotropy /* TODOTODO */, float3 hazyGlossMaxf0, inout BSDFData bsdfData)
 {
     float w = 10.0; // interpolation steepness weight (Bezier weight of central point)
     bool useBezierToMapKh = true; 
 
     float3 r_c = fresnel0;
-    float2 alpha_n = float2(roughnessAT, roughnessAB);
+    // We can use clamping of roughnessA here to avoid a "p == 0/0" case if roughnessA == 0.
+    // Also note that if hazeExtent == 0, p will == 1, which will end up posing lobeMix = haziness.
+    // Thus, we could also test (alpha_w_xy <= FLT_EPS) below (it will be such if hazeExtent == 0 or rouhnessA == 0)
+    // to directly return lobeMix = haziness.
+    //
+    // But since hazeExtent is variable, this doesn't yield the same limit behaviour for a general hazeExtent though:
+    // Clamping roughness will allow p to approach a non unit (p != 1) value as input roughness goes to 0 and
+    // hazeExtent is non null, while using (alpha_w_xy <= FLT_EPS) makes us use the limit of p = 1 as soon as
+    // alpha_w_xy is small enough.
+    // The general limit of p = alpha_n/[alpha_n(1+lambda_h)] is 1/(1+lambda_h) for all paths where alpha_n > 0.
+    // So both methods are arbitrary since whatever clamp value we use as eps in max(roughness, eps) for clamping
+    // will determine at what value of "hazeExtent" there's a rapid change (high sensitivity) of p when roughness is
+    // close to 0. (With the (alpha_w_xy <= FLT_EPS), there is also such a point).
+    // We choose to streamline with just clamp, and arbitrarily with the value used when clamping for analytical lights.
+
+    //float2 alpha_n = float2(roughnessAT, roughnessAB);
+    float2 alpha_n = float2(ClampRoughnessForAnalyticalLights(roughnessAT), ClampRoughnessForAnalyticalLights(roughnessAB));
     float alpha_n_xy = alpha_n.x * alpha_n.y;
     float beta_h = haziness;
-    float2 lambda_h; // hazeExtent anisotropic
+    float2 lambda_h; // TODOTODO: hazeExtent anisotropic
     //ConvertValueAnisotropyToValueTB(hazeExtent, hazeExtentAnisotropy, lambda_h.x, lambda_h.y);
     ConvertValueAnisotropyToValueTB(hazeExtent, 0.0, lambda_h.x, lambda_h.y);
 
     float2 alpha_w = saturate(alpha_n + lambda_h * sqrt(alpha_n_xy)); // wide lobe (haze) roughness
+    float alpha_w_xy = alpha_w.x * alpha_w.y;
     // We saturate here as hazeExtent is scaled arbitrarily (Ideally, a max scale depends on the
     // maximum core roughness and since this primary roughness (of lobe A) can be textured, we
     // don't know it).
-    float p = alpha_n_xy/(alpha_w.x * alpha_w.y); // peak ratio formula at theta_d = 0 (ie p is in the paper := P(0))
+    float p = alpha_n_xy/alpha_w_xy; // peak ratio formula at theta_d = 0 (ie p is in the paper := P(0))
     
     float r_c_max = Max3(r_c.r, r_c.g, r_c.b);
     float k_h_max = 0.0;
@@ -372,6 +389,7 @@ void HazeMapping(float3 fresnel0, float roughnessAT, float roughnessAB, float ha
     {
         bsdfData.lobeMix = 0.0;
     }
+    //else if (alpha_w_xy <= FLT_EPS) { bsdfData.lobeMix = beta_h; }
     else 
     {
         if (useBezierToMapKh)
@@ -405,10 +423,13 @@ void HazeMapping(float3 fresnel0, float roughnessAT, float roughnessAB, float ha
         float3 chromaVec = r_c/r_c_max;
   
         bsdfData.fresnel0 = r_max*chromaVec;
+        bsdfData.fresnel0 = min(bsdfData.fresnel0, hazyGlossMaxf0);
         bsdfData.lobeMix = k_h_max / r_max;
         //bsdfData.lobeMix = 0.5;
 
-        float anisotropyB; // TODOTODO
+        // For IBL, convert back to the scalar roughness + anisotropy parametrization for the 
+        // secondary lobe:
+        float anisotropyB;
         float roughnessB;
         ConvertRoughnessToAnisotropy(alpha_w.x, alpha_w.y, anisotropyB);
         ConvertRoughnessTAndAnisotropyToRoughness(alpha_w.x, anisotropyB, roughnessB);
@@ -481,7 +502,8 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
     // 
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_HAZY_GLOSS))
     {
-        HazeMapping(bsdfData.fresnel0, bsdfData.roughnessAT, bsdfData.roughnessAB, surfaceData.haziness, surfaceData.hazeExtent, bsdfData.anisotropy /* TODOTODO */, bsdfData);
+        float3 hazyGlossMaxf0 = ComputeFresnel0(float3(1.0, 1.0, 1.0), surfaceData.metallic, surfaceData.hazyGlossMaxDielectricF0);
+        HazeMapping(bsdfData.fresnel0, bsdfData.roughnessAT, bsdfData.roughnessAB, surfaceData.haziness, surfaceData.hazeExtent, bsdfData.anisotropy /* TODOTODO */, hazyGlossMaxf0, bsdfData);
     }
 
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_IRIDESCENCE))

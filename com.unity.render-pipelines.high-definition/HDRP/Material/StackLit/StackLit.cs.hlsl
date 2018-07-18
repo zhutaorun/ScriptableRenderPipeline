@@ -40,7 +40,7 @@
 #define DEBUGVIEW_STACKLIT_SURFACEDATA_LOBE_MIXING (1116)
 #define DEBUGVIEW_STACKLIT_SURFACEDATA_HAZINESS (1117)
 #define DEBUGVIEW_STACKLIT_SURFACEDATA_HAZE_EXTENT (1118)
-#define DEBUGVIEW_STACKLIT_SURFACEDATA_CAP_HAZINESS_TO_AGREE_WITH_METALLIC (1119)
+#define DEBUGVIEW_STACKLIT_SURFACEDATA_HAZY_GLOSS_MAX_DIELECTRIC_F0_VALUE_TO_AGREE_WITH_METALLIC (1119)
 #define DEBUGVIEW_STACKLIT_SURFACEDATA_TANGENT (1120)
 #define DEBUGVIEW_STACKLIT_SURFACEDATA_ANISOTROPY (1121)
 #define DEBUGVIEW_STACKLIT_SURFACEDATA_IRIDESCENCE_IOR (1122)
@@ -112,7 +112,7 @@ struct SurfaceData
     float lobeMix;
     float haziness;
     float hazeExtent;
-    bool capHazinessWrtMetallic;
+    float hazyGlossMaxDielectricF0;
     float3 tangentWS;
     float anisotropy;
     float iridescenceIor;
@@ -230,8 +230,8 @@ void GetGeneratedSurfaceDataDebug(uint paramId, SurfaceData surfacedata, inout f
         case DEBUGVIEW_STACKLIT_SURFACEDATA_HAZE_EXTENT:
             result = surfacedata.hazeExtent.xxx;
             break;
-        case DEBUGVIEW_STACKLIT_SURFACEDATA_CAP_HAZINESS_TO_AGREE_WITH_METALLIC:
-            result = (surfacedata.capHazinessWrtMetallic) ? float3(1.0, 1.0, 1.0) : float3(0.0, 0.0, 0.0);
+        case DEBUGVIEW_STACKLIT_SURFACEDATA_HAZY_GLOSS_MAX_DIELECTRIC_F0_VALUE_TO_AGREE_WITH_METALLIC:
+            result = surfacedata.hazyGlossMaxDielectricF0.xxx;
             break;
         case DEBUGVIEW_STACKLIT_SURFACEDATA_TANGENT:
             result = surfacedata.tangentWS * 0.5 + 0.5;

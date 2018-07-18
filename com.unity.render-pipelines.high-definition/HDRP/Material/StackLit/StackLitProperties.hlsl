@@ -164,7 +164,7 @@ float4 _HazinessMap_MipInfo;
 float4 _HazinessMapChannelMask;
 float4 _HazinessMapRange;
 
-float _CapHazinessWrtMetallic;
+float _HazyGlossMaxDielectricF0;
 
 float _HazeExtent;
 float _HazeExtentUseMap;

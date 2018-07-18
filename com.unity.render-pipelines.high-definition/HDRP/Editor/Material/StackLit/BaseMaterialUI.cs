@@ -262,6 +262,107 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
+        public class UIBufferedProperty : Property
+        {
+            public string RealPropertyName;
+            public MaterialProperty m_RealMaterialProperty = null;
+
+            public new bool IsValid
+            {
+                get { return (m_MaterialProperty != null) && (m_RealMaterialProperty != null); }
+            }
+
+            public UIBufferedProperty(BaseMaterialGUI parent, string propertyName, string guiText, bool isMandatory = true, Func<object, bool> isVisible = null)
+                : this(parent, propertyName, guiText, string.Empty, isMandatory, isVisible)
+            {
+            }
+
+            public UIBufferedProperty(BaseMaterialGUI parent, string propertyName, string guiText, string toolTip, bool isMandatory = true, Func<object, bool> isVisible = null)
+                : base(parent, propertyName + "UIBuffer", guiText, toolTip, isMandatory, isVisible)
+            {
+                RealPropertyName = propertyName;
+            }
+
+            public override void OnFindProperty(MaterialProperty[] props)
+            {
+                base.OnFindProperty(props);
+                m_RealMaterialProperty = ShaderGUI.FindProperty(RealPropertyName, props, IsMandatory);
+            }
+
+            public override void OnGUI()
+            {
+                if (IsValid)
+                {
+                    base.OnGUI();
+                }
+            }
+
+            internal override string ToShaderPropertiesStringInternal()
+            {
+                if (IsValid
+                    && (IsVisible == null || IsVisible(this)))
+                {
+                    switch (m_MaterialProperty.type)
+                    {
+                        case MaterialProperty.PropType.Color:
+                            return base.ToShaderPropertiesStringInternal() + "\n" + string.Format("[HideInInspector] {0}(\"{1}\", Color) = (1, 1, 1, 1)", RealPropertyName, PropertyText);
+
+                        case MaterialProperty.PropType.Vector:
+                            return base.ToShaderPropertiesStringInternal() + "\n" + string.Format("[HideInInspector] {0}(\"{1}\", Vector) = (0, 0, 0, 0)", RealPropertyName, PropertyText);
+
+                        case MaterialProperty.PropType.Float:
+                            return base.ToShaderPropertiesStringInternal() + "\n" + string.Format("[HideInInspector] {0}(\"{1}\", Float) = 0.0", RealPropertyName, PropertyText);
+
+                        case MaterialProperty.PropType.Range:
+                            return base.ToShaderPropertiesStringInternal() + "\n" + string.Format("[HideInInspector] {0}(\"{1}\", Range({2:0.0###}, {3:0.0###})) = 0", RealPropertyName, PropertyText, m_MaterialProperty.rangeLimits.x, m_MaterialProperty.rangeLimits.y);
+
+                        case MaterialProperty.PropType.Texture:
+                            return base.ToShaderPropertiesStringInternal() + "\n" + string.Format("[HideInInspector] {0}(\"{1}\", 2D) = \"white\" {{}}", RealPropertyName, PropertyText);
+
+                        default:
+                            // Unknown type... default to outputting a float.
+                            return base.ToShaderPropertiesStringInternal() + "\n" + string.Format("[HideInInspector] {0}(\"{1}\", Float) = 0.0", RealPropertyName, PropertyText);
+                    }
+                }
+                else
+                {
+                    // Material property is not loaded, default to outputting a float.
+                    return base.ToShaderPropertiesStringInternal() + "\n" + string.Format("{0}(\"{1}\", Float) = 0.0", PropertyName, PropertyText);
+                }
+            }
+
+            public static void SetupUIBufferedMaterialProperty(Material material, string basePropertyName, MaterialProperty.PropType propType)
+            {
+                string uibufferPropertyName = basePropertyName + "UIBuffer";
+
+                if (material.HasProperty(basePropertyName) && material.HasProperty(uibufferPropertyName))
+                {
+                    switch(propType)
+                    {
+                        case MaterialProperty.PropType.Color:
+                            material.SetColor(basePropertyName, material.GetColor(uibufferPropertyName));
+                            break;
+
+                        case MaterialProperty.PropType.Vector:
+                            material.SetVector(basePropertyName, material.GetVector(uibufferPropertyName));
+                            break;
+
+                        case MaterialProperty.PropType.Float:
+                            material.SetFloat(basePropertyName, material.GetFloat(uibufferPropertyName));
+                            break;
+
+                        case MaterialProperty.PropType.Texture:
+                            material.SetTexture(basePropertyName, material.GetTexture(uibufferPropertyName));
+                            break;
+
+                        default:
+                            // Unknown / not implemented
+                            break;
+                    }
+                }
+            }
+        }
+
         public class DiffusionProfileProperty : Property
         {
             public DiffusionProfileProperty(BaseMaterialGUI parent, string propertyName, string guiText, string toolTip, bool isMandatory = true, Func<object, bool> isVisible = null)
@@ -592,6 +693,75 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     "[HideInInspector] {0}Range(\"{1} Range\", Vector) = (0, 1, 0, 0)\n",
                     m_ConstantPropertyName, constantName, PropertyName);
             }
+
+            public static void SetupTextureMaterialProperty(Material material, string basePropertyName)
+            {
+                // TODO: Caution this can generate a lot of garbage collection call ?
+                string useMapPropertyName = basePropertyName + "UseMap";
+                string mapPropertyName = basePropertyName + "Map";
+                string remapPropertyName = basePropertyName + "MapRemap";
+                string invertPropertyName = basePropertyName + "MapRemapInverted";
+                string rangePropertyName = basePropertyName + "MapRange";
+                string channelPropertyName = basePropertyName + "MapChannel";
+                string channelMaskPropertyName = basePropertyName + "MapChannelMask";
+
+                if (material.GetTexture(mapPropertyName))
+                {
+                    if (material.HasProperty(remapPropertyName) && material.HasProperty(rangePropertyName))
+                    {
+                        Vector4 rangeVector = material.GetVector(remapPropertyName);
+                        if (material.HasProperty(invertPropertyName) && material.GetFloat(invertPropertyName) > 0.0f)
+                        {
+                            float s = rangeVector.x;
+                            rangeVector.x = rangeVector.y;
+                            rangeVector.y = s;
+                        }
+
+                        material.SetVector(rangePropertyName, rangeVector);
+                    }
+
+                    if (material.HasProperty(useMapPropertyName))
+                    {
+                        material.SetFloat(useMapPropertyName, 1.0f);
+                    }
+
+                    if (material.HasProperty(channelPropertyName))
+                    {
+                        int channel = (int)material.GetFloat(channelPropertyName);
+                        switch (channel)
+                        {
+                            case 0:
+                                material.SetVector(channelMaskPropertyName, new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
+                                break;
+                            case 1:
+                                material.SetVector(channelMaskPropertyName, new Vector4(0.0f, 1.0f, 0.0f, 0.0f));
+                                break;
+                            case 2:
+                                material.SetVector(channelMaskPropertyName, new Vector4(0.0f, 0.0f, 1.0f, 0.0f));
+                                break;
+                            case 3:
+                                material.SetVector(channelMaskPropertyName, new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+                                break;
+                        }
+                    }
+                }
+                else
+                {
+                    if (material.HasProperty(useMapPropertyName))
+                    {
+                        material.SetFloat(useMapPropertyName, 0.0f);
+                    }
+                    if (material.HasProperty(rangePropertyName))
+                    {
+                        material.SetVector(rangePropertyName, new Vector4(0.0f, 1.0f, 0.0f, 0.0f));
+                    }
+                    if (material.HasProperty(channelPropertyName))
+                    {
+                        material.SetVector(channelMaskPropertyName, new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
+                    }
+                }
+            }
+
         }
         #endregion
     }

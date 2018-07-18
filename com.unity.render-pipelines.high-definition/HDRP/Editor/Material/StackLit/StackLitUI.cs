@@ -105,6 +105,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string k_HazeExtentMapUV = "_HazeExtentMapUV";
 
         protected const string k_CapHazinessWrtMetallic = "_CapHazinessWrtMetallic";
+        protected const string k_HazyGlossMaxDielectricF0 = "_HazyGlossMaxDielectricF0"; // only valid if above option enabled and we have a basecolor + metallic input parametrization
 
         // Anisotropy
         protected const string k_EnableAnisotropy = "_EnableAnisotropy";
@@ -169,14 +170,23 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         private ComboProperty BaseParametrization;
         private ComboProperty DualSpecularLobeParametrization;
 
+        private Property CapHazinessWrtMetallic;
+
         private bool IsMetallicParametrizationUsed
         {
             get { return (!BaseParametrization.IsValid) || ((StackLit.BaseParametrization)BaseParametrization.FloatValue == StackLit.BaseParametrization.BaseMetallic); }
         }
+
         private bool IsHazyGlossParametrizationUsed
         {
             get { return DualSpecularLobeParametrization.IsValid && ((StackLit.DualSpecularLobeParametrization)DualSpecularLobeParametrization.FloatValue == StackLit.DualSpecularLobeParametrization.HazyGloss); }
         }
+
+        private bool IsCapDielectricUsed
+        {
+            get { return (IsMetallicParametrizationUsed) && (CapHazinessWrtMetallic.IsValid && CapHazinessWrtMetallic.BoolValue == true); }
+        }
+
         public StackLitGUI()
         {
             _baseMaterialProperties = new GroupProperty(this, "_BaseMaterial", new BaseProperty[]
@@ -252,8 +262,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var Haziness = new TextureProperty(this, k_HazinessMap, k_Haziness, "Haziness", "Haziness", false, false);
             var HazeExtent = new TextureProperty(this, k_HazeExtentMap, k_HazeExtent, "Haze Extent", "Haze Extent", false, false);
 
-            var CapHazinessWrtMetallic = new Property(this, k_CapHazinessWrtMetallic, "Cap Haziness Wrt Metallic", "Cap Haziness To Agree With Metallic", false,
+            CapHazinessWrtMetallic = new Property(this, k_CapHazinessWrtMetallic, "Cap Haziness Wrt Metallic", "Cap Haziness To Agree With Metallic", false,
                 _ => (IsMetallicParametrizationUsed));
+
+            var HazyGlossMaxDielectricF0UI = new UIBufferedProperty(this, k_HazyGlossMaxDielectricF0, "Maximum Dielectric Specular Color", "Cap Dielectrics To This Maximum Dielectric Specular Color", false,
+                _ => (IsCapDielectricUsed));
+
+            var HazyGlossMaxDielectricF0 = new Property(this, k_HazyGlossMaxDielectricF0, "Maximum Dielectric Specular Color", "Cap Dielectrics To This Maximum Dielectric Specular Color", true);
+            // ...this later property is always used by the shader when IsMetallicParametrizationUsed and IsHazyGlossParametrizationUsed, but since these are dynamic, 
+            // we always make the base property mandatory.
 
             var DualSpecularLobeDirectGroup = new GroupProperty(this, "_DualSpecularLobe", "Dual Specular Lobe (Direct Control Mode)", new BaseProperty[]
             {
@@ -267,6 +284,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 DualSpecularLobeParametrization,
                 Haziness,
                 CapHazinessWrtMetallic,
+                HazyGlossMaxDielectricF0UI,
                 HazeExtent,
             }, _ => (EnableDualSpecularLobe.BoolValue == true && IsHazyGlossParametrizationUsed) );
 
@@ -412,74 +430,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             SetupMaterialKeywordsAndPass(material);
         }
 
-        protected static void SetupTextureMaterialProperty(Material material, string basePropertyName)
-        {
-            // TODO: Caution this can generate a lot of garbage collection call ?
-            string useMapPropertyName = basePropertyName + "UseMap";
-            string mapPropertyName = basePropertyName + "Map";
-            string remapPropertyName = basePropertyName + "MapRemap";
-            string invertPropertyName = basePropertyName + "MapRemapInverted";
-            string rangePropertyName = basePropertyName + "MapRange";
-            string channelPropertyName = basePropertyName + "MapChannel";
-            string channelMaskPropertyName = basePropertyName + "MapChannelMask";
-
-            if (material.GetTexture(mapPropertyName))
-            {
-                if (material.HasProperty(remapPropertyName) && material.HasProperty(rangePropertyName))
-                {
-                    Vector4 rangeVector = material.GetVector(remapPropertyName);
-                    if (material.HasProperty(invertPropertyName) && material.GetFloat(invertPropertyName) > 0.0f)
-                    {
-                        float s = rangeVector.x;
-                        rangeVector.x = rangeVector.y;
-                        rangeVector.y = s;
-                    }
-
-                    material.SetVector(rangePropertyName, rangeVector);
-                }
-
-                if (material.HasProperty(useMapPropertyName))
-                {
-                    material.SetFloat(useMapPropertyName, 1.0f);
-                }
-
-                if (material.HasProperty(channelPropertyName))
-                {
-                    int channel = (int)material.GetFloat(channelPropertyName);
-                    switch (channel)
-                    {
-                        case 0:
-                            material.SetVector(channelMaskPropertyName, new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
-                            break;
-                        case 1:
-                            material.SetVector(channelMaskPropertyName, new Vector4(0.0f, 1.0f, 0.0f, 0.0f));
-                            break;
-                        case 2:
-                            material.SetVector(channelMaskPropertyName, new Vector4(0.0f, 0.0f, 1.0f, 0.0f));
-                            break;
-                        case 3:
-                            material.SetVector(channelMaskPropertyName, new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
-                            break;
-                    }
-                }
-            }
-            else
-            {
-                if (material.HasProperty(useMapPropertyName))
-                {
-                    material.SetFloat(useMapPropertyName, 0.0f);
-                }
-                if (material.HasProperty(rangePropertyName))
-                {
-                    material.SetVector(rangePropertyName, new Vector4(0.0f, 1.0f, 0.0f, 0.0f));
-                }
-                if (material.HasProperty(channelPropertyName))
-                {
-                    material.SetVector(channelMaskPropertyName, new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
-                }
-            }
-        }
-
         // All Setup Keyword functions must be static. It allow to create script to automatically update the shaders with a script if code change
         public static void SetupMaterialKeywordsAndPass(Material material)
         {
@@ -512,23 +462,23 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             //TODO: disable DBUFFER
 
-            SetupTextureMaterialProperty(material, k_Metallic);
-            SetupTextureMaterialProperty(material, k_SmoothnessA);
-            SetupTextureMaterialProperty(material, k_SmoothnessB);
-            SetupTextureMaterialProperty(material, k_LobeMix);
-            SetupTextureMaterialProperty(material, k_Haziness);
-            SetupTextureMaterialProperty(material, k_HazeExtent);
-            SetupTextureMaterialProperty(material, k_AmbientOcclusion);
-            SetupTextureMaterialProperty(material, k_SubsurfaceMask);
-            SetupTextureMaterialProperty(material, k_Thickness);
-            SetupTextureMaterialProperty(material, k_Anisotropy);
-            SetupTextureMaterialProperty(material, k_IridescenceThickness);
-            SetupTextureMaterialProperty(material, k_IridescenceMask);
-            SetupTextureMaterialProperty(material, k_CoatSmoothness);
+            TextureProperty.SetupTextureMaterialProperty(material, k_Metallic);
+            TextureProperty.SetupTextureMaterialProperty(material, k_SmoothnessA);
+            TextureProperty.SetupTextureMaterialProperty(material, k_SmoothnessB);
+            TextureProperty.SetupTextureMaterialProperty(material, k_LobeMix);
+            TextureProperty.SetupTextureMaterialProperty(material, k_Haziness);
+            TextureProperty.SetupTextureMaterialProperty(material, k_HazeExtent);
+            TextureProperty.SetupTextureMaterialProperty(material, k_AmbientOcclusion);
+            TextureProperty.SetupTextureMaterialProperty(material, k_SubsurfaceMask);
+            TextureProperty.SetupTextureMaterialProperty(material, k_Thickness);
+            TextureProperty.SetupTextureMaterialProperty(material, k_Anisotropy);
+            TextureProperty.SetupTextureMaterialProperty(material, k_IridescenceThickness);
+            TextureProperty.SetupTextureMaterialProperty(material, k_IridescenceMask);
+            TextureProperty.SetupTextureMaterialProperty(material, k_CoatSmoothness);
 
             // details
-            SetupTextureMaterialProperty(material, k_DetailMask);
-            SetupTextureMaterialProperty(material, k_DetailSmoothness);
+            TextureProperty.SetupTextureMaterialProperty(material, k_DetailMask);
+            TextureProperty.SetupTextureMaterialProperty(material, k_DetailSmoothness);
 
 
             bool detailsEnabled = material.HasProperty(k_EnableDetails) && material.GetFloat(k_EnableDetails) > 0.0f;
@@ -550,6 +500,28 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             bool hazyGlossEnabled = dualSpecularLobeEnabled && material.HasProperty(k_DualSpecularLobeParametrization)
                                         && ((StackLit.DualSpecularLobeParametrization)material.GetFloat(k_DualSpecularLobeParametrization) == StackLit.DualSpecularLobeParametrization.HazyGloss);
             CoreUtils.SetKeyword(material, "_MATERIAL_FEATURE_HAZY_GLOSS", hazyGlossEnabled);
+
+            // This is not a keyword but we validate an input here that act as one:
+            // HazyGlossMaxDielectricF0
+            bool hazyGloosMaxDielectricF0Required = hazyGlossEnabled && (specularColorEnabled == false);
+            bool hazyGlossUseMaxDielectricF0 = hazyGloosMaxDielectricF0Required
+                                               && material.HasProperty(k_CapHazinessWrtMetallic) && material.GetFloat(k_CapHazinessWrtMetallic) > 0.0f;
+            if (hazyGloosMaxDielectricF0Required)
+            {
+                if  (hazyGlossUseMaxDielectricF0 == false)
+                {
+                    // In that case, the shader expects k_HazyGlossMaxDielectricF0 so we don't pre-check material.HasProperty(k_HazyGlossMaxDielectricF0),
+                    // it is considered mandatory.
+                    // The use of the option is nevertheless disabled, so we need to make sure the value (again that is used anyway in StackLitData) 
+                    // will be set to its neutral input:
+                    material.SetFloat(k_HazyGlossMaxDielectricF0, 1.0f);
+                }
+                else
+                {
+                    // In that case, the UI is supposed to have a valid UI value, forward it to the shader-used value:
+                    UIBufferedProperty.SetupUIBufferedMaterialProperty(material, k_HazyGlossMaxDielectricF0, MaterialProperty.PropType.Float);
+                }
+            }
 
             bool anisotropyEnabled = material.HasProperty(k_EnableAnisotropy) && material.GetFloat(k_EnableAnisotropy) > 0.0f;
             CoreUtils.SetKeyword(material, "_MATERIAL_FEATURE_ANISOTROPY", anisotropyEnabled);

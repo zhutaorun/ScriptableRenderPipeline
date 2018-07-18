@@ -121,8 +121,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             [SurfaceDataAttributes("Haze Extent")]
             public float hazeExtent;
 
-            [SurfaceDataAttributes("Cap Haziness To Agree With Metallic")]
-            public bool capHazinessWrtMetallic;
+            [SurfaceDataAttributes("Hazy Gloss Max Dielectric f0 Value To Agree With Metallic")]
+            public float hazyGlossMaxDielectricF0;
 
             // Anisotropy
             [SurfaceDataAttributes("Tangent", true)]

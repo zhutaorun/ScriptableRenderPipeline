@@ -90,6 +90,8 @@ Shader "HDRenderPipeline/StackLit"
         [HideInInspector] _HazinessMapRange("Haziness Range", Vector) = (0, 1, 0, 0)
 
         [ToggleUI] _CapHazinessWrtMetallic("Cap Haziness Wrt Metallic", Float) = 0.0
+        _HazyGlossMaxDielectricF0UIBuffer("Hazy Gloss Max Dielectric F0 When Using Metallic Parametrization", Range(0.0, 1.0)) = 1.0
+        [HideInInspector] _HazyGlossMaxDielectricF0("Hazy Gloss Max Dielectric F0 When Using Metallic Parametrization", Range(0.0, 1.0)) = 1.0
 
         [HideInInspector] _HazeExtentMapShow("HazeExtent Map Show", Float) = 0
         _HazeExtentMapRangeScale("HazeExtent Range Scale", Float) = 8.0

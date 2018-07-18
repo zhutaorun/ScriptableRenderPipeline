@@ -268,7 +268,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.perceptualSmoothnessB = 1.0;
     surfaceData.haziness = 0.0;
     surfaceData.hazeExtent = 0.0;
-    surfaceData.capHazinessWrtMetallic = false;
+    surfaceData.hazyGlossMaxDielectricF0 = 1.0;
 
 #ifdef _MATERIAL_FEATURE_DUAL_SPECULAR_LOBE
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_DUAL_SPECULAR_LOBE;
@@ -284,8 +284,13 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.hazeExtent = lerp(_HazeExtent, surfaceData.hazeExtent, _HazeExtentUseMap);
     surfaceData.hazeExtent *= _HazeExtentMapRangeScale;
 #ifndef _MATERIAL_FEATURE_SPECULAR_COLOR
-    // base parametrization is baseColor + metallic, check option regarding how high can hazeExtent go:
-    surfaceData.capHazinessWrtMetallic = (_CapHazinessWrtMetallic == 1.0);
+    // base parametrization is baseColor + metallic, use value / option regarding how high can hazeExtent and f0 go:
+    // If metallic parametrization is actually used, set the cap to be enforced later by the hazy gloss mapping,
+    // it will be adjusted according to the metallic value such that
+    // hazyGlossMaxf0 = ComputeFresnel0(1.0, surfaceData.metallic, surfaceData.hazyGlossMaxDielectricF0);
+    surfaceData.hazyGlossMaxDielectricF0 = _HazyGlossMaxDielectricF0;
+#else
+    surfaceData.hazyGlossMaxDielectricF0 = 1.0;
 #endif
 
 #else // else not def _MATERIAL_FEATURE_HAZY_GLOSS
