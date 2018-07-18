@@ -285,7 +285,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_DbufferManager.CreateBuffers();
 
             m_SSSBufferManager.InitSSSBuffers(m_GbufferManager, m_Asset.renderPipelineSettings);
-            m_NormalBufferManager.InitNormalBuffers(m_GbufferManager, m_Asset.renderPipelineSettings);            
+            m_NormalBufferManager.InitNormalBuffers(m_GbufferManager, m_Asset.renderPipelineSettings);
 
             m_CameraColorBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, enableMSAA: true, name: "CameraColor");
             m_CameraSssDiffuseLightingBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, enableRandomWrite: true, enableMSAA: true, name: "CameraSSSDiffuseLighting");
@@ -369,7 +369,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 rendererSupportsLightProbeProxyVolumes = true,
                 rendererSupportsMotionVectors = true,
                 rendererSupportsReceiveShadows = false,
-                rendererSupportsReflectionProbes = true
+                rendererSupportsReflectionProbes = true,
+                rendererSupportsRendererPriority = true
             };
 
             Lightmapping.SetDelegate(GlobalIlluminationUtils.hdLightsDelegate);
@@ -840,7 +841,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     var postProcessLayer = camera.GetComponent<PostProcessLayer>();
 
                     // Disable post process if we enable debug mode or if the post process layer is disabled
-                    if (m_CurrentDebugDisplaySettings.IsDebugDisplayRemovePostprocess() || !CoreUtils.IsPostProcessingActive(postProcessLayer))
+                    if (m_CurrentDebugDisplaySettings.IsDebugDisplayRemovePostprocess() || !HDUtils.IsPostProcessingActive(postProcessLayer))
                     {
                         currentFrameSettings.enablePostprocess = false;
                     }
@@ -1264,7 +1265,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var drawSettings = new DrawRendererSettings(hdCamera.camera, HDShaderPassNames.s_EmptyName)
             {
                 rendererConfiguration = rendererConfiguration,
-                sorting = { flags = SortFlags.CommonTransparent }
+                sorting = { flags = SortFlags.CommonTransparent | SortFlags.RendererPriority }
             };
 
             for (int i = 0; i < passNames.Length; ++i)
@@ -1307,7 +1308,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             using (new ProfilingSample(cmd, "ApplyDistortion", CustomSamplerId.ApplyDistortion.GetSampler()))
             {
-                var colorPyramidRT = hdCamera.GetPreviousFrameRT((int)HDCameraFrameHistoryType.ColorPyramid);
+                var colorPyramidRT = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.ColorPyramid);
                 var pyramidScale = m_BufferPyramid.GetPyramidToScreenScale(hdCamera, colorPyramidRT);
 
                 // Need to account for the fact that the gaussian pyramid is actually rendered inside the camera viewport in a square texture so we mutiply by the PyramidToScreen scale
@@ -1364,7 +1365,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 using (new ProfilingSample(cmd, m_DbufferManager.EnableDBUffer ? "Depth Prepass (deferred) force by DBuffer" : "Depth Prepass (deferred)", CustomSamplerId.DepthPrepass.GetSampler()))
                 {
                     cmd.DisableShaderKeyword("WRITE_NORMAL_BUFFER"); // Note: This only disable the output of normal buffer for Lit shader, not the other shader that don't use multicompile
-                    
+
                     HDUtils.SetRenderTarget(cmd, hdCamera, m_CameraDepthStencilBuffer);
 
                     // First deferred material
@@ -1623,8 +1624,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 else
                 {
                     HDUtils.SetRenderTarget(cmd, hdCamera, m_CameraColorBuffer, m_CameraDepthStencilBuffer);
-                    if ((hdCamera.frameSettings.enableDBuffer) && (DecalSystem.m_DecalDatasCount > 0)) // enable d-buffer flag value is being interpreted more like enable decals in general now that we have clustered                    
-                                                                                                       // decal datas count is 0 if no decals affect transparency             
+                    if ((hdCamera.frameSettings.enableDBuffer) && (DecalSystem.m_DecalDatasCount > 0)) // enable d-buffer flag value is being interpreted more like enable decals in general now that we have clustered
+                                                                                                       // decal datas count is 0 if no decals affect transparency
                     {
                         DecalSystem.instance.SetAtlas(cmd); // for clustered decals
                     }
@@ -1750,7 +1751,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 RenderTargetIdentifier source = m_CameraColorBuffer;
 
                 // For console we are not allowed to resize the windows, so don't use our hack.
-                bool tempHACK = !IsConsolePlatform();
+                // We also don't do the copy if viewport size and render texture size match.
+                bool viewportAndRTSameSize = (hdcamera.actualWidth == m_CameraColorBuffer.rt.width && hdcamera.actualHeight == m_CameraColorBuffer.rt.height);
+                bool tempHACK = !IsConsolePlatform() && !viewportAndRTSameSize;
 
                 if (tempHACK)
                 {

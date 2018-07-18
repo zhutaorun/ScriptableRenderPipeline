@@ -4,15 +4,31 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [unreleased]
+
+## [3.0.1-preview]
 
 ### Fixed
-- Fixed a shader preprocessor issue when compiling DebugViewMaterialGBuffer.shader against Metal target
-- Added a temporary workaround to Lit.hlsl to avoid broken lighting code with Metal/AMD
-- Fixed compilation errors on Nintendo Switch (limited XRSetting support).
-- Fixed apply range attenuation option on punctual light
-- Fixed issue when using more than one volume mask texture with density volumes.
-- Fixed an error which prevented volumetric lighting from working if no density volumes with 3D textures were present.
+- Fixed an issue with PreIntegratedFGD texture being sometimes destroyed and not regenerated causing rendering to break
+- PostProcess input buffers are not copied anymore on PC if the viewport size matches the final render target size
+- Fixed an issue when manipulating a lot of decals, it was displaying a lot of errors in the inspector
+- Fixed capture material with reflection probe
+
+### Added
+- Added support for RendererPriority on Renderer. This allow to control order of transparent rendering manually. HDRP have now two stage of sorting for transparent in addition to bact to front. Material have a priority then Renderer have a priority.
+- Add Coupling of (HD)Camera and HDAdditionalCameraData for reset and remove in inspector contextual menu of Camera
+- Add macro to forbid unity_ObjectToWorld/unity_WorldToObject to be use as it doesn't handle camera relative rendering
+
+## [3.0.0-preview]
+
+### Fixed
+- Fixed an issue with distortion that was using previous frame instead of current frame
+- Fixed an issue where disabled light where not upgrade correctly to the new physical light unit system introduce in 2.0.5-preview
+
+### Changed
+- Update assembly definitions to output assemblies that match Unity naming convention (Unity.*).
+
+## [2.0.5-preview]
 
 ### Added
 - Add option supportDitheringCrossFade on HDRP Asset to allow to remove shader variant during player build if needed
@@ -21,6 +37,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Exposed shadow budget parameters in HDRP asset
 - Add an option to generate an emissive mesh for area lights (currently rectangle light only). The mesh fits the size, intensity and color of the light.
 - Add an option to the HDRP asset to increase the resolution of volumetric lighting.
+- Add additional ligth unit support for punctual light (Lumens, Candela) and area lights (Lumens, Luminance)
+- Add dedicated Gizmo for the box Influence volume of HDReflectionProbe / PlanarReflectionProbe
 
 ### Changed
 - Re-enable shadow mask mode in debug view
@@ -28,10 +46,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Change code in area light with LTC for Lit shader. Magnitude is now take from FGD texture instead of a separate texture
 - Improve camera relative rendering: We now apply camera translation on the model matrix, so before the TransformObjectToWorld(). Note: unity_WorldToObject and unity_ObjectToWorld must never be used directly.
 - Rename positionWS to positionRWS (Camera relative world position) at a lot of places (mainly in interpolator and FragInputs). In case of custom shader user will be required to update their code.
+- Rename positionWS, capturePositionWS, proxyPositionWS, influencePositionWS to positionRWS, capturePositionRWS, proxyPositionRWS, influencePositionRWS (Camera relative world position) in LightDefinition struct.
 - Improve the quality of trilinear filtering of density volume textures.
+- Improve UI for HDReflectionProbe / PlanarReflectionProbe
 
 ### Fixed
+- Fixed a shader preprocessor issue when compiling DebugViewMaterialGBuffer.shader against Metal target
+- Added a temporary workaround to Lit.hlsl to avoid broken lighting code with Metal/AMD
+- Fixed issue when using more than one volume texture mask with density volumes.
+- Fixed an error which prevented volumetric lighting from working if no density volumes with 3D textures were present.
 - Fix contact shadows applied on transmission
+- Fix issue with forward opaque lit shader variant being removed by the shader preprocessor
+- Fixed compilation errors on Nintendo Switch (limited XRSetting support).
+- Fixed apply range attenuation option on punctual light
+- Fixed issue with color temperature not take correctly into account with static lighting
+- Don't display fog when diffuse lighting, specular lighting, or lux meter debug mode are enabled.
 
 ## [2.0.4-preview]
 
@@ -76,7 +105,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Support correctly scene selection for alpha tested object
 - Add per light shadow mask mode control (i.e shadow mask distance and shadow mask). It use the option NonLightmappedOnly
 - Add geometric filtering to Lit shader (allow to reduce specular aliasing)
-- Allow to double click on a render pipeline asset to setup it automatically in GraphicSettings
 - Add shortcut to create DensityVolume and PlanarReflection in hierarchy
 - Add a DefaultHDMirrorMaterial material for PlanarReflection
 - Added a script to be able to upgrade material to newer version of HDRP
