@@ -35,6 +35,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         readonly HDRenderPipelineAsset m_Asset;
         public HDRenderPipelineAsset asset { get { return m_Asset; } }
 
+        //SS Spotlight Added.
+        public delegate void HDPassCallback(CommandBuffer cmd, HDCamera cam, RenderTexture depthBuffer);
+        public static HDPassCallback afterGBufferPass = null;
+
         DiffusionProfileSettings m_InternalSSSAsset;
         public DiffusionProfileSettings diffusionProfileSettings
         {
@@ -949,6 +953,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // In both forward and deferred, everything opaque should have been rendered at this point so we can safely copy the depth buffer for later processing.
                     CopyDepthBufferIfNeeded(cmd);
                     RenderDepthPyramid(hdCamera, cmd, renderContext, FullScreenDebugMode.DepthPyramid);
+
+                    //SS Spotlight Added.
+                    if (afterGBufferPass != null)
+                    {
+                        afterGBufferPass(cmd, hdCamera, m_CameraDepthStencilBuffer.rt); 
+                    }
 
                     // TODO: In the future we will render object velocity at the same time as depth prepass (we need C++ modification for this)
                     // Once the C++ change is here we will first render all object without motion vector then motion vector object
