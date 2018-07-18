@@ -305,15 +305,18 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 #endif // _MATERIAL_FEATURE_DUAL_SPECULAR_LOBE
 
 
+    surfaceData.anisotropyA = 0.0;
+    surfaceData.anisotropyB = 0.0;
 #ifdef _MATERIAL_FEATURE_ANISOTROPY
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_ANISOTROPY;
     // TODO: manage anistropy map
     //surfaceData.anisotropy = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_AnistropyMap), _AnistropyMapChannelMask);
     //surfaceData.anisotropy = lerp(_AnistropyMapRange.x, _AnistropyMapRange.y, surfaceData.anisotropy);
-    surfaceData.anisotropy = _Anisotropy; // In all cases we must multiply anisotropy with the map
-#else
-    surfaceData.anisotropy = 0.0;
+    surfaceData.anisotropyA = _AnisotropyA; // In all cases we must multiply anisotropy with the map
+#ifdef _MATERIAL_FEATURE_DUAL_SPECULAR_LOBE
+    surfaceData.anisotropyB = _AnisotropyB;
 #endif
+#endif // _MATERIAL_FEATURE_ANISOTROPY
     surfaceData.tangentWS = normalize(input.worldToTangent[0].xyz); // The tangent is not normalize in worldToTangent for mikkt. TODO: Check if it expected that we normalize with Morten. Tag: SURFACE_GRADIENT
 
     float4 coatGradient = float4(0.0, 0.0, 0.0, 1.0f);

@@ -41,8 +41,11 @@ SAMPLER(sampler_HazinessMap);
 TEXTURE2D(_HazeExtentMap);
 SAMPLER(sampler_HazeExtentMap);
 
-TEXTURE2D(_AnisotropyMap);
-SAMPLER(sampler_AnisotropyMap);
+TEXTURE2D(_AnisotropyAMap);
+SAMPLER(sampler_AnisotropyAMap);
+
+TEXTURE2D(_AnisotropyBMap);
+SAMPLER(sampler_AnisotropyBMap);
 
 TEXTURE2D(_CoatSmoothnessMap);
 SAMPLER(sampler_CoatSmoothnessMap);
@@ -177,15 +180,25 @@ float4 _HazeExtentMapChannelMask;
 float4 _HazeExtentMapRange;
 float _HazeExtentMapRangeScale;
 
-float _Anisotropy;
-float _AnisotropyUseMap;
-float _AnisotropyMapUV;
-float _AnisotropyMapUVLocal;
-float4 _AnisotropyMap_ST;
-float4 _AnisotropyMap_TexelSize;
-float4 _AnisotropyMap_MipInfo;
-float4 _AnisotropyMapChannelMask;
-float4 _AnisotropyMapRange;
+float _AnisotropyA;
+float _AnisotropyAUseMap;
+float _AnisotropyAMapUV;
+float _AnisotropyAMapUVLocal;
+float4 _AnisotropyAMap_ST;
+float4 _AnisotropyAMap_TexelSize;
+float4 _AnisotropyAMap_MipInfo;
+float4 _AnisotropyAMapChannelMask;
+float4 _AnisotropyAMapRange;
+
+float _AnisotropyB;
+float _AnisotropyBUseMap;
+float _AnisotropyBMapUV;
+float _AnisotropyBMapUVLocal;
+float4 _AnisotropyBMap_ST;
+float4 _AnisotropyBMap_TexelSize;
+float4 _AnisotropyBMap_MipInfo;
+float4 _AnisotropyBMapChannelMask;
+float4 _AnisotropyBMapRange;
 
 float _CoatSmoothness;
 float _CoatSmoothnessUseMap;

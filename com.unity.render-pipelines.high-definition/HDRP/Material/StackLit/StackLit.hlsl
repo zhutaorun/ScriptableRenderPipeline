@@ -172,9 +172,10 @@ bool IsCoatNormalMapEnabled(BSDFData bsdfData)
 }
 
 // Assume bsdfData.normalWS is init
-void FillMaterialAnisotropy(float anisotropy, float3 tangentWS, float3 bitangentWS, inout BSDFData bsdfData)
+void FillMaterialAnisotropy(float anisotropyA, float anisotropyB, float3 tangentWS, float3 bitangentWS, inout BSDFData bsdfData)
 {
-    bsdfData.anisotropy  = anisotropy;
+    bsdfData.anisotropyA  = anisotropyA;
+    bsdfData.anisotropyB  = anisotropyB;
     bsdfData.tangentWS   = tangentWS;
     bsdfData.bitangentWS = bitangentWS;
 }
@@ -344,9 +345,8 @@ NormalData ConvertSurfaceDataToNormalData(SurfaceData surfaceData)
 //    bsdfData.roughnessBT
 //    bsdfData.roughnessBB
 //
-// TODOTODO: hazyGlossMaxf0 and secondary anisotropy
 //
-void HazeMapping(float3 fresnel0, float roughnessAT, float roughnessAB, float haziness, float hazeExtent, float hazeExtentAnisotropy /* TODOTODO */, float3 hazyGlossMaxf0, inout BSDFData bsdfData)
+void HazeMapping(float3 fresnel0, float roughnessAT, float roughnessAB, float haziness, float hazeExtent, float hazeExtentAnisotropy, float3 hazyGlossMaxf0, inout BSDFData bsdfData)
 {
     float w = 10.0; // interpolation steepness weight (Bezier weight of central point)
     bool useBezierToMapKh = true; 
@@ -371,9 +371,9 @@ void HazeMapping(float3 fresnel0, float roughnessAT, float roughnessAB, float ha
     float2 alpha_n = float2(ClampRoughnessForAnalyticalLights(roughnessAT), ClampRoughnessForAnalyticalLights(roughnessAB));
     float alpha_n_xy = alpha_n.x * alpha_n.y;
     float beta_h = haziness;
-    float2 lambda_h; // TODOTODO: hazeExtent anisotropic
-    //ConvertValueAnisotropyToValueTB(hazeExtent, hazeExtentAnisotropy, lambda_h.x, lambda_h.y);
-    ConvertValueAnisotropyToValueTB(hazeExtent, 0.0, lambda_h.x, lambda_h.y);
+    float2 lambda_h;
+    ConvertValueAnisotropyToValueTB(hazeExtent, hazeExtentAnisotropy, lambda_h.x, lambda_h.y);
+    //ConvertValueAnisotropyToValueTB(hazeExtent, 0.0, lambda_h.x, lambda_h.y);
 
     float2 alpha_w = saturate(alpha_n + lambda_h * sqrt(alpha_n_xy)); // wide lobe (haze) roughness
     float alpha_w_xy = alpha_w.x * alpha_w.y;
@@ -481,12 +481,12 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
 
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_ANISOTROPY))
     {
-        FillMaterialAnisotropy(surfaceData.anisotropy, surfaceData.tangentWS, cross(surfaceData.normalWS, surfaceData.tangentWS), bsdfData);
+        FillMaterialAnisotropy(surfaceData.anisotropyA, surfaceData.anisotropyB, surfaceData.tangentWS, cross(surfaceData.normalWS, surfaceData.tangentWS), bsdfData);
     }
 
     // Extract T & B anisotropies
-    ConvertAnisotropyToRoughness(bsdfData.perceptualRoughnessA, bsdfData.anisotropy, bsdfData.roughnessAT, bsdfData.roughnessAB);
-    ConvertAnisotropyToRoughness(bsdfData.perceptualRoughnessB, bsdfData.anisotropy, bsdfData.roughnessBT, bsdfData.roughnessBB);
+    ConvertAnisotropyToRoughness(bsdfData.perceptualRoughnessA, bsdfData.anisotropyA, bsdfData.roughnessAT, bsdfData.roughnessAB);
+    ConvertAnisotropyToRoughness(bsdfData.perceptualRoughnessB, bsdfData.anisotropyB, bsdfData.roughnessBT, bsdfData.roughnessBB);
     bsdfData.lobeMix = surfaceData.lobeMix;
 
     // Note that if we're using the hazy gloss parametrization, these will all be changed again:
@@ -503,7 +503,7 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_HAZY_GLOSS))
     {
         float3 hazyGlossMaxf0 = ComputeFresnel0(float3(1.0, 1.0, 1.0), surfaceData.metallic, surfaceData.hazyGlossMaxDielectricF0);
-        HazeMapping(bsdfData.fresnel0, bsdfData.roughnessAT, bsdfData.roughnessAB, surfaceData.haziness, surfaceData.hazeExtent, bsdfData.anisotropy /* TODOTODO */, hazyGlossMaxf0, bsdfData);
+        HazeMapping(bsdfData.fresnel0, bsdfData.roughnessAT, bsdfData.roughnessAB, surfaceData.haziness, surfaceData.hazeExtent, bsdfData.anisotropyB, hazyGlossMaxf0, bsdfData);
     }
 
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_IRIDESCENCE))
@@ -1345,8 +1345,8 @@ void ComputeAdding(float _cti, float3 V, in BSDFData bsdfData, inout PreLightDat
     // analytical lights.
     // --------------------------------------------------------------------------------
 
-    preLightData.iblAnisotropy[0] = bsdfData.anisotropy;
-    preLightData.iblAnisotropy[1] = bsdfData.anisotropy;
+    preLightData.iblAnisotropy[0] = bsdfData.anisotropyA;
+    preLightData.iblAnisotropy[1] = bsdfData.anisotropyB;
 
 
     s_r12 = RoughnessToLinearVariance(PerceptualRoughnessToRoughness(bsdfData.perceptualRoughnessA));
@@ -1361,10 +1361,10 @@ void ComputeAdding(float _cti, float3 V, in BSDFData bsdfData, inout PreLightDat
     // that destretching happens.
     IF_DEBUG( if( _DebugAniso.x == 1) )
     {
-        preLightData.iblAnisotropy[0] = GetModifiedAnisotropy(bsdfData.anisotropy, bsdfData.perceptualRoughnessA,
+        preLightData.iblAnisotropy[0] = GetModifiedAnisotropy(bsdfData.anisotropyA, bsdfData.perceptualRoughnessA,
                                                               PerceptualRoughnessToRoughness(bsdfData.perceptualRoughnessA),
                                                               preLightData.iblPerceptualRoughness[BASE_LOBEA_IDX]);
-        preLightData.iblAnisotropy[1] = GetModifiedAnisotropy(bsdfData.anisotropy, bsdfData.perceptualRoughnessB,
+        preLightData.iblAnisotropy[1] = GetModifiedAnisotropy(bsdfData.anisotropyB, bsdfData.perceptualRoughnessB,
                                                               PerceptualRoughnessToRoughness(bsdfData.perceptualRoughnessB),
                                                               preLightData.iblPerceptualRoughness[BASE_LOBEB_IDX]);
     }
@@ -1434,7 +1434,7 @@ void ComputeAdding(float _cti, float3 V, in BSDFData bsdfData, inout PreLightDat
         // TODOANISOTROPY
         ConvertRoughnessToAnisotropy(roughnessT, roughnessB, preLightData.iblAnisotropy[0]);
 #else
-        preLightData.iblAnisotropy[0] = bsdfData.anisotropy;
+        preLightData.iblAnisotropy[0] = bsdfData.anisotropyA;
 #endif
         preLightData.iblPerceptualRoughness[BASE_LOBEA_IDX] = RoughnessToPerceptualRoughness((roughnessT + roughnessB)/2.0);
 
@@ -1461,7 +1461,7 @@ void ComputeAdding(float _cti, float3 V, in BSDFData bsdfData, inout PreLightDat
         // TODOANISOTROPY
         ConvertRoughnessToAnisotropy(roughnessT, roughnessB, preLightData.iblAnisotropy[1]);
 #else
-        preLightData.iblAnisotropy[1] = bsdfData.anisotropy;
+        preLightData.iblAnisotropy[1] = bsdfData.anisotropyB;
 #endif
         preLightData.iblPerceptualRoughness[BASE_LOBEB_IDX] = RoughnessToPerceptualRoughness((roughnessT + roughnessB)/2.0);
 
@@ -1999,8 +1999,8 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData b
         // Also important: iblPerceptualRoughness[] is used for specular occlusion
         preLightData.iblPerceptualRoughness[BASE_LOBEA_IDX] = bsdfData.perceptualRoughnessA;
         preLightData.iblPerceptualRoughness[BASE_LOBEB_IDX] = bsdfData.perceptualRoughnessB;
-        preLightData.iblAnisotropy[0] = bsdfData.anisotropy;
-        preLightData.iblAnisotropy[1] = bsdfData.anisotropy;
+        preLightData.iblAnisotropy[0] = bsdfData.anisotropyA;
+        preLightData.iblAnisotropy[1] = bsdfData.anisotropyB;
 
         float3 f0forCalculatingFGD = bsdfData.fresnel0;
         if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_IRIDESCENCE))

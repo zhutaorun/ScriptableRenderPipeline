@@ -121,15 +121,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             [SurfaceDataAttributes("Haze Extent")]
             public float hazeExtent;
 
-            [SurfaceDataAttributes("Hazy Gloss Max Dielectric f0 Value To Agree With Metallic")]
+            [SurfaceDataAttributes("Hazy Gloss Max Dielectric f0 When Using Metallic Input")]
             public float hazyGlossMaxDielectricF0;
 
             // Anisotropy
             [SurfaceDataAttributes("Tangent", true)]
             public Vector3 tangentWS;
 
-            [SurfaceDataAttributes("Anisotropy")]
-            public float anisotropy; // anisotropic ratio(0->no isotropic; 1->full anisotropy in tangent direction, -1->full anisotropy in bitangent direction)
+            [SurfaceDataAttributes("AnisotropyA")]
+            public float anisotropyA; // anisotropic ratio(0->no isotropic; 1->full anisotropy in tangent direction, -1->full anisotropy in bitangent direction)
+
+            // Anisotropy for secondary specular lobe
+            [SurfaceDataAttributes("AnisotropyB")]
+            public float anisotropyB; // anisotropic ratio(0->no isotropic; 1->full anisotropy in tangent direction, -1->full anisotropy in bitangent direction)
 
             // Iridescence
             [SurfaceDataAttributes("IridescenceIor")]
@@ -204,7 +208,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public float roughnessAB;
             public float roughnessBT;
             public float roughnessBB;
-            public float anisotropy;
+            public float anisotropyA;
+            public float anisotropyB;
 
             // Top interface and media (clearcoat)
             public float coatRoughness;

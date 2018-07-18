@@ -109,9 +109,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         // Anisotropy
         protected const string k_EnableAnisotropy = "_EnableAnisotropy";
-        protected const string k_Anisotropy = "_Anisotropy";
-        protected const string k_AnisotropyMap = "_AnisotropyMap";
-        protected const string k_AnisotropyMapUV = "_AnisotropyMapUV";
+        protected const string k_AnisotropyA = "_AnisotropyA";
+        protected const string k_AnisotropyAMap = "_AnisotropyAMap";
+        protected const string k_AnisotropyAMapUV = "_AnisotropyAMapUV";
+
+        protected const string k_AnisotropyB = "_AnisotropyB";
+        protected const string k_AnisotropyBMap = "_AnisotropyBMap";
+        protected const string k_AnisotropyBMapUV = "_AnisotropyBMapUV";
 
         // Iridescence
         protected const string k_EnableIridescence = "_EnableIridescence";
@@ -223,6 +227,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var Metallic = new TextureProperty(this, k_MetallicMap, k_Metallic, "Metallic", "Metallic", false, false);
             var DielectricIor = new Property(this, k_DielectricIor, "DieletricIor", "IOR use for dielectric material (i.e non metallic material)", false);
             var SmoothnessA = new TextureProperty(this, k_SmoothnessAMap, k_SmoothnessA, "Smoothness", "Smoothness", false, false);
+            var AnisotropyA = new Property(this, k_AnisotropyA, "AnisotropyA", "Anisotropy of primary lobe of base layer", false, _ => EnableAnisotropy.BoolValue == true);
+            // TODO: Tangent map and rotation
             var NormalMap = new TextureProperty(this, k_NormalMap, k_NormalScale, "Normal Map", "Normal Map", pairConstantWithTexture: true, isMandatory: false, isNormalMap: true, showScaleOffset: true, slaveTexOneLineProp: BentNormal.m_TextureProperty);
             var AmbientOcclusion = new TextureProperty(this, k_AmbientOcclusionMap, k_AmbientOcclusion, "AmbientOcclusion", "AmbientOcclusion Map", false, false);
             var SpecularColor = new TextureProperty(this, k_SpecularColorMap, k_SpecularColor, "Specular Color (f0)", "Specular Color  (f0) (RGB)", true, false);
@@ -235,6 +241,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 Metallic,
                 DielectricIor,
                 SmoothnessA,
+                AnisotropyA,
                 NormalMap,
                 BentNormal,
                 AmbientOcclusion,
@@ -248,6 +255,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 SpecularColor,
                 EnergyConservingSpecularColor,
                 SmoothnessA,
+                AnisotropyA,
                 NormalMap,
                 BentNormal,
                 AmbientOcclusion,
@@ -257,6 +265,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             DualSpecularLobeParametrization = new ComboProperty(this, k_DualSpecularLobeParametrization, "Dual Specular Lobe Parametrization", Enum.GetNames(typeof(StackLit.DualSpecularLobeParametrization)), false);
 
             var SmoothnessB = new TextureProperty(this, k_SmoothnessBMap, k_SmoothnessB, "Smoothness B", "Smoothness B", false, false);
+            var AnisotropyB = new Property(this, k_AnisotropyB, "AnisotropyB", "Anisotropy of secondary lobe of base layer", false, _ => EnableAnisotropy.BoolValue == true);
             //var LobeMix = new Property(this, k_LobeMix, "Lobe Mix", "Lobe Mix", false);
             var LobeMix = new TextureProperty(this, k_LobeMixMap, k_LobeMix, "LobeMix", "LobeMix", false, false);
             var Haziness = new TextureProperty(this, k_HazinessMap, k_Haziness, "Haziness", "Haziness", false, false);
@@ -276,6 +285,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 DualSpecularLobeParametrization,
                 SmoothnessB,
+                AnisotropyB,
                 LobeMix,
             }, _ => ( EnableDualSpecularLobe.BoolValue == true && !IsHazyGlossParametrizationUsed) );
 
@@ -286,6 +296,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 CapHazinessWrtMetallic,
                 HazyGlossMaxDielectricF0UI,
                 HazeExtent,
+                AnisotropyB,
             }, _ => (EnableDualSpecularLobe.BoolValue == true && IsHazyGlossParametrizationUsed) );
 
             // All material properties
@@ -320,11 +331,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 DualSpecularLobeDirectGroup,
                 DualSpecularLobeHazyGlossGroup,
 
-                new GroupProperty(this, "_Anisotropy", "Anisotropy", new BaseProperty[]
-                {
-                    new Property(this, k_Anisotropy, "Anisotropy", "Anisotropy of base layer", false),
-                    // TODO: Tangent map and rotation
-                }, _ => EnableAnisotropy.BoolValue == true),
+                //new GroupProperty(this, "_Anisotropy", "Anisotropy", new BaseProperty[]
+                //{
+                //    new Property(this, k_AnisotropyA, "AnisotropyA", "Anisotropy of base layer", false),
+                //    // TODO: Tangent map and rotation
+                //}, _ => EnableAnisotropy.BoolValue == true),
 
                 new GroupProperty(this, "_Coat", "Coat", new BaseProperty[]
                 {
@@ -471,7 +482,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             TextureProperty.SetupTextureMaterialProperty(material, k_AmbientOcclusion);
             TextureProperty.SetupTextureMaterialProperty(material, k_SubsurfaceMask);
             TextureProperty.SetupTextureMaterialProperty(material, k_Thickness);
-            TextureProperty.SetupTextureMaterialProperty(material, k_Anisotropy);
+            TextureProperty.SetupTextureMaterialProperty(material, k_AnisotropyA);
+            TextureProperty.SetupTextureMaterialProperty(material, k_AnisotropyB);
             TextureProperty.SetupTextureMaterialProperty(material, k_IridescenceThickness);
             TextureProperty.SetupTextureMaterialProperty(material, k_IridescenceMask);
             TextureProperty.SetupTextureMaterialProperty(material, k_CoatSmoothness);
@@ -562,7 +574,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             TextureProperty.UVMapping hazeExtentMapUV           = (dualSpecularLobeEnabled && hazyGlossEnabled) ? (TextureProperty.UVMapping)material.GetFloat(k_HazeExtentMapUV) : TextureProperty.UVMapping.UV0;
             TextureProperty.UVMapping subsurfaceMaskMapUV       = sssEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_SubsurfaceMaskMapUV) : TextureProperty.UVMapping.UV0;
             TextureProperty.UVMapping thicknessMapUV            = sssEnabled || transmissionEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_ThicknessMapUV) : TextureProperty.UVMapping.UV0;
-            TextureProperty.UVMapping anisotropyMapUV           = anisotropyEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_AnisotropyMapUV) : TextureProperty.UVMapping.UV0;
+            TextureProperty.UVMapping anisotropyAMapUV           = anisotropyEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_AnisotropyAMapUV) : TextureProperty.UVMapping.UV0;
+            TextureProperty.UVMapping anisotropyBMapUV           = anisotropyEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_AnisotropyBMapUV) : TextureProperty.UVMapping.UV0;
             TextureProperty.UVMapping iridescenceThicknessMapUV = iridescenceEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_IridescenceThicknessMapUV) : TextureProperty.UVMapping.UV0;
             TextureProperty.UVMapping iridescenceMaskMapUV      = iridescenceEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_IridescenceMaskMapUV) : TextureProperty.UVMapping.UV0;
             TextureProperty.UVMapping coatSmoothnessMapUV       = coatEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_CoatSmoothnessMapUV) : TextureProperty.UVMapping.UV0;
@@ -581,7 +594,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 hazeExtentMapUV,
                 subsurfaceMaskMapUV,
                 thicknessMapUV,
-                anisotropyMapUV,
+                anisotropyAMapUV,
+                anisotropyBMapUV,
                 iridescenceThicknessMapUV,
                 iridescenceMaskMapUV,
                 coatSmoothnessMapUV,

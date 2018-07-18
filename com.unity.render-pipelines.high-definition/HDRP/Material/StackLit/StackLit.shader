@@ -122,15 +122,28 @@ Shader "HDRenderPipeline/StackLit"
         // TODO: TangentMap, AnisotropyMap and CoatIorMap (SmoothnessMap ?)
 
         [ToggleUI] _EnableAnisotropy("Enable Anisotropy", Float) = 0.0 // UI only
-        _Anisotropy("Anisotropy", Range(-1.0, 1.0)) = 0.0
-        _AnisotropyMap("Anisotropy Map", 2D) = "white" {}
-        _AnisotropyUseMap("Anisotropy Use Map", Float) = 0
-        _AnisotropyMapUV("Anisotropy Map UV", Float) = 0.0
-        _AnisotropyMapUVLocal("Anisotropy Map UV Local", Float) = 0.0
-        _AnisotropyMapChannel("Anisotropy Map Channel", Float) = 0.0
-        [HideInInspector] _AnisotropyMapChannelMask("Anisotropy Map Channel Mask", Vector) = (1, 0, 0, 0)
-        _AnisotropyMapRemap("Anisotropy Remap", Vector) = (0, 1, 0, 0)
-        [HideInInspector] _AnisotropyMapRange("Anisotropy Range", Vector) = (0, 1, 0, 0)
+
+        [HideInInspector] _AnisotropyAMapShow("AnisotropyA Map Show", Float) = 0
+        _AnisotropyA("AnisotropyA", Range(-1.0, 1.0)) = 0.0
+        _AnisotropyAMap("AnisotropyA Map", 2D) = "white" {}
+        _AnisotropyAUseMap("AnisotropyA Use Map", Float) = 0
+        _AnisotropyAMapUV("AnisotropyA Map UV", Float) = 0.0
+        _AnisotropyAMapUVLocal("AnisotropyA Map UV Local", Float) = 0.0
+        _AnisotropyAMapChannel("AnisotropyA Map Channel", Float) = 0.0
+        [HideInInspector] _AnisotropyAMapChannelMask("AnisotropyA Map Channel Mask", Vector) = (1, 0, 0, 0)
+        _AnisotropyAMapRemap("AnisotropyA Remap", Vector) = (0, 1, 0, 0)
+        [HideInInspector] _AnisotropyAMapRange("AnisotropyA Range", Vector) = (0, 1, 0, 0)
+
+        [HideInInspector] _AnisotropyBMapShow("AnisotropyB Map Show", Float) = 0
+        _AnisotropyB("AnisotropyB", Range(-1.0, 1.0)) = 0.0
+        _AnisotropyBMap("AnisotropyB Map", 2D) = "white" {}
+        _AnisotropyBUseMap("AnisotropyB Use Map", Float) = 0
+        _AnisotropyBMapUV("AnisotropyB Map UV", Float) = 0.0
+        _AnisotropyBMapUVLocal("AnisotropyB Map UV Local", Float) = 0.0
+        _AnisotropyBMapChannel("AnisotropyB Map Channel", Float) = 0.0
+        [HideInInspector] _AnisotropyBMapChannelMask("AnisotropyB Map Channel Mask", Vector) = (1, 0, 0, 0)
+        _AnisotropyBMapRemap("AnisotropyB Remap", Vector) = (0, 1, 0, 0)
+        [HideInInspector] _AnisotropyBMapRange("AnisotropyB Range", Vector) = (0, 1, 0, 0)
 
         [ToggleUI] _EnableCoat("Enable Coat", Float) = 0.0 // UI only
         [HideInInspector] _CoatSmoothnessMapShow("CoatSmoothness Show", Float) = 0
