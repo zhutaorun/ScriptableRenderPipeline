@@ -514,6 +514,23 @@ namespace UnityEngine.Experimental.Rendering
             return mesh;
         }
 
+        public static int GetEnumLength<T>()
+            where T : struct, IComparable // This is not an exact enum restriction, but it is generally viable
+        {
+            return Enum.GetNames(typeof(T)).Length;
+        }
+
+        public static void DisposeArray<T>(ref T[] values)
+            where T : IDisposable
+        {
+            for (int i = 0; i < values.Length; ++i)
+            {
+                values[i].Dispose();
+                values[i] = default(T);
+            }
+            values = null;
+        }
+
         public static void DisplayUnsupportedMessage(string msg)
         {
             Debug.LogError(msg);
