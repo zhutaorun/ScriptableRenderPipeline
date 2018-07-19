@@ -277,7 +277,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var HazyGlossMaxDielectricF0UI = new UIBufferedProperty(this, k_HazyGlossMaxDielectricF0, "Maximum Dielectric Specular Color", "Cap Dielectrics To This Maximum Dielectric Specular Color", false,
                 _ => (IsCapDielectricUsed));
 
-            var HazyGlossMaxDielectricF0 = new Property(this, k_HazyGlossMaxDielectricF0, "Maximum Dielectric Specular Color", "Cap Dielectrics To This Maximum Dielectric Specular Color", true);
+            var HazyGlossMaxDielectricF0 = new Property(this, k_HazyGlossMaxDielectricF0, "Maximum Dielectric Specular Color", "Cap Dielectrics To This Maximum Dielectric Specular Color", true, _ => (false));
             // ...this later property is always used by the shader when IsMetallicParametrizationUsed and IsHazyGlossParametrizationUsed, but since these are dynamic, 
             // we always make the base property mandatory.
 
@@ -295,6 +295,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 Haziness,
                 CapHazinessWrtMetallic,
                 HazyGlossMaxDielectricF0UI,
+                HazyGlossMaxDielectricF0, // dummy, always hidden, we create it just to force the isMandatory check
                 HazeExtent,
                 AnisotropyB,
             }, _ => (EnableDualSpecularLobe.BoolValue == true && IsHazyGlossParametrizationUsed) );
