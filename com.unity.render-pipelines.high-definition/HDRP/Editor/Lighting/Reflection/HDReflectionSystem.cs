@@ -11,6 +11,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         PlanarProbe
     }
 
+    // TODO: this ID should be persistent over a domain reload and play mode
     public struct HDReflectionEntityID
     {
         internal struct SetID
@@ -172,6 +173,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         internal Hash128 customTextureHash;
     }
 
+    class BakedProbeState
+    {
+        public int count;
+        public Hash128[] probeOnlyHashes;
+        public Hash128[] probeOutputHashes;
+        public HDReflectionEntityID[] IDs;
+    }
+
     struct ReflectionSettings
     {
         public uint bounces;
@@ -180,6 +189,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     unsafe struct HDReflectionSystemTick
     {
         public ReflectionSettings settings;
+        public BakedProbeState bakedProbeState;
 
         internal void Tick(SceneStateHash sceneStateHash, IScriptableBakedReflectionSystemStageNotifier handle)
         {
@@ -225,6 +235,34 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // We must then trigger a baking of these probes.
             // But we must also take care their baking may be currently running.
 
+            // Compute the difference between hashes to detect the baked probe to bake or delete
+            var maxProbeCount = Mathf.Max(bakedProbeCount, bakedProbeState.count);
+            var addIndicies = stackalloc int[maxProbeCount];
+            var remIndicies = stackalloc int[maxProbeCount];
+            fixed (Hash128* oldHashes = bakedProbeState.probeOutputHashes)
+            {
+                int addCount = 0, remCount = 0;
+                if (Utilities.CompareHashes(
+                    bakedProbeState.count, oldHashes,
+                    bakedProbeCount, bakedProbeOutputHashes,
+                    addIndicies, remIndicies,
+                    out addCount, out remCount
+                    ) > 0)
+                {
+                    handle.EnterStage(
+                        (int)HDReflectionSystem.BakeStages.ReflectionProbes,
+                        string.Format("Reflection Probes | {0} jobs", addCount),
+                        Utilities.CalculateProgress(addCount, bakedProbeCount)
+                    );
+
+                    // TODO: trigger jobs
+
+                    return;
+                }
+            }
+
+            handle.ExitStage((int)HDReflectionSystem.BakeStages.ReflectionProbes);
+            handle.SetIsDone(true);
         }
 
         void ComputeBakedProbeOutputHashes(
@@ -292,15 +330,35 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
     unsafe class HDReflectionSystem : IScriptableBakedReflectionSystem
     {
+        public enum BakeStages
+        {
+            ReflectionProbes
+        }
+
         [InitializeOnLoadMethod]
         static void RegisterSystem()
         {
             ScriptableBakedReflectionSystemSettings.system = new HDReflectionSystem();
         }
 
-        public int stageCount { get { throw new System.NotImplementedException(); } }
+        BakedProbeState m_BakedProbeState;
 
-        public Hash128 stateHash { get { throw new System.NotImplementedException(); } }
+        public int stageCount { get { return 1; } }
+
+        public Hash128 stateHash
+        {
+            get
+            {
+                // TODO: cache the hash when updating the baked state
+                var hash = new Hash128();
+                if (m_BakedProbeState != null && m_BakedProbeState.probeOutputHashes != null)
+                {
+                    fixed (Hash128* hashes = m_BakedProbeState.probeOutputHashes)
+                        Utilities.CombineHashes(m_BakedProbeState.count, hashes, &hash);
+                }
+                return hash;
+            }
+        }
 
         public void Cancel()
         {
@@ -328,6 +386,106 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         void Dispose(bool disposing)
         {
             
+        }
+    }
+
+    unsafe static class Utilities
+    {
+        public static float CalculateProgress(int numJobsTodo, int totalNumJobs)
+        {
+            return (totalNumJobs != 0) ? 1.0f - ((float)numJobsTodo / totalNumJobs) : 1.0f;
+        }
+
+        public static void CombineHashes(int count, Hash128* hashes, Hash128* outHash)
+        {
+            for (int i = 0; i < count; ++i)
+                HashUtilities.AppendHash(ref hashes[i], ref *outHash);
+        }
+
+        public static int CompareHashes(
+            int oldHashCount, Hash128* oldHashes,
+            int newHashCount, Hash128* newHashes,
+            // assume that the capacity of indices is >= max(oldHashCount, newHashCount)
+            int* addIndicies, int* removeIndicies,
+            out int addCount, out int remCount
+        )
+        {
+            addCount = 0;
+            remCount = 0;
+            // Check combined hashes
+            if (oldHashCount == newHashCount)
+            {
+                var oldHash = new Hash128();
+                var newHash = new Hash128();
+                CombineHashes(oldHashCount, oldHashes, &oldHash);
+                CombineHashes(newHashCount, newHashes, &newHash);
+                if (oldHash == newHash)
+                    return 0;
+            }
+
+            var numOperations = 0;
+
+            var oldI = 0;
+            var newI = 0;
+
+            while (oldI < oldHashCount || newI < newHashCount)
+            {
+                // At the end of old array.
+                if (oldI == oldHashCount)
+                {
+                    // No more hashes in old array. Add remaining entries from new array.
+                    for (; newI < newHashCount; ++newI)
+                    {
+                        addIndicies[addCount++] = newI;
+                        ++numOperations;
+                    }
+                    continue;
+                }
+
+                // At end of new array.
+                if (newI == newHashCount)
+                {
+                    // No more hashes in old array. Remove remaining entries from old array.
+                    for (; oldI < oldHashCount; ++oldI)
+                    {
+                        removeIndicies[remCount++] = oldI;
+                        ++numOperations;
+                    }
+                    continue;
+                }
+
+                // Both arrays have data.
+                if (newHashes[newI] == oldHashes[oldI])
+                {
+                    // Matching hash, skip.
+                    ++newI;
+                    ++oldI;
+                    continue;
+                }
+
+                // Both arrays have data, but hashes do not match.
+                if (newHashes[newI] < oldHashes[oldI])
+                {
+                    // oldIter is the greater hash. Push "add" jobs from the new array until reaching the oldIter hash.
+                    while (newI < newHashCount && newHashes[newI] < oldHashes[oldI])
+                    {
+                        addIndicies[addCount++] = newI;
+                        ++newI;
+                        ++numOperations;
+                    }
+                }
+                else
+                {
+                    // newIter is the greater hash. Push "remove" jobs from the old array until reaching the newIter hash.
+                    while (oldI < oldHashCount && oldHashes[oldI] < newHashes[newI])
+                    {
+                        removeIndicies[remCount++] = oldI;
+                        ++numOperations;
+                    }
+                }
+            }
+
+            return numOperations;
         }
     }
 }
