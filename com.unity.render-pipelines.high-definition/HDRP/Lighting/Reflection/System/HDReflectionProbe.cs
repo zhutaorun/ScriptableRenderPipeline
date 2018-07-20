@@ -5,6 +5,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public struct ProbeCaptureProperties
         {
             public CaptureProperties common;
+            public int cubemapSize;
         }
 
         public ProbeCaptureProperties captureSettings;

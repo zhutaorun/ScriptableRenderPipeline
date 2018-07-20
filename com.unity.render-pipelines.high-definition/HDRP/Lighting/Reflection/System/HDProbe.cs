@@ -2,7 +2,7 @@ using UnityEngine.Rendering.PostProcessing;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
-    abstract class HDProbe
+    abstract class HDProbe : MonoBehaviour
     {
         public enum WorkflowType
         {

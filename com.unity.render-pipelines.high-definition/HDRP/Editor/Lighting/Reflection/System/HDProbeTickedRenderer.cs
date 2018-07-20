@@ -12,6 +12,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         bool m_IsComplete = true;
         bool m_IsRunning = false;
         HDReflectionEntityID[] m_ToBakeIDs;
+        Hash128[] m_ToBakeHashes;
 
         internal bool isComplete { get { return m_IsComplete; } }
         internal Hash128 inputHash;
@@ -29,7 +30,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             Hash128 inputHash,
             ReflectionSettings settings,
             int addCount,
-            HDReflectionEntityID* toBakeIDs
+            HDReflectionEntityID* toBakeIDs,
+            Hash128* toBakeHashes
         )
         {
             if (m_IsRunning)
@@ -45,6 +47,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             Array.Resize(ref m_ToBakeIDs, addCount);
             for (int i = 0; i < m_ToBakeIDs.Length; ++i)
                 m_ToBakeIDs[i] = toBakeIDs[i];
+            Array.Resize(ref m_ToBakeHashes, addCount);
+            for (int i = 0; i < m_ToBakeHashes.Length; ++i)
+                m_ToBakeHashes[i] = toBakeHashes[i];
         }
 
         internal bool Tick()
@@ -53,7 +58,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 || m_NextIndexToBake >= m_ToBakeIDs.Length)
             {
                 m_IsComplete = true;
-                return true;
+                m_IsRunning = !m_IsComplete;
+                return m_IsComplete;
             }
 
             var index = m_NextIndexToBake;
@@ -61,12 +67,18 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             var probeId = m_ToBakeIDs[index];
             var probe = entityManager.GetProbeByID(probeId);
+            var scenePath = probe.gameObject.scene.path;
+            var hash = m_ToBakeHashes[index];
 
             var renderTarget = HDProbeRendererUtilities.CreateRenderTarget(probe);
             m_Renderer.Render(probe, renderTarget);
-            HDProbeRendererUtilities.SetBakedTextureFromRenderTarget(probe, renderTarget);
 
-            return m_NextIndexToBake >= m_ToBakeIDs.Length;
+            var cacheFilePath = HDBakeUtilities.GetCacheBakePath(scenePath, hash, ".exr");
+            HDBakeUtilities.WriteBakedTextureTo(renderTarget, cacheFilePath);
+
+            m_IsComplete = m_NextIndexToBake >= m_ToBakeIDs.Length;
+            m_IsRunning = !m_IsComplete;
+            return m_IsComplete;
         }
     }
 }

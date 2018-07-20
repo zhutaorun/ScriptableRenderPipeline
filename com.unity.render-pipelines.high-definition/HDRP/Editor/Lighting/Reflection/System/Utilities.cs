@@ -1,9 +1,11 @@
+using System;
 using UnityEngine;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     unsafe static class Utilities
     {
+        // calculate progression to display given the number of job to complete vs the total number of jobs
         public static float CalculateProgress(int numJobsTodo, int totalNumJobs)
         {
             return (totalNumJobs != 0) ? 1.0f - ((float)numJobsTodo / totalNumJobs) : 1.0f;
@@ -15,6 +17,39 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 HashUtilities.AppendHash(ref hashes[i], ref *outHash);
         }
 
+        /// <summary>
+        /// Remove and resize all the item in <paramref name="array"/> at indices <paramref name="indices"/>.
+        /// <paramref name="indices"/> are expected to be sorted in increasing order.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="array"></param>
+        /// <param name="count"></param>
+        /// <param name="indices"></param>
+        public static void RemoveSortedIndicesInArray<T>(ref T[] array, int count, int* indices)
+        {
+            if (count > array.Length)
+                throw new ArgumentException();
+
+            var lastItemIndex = array.Length - 1;
+            for (int i = count - 1; i >= 0; --i)
+            {
+                var index = indices[i];
+                // Swap back to delete
+                array[index] = array[lastItemIndex];
+                --lastItemIndex;
+            }
+
+            Array.Resize(ref array, lastItemIndex + 1);
+        }
+
+        /// <summary>
+        /// Copy into <paramref name="dest"/> the values from <paramref name="src"/> designated by the indices <paramref name="indices"/>.
+        /// </summary>
+        /// <param name="count">Number of indices</param>
+        /// <param name="indices"></param>
+        /// <param name="src"></param>
+        /// <param name="dest"></param>
+        /// <param name="stride">stride of one element in bytes.</param>
         public static void CopyToIndirect(int count, int* indices, byte* src, byte* dest, int stride)
         {
             for (int i = 0; i < count; ++i)
@@ -25,11 +60,25 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
+        /// <summary>
+        /// Compare hashes of two collections and provide
+        /// a list of indices <paramref name="removeIndices"/> to remove in <paramref name="oldHashes"/>
+        /// and a list of indices <paramref name="addIndices"/> to add in <paramref name="newHashes"/>.
+        /// </summary>
+        /// <param name="oldHashCount"></param>
+        /// <param name="oldHashes"></param>
+        /// <param name="newHashCount"></param>
+        /// <param name="newHashes"></param>
+        /// <param name="addIndices"></param>
+        /// <param name="removeIndices"></param>
+        /// <param name="addCount"></param>
+        /// <param name="remCount"></param>
+        /// <returns></returns>
         public static int CompareHashes(
             int oldHashCount, Hash128* oldHashes,
             int newHashCount, Hash128* newHashes,
             // assume that the capacity of indices is >= max(oldHashCount, newHashCount)
-            int* addIndicies, int* removeIndicies,
+            int* addIndices, int* removeIndices,
             out int addCount, out int remCount
         )
         {
@@ -59,7 +108,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     // No more hashes in old array. Add remaining entries from new array.
                     for (; newI < newHashCount; ++newI)
                     {
-                        addIndicies[addCount++] = newI;
+                        addIndices[addCount++] = newI;
                         ++numOperations;
                     }
                     continue;
@@ -71,7 +120,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     // No more hashes in old array. Remove remaining entries from old array.
                     for (; oldI < oldHashCount; ++oldI)
                     {
-                        removeIndicies[remCount++] = oldI;
+                        removeIndices[remCount++] = oldI;
                         ++numOperations;
                     }
                     continue;
@@ -92,7 +141,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     // oldIter is the greater hash. Push "add" jobs from the new array until reaching the oldIter hash.
                     while (newI < newHashCount && newHashes[newI] < oldHashes[oldI])
                     {
-                        addIndicies[addCount++] = newI;
+                        addIndices[addCount++] = newI;
                         ++newI;
                         ++numOperations;
                     }
@@ -102,7 +151,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     // newIter is the greater hash. Push "remove" jobs from the old array until reaching the newIter hash.
                     while (oldI < oldHashCount && oldHashes[oldI] < newHashes[newI])
                     {
-                        removeIndicies[remCount++] = oldI;
+                        removeIndices[remCount++] = oldI;
                         ++numOperations;
                     }
                 }

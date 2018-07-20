@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
@@ -20,6 +21,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         internal void Tick(SceneStateHash sceneStateHash, IScriptableBakedReflectionSystemStageNotifier handle)
         {
+            DestroyUnusedCubemaps();
+
             // Explanation of the algorithm:
             // 1. First we create the hash of the world that can impact the reflection probes.
             // 2. Then for each probe, we calculate a hash that represent what this specific probe should have baked.
@@ -31,7 +34,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             //   b. Otherwise, we cancel the baking a restart a new one
             // 5. When baking is complete:
             //   a. Remove the unused baked data
-            //   b. Write asset files to disk
+            //   b. Get baked file from cache, apply proper import settings and link to the probe.
 
             // = Step 1 =
             // Allocate stack variables
@@ -130,9 +133,25 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     // = Step 5 =
                     if (bakingComplete)
                     {
-                        // TODO:
-                        //   a. Remove the unused baked data
-                        //   b. Write asset files to disk
+                        if (remCount > 0)
+                        {
+                            Utilities.RemoveSortedIndicesInArray(
+                                ref bakedProbeHashes.probeOnlyHashes,
+                                remCount, remIndices
+                            );
+                            Utilities.RemoveSortedIndicesInArray(
+                                ref bakedProbeHashes.probeOutputHashes,
+                                remCount, remIndices
+                            );
+                            Utilities.RemoveSortedIndicesInArray(
+                               ref bakedProbeHashes.IDs,
+                               remCount, remIndices
+                           );
+                            bakedProbeHashes.count = bakedProbeHashes.probeOutputHashes.Length;
+                        }
+
+                        //   b. Get baked file from cache, apply proper import settings and link to the probe.
+                        // TODO
                     }
 
                     return;
@@ -144,7 +163,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             handle.SetIsDone(true);
         }
 
-
+        void DestroyUnusedCubemaps()
+        {
+        }
 
         void ComputeBakedProbeOutputHashes(
             Hash128* allBakedProbeHash,
