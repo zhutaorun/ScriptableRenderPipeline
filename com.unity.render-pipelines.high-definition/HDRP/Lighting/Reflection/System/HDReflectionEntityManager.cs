@@ -137,5 +137,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             throw new NotImplementedException();
         }
+
+        public HDProbe GetProbeByID(HDReflectionEntityID probeId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

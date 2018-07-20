@@ -1,4 +1,3 @@
-using System;
 using UnityEngine.Rendering.PostProcessing;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
@@ -25,17 +24,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         internal struct BakedProperties
         {
-            public Hash128 bakedTextureHash;
+            public Hash128 bakedTextureHash { get; set; }
         }
 
         internal struct CustomProperties
         {
-            public Hash128 customTextureHash;
+            public Hash128 customTextureHash { get; set; }
         }
 
         internal struct RealtimeProperties
         {
-            public Hash128 realtimeHash;
+            public Hash128 realtimeHash { get; set; }
         }
 
         internal struct Assets

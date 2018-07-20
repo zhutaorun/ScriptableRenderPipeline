@@ -62,7 +62,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public void Tick(SceneStateHash sceneStateHash, IScriptableBakedReflectionSystemStageNotifier handle)
         {
-            var tick = new HDReflectionSystemTick();
+            var tick = new HDReflectionSystemTick
+            {
+                bakedProbeHashes = m_BakedProbeState,
+                // TODO: Set lighting settings here
+            };
             tick.Tick(sceneStateHash, handle);
         }
 

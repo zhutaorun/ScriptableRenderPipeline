@@ -15,6 +15,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 HashUtilities.AppendHash(ref hashes[i], ref *outHash);
         }
 
+        public static void CopyToIndirect(int count, int* indices, byte* src, byte* dest, int stride)
+        {
+            for (int i = 0; i < count; ++i)
+            {
+                var srcAddress = src + stride * indices[i];
+                var destAddress = dest + stride * i;
+                Unity.Collections.LowLevel.Unsafe.UnsafeUtility.MemCpy(destAddress, srcAddress, stride);
+            }
+        }
+
         public static int CompareHashes(
             int oldHashCount, Hash128* oldHashes,
             int newHashCount, Hash128* newHashes,
