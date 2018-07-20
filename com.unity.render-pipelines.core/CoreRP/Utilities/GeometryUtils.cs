@@ -157,13 +157,6 @@ namespace UnityEngine.Experimental.Rendering
 
         public static readonly Matrix4x4 FlipMatrixLHSRHS = Matrix4x4.Scale(new Vector3(1, 1, -1));
 
-        public static Vector4 Plane(Vector3 position, Vector3 normal)
-        {
-            var n = normal;
-            var d = -Vector3.Dot(n, position);
-            var plane = new Vector4(n.x, n.y, n.z, d);
-            return plane;
-        }
 
         public static Vector4 CameraSpacePlane(Matrix4x4 worldToCamera, Vector3 pos, Vector3 normal, float sideSign = 1, float clipPlaneOffset = 0)
         {
@@ -204,9 +197,14 @@ namespace UnityEngine.Experimental.Rendering
             return projection;
         }
 
-        public static Matrix4x4 CalculateReflectionMatrix(Vector3 position, Vector3 normal)
+        public static Vector4 ToVector4(this Plane plane)
         {
-            return CalculateReflectionMatrix(Plane(position, normal.normalized));
+            return new Vector4(plane.normal.x, plane.normal.y, plane.normal.z, plane.distance);
+        }
+
+        public static Matrix4x4 CalculateReflectionMatrix(Plane mirrorPlane)
+        {
+            return CalculateReflectionMatrix(mirrorPlane.ToVector4());
         }
 
         public static Matrix4x4 CalculateReflectionMatrix(Vector4 plane)
