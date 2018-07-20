@@ -3295,7 +3295,7 @@ void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
     IF_FEATURE_COAT( if (_DebugSpecularOcclusion.w == 1.0) { specularOcclusion = preLightData.hemiSpecularOcclusion[COAT_LOBE_IDX]; } )
     if (_DebugSpecularOcclusion.w == 2.0) { specularOcclusion = preLightData.hemiSpecularOcclusion[BASE_LOBEA_IDX]; }
     if (_DebugSpecularOcclusion.w == 3.0) { specularOcclusion = preLightData.hemiSpecularOcclusion[BASE_LOBEB_IDX]; }
-    if (_DebugSpecularOcclusion.w == 4.0) { specularOcclusion = float3(0.0,0.0,1.0) * preLightData.screenSpaceAmbientOcclusion; }
+    if (_DebugSpecularOcclusion.w == 4.0) { specularOcclusion = /* float3(0.0,0.0,1.0) */ preLightData.screenSpaceAmbientOcclusion; }
 #endif
 
     GetAmbientOcclusionFactor(diffuseOcclusion, specularOcclusion, directAmbientOcclusion /* not used for now in PostEvaluateBSDFDebugDisplay */ , aoFactor);

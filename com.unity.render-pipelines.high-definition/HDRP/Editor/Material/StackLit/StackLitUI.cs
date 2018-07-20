@@ -391,8 +391,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     new Property(this, "_DebugEnvLobeMask", "DebugEnvLobeMask", "xyz is Environments Lobe 0 1 2 Enable, w is Enable VLayering", false),
                     new Property(this, "_DebugLobeMask", "DebugLobeMask", "xyz is Analytical Lobe 0 1 2 Enable", false),
                     new Property(this, "_DebugAniso", "DebugAniso", "x is Hack Enable, y is factor", false),
-                    new Property(this, "_DebugSpecularOcclusion", "DebugSpecularOcclusion", "eg (2,2,1,0), .x = {0 = fromAO, 1 = conecone, 2 = SPTD} .y = bentao algo {0 = uniform, cos, bent cos}, .z = use hemisphere clipping", false),
-               }),
+                    new Property(this, "_DebugSpecularOcclusion", "DebugSpecularOcclusion", "eg (2,2,1,2), .x = {0 = fromAO, 1 = conecone, 2 = SPTD} .y = bentao algo {0 = uniform, cos, bent cos}, .z = use hemisphere clipping", false),
+                    // The last component of _DebugSpecularOcclusion controls debug visualization: -1 colors the object according to the SO algorithm used, 
+                    // and values from 1 to 4 controls what the lighting debug display mode will show when set to show "indirect specular occlusion":
+                    // Since there's not one value in our case, 0 will show the object all red to indicate to choose one, 1-4 corresponds to showing
+                    // 1 = coat SO, 2 = base lobe A SO, 3 = base lobe B SO, 4 = shows the result of sampling the SSAO texture (screenSpaceAmbientOcclusion).
+                }),
             });
         }
 
