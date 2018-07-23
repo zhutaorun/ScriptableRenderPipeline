@@ -16,12 +16,14 @@
 
 TEXTURE2D(_InputTexture);
 TEXTURE2D(_ChromaSpectralLut);
+TEXTURE3D(_LogLut3D);
 TEXTURE2D(_VignetteMask);
 
 RW_TEXTURE2D(float4, _OutputTexture);
 
 SAMPLER(sampler_LinearClamp);
 SAMPLER(sampler_ChromaSpectralLut);
+SAMPLER(sampler_LogLut3D);
 SAMPLER(sampler_VignetteMask);
 
 CBUFFER_START(cb0)
@@ -29,9 +31,10 @@ CBUFFER_START(cb0)
     float4 _ChromaParams;           // x: amount, y: max samples, zw: unused
     float4 _VignetteParams1;        // xy: center, z: mode, w: unused
     float4 _VignetteParams2;        // x: intensity, y: smoothness, z: roundness, w: rounded
-    float4 _VignetteColor;          // xyz: color, a: opacity
+    float4 _VignetteColor;          // xyz: color, w: opacity
     float4 _DistortionParams1;      // xy: center, zw: axis intensity
     float4 _DistortionParams2;      // x: theta, y: sigma, z: scale, w: intensity
+    float4 _LogLut3D_Params;        // x: 1 / lut_size, y: lut_size - 1, z: postexposure, w: unused
 CBUFFER_END
 
 float2 DistortUV(float2 uv)
@@ -55,12 +58,12 @@ float2 DistortUV(float2 uv)
         if (intensity > 0.0)
         {
             float wu = ru * theta;
-            ru = tan(wu) * (1.0 / (ru * sigma));
+            ru = tan(wu) * (rcp(ru * sigma));
             uv = uv + ruv * (ru - 1.0);
         }
         else
         {
-            ru = (1.0 / ru) * theta * atan(ru * sigma);
+            ru = rcp(ru) * theta * atan(ru * sigma);
             uv = uv + ruv * (ru - 1.0);
         }
     }
@@ -143,11 +146,14 @@ void MAIN(uint2 id : SV_DispatchThreadID)
         }
     }
 
-    _OutputTexture[id] = color;
-
-    // Can't happen unless something goes horribly wrong
-    if (VARIANT & UBERPOSTFEATUREFLAGS_NONE)
+    // Grading, tonemapping, ODT
+    // This is always on when post-processing is enabled as ODTs will be baked into the grading LUT
     {
-        _OutputTexture[id] = _InputTexture[id];
+        color *= _LogLut3D_Params.z;
+        float3 colorLutSpace = saturate(LinearToLogC(color.rgb));
+        color.rgb = ApplyLut3D(TEXTURE3D_PARAM(_LogLut3D, sampler_LogLut3D), colorLutSpace, _LogLut3D_Params.xy);
     }
+
+    // Done
+    _OutputTexture[id] = color;
 }

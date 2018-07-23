@@ -448,6 +448,12 @@ real Pow4(real x)
     return (x * x) * (x * x);
 }
 
+real Smootherstep(real a, real b, real x)
+{
+    float t = saturate((x - a) / (b - a));
+    return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
+}
+
 TEMPLATE_3_FLT(RangeRemap, min, max, t, return saturate((t - min) / (max - min)))
 
 // ----------------------------------------------------------------------------

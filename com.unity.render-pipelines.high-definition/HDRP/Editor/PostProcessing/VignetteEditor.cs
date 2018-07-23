@@ -4,7 +4,7 @@ using UnityEngine.Experimental.Rendering.HDPipeline;
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     [VolumeComponentEditor(typeof(Vignette))]
-    public sealed class VignetteEditor : VolumeComponentEditor
+    sealed class VignetteEditor : VolumeComponentEditor
     {
         SerializedDataParameter m_Mode;
         SerializedDataParameter m_Color;
@@ -20,7 +20,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public override void OnEnable()
         {
-            
             var o = new PropertyFetcher<Vignette>(serializedObject);
 
             m_Mode = Unpack(o.Find(x => x.mode));

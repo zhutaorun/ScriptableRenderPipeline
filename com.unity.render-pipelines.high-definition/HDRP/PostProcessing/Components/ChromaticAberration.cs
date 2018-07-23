@@ -3,7 +3,7 @@ using System;
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     [Serializable, VolumeComponentMenu("Post-processing/Chromatic Aberration")]
-    public sealed class ChromaticAberration : VolumeComponent
+    public sealed class ChromaticAberration : VolumeComponent, IPostProcessComponent
     {
         [Tooltip("Shifts the hue of chromatic aberrations.")]
         public TextureParameter spectralLut = new TextureParameter(null);

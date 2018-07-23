@@ -394,7 +394,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _ExposureCurveTexture           = Shader.PropertyToID("_ExposureCurveTexture");
         public static readonly int _Variants                       = Shader.PropertyToID("_Variants");
         public static readonly int _InputTexture                   = Shader.PropertyToID("_InputTexture");
-        public static readonly int _OuputTexture                   = Shader.PropertyToID("_OutputTexture");
+        public static readonly int _OutputTexture                  = Shader.PropertyToID("_OutputTexture");
 
         public static readonly int _TexelSize                      = Shader.PropertyToID("_TexelSize");
 
@@ -408,5 +408,31 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         
         public static readonly int _DistortionParams1              = Shader.PropertyToID("_DistortionParams1");
         public static readonly int _DistortionParams2              = Shader.PropertyToID("_DistortionParams2");
+        
+        public static readonly int _LogLut3D                       = Shader.PropertyToID("_LogLut3D");
+        public static readonly int _LogLut3D_Params                = Shader.PropertyToID("_LogLut3D_Params");
+        public static readonly int _ColorBalance                   = Shader.PropertyToID("_ColorBalance");
+        public static readonly int _ColorFilter                    = Shader.PropertyToID("_ColorFilter");
+        public static readonly int _ChannelMixerRed                = Shader.PropertyToID("_ChannelMixerRed");
+        public static readonly int _ChannelMixerGreen              = Shader.PropertyToID("_ChannelMixerGreen");
+        public static readonly int _ChannelMixerBlue               = Shader.PropertyToID("_ChannelMixerBlue");
+        public static readonly int _HueSatCon                      = Shader.PropertyToID("_HueSatCon");
+        public static readonly int _Lift                           = Shader.PropertyToID("_Lift");
+        public static readonly int _Gamma                          = Shader.PropertyToID("_Gamma");
+        public static readonly int _Gain                           = Shader.PropertyToID("_Gain");
+        public static readonly int _Shadows                        = Shader.PropertyToID("_Shadows");
+        public static readonly int _Midtones                       = Shader.PropertyToID("_Midtones");
+        public static readonly int _Highlights                     = Shader.PropertyToID("_Highlights");
+        public static readonly int _ShaHiLimits                    = Shader.PropertyToID("_ShaHiLimits");
+        public static readonly int _SplitShadows                   = Shader.PropertyToID("_SplitShadows");
+        public static readonly int _SplitHighlights                = Shader.PropertyToID("_SplitHighlights");
+
+        public static readonly int _CustomToneCurve                = Shader.PropertyToID("_CustomToneCurve");
+        public static readonly int _ToeSegmentA                    = Shader.PropertyToID("_ToeSegmentA");
+        public static readonly int _ToeSegmentB                    = Shader.PropertyToID("_ToeSegmentB");
+        public static readonly int _MidSegmentA                    = Shader.PropertyToID("_MidSegmentA");
+        public static readonly int _MidSegmentB                    = Shader.PropertyToID("_MidSegmentB");
+        public static readonly int _ShoSegmentA                    = Shader.PropertyToID("_ShoSegmentA");
+        public static readonly int _ShoSegmentB                    = Shader.PropertyToID("_ShoSegmentB");
     }
 }

@@ -64,6 +64,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         // Post-processing
         Exposure,
+        ColorGradingLUTBuilder,
         UberPost,
 
         Max

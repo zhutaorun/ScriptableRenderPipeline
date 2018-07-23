@@ -3,7 +3,7 @@ using System;
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     [Serializable]
-    public sealed class CameraControls : VolumeComponent
+    public sealed class CameraControls : VolumeComponent, IPostProcessComponent
     {
         // Camera & lens settings
         [Header("Camera & Lens")]
@@ -26,6 +26,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public AdaptationModeParameter adaptationMode = new AdaptationModeParameter(AdaptationMode.Progressive);
         public MinFloatParameter adaptationSpeedUp = new MinFloatParameter(3f, 0.001f);
         public MinFloatParameter adaptationSpeedDown = new MinFloatParameter(1f, 0.001f);
+
+        public bool IsActive()
+        {
+            return true;
+        }
     }
 
     public enum ShootingMode

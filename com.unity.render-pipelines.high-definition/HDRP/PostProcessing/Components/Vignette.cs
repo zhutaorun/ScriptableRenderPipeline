@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -9,7 +10,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     }
 
     [Serializable, VolumeComponentMenu("Post-processing/Vignette")]
-    public sealed class Vignette : VolumeComponent
+    public sealed class Vignette : VolumeComponent, IPostProcessComponent
     {
         [Tooltip("Use the \"Procedural\" mode for parametric controls. Use the \"Masked\" mode to use your own texture mask.")]
         public VignetteModeParameter mode = new VignetteModeParameter(VignetteMode.Procedural);

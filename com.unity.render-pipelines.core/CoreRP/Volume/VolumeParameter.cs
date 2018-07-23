@@ -677,6 +677,7 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     // Used as a container to store custom serialized classes/structs inside volume components
+    // TODO: ObjectParameter<T> doesn't seem to be working as expect, debug me
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
     public class ObjectParameter<T> : VolumeParameter<T>
     {
@@ -730,7 +731,10 @@ namespace UnityEngine.Experimental.Rendering
 
             for (int i = 0; i < paramFrom.Count; i++)
             {
-                if (paramOrigin[i].overrideState)
+                // Keep track of the override state for debugging purpose
+                paramOrigin[i].overrideState = paramTo[i].overrideState;
+
+                if (paramTo[i].overrideState)
                     paramOrigin[i].Interp(paramFrom[i], paramTo[i], t);
             }
         }

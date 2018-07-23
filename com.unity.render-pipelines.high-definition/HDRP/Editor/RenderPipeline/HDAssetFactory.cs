@@ -128,6 +128,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 // Post-processing
                 newAsset.exposureCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/Exposure.compute");
                 newAsset.uberPostCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/UberPost.compute");
+                newAsset.lutBuilder3DCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/LutBuilder3D.compute");
 
                 AssetDatabase.CreateAsset(newAsset, pathName);
                 ProjectWindowUtil.ShowCreatedAsset(newAsset);
