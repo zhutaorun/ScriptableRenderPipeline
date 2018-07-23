@@ -91,7 +91,7 @@ ${Defines}
     //-------------------------------------------------------------------------------------
 
     #include "HDRP/ShaderVariables.hlsl"
-    #include "HDRP/GraphFunctions.hlsl"
+    #include "HDRP/ShaderGraphFunctions.hlsl"
     #ifdef DEBUG_DISPLAY
         #include "HDRP/Debug/DebugDisplay.hlsl"
     #endif
