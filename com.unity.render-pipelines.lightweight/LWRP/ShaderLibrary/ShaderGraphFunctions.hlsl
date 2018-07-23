@@ -61,9 +61,9 @@ void shadergraph_LWAdditionalLight(float index, float3 positionWS, out float att
 float3 shadergraph_LWSampleBakedGI(float3 positionWS, float3 normalWS, float2 uvStaticLightmap, float2 uvDynamicLightmap)
 {
 #ifdef LIGHTMAP_ON
-    return SampleLightmap(uvStaticLightmap, normalWS)
+    return SampleLightmap(uvStaticLightmap, normalWS);
 #else
-    return SampleSH(normalWS)
+    return SampleSH(normalWS);
 #endif
 }
 

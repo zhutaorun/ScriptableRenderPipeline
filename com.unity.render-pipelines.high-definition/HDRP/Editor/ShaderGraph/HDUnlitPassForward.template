@@ -80,7 +80,7 @@ ${Defines}
     //-------------------------------------------------------------------------------------
 
     #include "HDRP/ShaderVariables.hlsl"
-    #include "HDRP/ShaderGraphFunctions.hlsl"
+    
     #ifdef DEBUG_DISPLAY
         #include "HDRP/Debug/DebugDisplay.hlsl"
     #endif
@@ -93,6 +93,7 @@ ${Defines}
         #include "HDRP/Material/Material.hlsl"
     #endif
     #include "HDRP/Material/MaterialUtilities.hlsl"
+    #include "HDRP/ShaderGraphFunctions.hlsl"
 
     // this function assumes the bitangent flip is encoded in tangentWS.w
     // TODO: move this function to HDRP shared file, once we merge with HDRP repo
