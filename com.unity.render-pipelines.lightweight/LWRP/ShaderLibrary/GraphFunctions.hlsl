@@ -5,6 +5,7 @@
 #define SHADERGRAPH_SAMPLE_SCENE_COLOR(uv) shadergraph_LWSampleSceneColor(uv);
 #define SHADERGRAPH_MAIN_LIGHT(attenuation, direction, color) shadergraph_LWMainLight(attenuation, direction, color);
 #define SHADERGRAPH_ADDITIONAL_LIGHT(index, positionWS, attenuation, direction, color) shadergraph_LWAdditionalLight(index, positionWS, attenuation, direction, color);
+#define SHADERGRAPH_BAKED_GI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap) shadergraph_LWSampleBakedGI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap)
 
 #if defined(REQUIRE_DEPTH_TEXTURE)
 #if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
@@ -55,6 +56,15 @@ void shadergraph_LWAdditionalLight(float index, float3 positionWS, out float att
     attenutation = light.attenuation;
     direction = light.direction;
     color = light.color;
+}
+
+float3 shadergraph_LWSampleBakedGI(float3 positionWS, float3 normalWS, float2 uvStaticLightmap, float2 uvDynamicLightmap)
+{
+#ifdef LIGHTMAP_ON
+    return SampleLightmap(uvStaticLightmap, normalWS)
+#else
+    return SampleSH(normalWS)
+#endif
 }
 
 // Always include Shader Graph version

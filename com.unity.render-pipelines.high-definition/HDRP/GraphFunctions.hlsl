@@ -2,6 +2,7 @@
 #define UNITY_GRAPHFUNCTIONS_HD_INCLUDED
 
 #define SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv) shadergraph_HDSampleSceneDepth(uv);
+#define SHADERGRAPH_BAKED_GI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap) shadergraph_HDSampleBakedGI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap)
 
 float shadergraph_HDSampleSceneDepth(float2 uv)
 {
@@ -10,6 +11,12 @@ float shadergraph_HDSampleSceneDepth(float2 uv)
 	return Linear01Depth(rawDepth, _ZBufferParams);
 #endif
     return 0;
+}
+
+float3 shadergraph_HDSampleBakedGI(float3 positionWS, float3 normalWS, float2 uvStaticLightmap, float2 uvDynamicLightmap)
+{
+    float3 positionRWS = GetCameraRelativePositionWS(positionWS);
+    return SampleBakedGI(positionRWS, normalWS, uvStaticLightmap, uvDynamicLightmap);
 }
 
 // Always include Shader Graph version
