@@ -48,8 +48,12 @@ struct Gradient
     #define SHADERGRAPH_ADDITIONAL_LIGHT(index, positionWS, attenuation, direction, color) shadergraph_AdditionalLight(index, positionWS, attenuation, direction, color);
 #endif
 
-#ifndef SHADERGRAPH_BAKED_GI
-    #define SHADERGRAPH_BAKED_GI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap) shadergraph_SampleBakedGI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap)
+#ifndef SHADERGRAPH_SAMPLE_BAKED_GI
+    #define SHADERGRAPH_SAMPLE_BAKED_GI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap) shadergraph_SampleBakedGI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap)
+#endif
+
+#ifndef SHADERGRAPH_SAMPLE_SHADOWMASK
+    #define SHADERGRAPH_SAMPLE_SHADOWMASK(positionWS, uvStaticLightmap) shadergraph_SampleShadowmask(positionWS, uvStaticLightmap)
 #endif
 
 float shadergraph_SampleSceneDepth(float2 uv)
@@ -79,6 +83,11 @@ void shadergraph_AdditionalLight(float index, float3 positionWS, out float atten
 float3 shadergraph_SampleBakedGI(float3 positionWS, float3 normalWS, float2 uvStaticLightmap, float2 uvDynamicLightmap)
 {
     return 0;
+}
+
+float4 shadergraph_SampleShadowmask(float3 positionWS, float2 uvStaticLightmap)
+{
+    return 1;
 }
 
 #endif // UNITY_GRAPHFUNCTIONS_INCLUDED
