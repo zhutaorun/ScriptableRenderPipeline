@@ -174,19 +174,19 @@ float3 Tonemap(float3 colorLinear)
 // Ultimately it would nice to expose `maxTotalThreadsPerThreadgroup` for Metal...
 // Source: https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf
 [numthreads(4,4,4)]
-void MAIN(uint3 id : SV_DispatchThreadID)
+void MAIN(uint3 dispatchThreadId : SV_DispatchThreadID)
 {
-    if (any(id > uint3(_Size.xxx)))
+    if (any(dispatchThreadId > uint3(_Size.xxx)))
         return;  // Out of bounds, discard
 
     // Lut space
     // We use Alexa LogC (El 1000) to store the LUT as it provides a good enough range (~58.85666)
     // and is good enough to be stored in fp16 without losing precision in the darks
-    float3 colorLutSpace = float3(id) * _Size.yyy;
+    float3 colorLutSpace = float3(dispatchThreadId) * _Size.yyy;
 
     // Color grade & tonemap
     float3 gradedColor = ColorGrade(colorLutSpace);
     gradedColor = Tonemap(gradedColor);
 
-    _OutputTexture[id] = float4(gradedColor, 1.0);
+    _OutputTexture[dispatchThreadId] = float4(gradedColor, 1.0);
 }

@@ -117,7 +117,8 @@ void KManualCameraExposure(uint2 dispatchThreadId : SV_DispatchThreadID)
 [numthreads(8,8,1)]
 void KPrePass(uint2 dispatchThreadId : SV_DispatchThreadID)
 {
-    float2 coords = float2(dispatchThreadId) / (1024.0).xx * _ScreenToTargetScale.xy;
+    PositionInputs posInputs = GetPositionInput(float2(dispatchThreadId), 1.0 / 1024.0, uint2(8u, 8u));
+    float2 uv = posInputs.positionNDC * _ScreenToTargetScale.xy;
     float luma;
 
     UNITY_BRANCH
@@ -127,7 +128,7 @@ void KPrePass(uint2 dispatchThreadId : SV_DispatchThreadID)
         {
             // Color buffer
             float prevExposure = ConvertEV100ToExposure(GetPreviousExposure());
-            float3 color = SAMPLE_TEXTURE2D_LOD(_InputTexture, sampler_LinearClamp, coords, 0.0).xyz;
+            float3 color = SAMPLE_TEXTURE2D_LOD(_InputTexture, sampler_LinearClamp, uv, 0.0).xyz;
             luma = Luminance(color / prevExposure);
             break;
         }
@@ -141,7 +142,7 @@ void KPrePass(uint2 dispatchThreadId : SV_DispatchThreadID)
 
     float weight = WeightSample(dispatchThreadId);
     float logLuma = ComputeEV100FromAvgLuminance(max(luma, 1e-4));
-    _OutputTexture[dispatchThreadId] = float2(logLuma, weight);
+    _OutputTexture[posInputs.positionSS] = float2(logLuma, weight);
 }
 
 //

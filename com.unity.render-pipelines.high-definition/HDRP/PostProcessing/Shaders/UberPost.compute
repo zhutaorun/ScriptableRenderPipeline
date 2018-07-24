@@ -72,12 +72,13 @@ float2 DistortUV(float2 uv)
 }
 
 [numthreads(8,8,1)]
-void MAIN(uint2 id : SV_DispatchThreadID)
+void MAIN(uint2 dispatchThreadId : SV_DispatchThreadID)
 {
-    if (any(id > uint2(_TexelSize.xy)))
+    if (any(dispatchThreadId > uint2(_TexelSize.xy)))
         return; // Out of bounds, discard
 
-    float2 uv = (float2(id) + 0.5) * _TexelSize.zw; // Half-pixel offset when sampling in compute
+    PositionInputs posInputs = GetPositionInput(float2(dispatchThreadId), _TexelSize.zw, uint2(8u, 8u));
+    float2 uv = posInputs.positionNDC;
     float2 uvDistorted = DistortUV(uv);
     float4 color = 0.0;
 
@@ -155,5 +156,5 @@ void MAIN(uint2 id : SV_DispatchThreadID)
     }
 
     // Done
-    _OutputTexture[id] = color;
+    _OutputTexture[posInputs.positionSS] = color;
 }
