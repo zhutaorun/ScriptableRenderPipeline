@@ -359,7 +359,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Internal
             backgroundColor = viewerCamera.backgroundColor;
 
             var worldToCapture = GeometryUtils.CalculateWorldToCameraMatrixRHS(viewerCamera.transform);
-            var reflectionMatrix = GeometryUtils.CalculateReflectionMatrix(probe.captureMirrorPlanePosition, probe.captureMirrorPlaneNormal);
+            var reflectionMatrix = GeometryUtils.CalculateReflectionMatrix(new Plane(probe.captureMirrorPlaneNormal, probe.captureMirrorPlanePosition));
             worldToCamera = worldToCapture * reflectionMatrix;
 
             var clipPlane = GeometryUtils.CameraSpacePlane(worldToCamera, probe.captureMirrorPlanePosition, probe.captureMirrorPlaneNormal);

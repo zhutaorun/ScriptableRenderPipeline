@@ -154,7 +154,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                             bakedProbeHashes.count = bakedProbeHashes.probeOutputHashes.Length;
                         }
 
-                        //   b. Get baked file from cache, apply proper import settings and link to the probe.
+                        //   b. Get baked file from cache, apply proper import settings and link to the probe and lighting asset.
                         // TODO
                     }
 
