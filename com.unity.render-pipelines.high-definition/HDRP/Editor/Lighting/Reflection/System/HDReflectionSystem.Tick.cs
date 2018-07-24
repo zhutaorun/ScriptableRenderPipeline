@@ -80,6 +80,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var remIndices = stackalloc int[maxProbeCount];
             fixed (Hash128* oldHashes = bakedProbeHashes.probeOutputHashes)
             {
+                // Sort the hashes to have a consistent comparison
+                Utilities.QuickSort<Hash128>(bakedProbeHashes.count, oldHashes);
+                Utilities.QuickSort<Hash128>(bakedProbeCount, bakedProbeOutputHashes);
                 int addCount = 0, remCount = 0;
                 // The actual comparison happens here
                 // addIndicies will hold indices of probes to bake
@@ -121,7 +124,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                             tickedRenderer.Start(
                                 allProbeOutputHash,
                                 settings,
-                                addCount, toBakeIDs
+                                addCount,
+                                toBakeIDs, bakedProbeOutputHashes
                             );
                         }
                     }

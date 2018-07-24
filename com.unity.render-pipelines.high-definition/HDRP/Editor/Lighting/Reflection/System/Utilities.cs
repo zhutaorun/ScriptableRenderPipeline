@@ -1,4 +1,5 @@
 using System;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
@@ -15,6 +16,79 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             for (int i = 0; i < count; ++i)
                 HashUtilities.AppendHash(ref hashes[i], ref *outHash);
+        }
+
+        struct QuickSortStackEntry
+        {
+            public int lowIndex;
+            public int highIndex;
+        }
+
+        public static void QuickSort<T>(int count, void* data)
+            where T : struct, IComparable<T>
+        {
+            var stride = UnsafeUtility.SizeOf<T>();
+
+            var stack = stackalloc QuickSortStackEntry[count + 1];
+            var stackIndex = -1;
+
+            // Push first array on the stack
+            {
+                var s = (stack + ++stackIndex);
+                s->lowIndex = 0;
+                s->highIndex = count;
+            }
+
+            while (stackIndex >= 0)
+            {
+                var s = (stack + stackIndex--);
+
+                if (s->lowIndex >= s->highIndex)
+                    continue;
+
+                // Partition
+                var partitionIndex = 0;
+                {
+                    var pivot = UnsafeUtility.ReadArrayElement<T>(data, s->highIndex);
+                    var lowerElementIndex = s->lowIndex - 1;
+                    for (int j = s->lowIndex; j < s->highIndex - 1; ++j)
+                    {
+                        var v = UnsafeUtility.ReadArrayElement<T>(data, j);
+                        if (v.CompareTo(pivot) < 0)
+                        {
+                            ++lowerElementIndex;
+                            // Swap data[lowerElementIndex] and data[j]
+                            // v is a copy of data[j]
+                            UnsafeUtility.MemCpy(
+                                (byte*)data + j * stride,
+                                (byte*)data + lowerElementIndex * stride,
+                                stride
+                            );
+                            UnsafeUtility.WriteArrayElement(data, lowerElementIndex, v);
+                        }
+                    }
+
+                    // Swap data[lowerElementIndex + 1] and data[s->highIndex]
+                    // pivot is a copy of data[s->highIndex]
+                    UnsafeUtility.MemCpy(
+                        (byte*)data + s->highIndex * stride,
+                        (byte*)data + (lowerElementIndex + 1) * stride,
+                        stride
+                    );
+                    UnsafeUtility.WriteArrayElement(data, lowerElementIndex + 1, pivot);
+                    partitionIndex = lowerElementIndex + 1;
+                }
+
+                // Call to sort lower subarray
+                var ns = (stack + ++stackIndex);
+                ns->lowIndex = s->lowIndex;
+                ns->highIndex = partitionIndex - 1;
+
+                // Call to sort upper subarray
+                ns = (stack + ++stackIndex);
+                ns->lowIndex = partitionIndex + 1;
+                ns->highIndex = s->highIndex;
+            }
         }
 
         /// <summary>
@@ -64,6 +138,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         /// Compare hashes of two collections and provide
         /// a list of indices <paramref name="removeIndices"/> to remove in <paramref name="oldHashes"/>
         /// and a list of indices <paramref name="addIndices"/> to add in <paramref name="newHashes"/>.
+        ///
+        /// Assumes that <paramref name="newHashes"/> and <paramref name="oldHashes"/> are sorted.
         /// </summary>
         /// <param name="oldHashCount"></param>
         /// <param name="oldHashes"></param>
