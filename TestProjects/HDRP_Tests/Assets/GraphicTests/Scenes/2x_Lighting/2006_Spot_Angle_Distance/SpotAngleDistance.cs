@@ -9,6 +9,7 @@ public class SpotAngleDistance : MonoBehaviour
 	public float targetRadius = 1f;
 	public float referenceIntensity = 600f;
 	public float referenceDistance = 1.5f;
+	public float additionalRange = 10f;
 
 	public enum Mode {Distance, Angle}
 	public Mode mode = Mode.Distance;
@@ -36,10 +37,12 @@ public class SpotAngleDistance : MonoBehaviour
 			distance = targetRadius / t;
 		}
 
+		float sphereRadius = targetRadius / Mathf.Sin( Mathf.Deg2Rad * angle * 0.5f );
+
 		light.spotAngle = angle;
-		light.range = distance + 10f;
+		light.range = distance + additionalRange;
 		transform.localPosition = -distance * Vector3.forward;
 
-		hdLightData.intensity = referenceIntensity * Mathf.Pow( distance / referenceDistance , 2f );
+		hdLightData.intensity = referenceIntensity * Mathf.Pow( sphereRadius / referenceDistance , 2f );
 	}
 }
