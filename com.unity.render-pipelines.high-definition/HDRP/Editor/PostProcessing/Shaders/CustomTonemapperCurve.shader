@@ -71,7 +71,8 @@ Shader "Hidden/HD PostProcessing/Editor/Custom Tonemapper Curve"
                 _ShoSegmentB.xy
             );
 
-            float curve = smoothstep(y - 0.015, y, i.uv.y) - smoothstep(y, y + 0.015, i.uv.y);
+            float aa = fwidth(i.uv.y - y);
+            float curve = smoothstep(y - aa, y, i.uv.y) - smoothstep(y, y + aa, i.uv.y);
             float3 color = lerp(background, curveColor, curve * _Variants.xxx);
 
             return float4(color, 1.0);

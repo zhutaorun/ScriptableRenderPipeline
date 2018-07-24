@@ -15,21 +15,21 @@ Shader "Hidden/HD PostProcessing/Editor/Shadows Midtones Highlights Curve"
 
         float4 DrawCurve(v2f_img i, float3 background, float3 shadowsCurveColor, float3 midtonesCurveColor, float3 highlightsCurveColor)
         {
-            const float kSmoothing = 0.02;
             float x = i.uv.x * _Variants.y;
             float y = i.uv.y;
+            float aa = fwidth(i.uv.y) * 2.0;
 
             float shadowsY = 1.0 - smoothstep(_ShaHiLimits.x, _ShaHiLimits.y, x);
-            float shadowsCurve = smoothstep(shadowsY + kSmoothing, shadowsY, y);
-            float shadowsLine = smoothstep(shadowsY - kSmoothing, shadowsY, y) - smoothstep(shadowsY, shadowsY + kSmoothing, y);
+            float shadowsCurve = smoothstep(shadowsY + aa, shadowsY, y);
+            float shadowsLine = smoothstep(shadowsY - aa, shadowsY, y) - smoothstep(shadowsY, shadowsY + aa, y);
 
             float highlightsY = smoothstep(_ShaHiLimits.z, _ShaHiLimits.w, x);
-            float highlightsCurve = smoothstep(highlightsY + kSmoothing, highlightsY, y);
-            float highlightsLine = smoothstep(highlightsY - kSmoothing, highlightsY, y) - smoothstep(highlightsY, highlightsY + kSmoothing, y);
+            float highlightsCurve = smoothstep(highlightsY + aa, highlightsY, y);
+            float highlightsLine = smoothstep(highlightsY - aa, highlightsY, y) - smoothstep(highlightsY, highlightsY + aa, y);
 
             float midtonesY = 1.0 - shadowsY - highlightsY;
-            float midtonesCurve = smoothstep(midtonesY + kSmoothing, midtonesY, y);
-            float midtonesLine = smoothstep(midtonesY - kSmoothing, midtonesY, y) - smoothstep(midtonesY, midtonesY + kSmoothing, y);
+            float midtonesCurve = smoothstep(midtonesY + aa, midtonesY, y);
+            float midtonesLine = smoothstep(midtonesY - aa, midtonesY, y) - smoothstep(midtonesY, midtonesY + aa, y);
 
             float grad = lerp(0.7, 1.0, y);
             float3 shadowsColor = shadowsCurveColor * shadowsCurve * grad;

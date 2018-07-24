@@ -4,6 +4,7 @@ using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
+    // TODO: handle retina / EditorGUIUtility.pixelsPerPoint
     [VolumeComponentEditor(typeof(ShadowsMidtonesHighlights))]
     sealed class ShadowsMidtonesHighlightsEditor : VolumeComponentEditor
     {
@@ -58,7 +59,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             if (Event.current.type == EventType.Repaint)
             {
-                
                 float alpha = GUI.enabled ? 1f : 0.4f;
                 var limits = new Vector4(m_ShadowsStart.value.floatValue, m_ShadowsEnd.value.floatValue, m_HighlightsStart.value.floatValue, m_HighlightsEnd.value.floatValue);
 

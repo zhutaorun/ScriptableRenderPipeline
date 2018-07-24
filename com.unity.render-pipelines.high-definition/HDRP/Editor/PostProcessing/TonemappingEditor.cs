@@ -4,6 +4,7 @@ using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
+    // TODO: handle retina / EditorGUIUtility.pixelsPerPoint
     [VolumeComponentEditor(typeof(Tonemapping))]
     sealed class TonemappingEditor : VolumeComponentEditor
     {
