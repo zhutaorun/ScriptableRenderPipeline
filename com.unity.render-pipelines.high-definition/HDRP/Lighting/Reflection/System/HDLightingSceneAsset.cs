@@ -1,8 +1,14 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
+    /// <summary>
+    /// Reference all generated assets for probes.
+    ///
+    /// It is intended to be a storage only for the editor.
+    /// </summary>
     class HDLightingSceneAsset : MonoBehaviour, ISerializationCallbackReceiver
     {
         [Serializable]
@@ -10,6 +16,28 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             public GameObject gameObject;
             public Texture bakedTexture;
+        }
+
+        public static HDLightingSceneAsset GetOrCreateForScene(Scene scene)
+        {
+            var list = new List<GameObject>(scene.rootCount);
+            scene.GetRootGameObjects(list);
+
+            HDLightingSceneAsset asset = null;
+            for (int i = 0, c = list.Count; i < c && asset == null; ++i)
+                asset = list[i].GetComponent<HDLightingSceneAsset>();
+
+            if (asset == null)
+            {
+                var go = new GameObject("HDLightSceneAsset")
+                {
+                    hideFlags = HideFlags.DontSaveInBuild
+                };
+                SceneManager.MoveGameObjectToScene(go, scene);
+                asset = go.AddComponent<HDLightingSceneAsset>();
+            }
+
+            return asset;
         }
 
         Dictionary<GameObject, Data> m_DataDictionary = new Dictionary<GameObject, Data>();

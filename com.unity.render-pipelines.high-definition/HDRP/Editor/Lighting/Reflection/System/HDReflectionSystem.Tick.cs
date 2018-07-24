@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering.HDPipeline;
@@ -18,6 +19,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public BakedProbeHashes bakedProbeHashes;
         public HDProbeTickedRenderer tickedRenderer;
         public HDReflectionEntityManager2 entityManager;
+        public HDProbeTextureImporter textureImporter;
 
         internal void Tick(SceneStateHash sceneStateHash, IScriptableBakedReflectionSystemStageNotifier handle)
         {
@@ -154,8 +156,41 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                             bakedProbeHashes.count = bakedProbeHashes.probeOutputHashes.Length;
                         }
 
-                        //   b. Get baked file from cache, apply proper import settings and link to the probe and lighting asset.
-                        // TODO
+                        for (int i = 0; i < addCount; ++i)
+                        {
+                            var index = addIndices[i];
+                            var probeId = bakedProbeIDs[index];
+                            var probe = entityManager.GetProbeByID(probeId);
+                            var probeScene = probe.gameObject.scene;
+                            var bakedOutputHash = bakedProbeOutputHashes[index];
+                            var probeOnlyHash = bakedProbeOnlyHashes[index];
+                            var bakedTexturePathInCache = HDBakeUtilities.GetCacheBakePath(
+                                probeScene.path,
+                                bakedOutputHash,
+                                HDBakeUtilities.BakedTextureExtension
+                            );
+
+                            if (!File.Exists(bakedTexturePathInCache))
+                                continue;
+
+                            var lightingAsset = HDLightingSceneAsset.GetOrCreateForScene(probeScene);
+                            Texture bakedTexture;
+                            if (lightingAsset.TryGetBakedTextureFor(probe, out bakedTexture))
+                            {
+                                var path = AssetDatabase.GetAssetPath(bakedTexture);
+                                AssetDatabase.DeleteAsset(path);
+                            }
+
+                            var bakedPath = textureImporter.GetBakedPathFor(probe);
+                            bakedTexture = textureImporter.ImportTextureFromFile(bakedTexturePathInCache);
+
+                            lightingAsset.SetBakedTextureFor(probe, bakedTexture);
+                            probe.bakedTexture = bakedTexture;
+
+                            EditorUtility.SetDirty(lightingAsset);
+
+                            bakedProbeHashes.Add(probeId, probeOnlyHash, bakedOutputHash);
+                        }
                     }
 
                     return;
