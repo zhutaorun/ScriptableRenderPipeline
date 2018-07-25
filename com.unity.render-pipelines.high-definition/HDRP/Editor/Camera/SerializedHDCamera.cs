@@ -32,6 +32,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public SerializedProperty targetDisplay;
 #endif
 
+        public SerializedProperty antialiasing;
         public SerializedProperty clearColorMode;
         public SerializedProperty backgroundColorHDR;
         public SerializedProperty renderingPath;
@@ -78,6 +79,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             shutterSpeed = serializedAdditionalDataObject.Find((HDAdditionalCameraData d) => d.shutterSpeed);
             iso = serializedAdditionalDataObject.Find((HDAdditionalCameraData d) => d.iso);
 
+            antialiasing = serializedAdditionalDataObject.Find((HDAdditionalCameraData d) => d.antialiasing);
             clearColorMode = serializedAdditionalDataObject.Find((HDAdditionalCameraData d) => d.clearColorMode);
             backgroundColorHDR = serializedAdditionalDataObject.Find((HDAdditionalCameraData d) => d.backgroundColorHDR);
             renderingPath = serializedAdditionalDataObject.Find((HDAdditionalCameraData d) => d.renderingPath);

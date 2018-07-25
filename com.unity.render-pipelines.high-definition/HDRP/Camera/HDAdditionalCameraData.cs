@@ -40,6 +40,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             None
         };
 
+        public enum AntialiasingMode
+        {
+            None,
+            FastApproximateAntialiasing,
+            TemporalAntialiasing
+        }
+
         public ClearColorMode clearColorMode = ClearColorMode.Sky;
         [ColorUsage(true, true)]
         public Color backgroundColorHDR = new Color(0.025f, 0.07f, 0.19f, 0.0f);
@@ -49,7 +56,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [Tooltip("Layer Mask used for the volume interpolation for this camera.")]
         public LayerMask volumeLayerMask = -1;
 
+        public AntialiasingMode antialiasing = AntialiasingMode.None;
+
         // Physical parameters
+        // TODO: Remove these once hd/postfx is in
         public float aperture = 8f;
         public float shutterSpeed = 1f / 200f;
         public float iso = 400f;

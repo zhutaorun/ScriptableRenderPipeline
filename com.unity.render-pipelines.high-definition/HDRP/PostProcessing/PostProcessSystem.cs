@@ -5,6 +5,7 @@ using UnityEngine.Rendering;
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     using RTHandle = RTHandleSystem.RTHandle;
+    using AntialiasingMode = HDAdditionalCameraData.AntialiasingMode;
 
     // Main class for all post-processing related features - only includes camera effects, no
     // lighting/surface effect like SSR/AO
@@ -30,9 +31,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         readonly HableCurve m_HableCurve;
 
         // Misc (re-usable)
-        RTHandle m_TempFullSize;
-        RTHandle m_TempTexture1024;
-        RTHandle m_TempTexture32;
+        RTHandle[] m_TempFullSizePingPong = new RTHandle[2];
+        int m_CurrentPingPong;
+
+        RTHandle m_TempTexture1024;   // RGHalf
+        RTHandle m_TempTexture32;     // RGHalf
 
         // Uber feature map to workaround the lack of multi_compile in compute shaders
         readonly Dictionary<int, string> m_UberPostFeatureMap = new Dictionary<int, string>();
@@ -81,36 +84,52 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Graphics.Blit(tempTex, m_EmptyExposureTexture);
             CoreUtils.Destroy(tempTex);
 
-            // TODO: Remove me
-            m_TempFullSize = RTHandles.Alloc(Vector2.one,
-                depthBufferBits: DepthBits.None,
-                filterMode: FilterMode.Bilinear,
-                colorFormat: RenderTextureFormat.RGB111110Float
+            // Ping pong targets
+            for (int i = 0; i < 2; i++)
+            {
+                m_TempFullSizePingPong[i] = RTHandles.Alloc(
+                    Vector2.one, depthBufferBits: DepthBits.None,
+                    filterMode: FilterMode.Bilinear, colorFormat: RenderTextureFormat.RGB111110Float,
+                    enableRandomWrite: true, name: "PingPong Target " + i
+                );
+            }
+
+            // Misc targets
+            m_TempTexture1024 = RTHandles.Alloc(
+                1024, 1024, colorFormat: RenderTextureFormat.RGHalf, sRGB: false,
+                enableRandomWrite: true, name: "Average Luminance Temp 1024"
+            );
+
+            m_TempTexture32 = RTHandles.Alloc(
+                32, 32, colorFormat: RenderTextureFormat.RGHalf, sRGB: false,
+                enableRandomWrite: true, name: "Average Luminance Temp 32"
             );
         }
 
         public void Cleanup()
         {
             RTHandles.Release(m_EmptyExposureTexture);
-            m_EmptyExposureTexture = null;
-
+            RTHandles.Release(m_TempFullSizePingPong[0]);
+            RTHandles.Release(m_TempFullSizePingPong[1]);
             RTHandles.Release(m_TempTexture1024);
-            m_TempTexture1024 = null;
-
             RTHandles.Release(m_TempTexture32);
-            m_TempTexture32 = null;
-
             CoreUtils.Destroy(m_ExposureCurveTexture);
-            m_ExposureCurveTexture = null;
-
             CoreUtils.Destroy(m_InternalSpectralLut);
-            m_InternalSpectralLut = null;
-
             RTHandles.Release(m_InternalLogLut);
-            m_InternalLogLut = null;
 
-            RTHandles.Release(m_TempFullSize);
-            m_TempFullSize = null;
+            m_EmptyExposureTexture = null;
+            m_TempFullSizePingPong[0] = null;
+            m_TempFullSizePingPong[1] = null;
+            m_TempTexture1024 = null;
+            m_TempTexture32 = null;
+            m_ExposureCurveTexture = null;
+            m_InternalSpectralLut = null;
+            m_InternalLogLut = null;
+        }
+
+        public void ResetHistory()
+        {
+            m_FirstFrame = true;
         }
 
         public void BeginFrame(CommandBuffer cmd, HDCamera camera)
@@ -130,6 +149,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             using (new ProfilingSample(cmd, "Post-processing", CustomSamplerId.PostProcessing.GetSampler()))
             {
+                bool needFinalPass = NeedFinalPass(camera);
+
+                // TODO: Do we want user effects before post?
+
                 // Start with exposure - will be applied in the next frame
                 if (!IsExposureFixed())
                 {
@@ -139,14 +162,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     }
                 }
 
-                // Combined post-processing stack
-                // Feature flags are passed to all effects and it's their reponsability to check if
-                // they are used or not so they can set default values if needed
-                var cs = m_Resources.uberPostCS;
-                var featureFlags = GetUberFeatureFlags();
+                // TODO: Depth of field goes here
+                // TODO: Motion blur goes here
 
+                // Combined post-processing stack - always runs if postfx is enabled
                 using (new ProfilingSample(cmd, "Uber", CustomSamplerId.UberPost.GetSampler()))
                 {
+                    // Feature flags are passed to all effects and it's their reponsability to check if
+                    // they are used or not so they can set default values if needed
+                    var cs = m_Resources.uberPostCS;
+                    var featureFlags = GetUberFeatureFlags();
+
                     int kernel = GetUberKernel(cs, featureFlags);
 
                     DoLensDistortion(cmd, cs, kernel, featureFlags);
@@ -155,19 +181,45 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     
                     using (new ProfilingSample(cmd, "Color Grading LUT Builder", CustomSamplerId.ColorGradingLUTBuilder.GetSampler()))
                     {
-                        DoColorGrading(cmd, cs, kernel, featureFlags);
+                        DoColorGrading(cmd, cs, kernel);
                     }
-                    
-                    // TODO: Review this and remove the temporary target & blit once the whole stack is done
-                    cmd.Blit(colorBuffer, m_TempFullSize);
+
                     cmd.SetComputeVectorParam(cs, HDShaderIDs._TexelSize, new Vector4(camera.actualWidth, camera.actualHeight, 1f / camera.actualWidth, 1f / camera.actualHeight));
-                    cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, m_TempFullSize);
-                    cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, colorBuffer);
+                    cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, colorBuffer);
+                    cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, PingPongTarget());
                     cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 9) / 8, (camera.actualHeight + 9) / 8, 1);
+                }
+
+                // TODO: User effects go here
+
+                if (needFinalPass)
+                {
+                    // Final pass for screen-space anti-aliasing
+                    using (new ProfilingSample(cmd, "Final Pass", CustomSamplerId.FinalPost.GetSampler()))
+                    {
+                        DoFinalPass(cmd, camera, GetLastPingPongTarget(), colorBuffer);
+                    }
+                }
+                else
+                {
+                    // Can skip this if Uber is the latest effect in the chain (no final pass and
+                    // no user effect)
+                    cmd.Blit(GetLastPingPongTarget(), colorBuffer);
                 }
             }
 
             m_FirstFrame = false;
+        }
+
+        RTHandle PingPongTarget()
+        {
+            m_CurrentPingPong = (m_CurrentPingPong + 1) % 2;
+            return m_TempFullSizePingPong[m_CurrentPingPong];
+        }
+
+        RTHandle GetLastPingPongTarget()
+        {
+            return m_TempFullSizePingPong[m_CurrentPingPong];
         }
 
         void PushUberFeature(UberPostFeatureFlags flags)
@@ -201,6 +253,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 flags |= UberPostFeatureFlags.LensDistortion;
 
             return flags;
+        }
+
+        bool NeedFinalPass(HDCamera camera)
+        {
+            return camera.antialiasing == AntialiasingMode.FastApproximateAntialiasing;
         }
 
         #region Exposure
@@ -268,25 +325,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             previous = camera.GetPreviousFrameRT((int)HDCameraFrameHistoryType.Exposure);
         }
 
-        void CheckAverageLuminanceTargets()
-        {
-            if (m_TempTexture1024 != null)
-                return;
-            
-            // R: Exposure in EV100
-            // G: Weight (used for metering modes when downscaling)
-            const RenderTextureFormat kFormat = RenderTextureFormat.RGHalf;
-
-            m_TempTexture1024 = RTHandles.Alloc(
-                1024, 1024, colorFormat: kFormat, sRGB: false,
-                enableRandomWrite: true, name: "Average Luminance Temp 1024"
-            );
-            m_TempTexture32 = RTHandles.Alloc(
-                32, 32, colorFormat: kFormat, sRGB: false,
-                enableRandomWrite: true, name: "Average Luminance Temp 32"
-            );
-        }
-
         void PrepareExposureCurveData(AnimationCurve curve, out float min, out float max)
         {
             if (m_ExposureCurveTexture == null)
@@ -332,8 +370,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RTHandle prevExposure, nextExposure;
             GrabExposureHistoryTextures(camera, out prevExposure, out nextExposure);
 
-            CheckAverageLuminanceTargets();
-
             // Setup variants
             var adaptationMode = settings.adaptationMode.value;
 
@@ -346,6 +382,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_ExposureVariants[3] = 0;
 
             // Pre-pass
+            // TODO: Handle light buffer as a source for average luminance
             var sourceTex = settings.luminanceSource == LuminanceSource.LightingBuffer
                 ? lightingBuffer
                 : colorBuffer;
@@ -487,7 +524,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         #region Color Grading
 
-        void DoColorGrading(CommandBuffer cmd, ComputeShader cs, int kernel, UberPostFeatureFlags flags)
+        void DoColorGrading(CommandBuffer cmd, ComputeShader cs, int kernel)
         {
             // TODO: User lut support
             var lut = VolumeManager.instance.stack.GetComponent<ColorLookup>();
@@ -686,6 +723,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Balance is stored in `shadows.w`
             shadows.w = settings.balance.value / 100f;
             highlights.w = 0f;
+        }
+
+        #endregion
+
+        #region Final Pass
+
+        void DoFinalPass(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination)
+        {
+            if (camera.antialiasing == AntialiasingMode.FastApproximateAntialiasing)
+            {
+                var cs = m_Resources.fxaaCS;
+                int kernel = cs.FindKernel("KFXAA");
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._TexelSize, new Vector4(camera.actualWidth, camera.actualHeight, 1f / camera.actualWidth, 1f / camera.actualHeight));
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, destination);
+                cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 9) / 8, (camera.actualHeight + 9) / 8, 1);
+            }
         }
 
         #endregion

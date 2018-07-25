@@ -4,7 +4,8 @@
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
@@ -61,8 +62,7 @@ MonoBehaviour:
   blitCubeTextureFace: {fileID: 4800000, guid: d850d0a2481878d4bbf17e5126b04163, type: 3}
   shadowClearShader: {fileID: 4800000, guid: e3cab24f27741f44d8af1e94d006267c, type: 3}
   shadowBlurMoments: {fileID: 7200000, guid: fb36979473602464fa32deacb9630c08, type: 3}
-  debugShadowMapShader: {fileID: 4800000, guid: ee25e539f5594f44085e0a9000c15d9b,
-    type: 3}
+  debugShadowMapShader: {fileID: 4800000, guid: ee25e539f5594f44085e0a9000c15d9b, type: 3}
   aoDownsample1: {fileID: 7200000, guid: f2242c3977ff794419fa0a2a3a08a1d5, type: 3}
   aoDownsample2: {fileID: 7200000, guid: 6a156e43d9869584ea70507ef5bb054a, type: 3}
   aoRender: {fileID: 7200000, guid: bdc1a70dcf8706247be8c321b8f9cdac, type: 3}
@@ -70,3 +70,4 @@ MonoBehaviour:
   exposureCS: {fileID: 7200000, guid: 976d7bce54fae534fb9ec67e9c18570c, type: 3}
   uberPostCS: {fileID: 7200000, guid: f1bf52f7c71bffd4f91e6cd90d12a4f7, type: 3}
   lutBuilder3DCS: {fileID: 7200000, guid: 37f2b1b0ecd6f1c439e4c1b4f2fdb524, type: 3}
+  fxaaCS: {fileID: 7200000, guid: b63d19684179eec45aa0c246226a3b67, type: 3}

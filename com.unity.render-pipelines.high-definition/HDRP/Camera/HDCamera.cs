@@ -151,6 +151,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
+        public HDAdditionalCameraData.AntialiasingMode antialiasing
+        {
+            get
+            {
+                if (m_AdditionalCameraData != null)
+                    return m_AdditionalCameraData.antialiasing;
+
+                return HDAdditionalCameraData.AntialiasingMode.None;
+            }
+        }
+
         static Dictionary<Camera, HDCamera> s_Cameras = new Dictionary<Camera, HDCamera>();
         static List<Camera> s_Cleanup = new List<Camera>(); // Recycled to reduce GC pressure
 
