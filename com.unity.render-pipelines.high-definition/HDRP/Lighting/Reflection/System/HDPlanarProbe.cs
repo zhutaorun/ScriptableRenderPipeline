@@ -2,7 +2,7 @@ using System;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
-    class HDPlanarProbe : HDProbe
+    class HDPlanarProbe : HDProbe2
     {
         public enum CapturePositionMode
         {

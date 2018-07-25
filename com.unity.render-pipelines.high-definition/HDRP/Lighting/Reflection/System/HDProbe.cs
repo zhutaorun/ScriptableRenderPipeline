@@ -2,7 +2,7 @@ using UnityEngine.Rendering.PostProcessing;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
-    abstract class HDProbe : MonoBehaviour
+    abstract class HDProbe2 : MonoBehaviour
     {
         public enum WorkflowType
         {
@@ -52,6 +52,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public BakedProperties bakedProperties;
         public CustomProperties customProperties;
         public RealtimeProperties realtimeProperties;
+
+        public Texture bakedTexture { get { return assets.bakedTexture; } set { assets.bakedTexture = value; } }
 
         public abstract Hash128 ComputeBakePropertyHashes();
     }

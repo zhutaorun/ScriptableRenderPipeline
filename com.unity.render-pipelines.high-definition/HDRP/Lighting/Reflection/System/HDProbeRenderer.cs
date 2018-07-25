@@ -50,7 +50,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         ReflectionProbeRenderer m_ReflectionProbeRenderer = new ReflectionProbeRenderer();
 
-        public bool Render(HDProbe probe, Texture target)
+        public bool Render(HDProbe2 probe, Texture target)
         {
             var standard = probe as HDReflectionProbe;
             var planar = probe as HDPlanarProbe;

@@ -10,8 +10,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     static class HDBakeUtilities
     {
-        public const string BakedTextureExtension = ".exr";
-
         // get a bake path in the cache folder for object in a scene
         public static string GetCacheBakePath(string scenePath, Hash128 hash, string ext)
         {

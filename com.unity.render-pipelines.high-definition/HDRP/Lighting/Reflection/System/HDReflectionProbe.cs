@@ -1,6 +1,6 @@
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
-    class HDReflectionProbe : HDProbe
+    class HDReflectionProbe : HDProbe2
     {
         public struct ProbeCaptureProperties
         {

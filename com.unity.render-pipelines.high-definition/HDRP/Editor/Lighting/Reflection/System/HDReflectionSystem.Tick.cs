@@ -80,121 +80,105 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var maxProbeCount = Mathf.Max(bakedProbeCount, bakedProbeHashes.count);
             var addIndices = stackalloc int[maxProbeCount];
             var remIndices = stackalloc int[maxProbeCount];
-            fixed (Hash128* oldHashes = bakedProbeHashes.probeOutputHashes)
+            var oldHashes = stackalloc Hash128[bakedProbeHashes.count];
+            bakedProbeHashes.probeOutputHashes.CopyTo(oldHashes, bakedProbeHashes.count);
+            // Sort the hashes to have a consistent comparison
+            Utilities.QuickSort<Hash128>(bakedProbeCount, bakedProbeOutputHashes);
+            int addCount = 0, remCount = 0;
+            // The actual comparison happens here
+            // addIndicies will hold indices of probes to bake
+            // remIndicies will hold indices of baked data to delete
+            if (Utilities.CompareHashes(
+                bakedProbeHashes.count, oldHashes,          // old hashes
+                bakedProbeCount, bakedProbeOutputHashes,    // new hashes
+                addIndices, remIndices,
+                out addCount, out remCount
+                ) > 0)
             {
-                // Sort the hashes to have a consistent comparison
-                Utilities.QuickSort<Hash128>(bakedProbeHashes.count, oldHashes);
-                Utilities.QuickSort<Hash128>(bakedProbeCount, bakedProbeOutputHashes);
-                int addCount = 0, remCount = 0;
-                // The actual comparison happens here
-                // addIndicies will hold indices of probes to bake
-                // remIndicies will hold indices of baked data to delete
-                if (Utilities.CompareHashes(
-                    bakedProbeHashes.count, oldHashes,          // old hashes
-                    bakedProbeCount, bakedProbeOutputHashes,    // new hashes
-                    addIndices, remIndices,
-                    out addCount, out remCount
-                    ) > 0)
+                // Notify Unity we are baking probes
+                handle.EnterStage(
+                    (int)HDReflectionSystem.BakeStages.ReflectionProbes,
+                    string.Format("Reflection Probes | {0} jobs", addCount),
+                    Utilities.CalculateProgress(addCount, bakedProbeCount)
+                );
+
+                // = Step 4 =
+                // No probe to bake == we already baked all probes properly
+                var bakingComplete = addCount == 0;
+                // Check if the renderer is currently baking the probes
+                if (!bakingComplete)
                 {
-                    // Notify Unity we are baking probes
-                    handle.EnterStage(
-                        (int)HDReflectionSystem.BakeStages.ReflectionProbes,
-                        string.Format("Reflection Probes | {0} jobs", addCount),
-                        Utilities.CalculateProgress(addCount, bakedProbeCount)
-                    );
-
-                    // = Step 4 =
-                    // No probe to bake == we already baked all probes properly
-                    var bakingComplete = addCount == 0;
-                    // Check if the renderer is currently baking the probes
-                    if (!bakingComplete)
+                    var allProbeOutputHash = new Hash128();
+                    Utilities.CombineHashes(bakedProbeCount, bakedProbeOutputHashes, &allProbeOutputHash);
+                    if (tickedRenderer.isComplete && tickedRenderer.inputHash == allProbeOutputHash)
+                        bakingComplete = true;
+                    else
                     {
-                        var allProbeOutputHash = new Hash128();
-                        Utilities.CombineHashes(bakedProbeCount, bakedProbeOutputHashes, &allProbeOutputHash);
-                        if (tickedRenderer.isComplete && tickedRenderer.inputHash == allProbeOutputHash)
-                            bakingComplete = true;
-                        else
-                        {
-                            // We must restart the renderer with the new data
-                            tickedRenderer.Cancel();
-                            var toBakeIDs = stackalloc HDReflectionEntityID[addCount];
-                            Utilities.CopyToIndirect(
-                                addCount, addIndices,
-                                (byte*)bakedProbeIDs, (byte*)toBakeIDs,
-                                UnsafeUtility.SizeOf<HDReflectionEntityID>()
-                            );
-                            tickedRenderer.Start(
-                                allProbeOutputHash,
-                                settings,
-                                addCount,
-                                toBakeIDs, bakedProbeOutputHashes
-                            );
-                        }
+                        // We must restart the renderer with the new data
+                        tickedRenderer.Cancel();
+                        var toBakeIDs = stackalloc HDReflectionEntityID[addCount];
+                        Utilities.CopyToIndirect(
+                            addCount, addIndices,
+                            (byte*)bakedProbeIDs, (byte*)toBakeIDs,
+                            UnsafeUtility.SizeOf<HDReflectionEntityID>()
+                        );
+                        tickedRenderer.Start(
+                            allProbeOutputHash,
+                            settings,
+                            addCount,
+                            toBakeIDs, bakedProbeOutputHashes
+                        );
                     }
-
-                    if (!bakingComplete && !tickedRenderer.isComplete)
-                        // Do one job this tick
-                        bakingComplete = tickedRenderer.Tick();
-
-                    // = Step 5 =
-                    if (bakingComplete)
-                    {
-                        if (remCount > 0)
-                        {
-                            Utilities.RemoveSortedIndicesInArray(
-                                ref bakedProbeHashes.probeOnlyHashes,
-                                remCount, remIndices
-                            );
-                            Utilities.RemoveSortedIndicesInArray(
-                                ref bakedProbeHashes.probeOutputHashes,
-                                remCount, remIndices
-                            );
-                            Utilities.RemoveSortedIndicesInArray(
-                               ref bakedProbeHashes.IDs,
-                               remCount, remIndices
-                           );
-                            bakedProbeHashes.count = bakedProbeHashes.probeOutputHashes.Length;
-                        }
-
-                        for (int i = 0; i < addCount; ++i)
-                        {
-                            var index = addIndices[i];
-                            var probeId = bakedProbeIDs[index];
-                            var probe = entityManager.GetProbeByID(probeId);
-                            var probeScene = probe.gameObject.scene;
-                            var bakedOutputHash = bakedProbeOutputHashes[index];
-                            var probeOnlyHash = bakedProbeOnlyHashes[index];
-                            var bakedTexturePathInCache = HDBakeUtilities.GetCacheBakePath(
-                                probeScene.path,
-                                bakedOutputHash,
-                                HDBakeUtilities.BakedTextureExtension
-                            );
-
-                            if (!File.Exists(bakedTexturePathInCache))
-                                continue;
-
-                            var lightingAsset = HDLightingSceneAsset.GetOrCreateForScene(probeScene);
-                            Texture bakedTexture;
-                            if (lightingAsset.TryGetBakedTextureFor(probe, out bakedTexture))
-                            {
-                                var path = AssetDatabase.GetAssetPath(bakedTexture);
-                                AssetDatabase.DeleteAsset(path);
-                            }
-
-                            var bakedPath = textureImporter.GetBakedPathFor(probe);
-                            bakedTexture = textureImporter.ImportTextureFromFile(bakedTexturePathInCache);
-
-                            lightingAsset.SetBakedTextureFor(probe, bakedTexture);
-                            probe.bakedTexture = bakedTexture;
-
-                            EditorUtility.SetDirty(lightingAsset);
-
-                            bakedProbeHashes.Add(probeId, probeOnlyHash, bakedOutputHash);
-                        }
-                    }
-
-                    return;
                 }
+
+                if (!bakingComplete && !tickedRenderer.isComplete)
+                    // Do one job this tick
+                    bakingComplete = tickedRenderer.Tick();
+
+                // = Step 5 =
+                if (bakingComplete)
+                {
+                    if (remCount > 0)
+                        bakedProbeHashes.RemoveIndices(remCount, remIndices);
+
+                    for (int i = 0; i < addCount; ++i)
+                    {
+                        var index = addIndices[i];
+                        var probeId = bakedProbeIDs[index];
+                        var probe = entityManager.GetProbeByID(probeId);
+                        var probeScene = probe.gameObject.scene;
+                        var bakedOutputHash = bakedProbeOutputHashes[index];
+                        var probeOnlyHash = bakedProbeOnlyHashes[index];
+                        var bakedTexturePathInCache = textureImporter.GetCacheBakePathFor(probe, bakedOutputHash);
+
+                        if (!File.Exists(bakedTexturePathInCache))
+                            continue;
+
+                        var lightingAsset = HDLightingSceneAsset.GetOrCreateForScene(probeScene);
+                        Texture bakedTexture;
+                        if (lightingAsset.TryGetBakedTextureFor(probe, out bakedTexture))
+                        {
+                            var path = AssetDatabase.GetAssetPath(bakedTexture);
+                            AssetDatabase.DeleteAsset(path);
+                        }
+
+                        var bakedPath = textureImporter.GetBakedPathFor(probe);
+                        bakedTexture = textureImporter.ImportBakedTextureFromFile(
+                            probe,
+                            bakedTexturePathInCache,
+                            bakedPath
+                        );
+
+                        lightingAsset.SetBakedTextureFor(probe, bakedTexture);
+                        probe.bakedTexture = bakedTexture;
+
+                        EditorUtility.SetDirty(lightingAsset);
+
+                        bakedProbeHashes.Add(probeId, probeOnlyHash, bakedOutputHash);
+                    }
+                }
+
+                return;
             }
 
             // Notify Unity we completed the baking
@@ -204,6 +188,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         void DestroyUnusedCubemaps()
         {
+            // TODO
         }
 
         void ComputeBakedProbeOutputHashes(
@@ -220,7 +205,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         }
 
         void ComputeProbeStateHashesAndGetEntityIDs(
-            IEnumerator<HDProbe> enumerator,
+            IEnumerator<HDProbe2> enumerator,
             Hash128* bakedProbeOnlyHashes,
             HDReflectionEntityID* bakedProbeIDs
         )
@@ -235,7 +220,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        void ComputeAllCustomProbeHash(IEnumerator<HDProbe> enumerator, ref Hash128 hash)
+        void ComputeAllCustomProbeHash(IEnumerator<HDProbe2> enumerator, ref Hash128 hash)
         {
             while (enumerator.MoveNext())
             {

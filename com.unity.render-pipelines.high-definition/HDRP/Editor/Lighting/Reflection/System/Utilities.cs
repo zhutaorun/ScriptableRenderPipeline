@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
@@ -22,6 +23,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             public int lowIndex;
             public int highIndex;
+        }
+
+        public static void CopyTo<T>(this List<T> list, void* dest, int count)
+            where T : struct
+        {
+            var c = Mathf.Min(count, list.Count);
+            for (int i = 0; i < c; ++i)
+                UnsafeUtility.WriteArrayElement<T>(dest, i, list[i]);
         }
 
         public static void QuickSort<T>(int count, void* data)

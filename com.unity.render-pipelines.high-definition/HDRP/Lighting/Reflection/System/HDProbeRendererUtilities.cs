@@ -6,7 +6,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
         const GraphicsFormat k_CubemapFormat = GraphicsFormat.R32G32B32A32_SFloat;
 
-        internal static Texture CreateRenderTarget(HDProbe probe)
+        internal static Texture CreateRenderTarget(HDProbe2 probe)
         {
             var standard = probe as HDReflectionProbe;
             var planar = probe as HDPlanarProbe;

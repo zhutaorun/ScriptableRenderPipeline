@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 
@@ -5,10 +7,58 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     class BakedProbeHashes
     {
-        public int count;
-        public Hash128[] probeOnlyHashes;
-        public Hash128[] probeOutputHashes;
-        public HDReflectionEntityID[] IDs;
+        public int count { get; private set; }
+        public List<Hash128> probeOnlyHashes { get; private set; }
+        public List<Hash128> probeOutputHashes { get; private set; }
+        public List<HDReflectionEntityID> IDs { get; private set; }
+
+        public BakedProbeHashes()
+        {
+            count = 0;
+            probeOnlyHashes = new List<Hash128>();
+            probeOutputHashes = new List<Hash128>();
+            IDs = new List<HDReflectionEntityID>();
+        }
+
+        internal void Add(HDReflectionEntityID probeId, Hash128 probeOnlyHash, Hash128 bakedOutputHash)
+        {
+            // Keep the array sorted
+            // It is most likely to have small arrays so it is ok concerning performance.
+            var insertAt = -1;
+            if (probeOutputHashes.Count == 0)
+                insertAt = 0;
+            else if (probeOutputHashes.Count > 0)
+            {
+                for (int i = 0; i < probeOutputHashes.Count - 1; ++i)
+                {
+                    if (probeOutputHashes[i] < bakedOutputHash
+                        && (bakedOutputHash < probeOutputHashes[i + 1] || bakedOutputHash == probeOutputHashes[i + 1]))
+                    {
+                        insertAt = i;
+                        break;
+                    }
+                }
+                if (insertAt == -1)
+                    insertAt = count;
+            }
+
+            ++count;
+            IDs.Insert(insertAt, probeId);
+            probeOnlyHashes.Insert(insertAt, probeOnlyHash);
+            probeOutputHashes.Insert(insertAt, bakedOutputHash);
+        }
+
+        internal unsafe void RemoveIndices(int remCount, int* remIndices)
+        {
+            for (int i = remCount - 1; i >= 0; --i)
+            {
+                --count;
+                var index = remIndices[i];
+                IDs.RemoveAt(index);
+                probeOnlyHashes.RemoveAt(index);
+                probeOutputHashes.RemoveAt(index);
+            }
+        }
     }
 
     struct ReflectionSettings
@@ -23,7 +73,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             ReflectionProbes
         }
 
-        [InitializeOnLoadMethod]
+        //[InitializeOnLoadMethod]
         static void RegisterSystem()
         {
             ScriptableBakedReflectionSystemSettings.system = new HDReflectionSystem();

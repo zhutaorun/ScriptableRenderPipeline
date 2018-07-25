@@ -128,17 +128,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
         public int BakedProbeCount { get; internal set; }
 
-        internal IEnumerator<HDProbe> GetActiveBakedProbeEnumerator()
+        internal IEnumerator<HDProbe2> GetActiveBakedProbeEnumerator()
         {
             throw new NotImplementedException();
         }
 
-        internal IEnumerator<HDProbe> GetActiveCustomProbeEnumerator()
+        internal IEnumerator<HDProbe2> GetActiveCustomProbeEnumerator()
         {
             throw new NotImplementedException();
         }
 
-        public HDProbe GetProbeByID(HDReflectionEntityID probeId)
+        public HDProbe2 GetProbeByID(HDReflectionEntityID probeId)
         {
             throw new NotImplementedException();
         }

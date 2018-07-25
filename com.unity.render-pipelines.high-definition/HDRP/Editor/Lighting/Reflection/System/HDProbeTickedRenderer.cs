@@ -14,6 +14,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         HDReflectionEntityID[] m_ToBakeIDs;
         Hash128[] m_ToBakeHashes;
 
+        HDProbeTextureImporter m_TextureImporter;
+
         internal bool isComplete { get { return m_IsComplete; } }
         internal Hash128 inputHash;
 
@@ -73,7 +75,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var renderTarget = HDProbeRendererUtilities.CreateRenderTarget(probe);
             m_Renderer.Render(probe, renderTarget);
 
-            var cacheFilePath = HDBakeUtilities.GetCacheBakePath(scenePath, hash, HDBakeUtilities.BakedTextureExtension);
+            var cacheFilePath = m_TextureImporter.GetCacheBakePathFor(probe, hash);
             HDBakeUtilities.WriteBakedTextureTo(renderTarget, cacheFilePath);
 
             m_IsComplete = m_NextIndexToBake >= m_ToBakeIDs.Length;
