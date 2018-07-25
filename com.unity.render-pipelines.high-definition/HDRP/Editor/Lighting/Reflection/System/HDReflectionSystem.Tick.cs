@@ -83,12 +83,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var oldHashes = stackalloc Hash128[bakedProbeHashes.count];
             bakedProbeHashes.probeOutputHashes.CopyTo(oldHashes, bakedProbeHashes.count);
             // Sort the hashes to have a consistent comparison
-            Utilities.QuickSort<Hash128>(bakedProbeCount, bakedProbeOutputHashes);
+            HDUnsafeUtils.QuickSort<Hash128>(bakedProbeCount, bakedProbeOutputHashes);
             int addCount = 0, remCount = 0;
             // The actual comparison happens here
             // addIndicies will hold indices of probes to bake
             // remIndicies will hold indices of baked data to delete
-            if (Utilities.CompareHashes(
+            if (HDUnsafeUtils.CompareHashes(
                 bakedProbeHashes.count, oldHashes,          // old hashes
                 bakedProbeCount, bakedProbeOutputHashes,    // new hashes
                 addIndices, remIndices,
@@ -96,10 +96,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 ) > 0)
             {
                 // Notify Unity we are baking probes
+                var progress = (bakedProbeCount != 0) ? 1.0f - ((float)addCount / bakedProbeCount) : 1.0f; ;
                 handle.EnterStage(
                     (int)HDReflectionSystem.BakeStages.ReflectionProbes,
                     string.Format("Reflection Probes | {0} jobs", addCount),
-                    Utilities.CalculateProgress(addCount, bakedProbeCount)
+                    progress
                 );
 
                 // = Step 4 =
@@ -109,7 +110,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 if (!bakingComplete)
                 {
                     var allProbeOutputHash = new Hash128();
-                    Utilities.CombineHashes(bakedProbeCount, bakedProbeOutputHashes, &allProbeOutputHash);
+                    HDUnsafeUtils.CombineHashes(bakedProbeCount, bakedProbeOutputHashes, &allProbeOutputHash);
                     if (tickedRenderer.isComplete && tickedRenderer.inputHash == allProbeOutputHash)
                         bakingComplete = true;
                     else
@@ -117,7 +118,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         // We must restart the renderer with the new data
                         tickedRenderer.Cancel();
                         var toBakeIDs = stackalloc HDReflectionEntityID[addCount];
-                        Utilities.CopyToIndirect(
+                        HDUnsafeUtils.CopyToIndirect(
                             addCount, addIndices,
                             (byte*)bakedProbeIDs, (byte*)toBakeIDs,
                             UnsafeUtility.SizeOf<HDReflectionEntityID>()

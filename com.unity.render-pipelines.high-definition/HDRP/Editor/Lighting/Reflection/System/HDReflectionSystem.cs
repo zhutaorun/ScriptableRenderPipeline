@@ -89,10 +89,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 // TODO: cache the hash when updating the baked state
                 var hash = new Hash128();
-                if (m_BakedProbeState != null && m_BakedProbeState.probeOutputHashes != null)
+                if (m_BakedProbeState != null)
                 {
-                    fixed (Hash128* hashes = m_BakedProbeState.probeOutputHashes)
-                        Utilities.CombineHashes(m_BakedProbeState.count, hashes, &hash);
+                    HDUnsafeUtils.CombineHashes(m_BakedProbeState.probeOutputHashes, &hash);
                 }
                 return hash;
             }

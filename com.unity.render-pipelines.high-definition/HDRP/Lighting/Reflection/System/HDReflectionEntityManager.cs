@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("Unity.RenderPipelines.HighDefinition.Editor")]
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
