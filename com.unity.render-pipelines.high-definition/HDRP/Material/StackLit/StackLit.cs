@@ -61,7 +61,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             [SurfaceDataAttributes("Metallic")]
             public float metallic;
 
-            [SurfaceDataAttributes("IOR")]
+            [SurfaceDataAttributes("Dielectric IOR")]
             public float dielectricIor;
 
             [SurfaceDataAttributes("Specular Color", false, true)]
