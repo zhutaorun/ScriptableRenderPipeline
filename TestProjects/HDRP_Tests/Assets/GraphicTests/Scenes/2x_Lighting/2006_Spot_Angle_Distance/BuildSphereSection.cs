@@ -37,7 +37,7 @@ public class BuildSphereSection : MonoBehaviour
 		float angleB;
 		Quaternion rot;
 
-		Vector3 offset = - Vector3.forward * Mathf.Cos(halfAngleRad) * sphereRadius;
+		Vector3 offset = - Vector3.forward * sphereRadius;
 
 		for (int y=0 ; y<segmentsY ; ++y)
 		{

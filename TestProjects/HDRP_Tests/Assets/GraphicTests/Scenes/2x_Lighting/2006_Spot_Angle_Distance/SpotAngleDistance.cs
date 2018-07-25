@@ -40,8 +40,8 @@ public class SpotAngleDistance : MonoBehaviour
 		float sphereRadius = targetRadius / Mathf.Sin( Mathf.Deg2Rad * angle * 0.5f );
 
 		light.spotAngle = angle;
-		light.range = distance + additionalRange;
-		transform.localPosition = -distance * Vector3.forward;
+		light.range = sphereRadius + additionalRange;
+		transform.localPosition = -sphereRadius * Vector3.forward;
 
 		hdLightData.intensity = referenceIntensity * Mathf.Pow( sphereRadius / referenceDistance , 2f );
 	}
