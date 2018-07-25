@@ -1007,7 +1007,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 var sinSpotOuterHalfAngle = Mathf.Sqrt(1.0f - cosSpotOuterHalfAngle * cosSpotOuterHalfAngle);
                 var cosSpotInnerHalfAngle = Mathf.Clamp(Mathf.Cos(spotAngle * 0.5f * innerConePercent * Mathf.Deg2Rad), 0.0f, 1.0f); // inner cone
 
-                var val = Mathf.Max(0.001f, (cosSpotInnerHalfAngle - cosSpotOuterHalfAngle));
+                var val = Mathf.Max(0.0001f, (cosSpotInnerHalfAngle - cosSpotOuterHalfAngle));
                 lightData.angleScale = 1.0f / val;
                 lightData.angleOffset = -cosSpotOuterHalfAngle * lightData.angleScale;
 
@@ -1828,7 +1828,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             }
 
                             LightVolumeType lightVolumeType = LightVolumeType.Box;
-                            if (additional != null && additional.influenceShape == ShapeType.Sphere)
+                            if (additional != null && additional.influenceVolume.shape == Shape.Sphere)
                                 lightVolumeType = LightVolumeType.Sphere;
                             ++envLightCount;
 
@@ -1846,7 +1846,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 continue;
 
                             var lightVolumeType = LightVolumeType.Box;
-                            if (probe.influenceVolume.shapeType == ShapeType.Sphere)
+                            if (probe.influenceVolume.shape == Shape.Sphere)
                                 lightVolumeType = LightVolumeType.Sphere;
                             ++envLightCount;
 
@@ -2282,9 +2282,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (add == null)
             {
                 add = HDUtils.s_DefaultHDAdditionalReflectionData;
-                add.blendDistancePositive = Vector3.one * probe.blendDistance;
-                add.blendDistanceNegative = add.blendDistancePositive;
-                add.influenceShape = ShapeType.Box;
+                Vector3 distance = Vector3.one * probe.blendDistance;
+                add.influenceVolume.boxBlendDistancePositive = distance;
+                add.influenceVolume.boxBlendDistanceNegative = distance;
+                add.influenceVolume.shape = Shape.Box;
             }
             return add;
         }
