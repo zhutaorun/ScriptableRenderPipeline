@@ -3,8 +3,9 @@
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
@@ -79,7 +80,7 @@ MonoBehaviour:
     scatterDistance2: {r: 0.5, g: 0.5, b: 0.5, a: 0}
     lerpWeight: 1
   - name: Layer_1
-    scatteringDistance: {r: 1, g: 0, b: 0, a: 1}
+    scatteringDistance: {r: 64.250984, g: 0.67278516, b: 0.67278516, a: 1}
     transmissionTint: {r: 1, g: 1, b: 1, a: 1}
     texturingMode: 0
     transmissionMode: 1
@@ -90,7 +91,7 @@ MonoBehaviour:
     scatterDistance2: {r: 0.5, g: 0.5, b: 0.5, a: 0}
     lerpWeight: 1
   - name: Layer_2
-    scatteringDistance: {r: 0, g: 1, b: 0, a: 1}
+    scatteringDistance: {r: 0, g: 64, b: 0, a: 1}
     transmissionTint: {r: 1, g: 1, b: 1, a: 1}
     texturingMode: 0
     transmissionMode: 1
@@ -101,7 +102,7 @@ MonoBehaviour:
     scatterDistance2: {r: 0.5, g: 0.5, b: 0.5, a: 0}
     lerpWeight: 1
   - name: Layer_3
-    scatteringDistance: {r: 0, g: 0, b: 1, a: 1}
+    scatteringDistance: {r: 0, g: 0, b: 64, a: 1}
     transmissionTint: {r: 1, g: 1, b: 1, a: 1}
     texturingMode: 1
     transmissionMode: 1
@@ -112,7 +113,7 @@ MonoBehaviour:
     scatterDistance2: {r: 0.5, g: 0.5, b: 0.5, a: 0}
     lerpWeight: 1
   - name: Layer_Base
-    scatteringDistance: {r: 1, g: 1, b: 1, a: 1}
+    scatteringDistance: {r: 63.999992, g: 63.999992, b: 63.999992, a: 1}
     transmissionTint: {r: 1, g: 1, b: 1, a: 1}
     texturingMode: 1
     transmissionMode: 1
