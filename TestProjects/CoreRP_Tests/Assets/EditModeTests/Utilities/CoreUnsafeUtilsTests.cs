@@ -30,6 +30,11 @@ namespace UnityEditor.Experimental.Rendering.Tests
                 fixed (float* fptr = &floatValue)
                 return intValue ^ *(int*)fptr;
             }
+
+            public override string ToString()
+            {
+                return string.Format("{{ floatValue: {0}, intValue: {1} }}", floatValue, intValue);
+            }
         }
 
         static object[][] s_CopyToList = new object[][]
@@ -181,6 +186,79 @@ namespace UnityEditor.Experimental.Rendering.Tests
                     Assert.AreEqual(expAddIndices[i], addIndices[i]);
                 for (int i = 0; i < expRemIndices.Length; ++i)
                     Assert.AreEqual(expRemIndices[i], remIndices[i]);
+            }
+        }
+
+        static object[][] s_CopyToIndirectInt = new object[][]
+        {
+            new object[] { "Empty Array", new int[] { }, new int[] { }, new int[] { } },
+            new object[] { "Simple Array", new int[] { 0, 1, 2, 3, 4 }, new int[] { 0, 2, 3 }, new int[] { 0, 2, 3 } },
+        };
+
+        [Test]
+        [TestCaseSource("s_CopyToIndirectInt")]
+        public void CopyToIndirectInt(
+            string name,
+            int[] sourceArr,
+            int[] indicesArr,
+            int[] expectedArr
+        )
+        {
+            fixed (int* source = sourceArr)
+            fixed (int* indices = indicesArr)
+            fixed (int* expected = expectedArr)
+            {
+                var dest = stackalloc int[indicesArr.Length];
+                CoreUnsafeUtils.CopyToIndirect(indicesArr.Length, indices, source, dest, sizeof(int));
+
+                for (int i = 0; i < expectedArr.Length; ++i)
+                    Assert.AreEqual(expectedArr[i], dest[i]);
+            }
+        }
+
+        static object[][] s_CopyToIndirectTestData = new object[][]
+        {
+            new object[] { "Empty Array", new TestData[] { }, new int[] { }, new TestData[] { } },
+            new object[] { "Simple Array",
+                new TestData[]
+                {
+                    new TestData { intValue = 0, floatValue = 1 },
+                    new TestData { intValue = 1, floatValue = 2 },
+                    new TestData { intValue = 2, floatValue = 3 },
+                    new TestData { intValue = 3, floatValue = 4 },
+                },
+                new int[] { 0, 2, 3 },
+                new TestData[]
+                {
+                    new TestData { intValue = 0, floatValue = 1 },
+                    new TestData { intValue = 2, floatValue = 3 },
+                    new TestData { intValue = 3, floatValue = 4 },
+                }
+            },
+        };
+
+        [Test]
+        [TestCaseSource("s_CopyToIndirectTestData")]
+        public void CopyToIndirectTestData(
+            string name,
+            TestData[] sourceArr,
+            int[] indicesArr,
+            TestData[] expectedArr
+        )
+        {
+            fixed (TestData* source = sourceArr)
+            fixed (int* indices = indicesArr)
+            fixed (TestData* expected = expectedArr)
+            {
+                var dest = stackalloc TestData[indicesArr.Length];
+                CoreUnsafeUtils.CopyToIndirect(indicesArr.Length, indices, source, dest, sizeof(TestData));
+
+                for (int i = 0; i < expectedArr.Length; ++i)
+                {
+                    var d = dest[i];
+                    Assert.AreEqual(expectedArr[i], d);
+                }
+                    
             }
         }
     }

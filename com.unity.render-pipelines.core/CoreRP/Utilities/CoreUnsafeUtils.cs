@@ -164,12 +164,14 @@ namespace UnityEngine.Experimental.Rendering
         /// <param name="src"></param>
         /// <param name="dest"></param>
         /// <param name="stride">stride of one element in bytes.</param>
-        public static void CopyToIndirect(int count, int* indices, byte* src, byte* dest, int stride)
+        public static void CopyToIndirect(int count, int* indices, void* src, void* dest, int stride)
         {
+            var bsrc = (byte*)src;
+            var bdest = (byte*)dest;
             for (int i = 0; i < count; ++i)
             {
-                var srcAddress = src + stride * indices[i];
-                var destAddress = dest + stride * i;
+                var srcAddress = bsrc + stride * indices[i];
+                var destAddress = bdest + stride * i;
                 UnsafeUtility.MemCpy(destAddress, srcAddress, stride);
             }
         }
