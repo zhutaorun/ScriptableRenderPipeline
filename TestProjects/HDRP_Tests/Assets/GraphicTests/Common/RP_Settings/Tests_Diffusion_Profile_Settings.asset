@@ -46,23 +46,23 @@ MonoBehaviour:
     scatterDistance1: {r: 0.3, g: 0.3, b: 0.3, a: 0}
     scatterDistance2: {r: 0.5, g: 0.5, b: 0.5, a: 0}
     lerpWeight: 1
-  - name: Foliage_Transmission-None
-    scatteringDistance: {r: 0.76052475, g: 0.70110214, b: 0.2422812, a: 1}
+  - name: '--- Unused ---'
+    scatteringDistance: {r: 96.64, g: 89.16783, b: 30.884945, a: 1}
     transmissionTint: {r: 1, g: 1, b: 1, a: 1}
     texturingMode: 0
     transmissionMode: 0
-    thicknessRemap: {x: 0, y: 2.7123199}
+    thicknessRemap: {x: 0, y: 1000}
     worldScale: 1
     ior: 1.4
     scatterDistance1: {r: 0.3, g: 0.3, b: 0.3, a: 0}
     scatterDistance2: {r: 0.5, g: 0.5, b: 0.5, a: 0}
     lerpWeight: 1
-  - name: Foliage_Transmission-Regular
-    scatteringDistance: {r: 0.76052475, g: 0.70110214, b: 0.2422812, a: 1}
-    transmissionTint: {r: 1, g: 1, b: 1, a: 1}
+  - name: Transmission-Regular
+    scatteringDistance: {r: 97.38038, g: 90.24255, b: 31.610384, a: 1}
+    transmissionTint: {r: 0.69411767, g: 0.47843137, b: 0.007843138, a: 1}
     texturingMode: 0
     transmissionMode: 0
-    thicknessRemap: {x: 0, y: 0.2873168}
+    thicknessRemap: {x: 0, y: 1000}
     worldScale: 1
     ior: 1.4
     scatterDistance1: {r: 0.3, g: 0.3, b: 0.3, a: 0}
@@ -80,7 +80,7 @@ MonoBehaviour:
     scatterDistance2: {r: 0.5, g: 0.5, b: 0.5, a: 0}
     lerpWeight: 1
   - name: Layer_1
-    scatteringDistance: {r: 64.250984, g: 0.67278516, b: 0.67278516, a: 1}
+    scatteringDistance: {r: 39.029957, g: 0.3902992, b: 0.3902992, a: 1}
     transmissionTint: {r: 1, g: 1, b: 1, a: 1}
     texturingMode: 0
     transmissionMode: 1
@@ -91,7 +91,7 @@ MonoBehaviour:
     scatterDistance2: {r: 0.5, g: 0.5, b: 0.5, a: 0}
     lerpWeight: 1
   - name: Layer_2
-    scatteringDistance: {r: 0, g: 64, b: 0, a: 1}
+    scatteringDistance: {r: 0.8715384, g: 87.153915, b: 0.8715384, a: 1}
     transmissionTint: {r: 1, g: 1, b: 1, a: 1}
     texturingMode: 0
     transmissionMode: 1
@@ -102,7 +102,7 @@ MonoBehaviour:
     scatterDistance2: {r: 0.5, g: 0.5, b: 0.5, a: 0}
     lerpWeight: 1
   - name: Layer_3
-    scatteringDistance: {r: 0, g: 0, b: 64, a: 1}
+    scatteringDistance: {r: 0.65220183, g: 0.65220183, b: 41.523594, a: 1}
     transmissionTint: {r: 1, g: 1, b: 1, a: 1}
     texturingMode: 1
     transmissionMode: 1
@@ -113,7 +113,7 @@ MonoBehaviour:
     scatterDistance2: {r: 0.5, g: 0.5, b: 0.5, a: 0}
     lerpWeight: 1
   - name: Layer_Base
-    scatteringDistance: {r: 63.999992, g: 63.999992, b: 63.999992, a: 1}
+    scatteringDistance: {r: 63.998318, g: 63.998318, b: 63.998318, a: 1}
     transmissionTint: {r: 1, g: 1, b: 1, a: 1}
     texturingMode: 1
     transmissionMode: 1
