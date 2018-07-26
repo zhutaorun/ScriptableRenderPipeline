@@ -14,6 +14,12 @@
 #define NORMALMAP_LOWEST_AVERAGE_NORMAL_LENGTH 0.8695
 #define NORMALMAP_HIGHEST_VARIANCE 0.03125
 
+#ifdef NORMALMAP_USES_VARIANCE
+#define NORMALMAP_NEUTRAL_DISPERSION_VALUE 0.0
+#else
+#define NORMALMAP_NEUTRAL_DISPERSION_VALUE 1.0
+#endif
+
 #define TEXCOORD_INDEX_UV0          (0)
 #define TEXCOORD_INDEX_UV1          (1)
 #define TEXCOORD_INDEX_UV2          (2)
@@ -304,9 +310,13 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     // Standard
     surfaceData.baseColor = SAMPLE_TEXTURE2D_SCALE_BIAS(_BaseColorMap).rgb * _BaseColor.rgb;
 
-    float4 gradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_NormalMap, _NormalScale, _NormalMapObjSpace);
+    float4 gradient = float4(0.0, 0.0, 0.0, NORMALMAP_NEUTRAL_DISPERSION_VALUE);
+    if (_NormalUseMap)
+    {
+        gradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_NormalMap, _NormalScale, _NormalMapObjSpace);
+    }
 
-    float4 bentGradient = float4(0.0, 0.0, 0.0, 1.0f);
+    float4 bentGradient = float4(0.0, 0.0, 0.0, NORMALMAP_NEUTRAL_DISPERSION_VALUE);
     // ...last value is for normal map filtering (average normal length). Unused for bent normal for now, but
     // could be used to tilt back the bent normal to the normal and/or enlarge the visibility cone as bent visibility
     // can alias like everything else.
@@ -398,7 +408,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 #endif // _MATERIAL_FEATURE_ANISOTROPY
     surfaceData.tangentWS = normalize(input.worldToTangent[0].xyz); // The tangent is not normalize in worldToTangent for mikkt. TODO: Check if it expected that we normalize with Morten. Tag: SURFACE_GRADIENT
 
-    float4 coatGradient = float4(0.0, 0.0, 0.0, 1.0f);
+    float4 coatGradient = float4(0.0, 0.0, 0.0, NORMALMAP_NEUTRAL_DISPERSION_VALUE);
 #ifdef _MATERIAL_FEATURE_COAT
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_COAT;
     surfaceData.coatPerceptualSmoothness = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_CoatSmoothnessMap), _CoatSmoothnessMapChannelMask);
@@ -410,7 +420,10 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 
 #ifdef _MATERIAL_FEATURE_COAT_NORMALMAP
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_COAT_NORMAL_MAP;
-    coatGradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_CoatNormalMap, _CoatNormalScale, _CoatNormalMapObjSpace);
+    if (_CoatNormalUseMap)
+    {
+        coatGradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_CoatNormalMap, _CoatNormalScale, _CoatNormalMapObjSpace);
+    }
 #endif
 
 #else
@@ -463,27 +476,49 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 #ifdef _DETAILMAP
     float detailMask = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_DetailMaskMap), _DetailMaskMapChannelMask);
 
-    float4 detailGradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_DetailNormalMap, _DetailNormalScale, 0.0);
+    float4 detailGradient = float4(0.0, 0.0, 0.0, NORMALMAP_NEUTRAL_DISPERSION_VALUE);
+    if (_DetailNormalUseMap)
+    {
+        detailGradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_DetailNormalMap, _DetailNormalScale, 0.0);
+    }
+
     gradient = AddDetailGradient(gradient, detailGradient, detailMask);
     bentGradient = AddDetailGradient(bentGradient, detailGradient, detailMask);
 
     float detailPerceptualSmoothness = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_DetailSmoothnessMap), _DetailSmoothnessMapChannelMask);
+    //debug: TODO either lineargrey or grey won't give 0.5 but 0.215 or 0.211
+    //surfaceData.dielectricIor = detailPerceptualSmoothness;
     detailPerceptualSmoothness = lerp(_DetailSmoothnessMapRange.x, _DetailSmoothnessMapRange.y, detailPerceptualSmoothness);
 
-    // Use overlay blend mode for detail abledo: (base < 0.5 ? (2.0 * base * blend) : (1.0 - 2.0 * (1.0 - base) * (1.0 - blend)))
-    float smoothnessOverlay = (detailPerceptualSmoothness < 0.5) ?
-                                surfaceData.perceptualSmoothnessA * PositivePow(2.0 * detailPerceptualSmoothness, _DetailSmoothnessScale) :
-                                1.0 - (1.0 - surfaceData.perceptualSmoothnessA) * PositivePow(2.0 * (1.0 - detailPerceptualSmoothness), _DetailSmoothnessScale);
+    // We assume here that 0 <= _DetailSmoothnessMapRange.x < _DetailSmoothnessMapRange.y <= 1
+    // (ie _DetailSmoothnessMapRemap should be (0,1) in the shader so the user can't set the remap endpoints outside this in the UI)
+    // such that 0 <= detailPerceptualSmoothness <= 1 (numerical calculations implied by lerp might violate the later though)
+    detailPerceptualSmoothness = detailPerceptualSmoothness * 2.0 - 1.0;
+    /// remap [0,1] to [-1, 1] : positive values will push the final smoothness (absolutely) towards 1 and negative values toward 0.
+
+    // Use overlay blend mode for detail:
+    //
+    // detailPerceptualSmoothness * _DetailSmoothnessScale from 0 to -1 controls a new absolute value for the smoothness
+    // that is closer to the absolute 0.0 endpoint (it is linearly relative to the original smoothness and the slope of the
+    // effect of the range of detailPerceptualSmoothness in [-1 to 0] is controlled by _DetailSmoothnessScale).
+    // Likewise, for positive detailPerceptualSmoothness, the 0 to +1 range calculates a new value towards the 1.0 endpoint.
+    //
+    // So (detailPerceptualSmoothness distance from 0) * _DetailSmoothnessScale controls the new endpoint, and the detailMask
+    // controls interpolation between the original smoothness value and the new endpoint calculated. Of course since both interpolations
+    // are linear, the slope of the effect depends on both _DetailSmoothnessScale and detailMask, although because of saturation
+    // in between, _DetailSmoothnessScale can be viewed as a thresholding control on the detail map before the application of
+    // the mask interpolation.
+    float smoothnessDetailSpeed = saturate(abs(detailPerceptualSmoothness) * _DetailSmoothnessScale);
+    float smoothnessOverlay = lerp(surfaceData.perceptualSmoothnessA, (detailPerceptualSmoothness < 0.0) ? 0.0 : 1.0, smoothnessDetailSpeed);
+
     // Lerp with details mask
     surfaceData.perceptualSmoothnessA = lerp(surfaceData.perceptualSmoothnessA, saturate(smoothnessOverlay), detailMask);
 
     #ifdef _MATERIAL_FEATURE_DUAL_SPECULAR_LOBE
-    // TODOTODO: Note that this will be ignored when using Hazy Gloss parametrization. This could be translated to apply to hazeExtent instead.
-    
-    // Use overlay blend mode for detail abledo: (base < 0.5 ? (2.0 * base * blend) : (1.0 - 2.0 * (1.0 - base) * (1.0 - blend)))
-    smoothnessOverlay = (detailPerceptualSmoothness < 0.5) ?
-                                surfaceData.perceptualSmoothnessB * PositivePow(2.0 * detailPerceptualSmoothness, _DetailSmoothnessScale) :
-                                1.0 - (1.0 - surfaceData.perceptualSmoothnessB) * PositivePow(2.0 * (1.0 - detailPerceptualSmoothness), _DetailSmoothnessScale);
+    // Note that this will be ignored when using Hazy Gloss parametrization.
+    // This could be translated to apply to hazeExtent instead if we really want that control.
+
+    smoothnessOverlay = lerp(surfaceData.perceptualSmoothnessB, (detailPerceptualSmoothness < 0.0) ? 0.0 : 1.0, smoothnessDetailSpeed);
     // Lerp with details mask
     surfaceData.perceptualSmoothnessB = lerp(surfaceData.perceptualSmoothnessB, saturate(smoothnessOverlay), detailMask);
     #endif
@@ -502,6 +537,12 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 
     if ((_GeometricNormalFilteringEnabled + _TextureNormalFilteringEnabled) > 0.0)
     {
+        // TODO Note: specular occlusion that uses bent normals should also use filtering, although the visibility model is not a
+        // specular lobe with roughness but a cone with solid angle determined by the ambient occlusion so this is an even more
+        // empirical hack (with visibility modelled by a single circular region in direction space)
+        // Intuitively, an increase of variance should enlarge (possible) visibility and thus diminish the occlusion
+        // (enlarge the visibility cone). This goes in hand with the softer BSDF specular lobe.
+
         float geometricVariance = _GeometricNormalFilteringEnabled ? GeometricNormalVariance(input.worldToTangent[2], _SpecularAntiAliasingScreenSpaceVariance) : 0.0;
         float textureFilteringVariance = _TextureNormalFilteringEnabled ? DecodeNormalDispersionMeasureToVariance(gradient.w) : 0.0;
         float coatTextureFilteringVariance = _TextureNormalFilteringEnabled ? DecodeNormalDispersionMeasureToVariance(coatGradient.w) : 0.0;

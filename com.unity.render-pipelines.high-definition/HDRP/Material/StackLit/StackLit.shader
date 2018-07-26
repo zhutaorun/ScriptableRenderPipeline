@@ -61,7 +61,7 @@ Shader "HDRenderPipeline/StackLit"
         _SmoothnessAMapUVLocal("_SmoothnessB Map UV Local", Float) = 0.0
         _SmoothnessBMapChannel("SmoothnessB Map Channel", Float) = 0.0
         [HideInInspector] _SmoothnessBMapChannelMask("SmoothnessB Map Channel Mask", Vector) = (1, 0, 0, 0)
-        _SmoothnessBMapRemap("SmoothnessB Remap", Vector) = (0, 1, 0, 0)
+        _SmoothnessBMapRemap("SmoothnessB Remap", Vector) = (0, 1, 0, 0) // Note: this should always match Range() in _SmoothnessB above
         [ToggleUI] _SmoothnessBMapRemapInverted("Invert SmoothnessB Remap", Float) = 0.0
         [HideInInspector] _SmoothnessBMapRange("SmoothnessB Range", Vector) = (0, 1, 0, 0)
 
@@ -165,6 +165,7 @@ Shader "HDRenderPipeline/StackLit"
         [ToggleUI] _EnableCoatNormalMap("Enable Coat Normal Map", Float) = 0.0 // UI only
         [HideInInspector] _CoatNormalMapShow("Coat NormalMap Show", Float) = 0.0
         _CoatNormalMap("Coat NormalMap", 2D) = "bump" {}     // Tangent space normal map
+        _CoatNormalUseMap("Coat Normal UseMap", Float) = 0
         _CoatNormalMapUV("Coat NormalMapUV", Float) = 0.0
         _CoatNormalMapUVLocal("Coat NormalMapUV Local", Float) = 0.0
         _CoatNormalMapObjSpace("Coat NormalMap ObjSpace", Float) = 0.0
@@ -172,6 +173,7 @@ Shader "HDRenderPipeline/StackLit"
 
         [HideInInspector] _NormalMapShow("NormalMap Show", Float) = 0.0
         _NormalMap("NormalMap", 2D) = "bump" {}     // Tangent space normal map
+        _NormalUseMap("Normal UseMap", Float) = 0
         _NormalMapUV("NormalMapUV", Float) = 0.0
         _NormalMapUVLocal("NormalMapUV Local", Float) = 0.0
         _NormalMapObjSpace("NormalMapObjSpace", Float) = 0.0
@@ -269,6 +271,7 @@ Shader "HDRenderPipeline/StackLit"
 
         [HideInInspector] _DetailNormalMapShow("DetailNormalMap Show", Float) = 0.0
         _DetailNormalMap("DetailNormalMap", 2D) = "bump" {}     // Tangent space normal map
+        _DetailNormalUseMap("DetailNormal Use Map", Float) = 0
         _DetailNormalMapUV("DetailNormalMapUV", Float) = 0.0
         _DetailNormalMapUVLocal("DetailNormalMapUV Local", Float) = 0.0
         _DetailNormalScale("DetailNormal Scale", Range(0.0, 2.0)) = 1
@@ -279,7 +282,7 @@ Shader "HDRenderPipeline/StackLit"
         _DetailSmoothnessMapUVLocal("DetailSmoothness Map UV Local", Float) = 0.0
         _DetailSmoothnessMapChannel("DetailSmoothness Map Channel", Float) = 0.0
         [HideInInspector] _DetailSmoothnessMapChannelMask("DetailSmoothness Map Channel Mask", Vector) = (1, 0, 0, 0)
-        _DetailSmoothnessMapRemap("DetailSmoothness Remap", Vector)  = (0, 1, 0, 0)
+        _DetailSmoothnessMapRemap("DetailSmoothness Remap", Vector)  = (0, 1, 0, 0) // Leave this to (0, 1) or change StackLitData !
         [ToggleUI] _DetailSmoothnessMapRemapInverted("Invert SmoothnessA Remap", Float) = 0.0
         [HideInInspector] _DetailSmoothnessMapRange("DetailSmoothness Range", Vector) = (0, 1, 0, 0)
         _DetailSmoothnessScale("DetailSmoothness Scale", Range(0.0, 2.0)) = 1

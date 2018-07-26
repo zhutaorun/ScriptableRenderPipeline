@@ -40,6 +40,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string k_SmoothnessAMap = "_SmoothnessAMap";
         protected const string k_SmoothnessAMapUV = "_SmoothnessAMapUV";
 
+        protected const string k_Normal = "_Normal";
         protected const string k_NormalMap = "_NormalMap";
         protected const string k_NormalMapUV = "_NormalMapUV";
         protected const string k_NormalScale = "_NormalScale";
@@ -67,6 +68,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string k_CoatThickness = "_CoatThickness";
         protected const string k_CoatExtinction = "_CoatExtinction";
         protected const string k_EnableCoatNormalMap = "_EnableCoatNormalMap";
+        protected const string k_CoatNormal = "_CoatNormal";
         protected const string k_CoatNormalMap = "_CoatNormalMap";
         protected const string k_CoatNormalMapUV = "_CoatNormalMapUV";
         protected const string k_CoatNormalScale = "_CoatNormalScale";
@@ -139,6 +141,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string k_DetailSmoothnessMap = "_DetailSmoothnessMap";
         protected const string k_DetailSmoothnessMapUV = "_DetailSmoothnessMapUV";
 
+        protected const string k_DetailNormal = "_DetailNormal";
         protected const string k_DetailNormalMap = "_DetailNormalMap";
         protected const string k_DetailNormalMapUV = "_DetailNormalMapUV";
         protected const string k_DetailNormalScale = "_DetailNormalScale";
@@ -210,8 +213,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             EnableDualSpecularLobe = new Property(this, k_EnableDualSpecularLobe, "Enable Dual Specular Lobe", "Enable a second specular lobe, aim to simulate a mix of a narrow and a haze lobe that better match measured material", true);
             EnableIridescence = new Property(this, k_EnableIridescence, "Enable Iridescence", "Enable physically based iridescence layer", true);
 
-            EnableGeometricNormalFiltering = new Property(this, k_GeometricNormalFilteringEnabled, "Enable Geometric filtering", "Enable specular antialiasing", true);
-            EnableTextureNormalFiltering = new Property(this, k_TextureNormalFilteringEnabled, "Enable Texture filtering", "Require normal map to use _NA or _OSNA suffix for normal map name", true);
+            EnableGeometricNormalFiltering = new Property(this, k_GeometricNormalFilteringEnabled, "Enable Geometric Normal filtering", "Enable specular antialiasing", true);
+            EnableTextureNormalFiltering = new Property(this, k_TextureNormalFilteringEnabled, "Enable Normal Texture filtering", "Require normal map to use _NA or _OSNA suffix for normal map name", true);
 
             // This property appears after one which references it:
             var BentNormal = new TextureProperty(this, k_BentNormalMap, "", "Bent Normal Map", "Bent Normal Map", pairConstantWithTexture: true, isMandatory: false, isNormalMap: true, showScaleOffset: false);
@@ -322,7 +325,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 StandardMetallicGroup,
                 StandardSpecularColorGroup,
 
-                new GroupProperty(this, "_Details", "Details", new BaseProperty[]
+                new GroupProperty(this, "_Details", "Details (base layer)", new BaseProperty[]
                 {
                     new TextureProperty(this, k_DetailMaskMap, "", "Detail Mask Map", "Detail Mask Map", false, false),
                     new TextureProperty(this, k_DetailNormalMap, k_DetailNormalScale, "Detail Normal Map", "Detail Normal Map Scale", true, false, true),
@@ -497,6 +500,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             TextureProperty.SetupTextureMaterialProperty(material, k_DetailMask);
             TextureProperty.SetupTextureMaterialProperty(material, k_DetailSmoothness);
 
+            TextureProperty.SetupTextureMaterialProperty(material, k_Normal);
+            TextureProperty.SetupTextureMaterialProperty(material, k_CoatNormal);
+            TextureProperty.SetupTextureMaterialProperty(material, k_DetailNormal);
 
             bool detailsEnabled = material.HasProperty(k_EnableDetails) && material.GetFloat(k_EnableDetails) > 0.0f;
             CoreUtils.SetKeyword(material, "_DETAILMAP", detailsEnabled);

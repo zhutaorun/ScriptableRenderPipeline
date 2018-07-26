@@ -120,6 +120,7 @@ float4 _DebugAniso;
 float4 _DebugSpecularOcclusion;
 
 float _NormalScale;
+float _NormalUseMap;
 float _NormalMapUV;
 float _NormalMapUVLocal;
 float _NormalMapObjSpace;
@@ -214,6 +215,7 @@ float _CoatThickness;
 float3 _CoatExtinction;
 
 float _CoatNormalScale;
+float _CoatNormalUseMap;
 float _CoatNormalMapUV;
 float _CoatNormalMapUVLocal;
 float _CoatNormalMapObjSpace;
@@ -281,6 +283,7 @@ float4 _DetailSmoothnessMapRange;
 float _DetailSmoothnessScale;
 
 float _DetailNormalScale;
+float _DetailNormalUseMap;
 float _DetailNormalMapUV;
 float _DetailNormalMapUVLocal;
 float4 _DetailNormalMap_ST;
