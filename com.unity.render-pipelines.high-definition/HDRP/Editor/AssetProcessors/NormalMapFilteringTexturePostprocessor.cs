@@ -117,9 +117,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // (that's the point of normal map inferred-NDF filtering vs just using mip-mapping hardware on normal maps),
             // and the formula to get to variance via the vMF lobe fit is also quite nonlinear, although not
             // everywhere. We show below that the most useful part of this fit (near the 1.0 end of the length
-            // of the average normal) is linear and so if we limit our range to that part, we could just
-            // store and filter directly the averageNormalLength.
-            // We can also directly store variance, as this is a filterable moment (cf LEAN, LEADR).
+            // of the average normal) is linear and so if we would store and filter averageNormalLength anyway
+            // but limit our range to that part, we could just store and filter directly the variance in that
+            // range too. (Note though that moments are linearly filterable cf LEAN, LEADR).
             // For 1), compression can further compound artefacts too so we need to consider the useful range.
             //
             // We recall:
