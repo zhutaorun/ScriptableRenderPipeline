@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
@@ -83,7 +84,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var oldHashes = stackalloc Hash128[bakedProbeHashes.count];
             bakedProbeHashes.probeOutputHashes.CopyTo(oldHashes, bakedProbeHashes.count);
             // Sort the hashes to have a consistent comparison
-            HDUnsafeUtils.QuickSort<Hash128>(bakedProbeCount, bakedProbeOutputHashes);
+            CoreUnsafeUtils.QuickSort<Hash128>(bakedProbeCount, bakedProbeOutputHashes);
             int addCount = 0, remCount = 0;
             // The actual comparison happens here
             // addIndicies will hold indices of probes to bake
