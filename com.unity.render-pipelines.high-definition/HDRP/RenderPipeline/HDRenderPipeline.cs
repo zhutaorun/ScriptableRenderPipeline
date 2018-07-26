@@ -876,7 +876,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     }
 
                     // From this point, we should only use frame settings from the camera
-                    hdCamera.Update(currentFrameSettings, postProcessLayer, m_VolumetricLightingSystem);
+                    hdCamera.Update(currentFrameSettings, m_VolumetricLightingSystem);
 
                     Resize(hdCamera);
 
@@ -1132,7 +1132,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             cmd: cmd,
                             camera: hdCamera,
                             colorBuffer: m_CameraColorBuffer,
-                            lightingBuffer: null
+                            lightingBuffer: null,
+                            velocityBuffer: m_VelocityBuffer
                         );
                         //<<<
 

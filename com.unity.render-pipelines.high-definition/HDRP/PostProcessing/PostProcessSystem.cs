@@ -145,11 +145,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalTexture(HDShaderIDs._ExposureTexture, GetExposureTexture(camera));
         }
 
-        public void Render(CommandBuffer cmd, HDCamera camera, RTHandle colorBuffer, RTHandle lightingBuffer)
+        public void Render(CommandBuffer cmd, HDCamera camera, RTHandle colorBuffer, RTHandle lightingBuffer, RTHandle velocityBuffer)
         {
             using (new ProfilingSample(cmd, "Post-processing", CustomSamplerId.PostProcessing.GetSampler()))
             {
-                bool needFinalPass = NeedFinalPass(camera);
+                var source = colorBuffer;
 
                 // TODO: Do we want user effects before post?
 
@@ -162,49 +162,55 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     }
                 }
 
+                // Temporal anti-aliasing goes first
+                if (camera.antialiasing == AntialiasingMode.TemporalAntialiasing)
+                {
+                    using (new ProfilingSample(cmd, "Temporal Anti-aliasing", CustomSamplerId.TemporalAntialiasing.GetSampler()))
+                    {
+                        DoTemporalAntialiasing(cmd, camera, source, PingPongTarget());
+                        source = GetLastPingPongTarget();
+                    }
+                }
+
                 // TODO: Depth of field goes here
                 // TODO: Motion blur goes here
 
                 // Combined post-processing stack - always runs if postfx is enabled
                 using (new ProfilingSample(cmd, "Uber", CustomSamplerId.UberPost.GetSampler()))
                 {
-                    // Feature flags are passed to all effects and it's their reponsability to check if
-                    // they are used or not so they can set default values if needed
+                    // Feature flags are passed to all effects and it's their reponsability to check
+                    // if they are used or not so they can set default values if needed
                     var cs = m_Resources.uberPostCS;
                     var featureFlags = GetUberFeatureFlags();
-
                     int kernel = GetUberKernel(cs, featureFlags);
 
-                    DoLensDistortion(cmd, cs, kernel, featureFlags);
-                    DoChromaticAberration(cmd, cs, kernel, featureFlags);
-                    DoVignette(cmd, cs, kernel, featureFlags);
-                    
+                    // Build the color grading lut
                     using (new ProfilingSample(cmd, "Color Grading LUT Builder", CustomSamplerId.ColorGradingLUTBuilder.GetSampler()))
                     {
                         DoColorGrading(cmd, cs, kernel);
                     }
 
+                    // Setup the rest of the effects
+                    DoLensDistortion(cmd, cs, kernel, featureFlags);
+                    DoChromaticAberration(cmd, cs, kernel, featureFlags);
+                    DoVignette(cmd, cs, kernel, featureFlags);
+
+                    // Run
                     cmd.SetComputeVectorParam(cs, HDShaderIDs._TexelSize, new Vector4(camera.actualWidth, camera.actualHeight, 1f / camera.actualWidth, 1f / camera.actualHeight));
-                    cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, colorBuffer);
+                    cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
                     cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, PingPongTarget());
                     cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 9) / 8, (camera.actualHeight + 9) / 8, 1);
+
+                    source = GetLastPingPongTarget();
                 }
 
                 // TODO: User effects go here
 
-                if (needFinalPass)
+                // Final pass
+                // TODO: this pass should be the one writing to the backbuffer and do all the remaining stuff
+                using (new ProfilingSample(cmd, "Final Pass", CustomSamplerId.FinalPost.GetSampler()))
                 {
-                    // Final pass for screen-space anti-aliasing
-                    using (new ProfilingSample(cmd, "Final Pass", CustomSamplerId.FinalPost.GetSampler()))
-                    {
-                        DoFinalPass(cmd, camera, GetLastPingPongTarget(), colorBuffer);
-                    }
-                }
-                else
-                {
-                    // Can skip this if Uber is the latest effect in the chain (no final pass and
-                    // no user effect)
-                    cmd.Blit(GetLastPingPongTarget(), colorBuffer);
+                    DoFinalPass(cmd, camera, source, colorBuffer);
                 }
             }
 
@@ -253,11 +259,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 flags |= UberPostFeatureFlags.LensDistortion;
 
             return flags;
-        }
-
-        bool NeedFinalPass(HDCamera camera)
-        {
-            return camera.antialiasing == AntialiasingMode.FastApproximateAntialiasing;
         }
 
         #region Exposure
@@ -427,6 +428,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         #endregion
 
+        #region
+
+        void DoTemporalAntialiasing(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination)
+        {
+            cmd.Blit(source, destination);
+        }
+
+        #endregion
+
         #region Lens Distortion
 
         void DoLensDistortion(CommandBuffer cmd, ComputeShader cs, int kernel, UberPostFeatureFlags flags)
@@ -527,7 +537,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         void DoColorGrading(CommandBuffer cmd, ComputeShader cs, int kernel)
         {
             // TODO: User lut support
-            var lut = VolumeManager.instance.stack.GetComponent<ColorLookup>();
+            //var lut = VolumeManager.instance.stack.GetComponent<ColorLookup>();
             var tonemapping = VolumeManager.instance.stack.GetComponent<Tonemapping>();
             var whiteBalance = VolumeManager.instance.stack.GetComponent<WhiteBalance>();
             var adjustments = VolumeManager.instance.stack.GetComponent<ColorAdjustments>();
@@ -731,6 +741,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void DoFinalPass(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination)
         {
+            // TODO: FIXME
+            // This pass should be the one writing to the backbuffer, but we can't write to it using
+            // a compute so it should be converted to a fragment.
+            // Also missing: 8-bit dithering, ODT transform
             if (camera.antialiasing == AntialiasingMode.FastApproximateAntialiasing)
             {
                 var cs = m_Resources.fxaaCS;
@@ -739,6 +753,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, destination);
                 cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 9) / 8, (camera.actualHeight + 9) / 8, 1);
+            }
+            else
+            {
+                cmd.Blit(source, destination);
             }
         }
 
