@@ -89,7 +89,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // The actual comparison happens here
             // addIndicies will hold indices of probes to bake
             // remIndicies will hold indices of baked data to delete
-            if (HDUnsafeUtils.CompareHashes(
+            if (CoreUnsafeUtils.CompareHashes(
                 bakedProbeHashes.count, oldHashes,          // old hashes
                 bakedProbeCount, bakedProbeOutputHashes,    // new hashes
                 addIndices, remIndices,
@@ -111,7 +111,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 if (!bakingComplete)
                 {
                     var allProbeOutputHash = new Hash128();
-                    HDUnsafeUtils.CombineHashes(bakedProbeCount, bakedProbeOutputHashes, &allProbeOutputHash);
+                    CoreUnsafeUtils.CombineHashes(bakedProbeCount, bakedProbeOutputHashes, &allProbeOutputHash);
                     if (tickedRenderer.isComplete && tickedRenderer.inputHash == allProbeOutputHash)
                         bakingComplete = true;
                     else
@@ -119,7 +119,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         // We must restart the renderer with the new data
                         tickedRenderer.Cancel();
                         var toBakeIDs = stackalloc HDReflectionEntityID[addCount];
-                        HDUnsafeUtils.CopyToIndirect(
+                        CoreUnsafeUtils.CopyToIndirect(
                             addCount, addIndices,
                             (byte*)bakedProbeIDs, (byte*)toBakeIDs,
                             UnsafeUtility.SizeOf<HDReflectionEntityID>()
