@@ -218,7 +218,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 2
   m_RefreshMode: 0
-  m_Version: 2
+  m_Version: 3
   influenceShape: 0
   influenceSphereRadius: 3
   blendDistancePositive: {x: 0, y: 0, z: 0}
@@ -377,7 +377,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 2
   m_RefreshMode: 0
-  m_Version: 2
+  m_Version: 3
   influenceShape: 0
   influenceSphereRadius: 3
   blendDistancePositive: {x: 0, y: 0, z: 0}
@@ -536,7 +536,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 2
   m_RefreshMode: 0
-  m_Version: 2
+  m_Version: 3
   influenceShape: 0
   influenceSphereRadius: 3
   blendDistancePositive: {x: 0, y: 0, z: 0}
@@ -695,7 +695,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 2
   m_RefreshMode: 0
-  m_Version: 2
+  m_Version: 3
   influenceShape: 0
   influenceSphereRadius: 3
   blendDistancePositive: {x: 0, y: 0, z: 0}
@@ -854,7 +854,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 2
   m_RefreshMode: 0
-  m_Version: 2
+  m_Version: 3
   influenceShape: 0
   influenceSphereRadius: 3
   blendDistancePositive: {x: 0, y: 0, z: 0}
@@ -1013,7 +1013,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 2
   m_RefreshMode: 0
-  m_Version: 2
+  m_Version: 3
   influenceShape: 0
   influenceSphereRadius: 3
   blendDistancePositive: {x: 0, y: 0, z: 0}
@@ -1172,7 +1172,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 2
   m_RefreshMode: 0
-  m_Version: 2
+  m_Version: 3
   influenceShape: 0
   influenceSphereRadius: 3
   blendDistancePositive: {x: 0, y: 0, z: 0}
@@ -1331,7 +1331,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 2
   m_RefreshMode: 0
-  m_Version: 2
+  m_Version: 3
   influenceShape: 0
   influenceSphereRadius: 3
   blendDistancePositive: {x: 0, y: 0, z: 0}
@@ -1490,7 +1490,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 2
   m_RefreshMode: 0
-  m_Version: 2
+  m_Version: 3
   influenceShape: 0
   influenceSphereRadius: 3
   blendDistancePositive: {x: 0, y: 0, z: 0}
@@ -1579,7 +1579,7 @@ ReflectionProbe:
   m_TimeSlicingMode: 0
   m_Resolution: 128
   m_UpdateFrequency: 0
-  m_BoxSize: {x: 6, y: 6, z: 6}
+  m_BoxSize: {x: 7, y: 7, z: 7}
   m_BoxOffset: {x: 0, y: 0, z: 0}
   m_NearClip: 0.3
   m_FarClip: 1000
@@ -1649,7 +1649,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 2
   m_RefreshMode: 0
-  m_Version: 2
+  m_Version: 3
   influenceShape: 0
   influenceSphereRadius: 3
   blendDistancePositive: {x: 0, y: 0, z: 0}
@@ -1762,6 +1762,10 @@ PrefabInstance:
       propertyPath: backgroundColorHDR.b
       value: 0.05448028
       objectReference: {fileID: 0}
+    - target: {fileID: 1132393308280272, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
 --- !u!1 &2034075293
@@ -1869,7 +1873,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 2
   m_RefreshMode: 0
-  m_Version: 2
+  m_Version: 3
   influenceShape: 0
   influenceSphereRadius: 3
   blendDistancePositive: {x: 0, y: 0, z: 0}
