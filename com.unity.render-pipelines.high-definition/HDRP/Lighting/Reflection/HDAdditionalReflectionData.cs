@@ -1,5 +1,5 @@
-using UnityEngine.Serialization;
 using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -16,6 +16,40 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Max,
             Current = Max - 1
         }
+
+        public struct ProbeCaptureProperties
+        {
+            public CaptureProperties common;
+            public int cubemapSize;
+        }
+
+        public ProbeCaptureProperties captureSettings;
+
+        public override Hash128 ComputeBakePropertyHashes()
+        {
+            var legacyProbe = GetComponent<ReflectionProbe>();
+            var center = legacyProbe.center;
+            var positionHash = new Hash128();
+            var position = transform.position;
+            HashUtilities.QuantisedVectorHash(ref position, ref positionHash);
+            var centerHash = new Hash128();
+            HashUtilities.QuantisedVectorHash(ref center, ref centerHash);
+            HashUtilities.AppendHash(ref centerHash, ref positionHash);
+            return positionHash;
+        }
+
+        public override void GetCaptureTransformFor(
+            Vector3 viewerPosition, Quaternion viewerRotation,
+            out Vector3 capturePosition, out Quaternion captureRotation
+        )
+        {
+            var legacyProbe = GetComponent<ReflectionProbe>();
+            var center = legacyProbe.center;
+            var position = transform.position;
+            capturePosition = position - center;
+            captureRotation = viewerRotation;
+        }
+
 
         [SerializeField, FormerlySerializedAs("version")]
         int m_Version;
@@ -72,8 +106,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        void OnEnable()
+        protected override void OnEnable()
         {
+            base.OnEnable();
+
             if (needMigrateToHDProbeChild)
                 MigrateToHDProbeChild();
             if (needMigrateToUseInfluenceVolume)

@@ -5,9 +5,46 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     class HDProbeRenderer
     {
-        struct ReflectionProbeRenderer
+        struct CommonRenderer
         {
-            public bool Render(HDReflectionProbe probe, Texture target)
+            public static void SetupCaptureCameraSettings(
+                Camera camera,
+                HDProbe2.CaptureProperties captureProperties
+            )
+            {
+                camera.farClipPlane = captureProperties.farClipPlane;
+                camera.nearClipPlane = captureProperties.nearClipPlane;
+                camera.fieldOfView = captureProperties.fieldOfview;
+
+                var add = camera.GetComponent<HDAdditionalCameraData>();
+                add.Import(captureProperties.cameraSettings);
+            }
+
+            public static void SetupCaptureCameraTransform(
+                Camera camera,
+                HDProbe2 probe,
+                Vector3 viewerPosition, Quaternion viewerRotation
+            )
+            {
+                Vector3 position; Quaternion rotation;
+                probe.GetCaptureTransformFor(
+                    viewerPosition, viewerRotation,
+                    out position, out rotation
+                );
+                camera.transform.position = position;
+                camera.transform.rotation = rotation;
+            }
+        }
+
+        interface IProbeRenderer<T>
+            where T : HDProbe2
+        {
+            bool Render(T probe, Texture target, Transform viewer);
+        }
+
+        struct ReflectionProbeRenderer : IProbeRenderer<HDReflectionProbe>
+        {
+            public bool Render(HDReflectionProbe probe, Texture target, Transform viewer)
             {
                 var cubemapTarget = target as Cubemap;
                 var rtTarget = target as RenderTexture;
@@ -20,7 +57,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 var camera = NewCamera(probe.assets.captureFrameSettings, probe.assets.postProcessLayer);
 
-                SetupCaptureCamera(camera, probe.captureSettings, rtTarget);
+                SetupCaptureCamera(camera, probe, rtTarget, viewer);
 
                 if (cubemapTarget != null)
                     camera.RenderToCubemap(cubemapTarget);
@@ -34,28 +71,26 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             void SetupCaptureCamera(
                 Camera camera,
-                HDReflectionProbe.ProbeCaptureProperties capture,
-                RenderTexture target
+                HDReflectionProbe probe,
+                RenderTexture target,
+                Transform viewer
             )
             {
-                camera.transform.position = capture.common.position;
-                camera.farClipPlane = capture.common.farClipPlane;
-                camera.nearClipPlane = capture.common.nearClipPlane;
-                camera.fieldOfView = capture.common.fieldOfview;
-                camera.clearFlags = capture.common.clearFlags;
-                camera.backgroundColor = capture.common.backgroundColor;
                 camera.aspect = target.width / (float)target.height;
+
+                CommonRenderer.SetupCaptureCameraSettings(camera, probe.captureSettings.common);
+                CommonRenderer.SetupCaptureCameraTransform(camera, probe, viewer.position, viewer.rotation);
             }
         }
 
         ReflectionProbeRenderer m_ReflectionProbeRenderer = new ReflectionProbeRenderer();
 
-        public bool Render(HDProbe2 probe, Texture target)
+        public bool Render(HDProbe2 probe, Texture target, Transform viewer)
         {
             var standard = probe as HDReflectionProbe;
             var planar = probe as HDPlanarProbe;
             if (standard != null)
-                return m_ReflectionProbeRenderer.Render(standard, target);
+                return m_ReflectionProbeRenderer.Render(standard, target, viewer);
             if (planar != null)
                 throw new NotImplementedException();
             return false;

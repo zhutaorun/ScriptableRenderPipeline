@@ -1,11 +1,66 @@
+using System;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
+    [Serializable]
+    public struct CameraSettings
+    {
+        public HDAdditionalCameraData.ClearColorMode clearColorMode;
+        public Color backgroundColorHDR;
+        public bool clearDepth;
+        public HDAdditionalCameraData.RenderingPath renderingPath;
+        public LayerMask volumeLayerMask;
+        public Transform volumeAnchorOverride;
+        public float aperture;
+        public float shutterSpeed;
+        public float iso;
+        public FrameSettings frameSettings;
+    }
+
+    public enum ReflectionProbeWorkflowType
+    {
+        Baked,
+        Custom,
+        Realtime
+    }
+
     [ExecuteInEditMode]
     public abstract class HDProbe : MonoBehaviour, ISerializationCallbackReceiver
     {
+        [Serializable]
+        public struct CaptureProperties
+        {
+            public float farClipPlane;
+            public float nearClipPlane;
+            public float fieldOfview;
+            public ReflectionProbeWorkflowType workflowType;
+            public CameraSettings cameraSettings;
+        }
+
+        [Serializable]
+        internal struct Assets
+        {
+            public Texture bakedTexture;        // TODO: texture should not be serialized here
+            public Texture customTexture;       // TODO: otherwise, you can have like the baked texture
+            public Texture realtimeTexture;     // TODO: included in build for a realtime probe...
+            public FrameSettings captureFrameSettings;
+        }
+
+        public Texture bakedTexture { get { return assets.bakedTexture; } set { assets.bakedTexture = value; } }
+
+        public abstract Hash128 ComputeBakePropertyHashes();
+        public abstract void GetCaptureTransformFor(
+            Vector3 viewerPosition, Quaternion viewerRotation,
+            out Vector3 capturePosition, out Quaternion captureRotation
+        );
+
+        // ---------------
+
+        [SerializeField]
+        internal Assets assets;
+
         [SerializeField, FormerlySerializedAs("proxyVolumeComponent"), FormerlySerializedAs("m_ProxyVolumeReference")]
         ReflectionProxyVolumeComponent m_ProxyVolume = null;
 
@@ -54,6 +109,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (influenceVolume == null)
                 influenceVolume = new InfluenceVolume();
             influenceVolume.Init(this);
+        }
+
+        protected virtual void OnEnable()
+        {
+            HDReflectionEntitySystem.instance.Register(this);
+        }
+
+        protected virtual void OnDisable()
+        {
+            HDReflectionEntitySystem.instance.Unregister(this);
         }
 
         void ISerializationCallbackReceiver.OnBeforeSerialize()

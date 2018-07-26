@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
@@ -76,9 +77,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static void RegisterSystem()
         {
             ScriptableBakedReflectionSystemSettings.system = new HDReflectionSystem();
+
         }
 
-        BakedProbeHashes m_BakedProbeState;
+        BakedProbeHashes m_BakedProbeState = new BakedProbeHashes();
+        HDProbeTickedRenderer m_TickedRenderer = new HDProbeTickedRenderer();
 
         public int stageCount { get { return 1; } }
 
@@ -113,7 +116,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var tick = new HDReflectionSystemTick
             {
                 bakedProbeHashes = m_BakedProbeState,
-                // TODO: Set lighting settings here
+                entitySystem = HDReflectionEntitySystem.instance,
+                tickedRenderer = m_TickedRenderer,
+                settings = new ReflectionSettings() // TODO: Set lighting settings here
             };
             tick.Tick(sceneStateHash, handle);
         }

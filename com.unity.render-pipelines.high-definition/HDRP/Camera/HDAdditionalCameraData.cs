@@ -1,5 +1,6 @@
 using UnityEngine.Serialization;
 using UnityEngine.Assertions;
+using System;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -43,6 +44,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public ClearColorMode clearColorMode = ClearColorMode.Sky;
         [ColorUsage(true, true)]
         public Color backgroundColorHDR = new Color(0.025f, 0.07f, 0.19f, 0.0f);
+
         public bool clearDepth = true;
 
         public RenderingPath renderingPath = RenderingPath.Default;
@@ -98,6 +100,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             //data.m_IsDebugRegistered = m_IsDebugRegistered;
             //data.m_CameraRegisterName = m_CameraRegisterName;
             //data.isEditorCameraPreview = isEditorCameraPreview;
+        }
+
+        internal void Import(CameraSettings cameraSettings)
+        {
+            clearColorMode = cameraSettings.clearColorMode;
+            backgroundColorHDR = cameraSettings.backgroundColorHDR;
+            clearDepth = cameraSettings.clearDepth;
+            renderingPath = cameraSettings.renderingPath;
+            volumeLayerMask = cameraSettings.volumeLayerMask;
+            volumeAnchorOverride = cameraSettings.volumeAnchorOverride;
+            aperture = cameraSettings.aperture;
+            shutterSpeed = cameraSettings.shutterSpeed;
+            iso = cameraSettings.iso;
+
+            cameraSettings.frameSettings.CopyTo(m_FrameSettings);
+            cameraSettings.frameSettings.CopyTo(m_FrameSettingsRuntime);
+            m_frameSettingsIsDirty = true; // Let's be sure it is dirty for update
         }
 
         // This is the function use outside to access FrameSettings. It return the current state of FrameSettings for the camera

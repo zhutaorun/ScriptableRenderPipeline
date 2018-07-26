@@ -19,9 +19,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         internal bool isComplete { get { return m_IsComplete; } }
         internal Hash128 inputHash;
 
-        // To inject by callee
-        public HDReflectionEntityManager2 entityManager;
-
         internal void Cancel()
         {
             m_IsRunning = false;
@@ -68,12 +65,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             ++m_NextIndexToBake;
 
             var probeId = m_ToBakeProbeInstanceIDs[index];
-            var probe = entityManager.GetProbeByID(probeId);
+            var probe = (HDProbe2)EditorUtility.InstanceIDToObject(probeId);
             var scenePath = probe.gameObject.scene.path;
             var hash = m_ToBakeHashes[index];
 
             var renderTarget = HDProbeRendererUtilities.CreateRenderTarget(probe);
-            m_Renderer.Render(probe, renderTarget);
+            m_Renderer.Render(probe, renderTarget, null);
 
             var cacheFilePath = m_TextureImporter.GetCacheBakePathFor(probe, hash);
             HDBakeUtilities.WriteBakedTextureTo(renderTarget, cacheFilePath);

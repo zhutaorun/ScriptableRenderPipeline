@@ -1,5 +1,6 @@
 using UnityEngine.Serialization;
 using UnityEngine.Rendering;
+using System;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -7,6 +8,28 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public class PlanarReflectionProbe : HDProbe, ISerializationCallbackReceiver
     {
         const int currentVersion = 2;
+
+        [Serializable]
+        public struct PlanarCaptureProperties
+        {
+            public CaptureProperties common;
+            public CapturePositionMode capturePositionMode;
+        }
+
+        public PlanarCaptureProperties captureSettings;
+
+        public override Hash128 ComputeBakePropertyHashes()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void GetCaptureTransformFor(
+            Vector3 viewerPosition, Quaternion viewerRotation,
+            out Vector3 capturePosition, out Quaternion captureRotation
+        )
+        {
+            throw new NotImplementedException();
+        }
 
         [SerializeField, FormerlySerializedAs("version")]
         int m_Version;
@@ -154,13 +177,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 ReflectionSystem.RequestRealtimeRender(this);
         }
 
-        void OnEnable()
+        protected override void OnEnable()
         {
+            base.OnEnable();
             ReflectionSystem.RegisterProbe(this);
         }
 
-        void OnDisable()
+        protected override void OnDisable()
         {
+            base.OnDisable();
             ReflectionSystem.UnregisterProbe(this);
         }
 

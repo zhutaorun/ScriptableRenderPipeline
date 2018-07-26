@@ -19,7 +19,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         // Injected resources by callee
         public BakedProbeHashes bakedProbeHashes;
         public HDProbeTickedRenderer tickedRenderer;
-        public HDReflectionEntityManager2 entityManager;
+        public HDReflectionEntitySystem entitySystem;
         public HDProbeTextureImporter textureImporter;
 
         internal void Tick(SceneStateHash sceneStateHash, IScriptableBakedReflectionSystemStageNotifier handle)
@@ -41,11 +41,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             // = Step 1 =
             // Allocate stack variables
-            var bakedProbeCount = entityManager.BakedProbeCount;
+            var bakedProbeCount = entitySystem.BakedProbeCount;
             var bakedProbeOnlyHashes = stackalloc Hash128[bakedProbeCount];
             var bakedProbeIDs = stackalloc int[bakedProbeCount];
             ComputeProbeStateHashesAndGetEntityIDs(
-                entityManager.GetActiveBakedProbeEnumerator(),
+                entitySystem.GetActiveBakedProbeEnumerator(),
                 bakedProbeOnlyHashes, bakedProbeIDs
             );
 
@@ -57,7 +57,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             // Baked probes depends on probes with custom textures
             var allCustomProbeHash = new Hash128();
-            ComputeAllCustomProbeHash(entityManager.GetActiveCustomProbeEnumerator(), ref allCustomProbeHash);
+            ComputeAllCustomProbeHash(entitySystem.GetActiveCustomProbeEnumerator(), ref allCustomProbeHash);
             HashUtilities.AppendHash(ref allCustomProbeHash, ref allBakedProbeHash);
 
             // TODO: calculate a custom hash for light that hashes additional data as well.
@@ -147,7 +147,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     {
                         var index = addIndices[i];
                         var probeId = bakedProbeIDs[index];
-                        var probe = entityManager.GetProbeByID(probeId);
+                        var probe = EditorUtility.InstanceIDToObject(probeId);
                         var probeScene = probe.gameObject.scene;
                         var bakedOutputHash = bakedProbeOutputHashes[index];
                         var probeOnlyHash = bakedProbeOnlyHashes[index];
