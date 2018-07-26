@@ -302,6 +302,18 @@ namespace UnityEngine.Experimental.Rendering
             DrawFullScreen(commandBuffer, material, colorBuffers, colorBuffers[0], properties, shaderPassId);
         }
 
+        /// <summary>Combine all of the hashes of a collection of hashes.</summary>
+        /// <param name="hashes">Hashes to combine.</param>
+        /// <param name="outHash">Hash to update.</param>
+        public static void CombineHashes(IList<Hash128> hashes, ref Hash128 outHash)
+        {
+            for (int i = 0; i < hashes.Count; ++i)
+            {
+                var h = hashes[i];
+                HashUtilities.AppendHash(ref h, ref outHash);
+            }
+        }
+
         // Color space utilities
         public static Color ConvertSRGBToActiveColorSpace(Color color)
         {
