@@ -43,7 +43,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // Allocate stack variables
             var bakedProbeCount = entityManager.BakedProbeCount;
             var bakedProbeOnlyHashes = stackalloc Hash128[bakedProbeCount];
-            var bakedProbeIDs = stackalloc HDReflectionEntityID[bakedProbeCount];
+            var bakedProbeIDs = stackalloc int[bakedProbeCount];
             ComputeProbeStateHashesAndGetEntityIDs(
                 entityManager.GetActiveBakedProbeEnumerator(),
                 bakedProbeOnlyHashes, bakedProbeIDs
@@ -118,11 +118,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     {
                         // We must restart the renderer with the new data
                         tickedRenderer.Cancel();
-                        var toBakeIDs = stackalloc HDReflectionEntityID[addCount];
+                        var toBakeIDs = stackalloc int[addCount];
                         CoreUnsafeUtils.CopyToIndirect(
                             addCount, addIndices,
                             (byte*)bakedProbeIDs, (byte*)toBakeIDs,
-                            UnsafeUtility.SizeOf<HDReflectionEntityID>()
+                            UnsafeUtility.SizeOf<int>()
                         );
                         tickedRenderer.Start(
                             allProbeOutputHash,
@@ -209,14 +209,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         void ComputeProbeStateHashesAndGetEntityIDs(
             IEnumerator<HDProbe2> enumerator,
             Hash128* bakedProbeOnlyHashes,
-            HDReflectionEntityID* bakedProbeIDs
+            int* bakedProbeIDs
         )
         {
             var i = 0;
             while (enumerator.MoveNext())
             {
                 var bakedProbe = enumerator.Current;
-                bakedProbeIDs[i] = bakedProbe.entityId;
+                bakedProbeIDs[i] = bakedProbe.GetInstanceID();
                 bakedProbeOnlyHashes[i] = bakedProbe.ComputeBakePropertyHashes();
                 ++i;
             }

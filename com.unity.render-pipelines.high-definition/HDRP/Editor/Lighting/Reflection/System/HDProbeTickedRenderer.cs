@@ -11,7 +11,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         Hash128 m_InputHash = new Hash128();
         bool m_IsComplete = true;
         bool m_IsRunning = false;
-        HDReflectionEntityID[] m_ToBakeIDs;
+        int[] m_ToBakeProbeInstanceIDs;
         Hash128[] m_ToBakeHashes;
 
         HDProbeTextureImporter m_TextureImporter;
@@ -32,7 +32,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             Hash128 inputHash,
             ReflectionSettings settings,
             int addCount,
-            HDReflectionEntityID* toBakeIDs,
+            int* toBakeIDs,
             Hash128* toBakeHashes
         )
         {
@@ -46,9 +46,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             m_InputHash = inputHash;
             m_NextIndexToBake = 0;
 
-            Array.Resize(ref m_ToBakeIDs, addCount);
-            for (int i = 0; i < m_ToBakeIDs.Length; ++i)
-                m_ToBakeIDs[i] = toBakeIDs[i];
+            Array.Resize(ref m_ToBakeProbeInstanceIDs, addCount);
+            for (int i = 0; i < m_ToBakeProbeInstanceIDs.Length; ++i)
+                m_ToBakeProbeInstanceIDs[i] = toBakeIDs[i];
             Array.Resize(ref m_ToBakeHashes, addCount);
             for (int i = 0; i < m_ToBakeHashes.Length; ++i)
                 m_ToBakeHashes[i] = toBakeHashes[i];
@@ -57,7 +57,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         internal bool Tick()
         {
             if (!m_IsRunning
-                || m_NextIndexToBake >= m_ToBakeIDs.Length)
+                || m_NextIndexToBake >= m_ToBakeProbeInstanceIDs.Length)
             {
                 m_IsComplete = true;
                 m_IsRunning = !m_IsComplete;
@@ -67,7 +67,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var index = m_NextIndexToBake;
             ++m_NextIndexToBake;
 
-            var probeId = m_ToBakeIDs[index];
+            var probeId = m_ToBakeProbeInstanceIDs[index];
             var probe = entityManager.GetProbeByID(probeId);
             var scenePath = probe.gameObject.scene.path;
             var hash = m_ToBakeHashes[index];
@@ -78,7 +78,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var cacheFilePath = m_TextureImporter.GetCacheBakePathFor(probe, hash);
             HDBakeUtilities.WriteBakedTextureTo(renderTarget, cacheFilePath);
 
-            m_IsComplete = m_NextIndexToBake >= m_ToBakeIDs.Length;
+            m_IsComplete = m_NextIndexToBake >= m_ToBakeProbeInstanceIDs.Length;
             m_IsRunning = !m_IsComplete;
             return m_IsComplete;
         }

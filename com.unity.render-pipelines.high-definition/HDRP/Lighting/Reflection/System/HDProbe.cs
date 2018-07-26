@@ -46,7 +46,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public PostProcessLayer postProcessLayer;
         }
 
-        internal HDReflectionEntityID entityId;
         internal Assets assets;
 
         public BakedProperties bakedProperties;

@@ -1,7 +1,6 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Experimental.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
@@ -10,17 +9,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public int count { get; private set; }
         public List<Hash128> probeOnlyHashes { get; private set; }
         public List<Hash128> probeOutputHashes { get; private set; }
-        public List<HDReflectionEntityID> IDs { get; private set; }
+        public List<int> InstanceIDs { get; private set; }
 
         public BakedProbeHashes()
         {
             count = 0;
             probeOnlyHashes = new List<Hash128>();
             probeOutputHashes = new List<Hash128>();
-            IDs = new List<HDReflectionEntityID>();
+            InstanceIDs = new List<int>();
         }
 
-        internal void Add(HDReflectionEntityID probeId, Hash128 probeOnlyHash, Hash128 bakedOutputHash)
+        internal void Add(int probeId, Hash128 probeOnlyHash, Hash128 bakedOutputHash)
         {
             // Keep the array sorted
             // It is most likely to have small arrays so it is ok concerning performance.
@@ -43,7 +42,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
 
             ++count;
-            IDs.Insert(insertAt, probeId);
+            InstanceIDs.Insert(insertAt, probeId);
             probeOnlyHashes.Insert(insertAt, probeOnlyHash);
             probeOutputHashes.Insert(insertAt, bakedOutputHash);
         }
@@ -54,7 +53,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 --count;
                 var index = remIndices[i];
-                IDs.RemoveAt(index);
+                InstanceIDs.RemoveAt(index);
                 probeOnlyHashes.RemoveAt(index);
                 probeOutputHashes.RemoveAt(index);
             }
@@ -91,7 +90,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 var hash = new Hash128();
                 if (m_BakedProbeState != null)
                 {
-                    HDUnsafeUtils.CombineHashes(m_BakedProbeState.probeOutputHashes, &hash);
+                    CoreUtils.CombineHashes(m_BakedProbeState.probeOutputHashes, ref hash);
                 }
                 return hash;
             }
