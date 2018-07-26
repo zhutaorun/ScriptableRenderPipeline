@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.Tests
@@ -81,15 +82,15 @@ namespace UnityEditor.Experimental.Rendering.Tests
 
         static object[][] s_QuickSort = new object[][]
         {
-            new object[] { new int[] { 0, 1 } },
-            new object[] { new int[] { 1, 0 } },
-            new object[] { new int[] { 0, 4, 2, 6, 3, 7, 1, 5 } }, // Test with unique set
-            new object[] { new int[] { 0, 4, 2, 6, 4, 7, 1, 5 } }, // Test with non unique set
+            new object[] { "noop",                  new int[] { 0, 1 } },
+            new object[] { "Invert 2 element",      new int[] { 1, 0 } },
+            new object[] { "Unique set",            new int[] { 0, 4, 2, 6, 3, 7, 1, 5 } },
+            new object[] { "Set with duplicates",   new int[] { 0, 4, 2, 6, 4, 7, 1, 5 } },
         };
 
         [Test]
         [TestCaseSource("s_QuickSort")]
-        public void QuickSort(int[] values)
+        public void QuickSort(string name, int[] values)
         {
             // We must perform a copy to avoid messing the test data directly
             var ptrValues = stackalloc int[values.Length];
@@ -97,8 +98,90 @@ namespace UnityEditor.Experimental.Rendering.Tests
 
             CoreUnsafeUtils.QuickSort<int>(values.Length, ptrValues);
 
-            for (int i = 0; i< values.Length - 1; ++i)
+            for (int i = 0; i < values.Length - 1; ++i)
                 Assert.LessOrEqual(ptrValues[i], ptrValues[i + 1]);
+        }
+
+        static object[][] s_CompareHashes = new object[][]
+        {
+            new object[] {
+                "no data",
+                new Hash128[] { },
+                new Hash128[] { },
+                new int[] { }, new int[] { }, 0
+            },
+            new object[] {
+                "1 to remove",
+                new Hash128[] { new Hash128(0x0, 0x0) },
+                new Hash128[] { },
+                new int[] { }, new int[] { 0 }, 1
+            },
+            new object[] {
+                "1 to add",
+                new Hash128[] { },
+                new Hash128[] { new Hash128(0x0, 0x0) },
+                new int[] { 0 }, new int[] { }, 1
+            },
+            new object[] {
+                "1 and nothing to do",
+                new Hash128[] { new Hash128(0x0, 0x0) },
+                new Hash128[] { new Hash128(0x0, 0x0) },
+                new int[] { }, new int[] { }, 0
+            },
+            new object[] {
+                "1 to add, 1 to remove",
+                new Hash128[] { new Hash128(0x0, 0x1) },
+                new Hash128[] { new Hash128(0x0, 0x0) },
+                new int[] { 0 }, new int[] { 0 }, 2
+            },
+            new object[] {
+                "1 to remove, with existing hashes",
+                new Hash128[] { new Hash128(0x0, 0x0), new Hash128(0x0, 0x1) },
+                new Hash128[] { new Hash128(0x0, 0x0) },
+                new int[] { }, new int[] { 1 }, 1
+            },
+            new object[] {
+                "1 to add, with existing hashes",
+                new Hash128[] { new Hash128(0x0, 0x0) },
+                new Hash128[] { new Hash128(0x0, 0x0), new Hash128(0x0, 0x1) },
+                new int[] { 1 }, new int[] { }, 1
+            }
+        };
+
+        [Test]
+        [TestCaseSource("s_CompareHashes")]
+        public void CompareHashes(
+            string name,
+            Hash128[] oldHashesArray,
+            Hash128[] newHashesArray,
+            int[] expAddIndices, int[] expRemIndices,
+            int expNumOp
+        )
+        {
+            fixed (Hash128* oldHashes = oldHashesArray)
+            fixed (Hash128* newHashes = newHashesArray)
+            {
+                var addIndices = stackalloc int[newHashesArray.Length];
+                var remIndices = stackalloc int[oldHashesArray.Length];
+                var addCount = 0;
+                var remCount = 0;
+
+                var numOp = CoreUnsafeUtils.CompareHashes(
+                    oldHashesArray.Length, oldHashes,
+                    newHashesArray.Length, newHashes,
+                    addIndices, remIndices,
+                    out addCount, out remCount
+                );
+
+                Assert.AreEqual(expNumOp, numOp);
+                Assert.AreEqual(expAddIndices.Length, addCount);
+                Assert.AreEqual(expRemIndices.Length, remCount);
+
+                for (int i = 0; i < expAddIndices.Length; ++i)
+                    Assert.AreEqual(expAddIndices[i], addIndices[i]);
+                for (int i = 0; i < expRemIndices.Length; ++i)
+                    Assert.AreEqual(expRemIndices[i], remIndices[i]);
+            }
         }
     }
 }

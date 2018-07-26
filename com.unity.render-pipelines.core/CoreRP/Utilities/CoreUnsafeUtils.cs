@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine.Assertions;
 
 namespace UnityEngine.Experimental.Rendering
 {
@@ -135,9 +136,18 @@ namespace UnityEngine.Experimental.Rendering
                 throw new ArgumentException();
 
             var lastItemIndex = array.Length - 1;
-            for (int i = count - 1; i >= 0; --i)
+            for (int i = count - 1; i > 0; --i)
             {
+                Assert.IsTrue(indices[i] > indices[i - 1], "Provided indices are not sorted in increasing order.");
+
                 var index = indices[i];
+                // Swap back to delete
+                array[index] = array[lastItemIndex];
+                --lastItemIndex;
+            }
+            // Unroll last loop
+            {
+                var index = indices[0];
                 // Swap back to delete
                 array[index] = array[lastItemIndex];
                 --lastItemIndex;
