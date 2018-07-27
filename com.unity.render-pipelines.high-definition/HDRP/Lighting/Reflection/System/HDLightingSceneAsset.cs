@@ -40,7 +40,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return asset;
         }
 
-        Dictionary<HDProbe2, int> m_IndexByProbe = new Dictionary<HDProbe2, int>();
+        Dictionary<HDProbe, int> m_IndexByProbe = new Dictionary<HDProbe, int>();
 
         [SerializeField]
         Data[] m_Data;
@@ -58,13 +58,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             for (int i = 0; i < m_Data.Length; ++i)
             {
-                var probe = m_Data[i].gameObject.GetComponent<HDProbe2>();
+                var probe = m_Data[i].gameObject.GetComponent<HDProbe>();
                 if (probe != null)
                     m_IndexByProbe.Add(probe, i);
             }
         }
 
-        internal bool TryGetBakedTextureFor(HDProbe2 probe, out Texture bakedTexture)
+        internal bool TryGetBakedTextureFor(HDProbe probe, out Texture bakedTexture)
         {
             int index;
             if (m_IndexByProbe.TryGetValue(probe, out index))
@@ -78,7 +78,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return false;
         }
 
-        internal void SetBakedTextureFor(HDProbe2 probe, Texture bakedTexture)
+        internal void SetBakedTextureFor(HDProbe probe, Texture bakedTexture)
         {
             int index;
             if (!m_IndexByProbe.TryGetValue(probe, out index))

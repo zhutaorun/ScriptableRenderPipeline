@@ -147,7 +147,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     {
                         var index = addIndices[i];
                         var probeId = bakedProbeIDs[index];
-                        var probe = EditorUtility.InstanceIDToObject(probeId);
+                        var probe = (HDProbe)EditorUtility.InstanceIDToObject(probeId);
                         var probeScene = probe.gameObject.scene;
                         var bakedOutputHash = bakedProbeOutputHashes[index];
                         var probeOnlyHash = bakedProbeOnlyHashes[index];
@@ -207,7 +207,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         }
 
         void ComputeProbeStateHashesAndGetEntityIDs(
-            IEnumerator<HDProbe2> enumerator,
+            IEnumerator<HDProbe> enumerator,
             Hash128* bakedProbeOnlyHashes,
             int* bakedProbeIDs
         )
@@ -222,12 +222,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        void ComputeAllCustomProbeHash(IEnumerator<HDProbe2> enumerator, ref Hash128 hash)
+        void ComputeAllCustomProbeHash(IEnumerator<HDProbe> enumerator, ref Hash128 hash)
         {
             while (enumerator.MoveNext())
             {
                 var customProbe = enumerator.Current;
-                var customHash = customProbe.customProperties.customTextureHash;
+                if (customProbe.assets.customTexture == null)
+                    continue;
+
+                var customHash = customProbe.assets.customTexture.imageContentsHash;
                 HashUtilities.AppendHash(ref customHash, ref hash);
             }
         }

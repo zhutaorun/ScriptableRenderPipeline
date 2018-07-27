@@ -65,7 +65,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             ++m_NextIndexToBake;
 
             var probeId = m_ToBakeProbeInstanceIDs[index];
-            var probe = (HDProbe2)EditorUtility.InstanceIDToObject(probeId);
+            var probe = (HDProbe)EditorUtility.InstanceIDToObject(probeId);
             var scenePath = probe.gameObject.scene.path;
             var hash = m_ToBakeHashes[index];
 

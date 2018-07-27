@@ -9,7 +9,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             public static void SetupCaptureCameraSettings(
                 Camera camera,
-                HDProbe2.CaptureProperties captureProperties
+                HDProbe.CaptureProperties captureProperties
             )
             {
                 camera.farClipPlane = captureProperties.farClipPlane;
@@ -22,7 +22,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             public static void SetupCaptureCameraTransform(
                 Camera camera,
-                HDProbe2 probe,
+                HDProbe probe,
                 Vector3 viewerPosition, Quaternion viewerRotation
             )
             {
@@ -37,14 +37,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         interface IProbeRenderer<T>
-            where T : HDProbe2
+            where T : HDProbe
         {
             bool Render(T probe, Texture target, Transform viewer);
         }
 
-        struct ReflectionProbeRenderer : IProbeRenderer<HDReflectionProbe>
+        struct ReflectionProbeRenderer : IProbeRenderer<HDAdditionalReflectionData>
         {
-            public bool Render(HDReflectionProbe probe, Texture target, Transform viewer)
+            public bool Render(HDAdditionalReflectionData probe, Texture target, Transform viewer)
             {
                 var cubemapTarget = target as Cubemap;
                 var rtTarget = target as RenderTexture;
@@ -71,7 +71,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             void SetupCaptureCamera(
                 Camera camera,
-                HDReflectionProbe probe,
+                HDAdditionalReflectionData probe,
                 RenderTexture target,
                 Transform viewer
             )
@@ -85,10 +85,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         ReflectionProbeRenderer m_ReflectionProbeRenderer = new ReflectionProbeRenderer();
 
-        public bool Render(HDProbe2 probe, Texture target, Transform viewer)
+        public bool Render(HDProbe probe, Texture target, Transform viewer)
         {
-            var standard = probe as HDReflectionProbe;
-            var planar = probe as HDPlanarProbe;
+            var standard = probe as HDAdditionalReflectionData;
+            var planar = probe as PlanarReflectionProbe;
             if (standard != null)
                 return m_ReflectionProbeRenderer.Render(standard, target, viewer);
             if (planar != null)

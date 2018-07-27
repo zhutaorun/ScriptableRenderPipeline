@@ -1,5 +1,6 @@
 using System;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.Serialization;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
@@ -46,6 +47,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Texture customTexture;       // TODO: otherwise, you can have like the baked texture
             public Texture realtimeTexture;     // TODO: included in build for a realtime probe...
             public FrameSettings captureFrameSettings;
+            public PostProcessLayer postProcessLayer;
         }
 
         public Texture bakedTexture { get { return assets.bakedTexture; } set { assets.bakedTexture = value; } }

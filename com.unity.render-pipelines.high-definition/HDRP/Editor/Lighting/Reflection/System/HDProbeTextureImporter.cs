@@ -9,39 +9,39 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     struct HDProbeTextureImporter
     {
         interface IProbeTextureImporter<T>
-            where T : HDProbe2
+            where T : HDProbe
         {
             Texture ImportBakedTextureFromFile(T probe, string pathInCache, string pathInAssets);
             string GetBakedPathFor(T probe);
             string GetCacheBakePathFor(T probe, Hash128 hash);
         }
 
-        struct HDPlanarTextureImporter : IProbeTextureImporter<HDPlanarProbe>
+        struct HDPlanarTextureImporter : IProbeTextureImporter<PlanarReflectionProbe>
         {
-            public string GetBakedPathFor(HDPlanarProbe probe)
+            public string GetBakedPathFor(PlanarReflectionProbe probe)
             {
                 throw new NotImplementedException();
             }
 
-            public string GetCacheBakePathFor(HDPlanarProbe probe, Hash128 hash)
+            public string GetCacheBakePathFor(PlanarReflectionProbe probe, Hash128 hash)
             {
                 throw new NotImplementedException();
             }
 
-            public Texture ImportBakedTextureFromFile(HDPlanarProbe probe, string pathInCache, string pathInAssets)
+            public Texture ImportBakedTextureFromFile(PlanarReflectionProbe probe, string pathInCache, string pathInAssets)
             {
                 throw new NotImplementedException();
             }
         }
 
-        struct HDReflectionProbeTextureImporter : IProbeTextureImporter<HDReflectionProbe>
+        struct HDReflectionProbeTextureImporter : IProbeTextureImporter<HDAdditionalReflectionData>
         {
-            public string GetBakedPathFor(HDReflectionProbe probe)
+            public string GetBakedPathFor(HDAdditionalReflectionData probe)
             {
                 return Path.Combine(probe.gameObject.scene.path, probe.name + ".exr");
             }
 
-            public string GetCacheBakePathFor(HDReflectionProbe probe, Hash128 hash)
+            public string GetCacheBakePathFor(HDAdditionalReflectionData probe, Hash128 hash)
             {
                 var bakedTexturePathInCache = HDBakeUtilities.GetCacheBakePath(
                     probe.gameObject.scene.path,
@@ -52,7 +52,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 return bakedTexturePathInCache;
             }
 
-            public Texture ImportBakedTextureFromFile(HDReflectionProbe probe, string pathInCache, string pathInAssets)
+            public Texture ImportBakedTextureFromFile(HDAdditionalReflectionData probe, string pathInCache, string pathInAssets)
             {
                 Assert.IsTrue(File.Exists(pathInCache));
                 Assert.IsTrue(File.Exists(pathInAssets));
@@ -71,10 +71,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         HDPlanarTextureImporter m_Planar;
         HDReflectionProbeTextureImporter m_ReflectionProbe;
 
-        internal string GetBakedPathFor(HDProbe2 probe)
+        internal string GetBakedPathFor(HDProbe probe)
         {
-            var standard = probe as HDReflectionProbe;
-            var planar = probe as HDPlanarProbe;
+            var standard = probe as HDAdditionalReflectionData;
+            var planar = probe as PlanarReflectionProbe;
             if (standard != null)
                 return m_ReflectionProbe.GetBakedPathFor(standard);
             if (planar != null)
@@ -83,10 +83,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             throw new ArgumentException();
         }
 
-        internal string GetCacheBakePathFor(HDProbe2 probe, Hash128 bakedOutputHash)
+        internal string GetCacheBakePathFor(HDProbe probe, Hash128 bakedOutputHash)
         {
-            var standard = probe as HDReflectionProbe;
-            var planar = probe as HDPlanarProbe;
+            var standard = probe as HDAdditionalReflectionData;
+            var planar = probe as PlanarReflectionProbe;
             if (standard != null)
                 return m_ReflectionProbe.GetCacheBakePathFor(standard, bakedOutputHash);
             if (planar != null)
@@ -96,13 +96,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         }
 
         internal Texture ImportBakedTextureFromFile(
-            HDProbe2 probe,
+            HDProbe probe,
             string bakedTexturePathInCache,
             string bakedPath
         )
         {
-            var standard = probe as HDReflectionProbe;
-            var planar = probe as HDPlanarProbe;
+            var standard = probe as HDAdditionalReflectionData;
+            var planar = probe as PlanarReflectionProbe;
             if (standard != null)
                 return m_ReflectionProbe.ImportBakedTextureFromFile(standard, bakedTexturePathInCache, bakedPath);
             if (planar != null)
