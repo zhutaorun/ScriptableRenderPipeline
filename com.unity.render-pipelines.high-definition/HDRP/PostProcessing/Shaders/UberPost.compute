@@ -27,7 +27,6 @@ SAMPLER(sampler_LogLut3D);
 SAMPLER(sampler_VignetteMask);
 
 CBUFFER_START(cb0)
-    float4 _TexelSize;              // x: width, y: height, z: 1 / width, w: 1 / height
     float4 _ChromaParams;           // x: amount, y: max samples, zw: unused
     float4 _VignetteParams1;        // xy: center, z: mode, w: unused
     float4 _VignetteParams2;        // x: intensity, y: smoothness, z: roundness, w: rounded
@@ -74,10 +73,10 @@ float2 DistortUV(float2 uv)
 [numthreads(8,8,1)]
 void MAIN(uint2 dispatchThreadId : SV_DispatchThreadID)
 {
-    if (any(dispatchThreadId > uint2(_TexelSize.xy)))
+    if (any(dispatchThreadId > uint2(_ScreenSize.xy)))
         return; // Out of bounds, discard
 
-    PositionInputs posInputs = GetPositionInput(float2(dispatchThreadId), _TexelSize.zw, uint2(8u, 8u));
+    PositionInputs posInputs = GetPositionInput(float2(dispatchThreadId), _ScreenSize.zw, uint2(8u, 8u));
     float2 uv = posInputs.positionNDC;
     float2 uvDistorted = DistortUV(uv);
     float4 color = 0.0;
@@ -93,7 +92,7 @@ void MAIN(uint2 dispatchThreadId : SV_DispatchThreadID)
         float2 coords = 2.0 * uv - 1.0;
         float2 end = uv - coords * dot(coords, coords) * amount;
         float2 diff = end - uv;
-        int samples = clamp(int(length(_TexelSize.xy * diff / 2.0)), 3, maxSamples);
+        int samples = clamp(int(length(_ScreenSize.xy * diff / 2.0)), 3, maxSamples);
         float2 delta = diff / samples;
         float2 pos = uv;
         float4 sum = 0.0, filterSum = 0.0;
@@ -131,7 +130,7 @@ void MAIN(uint2 dispatchThreadId : SV_DispatchThreadID)
             const float rounded = _VignetteParams2.w;
 
             float2 d = abs(uvDistorted - center) * intensity;
-            d.x *= lerp(1.0, _TexelSize.x / _TexelSize.y, rounded);
+            d.x *= lerp(1.0, _ScreenSize.x / _ScreenSize.y, rounded);
             d = pow(saturate(d), roundness);
             float vfactor = pow(saturate(1.0 - dot(d, d)),smoothness);
             color.rgb *= lerp(_VignetteColor.xyz, (1.0).xxx, vfactor);

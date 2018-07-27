@@ -85,5 +85,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public ComputeShader uberPostCS;
         public ComputeShader lutBuilder3DCS;
         public ComputeShader fxaaCS;
+        public ComputeShader taaCS;
     }
 }

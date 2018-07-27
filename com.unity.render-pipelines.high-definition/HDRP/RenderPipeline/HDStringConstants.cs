@@ -413,8 +413,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _Variants                       = Shader.PropertyToID("_Variants");
         public static readonly int _InputTexture                   = Shader.PropertyToID("_InputTexture");
         public static readonly int _OutputTexture                  = Shader.PropertyToID("_OutputTexture");
-
-        public static readonly int _TexelSize                      = Shader.PropertyToID("_TexelSize");
+        public static readonly int _InputHistoryTexture            = Shader.PropertyToID("_InputHistoryTexture");
+        public static readonly int _OutputHistoryTexture           = Shader.PropertyToID("_OutputHistoryTexture");
 
         public static readonly int _ChromaSpectralLut              = Shader.PropertyToID("_ChromaSpectralLut");
         public static readonly int _ChromaParams                   = Shader.PropertyToID("_ChromaParams");
@@ -452,5 +452,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _MidSegmentB                    = Shader.PropertyToID("_MidSegmentB");
         public static readonly int _ShoSegmentA                    = Shader.PropertyToID("_ShoSegmentA");
         public static readonly int _ShoSegmentB                    = Shader.PropertyToID("_ShoSegmentB");
+
+        public static readonly int _Params                         = Shader.PropertyToID("_Params");
     }
 }

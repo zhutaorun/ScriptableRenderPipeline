@@ -6,6 +6,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         ColorPyramid,
         VolumetricLighting,
         Exposure,
+        TemporalAntialiasing,
         Count
     }
 }

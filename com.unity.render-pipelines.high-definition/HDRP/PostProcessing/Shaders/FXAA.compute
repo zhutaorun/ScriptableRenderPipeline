@@ -4,7 +4,9 @@
 
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
-#pragma kernel KFXAA HDR_INPUT
+#pragma kernel KFXAA
+
+#define HDR_MAPUNMAP 1
 
 #define FXAA_SPAN_MAX       (8.0)
 #define FXAA_REDUCE_MUL     (1.0 / 8.0)
@@ -14,10 +16,6 @@ TEXTURE2D(_InputTexture);
 RW_TEXTURE2D(float4, _OutputTexture);
 
 SAMPLER(sampler_LinearClamp);
-
-CBUFFER_START(cb0)
-    float4 _TexelSize;      // x: width, y: height, z: 1 / width, w: 1 / height
-CBUFFER_END
 
 float3 Fetch(float2 coords, float2 offset)
 {
@@ -32,7 +30,7 @@ float3 Load(int2 icoords, int idx, int idy)
 
 float3 Map(float3 x)
 {
-    #if HDR_INPUT
+    #if HDR_MAPUNMAP
     return FastTonemap(x);
     #else
     return x;
@@ -41,7 +39,7 @@ float3 Map(float3 x)
 
 float3 Unmap(float3 x)
 {
-    #if HDR_INPUT
+    #if HDR_MAPUNMAP
     return FastTonemapInvert(x);
     #else
     return x;
@@ -51,10 +49,10 @@ float3 Unmap(float3 x)
 [numthreads(8,8,1)]
 void KFXAA(uint2 dispatchThreadId : SV_DispatchThreadID)
 {
-    if (any(dispatchThreadId > uint2(_TexelSize.xy)))
+    if (any(dispatchThreadId > uint2(_ScreenSize.xy)))
         return;  // Out of bounds, discard
     
-    PositionInputs posInputs = GetPositionInput(float2(dispatchThreadId), _TexelSize.zw, uint2(8u, 8u));
+    PositionInputs posInputs = GetPositionInput(float2(dispatchThreadId), _ScreenSize.zw, uint2(8u, 8u));
 
     // Edge detection
     float lumaNW = Luminance(Load(posInputs.positionSS, -1, -1));
@@ -71,7 +69,7 @@ void KFXAA(uint2 dispatchThreadId : SV_DispatchThreadID)
     float dirReduce = max(lumaSum * (0.25 * FXAA_REDUCE_MUL), FXAA_REDUCE_MIN);
     float rcpDirMin = rcp(min(abs(dir.x), abs(dir.y)) + dirReduce);
 
-    dir = min((FXAA_SPAN_MAX).xx, max((-FXAA_SPAN_MAX).xx, dir * rcpDirMin)) * _TexelSize.zw;
+    dir = min((FXAA_SPAN_MAX).xx, max((-FXAA_SPAN_MAX).xx, dir * rcpDirMin)) * _ScreenSize.zw;
 
     // Blur
     float3 rgb03 = Map(Fetch(posInputs.positionNDC, dir * (0.0 / 3.0 - 0.5)));

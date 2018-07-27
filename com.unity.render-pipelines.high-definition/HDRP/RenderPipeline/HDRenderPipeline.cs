@@ -1133,6 +1133,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             camera: hdCamera,
                             colorBuffer: m_CameraColorBuffer,
                             lightingBuffer: null,
+                            depthBuffer: GetDepthTexture(),
                             velocityBuffer: m_VelocityBuffer
                         );
                         //<<<
@@ -1811,7 +1812,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cmd.SetGlobalTexture(HDShaderIDs._CameraMotionVectorsTexture, m_VelocityBuffer);
                 }
 
-                var context = hdcamera.postprocessRenderContext;
+                var context = new PostProcessRenderContext();
                 context.Reset();
                 context.source = source;
                 context.destination = BuiltinRenderTextureType.CameraTarget;

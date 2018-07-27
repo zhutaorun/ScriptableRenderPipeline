@@ -12,7 +12,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public sealed class PostProcessSystem
     {
         RenderPipelineResources m_Resources;
-        bool m_FirstFrame = true;
+        bool m_ResetHistory;
 
         // Exposure data
         const int k_ExposureCurvePrecision = 128;
@@ -20,22 +20,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         int[] m_ExposureVariants = new int[4];
 
         Texture2D m_ExposureCurveTexture;
-        RTHandle m_EmptyExposureTexture;
+        RTHandle m_EmptyExposureTexture; // RGHalf
 
         // Chromatic aberration data
         Texture2D m_InternalSpectralLut;
 
         // Color grading data
         const int k_LogLutSize = 33;
-        RTHandle m_InternalLogLut;
+        RTHandle m_InternalLogLut; // ARGBHalf
         readonly HableCurve m_HableCurve;
 
         // Misc (re-usable)
-        RTHandle[] m_TempFullSizePingPong = new RTHandle[2];
-        int m_CurrentPingPong;
+        RTHandle[] m_TempFullSizePingPong = new RTHandle[2]; // R11G11B10F
+        int m_CurrentTemporaryPingPong;
 
-        RTHandle m_TempTexture1024;   // RGHalf
-        RTHandle m_TempTexture32;     // RGHalf
+        RTHandle m_TempTexture1024; // RGHalf
+        RTHandle m_TempTexture32;   // RGHalf
 
         // Uber feature map to workaround the lack of multi_compile in compute shaders
         readonly Dictionary<int, string> m_UberPostFeatureMap = new Dictionary<int, string>();
@@ -104,6 +104,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 32, 32, colorFormat: RenderTextureFormat.RGHalf, sRGB: false,
                 enableRandomWrite: true, name: "Average Luminance Temp 32"
             );
+
+            m_ResetHistory = true;
         }
 
         public void Cleanup()
@@ -129,11 +131,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void ResetHistory()
         {
-            m_FirstFrame = true;
+            m_ResetHistory = true;
         }
 
         public void BeginFrame(CommandBuffer cmd, HDCamera camera)
         {
+            // Check if motion vectors are needed, if so we need to enable a flag on the camera so
+            // that Unity properly generate motion vectors (internal engine dependency)
+            // TODO: Check for motion blur as well
+            if (camera.antialiasing == AntialiasingMode.TemporalAntialiasing)
+            {
+                camera.camera.depthTextureMode |= DepthTextureMode.MotionVectors;
+            }
+
+            // Handle fixed exposure
             if (IsExposureFixed())
             {
                 using (new ProfilingSample(cmd, "Fixed Exposure", CustomSamplerId.Exposure.GetSampler()))
@@ -145,7 +156,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalTexture(HDShaderIDs._ExposureTexture, GetExposureTexture(camera));
         }
 
-        public void Render(CommandBuffer cmd, HDCamera camera, RTHandle colorBuffer, RTHandle lightingBuffer, RTHandle velocityBuffer)
+        public void Render(CommandBuffer cmd, HDCamera camera, RTHandle colorBuffer, RTHandle lightingBuffer, RTHandle depthBuffer, RTHandle velocityBuffer)
         {
             using (new ProfilingSample(cmd, "Post-processing", CustomSamplerId.PostProcessing.GetSampler()))
             {
@@ -167,7 +178,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     using (new ProfilingSample(cmd, "Temporal Anti-aliasing", CustomSamplerId.TemporalAntialiasing.GetSampler()))
                     {
-                        DoTemporalAntialiasing(cmd, camera, source, PingPongTarget());
+                        DoTemporalAntialiasing(cmd, camera, source, PingPongTarget(), depthBuffer, velocityBuffer);
                         source = GetLastPingPongTarget();
                     }
                 }
@@ -196,7 +207,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     DoVignette(cmd, cs, kernel, featureFlags);
 
                     // Run
-                    cmd.SetComputeVectorParam(cs, HDShaderIDs._TexelSize, new Vector4(camera.actualWidth, camera.actualHeight, 1f / camera.actualWidth, 1f / camera.actualHeight));
                     cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
                     cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, PingPongTarget());
                     cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 9) / 8, (camera.actualHeight + 9) / 8, 1);
@@ -214,18 +224,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
             }
 
-            m_FirstFrame = false;
+            m_ResetHistory = false;
         }
 
         RTHandle PingPongTarget()
         {
-            m_CurrentPingPong = (m_CurrentPingPong + 1) % 2;
-            return m_TempFullSizePingPong[m_CurrentPingPong];
+            m_CurrentTemporaryPingPong = (m_CurrentTemporaryPingPong + 1) % 2;
+            return m_TempFullSizePingPong[m_CurrentTemporaryPingPong];
         }
 
         RTHandle GetLastPingPongTarget()
         {
-            return m_TempFullSizePingPong[m_CurrentPingPong];
+            return m_TempFullSizePingPong[m_CurrentTemporaryPingPong];
         }
 
         void PushUberFeature(UberPostFeatureFlags flags)
@@ -374,7 +384,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Setup variants
             var adaptationMode = settings.adaptationMode.value;
 
-            if (!Application.isPlaying || m_FirstFrame)
+            if (!Application.isPlaying || m_ResetHistory)
                 adaptationMode = AdaptationMode.Fixed;
             
             m_ExposureVariants[0] = (int)settings.luminanceSource.value;
@@ -428,11 +438,56 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         #endregion
 
-        #region
+        #region Temporal Anti-aliasing
 
-        void DoTemporalAntialiasing(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination)
+        void DoTemporalAntialiasing(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, RTHandle depthBuffer, RTHandle velocityBuffer)
         {
-            cmd.Blit(source, destination);
+            var cs = m_Resources.taaCS;
+            var kernel = cs.FindKernel(camera.camera.orthographic ? "KTAA_Ortho" : "KTAA_Persp");
+
+            RTHandle prevHistory, nextHistory;
+            GrabTemporalAntialiasingHistoryTextures(camera, out prevHistory, out nextHistory);
+
+            if (m_ResetHistory)
+            {
+                CopyTemporalAntialiasingHistory(cmd, camera, source, prevHistory);
+                CopyTemporalAntialiasingHistory(cmd, camera, source, nextHistory);
+            }
+
+            cmd.SetComputeVectorParam(cs, HDShaderIDs._Params, new Vector4(camera.taaJitter.x / camera.actualWidth, camera.taaJitter.y / camera.actualHeight, 0f, 0f));
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputHistoryTexture, prevHistory);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DepthTexture, depthBuffer);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._VelocityTexture, velocityBuffer);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputHistoryTexture, nextHistory);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, destination);
+            cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 9) / 8, (camera.actualHeight + 9) / 8, 1);
+        }
+
+        void GrabTemporalAntialiasingHistoryTextures(HDCamera camera, out RTHandle previous, out RTHandle next)
+        {
+            next = camera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.TemporalAntialiasing)
+                ?? camera.AllocHistoryFrameRT((int)HDCameraFrameHistoryType.TemporalAntialiasing, TemporalAntialiasingHistoryAllocator);
+            previous = camera.GetPreviousFrameRT((int)HDCameraFrameHistoryType.TemporalAntialiasing);
+        }
+
+        RTHandle TemporalAntialiasingHistoryAllocator(string id, int frameIndex, RTHandleSystem rtHandleSystem)
+        {
+            return rtHandleSystem.Alloc(
+                Vector2.one, depthBufferBits: DepthBits.None,
+                filterMode: FilterMode.Bilinear, colorFormat: RenderTextureFormat.RGB111110Float,
+                enableRandomWrite: true, name: "TAA History"
+            );
+        }
+
+        void CopyTemporalAntialiasingHistory(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle history)
+        {
+            var cs = m_Resources.taaCS;
+            var kernel = cs.FindKernel("KCopyHistory");
+
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, history);
+            cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 9) / 8, (camera.actualHeight + 9) / 8, 1);
         }
 
         #endregion
@@ -749,7 +804,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 var cs = m_Resources.fxaaCS;
                 int kernel = cs.FindKernel("KFXAA");
-                cmd.SetComputeVectorParam(cs, HDShaderIDs._TexelSize, new Vector4(camera.actualWidth, camera.actualHeight, 1f / camera.actualWidth, 1f / camera.actualHeight));
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, destination);
                 cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 9) / 8, (camera.actualHeight + 9) / 8, 1);

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
-using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.XR;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
@@ -30,8 +29,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector4   screenParams;
 
         public VolumetricLightingSystem.VBufferParameters[] vBufferParams; // Double-buffered
-
-        public PostProcessRenderContext postprocessRenderContext;
 
         public Matrix4x4[] viewMatrixStereo;
         public Matrix4x4[] projMatrixStereo;
@@ -178,8 +175,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             viewMatrixStereo = new Matrix4x4[2];
             projMatrixStereo = new Matrix4x4[2];
-
-            postprocessRenderContext = new PostProcessRenderContext();
 
             m_AdditionalCameraData = null; // Init in Update
 
@@ -388,13 +383,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             // The variance between 0 and the actual halton sequence values reveals noticeable
             // instability in Unity's shadow maps, so we avoid index 0.
-            // TODO: Check if this applies to HDRP
             taaJitter = new Vector2(
-                HaltonSeq.Get((taaFrameIndex & 1023) + 1, 2) - 0.5f,
-                HaltonSeq.Get((taaFrameIndex & 1023) + 1, 3) - 0.5f
+                HaltonSequence.Get((taaFrameIndex & 1023) + 1, 2) - 0.5f,
+                HaltonSequence.Get((taaFrameIndex & 1023) + 1, 3) - 0.5f
             );
 
-            const int kMaxSampleCount = 8;
+            const int kMaxSampleCount = 256;
             if (++taaFrameIndex >= kMaxSampleCount)
                 taaFrameIndex = 0;
 
@@ -407,8 +401,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 float horizontal = vertical * camera.aspect;
                 
                 var offset = taaJitter;
-                offset.x *= horizontal / (0.5f * actualWidth);
-                offset.y *= vertical / (0.5f * actualHeight);
+                offset.x *= horizontal / (0.5f * camera.pixelWidth);
+                offset.y *= vertical / (0.5f * camera.pixelHeight);
 
                 float left = offset.x - horizontal;
                 float right = offset.x + horizontal;
@@ -425,8 +419,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 float far = camera.farClipPlane;
                 
                 var offset = taaJitter;
-                offset.x *= horizontal / (0.5f * actualWidth);
-                offset.y *= vertical / (0.5f * actualHeight);
+                offset.x *= horizontal / (0.5f * camera.pixelWidth);
+                offset.y *= vertical / (0.5f * camera.pixelHeight);
 
                 float left = (offset.x - horizontal) * near;
                 float right = (offset.x + horizontal) * near;
