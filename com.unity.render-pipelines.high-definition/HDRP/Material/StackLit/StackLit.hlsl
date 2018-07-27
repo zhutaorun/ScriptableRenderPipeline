@@ -2116,74 +2116,35 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData b
 // bake lighting function
 //-----------------------------------------------------------------------------
 
-//
-// GetBakedDiffuseLighting will be called from ShaderPassForward.hlsl.
-//
-// GetBakedDiffuseLighting function compute the bake lighting + emissive color to be store in emissive buffer (Deferred case)
-// In forward it must be add to the final contribution.
-// This function require the 3 structure surfaceData, builtinData, bsdfData because it may require both the engine side data, and data that will not be store inside the gbuffer.
-float3 GetBakedDiffuseLighting(SurfaceData surfaceData, BuiltinData builtinData, BSDFData bsdfData, PreLightData preLightData)
+// This define allow to say that we implement a ModifyBakedDiffuseLighting function to be call in PostInitBuiltinData
+#define MODIFY_BAKED_DIFFUSE_LIGHTING
+
+void ModifyBakedDiffuseLighting(float3 V, PositionInputs posInput, SurfaceData surfaceData, inout BuiltinData builtinData)
 {
-#ifdef DEBUG_DISPLAY
-    if (_DebugLightingMode == DEBUGLIGHTINGMODE_LUX_METER)
-    {
-        // The lighting in SH or lightmap is assume to contain bounced light only (i.e no direct lighting), and is divide by PI (i.e Lambert is apply), so multiply by PI here to get back the illuminance
-        return builtinData.bakeDiffuseLighting * PI;
-    }
-#endif
+    // To get the data we need to do the whole process - compiler should optimize everything
+    BSDFData bsdfData = ConvertSurfaceDataToBSDFData(posInput.positionSS, surfaceData);
+    PreLightData preLightData = GetPreLightData(V, posInput, bsdfData);
 
-    // Note bsdfData isn't modified outside of this function scope.
-    if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_SUBSURFACE_SCATTERING)) // This test is static as it is done in GBuffer or forward pass, will be remove by compiler
+    // Add GI transmission contribution to bakeDiffuseLighting, we then drop backBakeDiffuseLighting (i.e it is not used anymore, this save VGPR)
+    if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_TRANSMISSION))
     {
-        // SSS Texturing mode can change albedo because diffuse maps can already contain some SSS too
-        bsdfData.diffuseColor = GetModifiedDiffuseColorForSSS(bsdfData); // local modification of bsdfData
+        builtinData.bakeDiffuseLighting += builtinData.backBakeDiffuseLighting * bsdfData.transmittance;
     }
 
-    // Premultiply bake diffuse lighting information
+    // For SSS we need to take into account the state of diffuseColor 
+    if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_SUBSURFACE_SCATTERING))
+    {
+        bsdfData.diffuseColor = GetModifiedDiffuseColorForSSS(bsdfData);
+    }
+
+    // Premultiply baked (possibly with back facing added) diffuse lighting information with diffuse
+    // pre-integration and energy term.
     // preLightData.diffuseEnergy will be 1,1,1 if no vlayering or no VLAYERED_DIFFUSE_ENERGY_HACKED_TERM
+    builtinData.bakeDiffuseLighting *= preLightData.diffuseFGD * preLightData.diffuseEnergy * bsdfData.diffuseColor;
 
-    //return builtinData.bakeDiffuseLighting * preLightData.diffuseFGD * preLightData.diffuseEnergy * surfaceData.ambientOcclusion * bsdfData.diffuseColor + builtinData.emissiveColor;
-    //
-    // In our case, we want to avoid the tradeoffs of deferred with ambientOcclusion:
-    //
-    // We don't want to apply (screen space based) ambient occlusion on baked emissive light
-    // and we don't want to apply double occlusion to indirect diffuse light that we return here
-    // to the ShaderPassForward and will get fed back to use in evaluateBSDF (and the postEval)
-    // functions via
-    // BakeLightingData.bakeDiffuseLighting
-    // but these functions mainly use the bakeShadowMask fields of BakeLightingData. 
-    //
-    // These errors happen in deferred because we don't want to store the separate ambient occlusion,
-    // in the GBuffer as we're already storing the bakeDiffuseLighting, so we apply data based AO on
-    // the bakediffuse here, but then, at PostEvaluateBSDF time, ie in some the lighting shader variant,
-    // we apply the screen space AO on all indirect diffuse lighting which will include emissive and be applied
-    // on builtinData.bakeDiffuseLighting * surfaceData.ambientOcclusion instead of these later terms
-    // getting min(ss AO, data based AO).
-    //
-    // Here we are called after PreLightData but before lighting.
-    // So we have choices: regardless of what we return as bakeDiffuseLighting here, we could store a separate
-    // copy of the lighting itself to split out emissive and apply indirect AO later, or calculate
-    // AO here (combined screen space based + data based) and apply it on the indirect diffuse as we don't deal
-    // with such lighting later anyway (data-based direct diffuse occlusion can be applied later - the direct
-    // diffuse is an artistic choice configured by the .w component of the AO parameters, the color of
-    // the later being ignored when using GTAOMultiBounce.)
-    //
-    // We decide on the later option as principle since BakeLightingData.bakeDiffuseLighting will be correct
-    // and not duplicated and again here in forward we can do it as the screen space occlusion texture should
-    // be ready too. The lobe specific specular occlusion data, along with the result of the screen space occlusion
-    // sampling, will already be computed in PreLightData.
-
-    // bsdfData.diffuseColor is not appropriate to use when vlayered when doing GTAOMultiBounce here, but we can
-    // try something with (bsdfData.diffuseColor * bsdfData.coatExtinction) (for specular occlusion with f0, it's
-    // even worse but both are a hack anyway) We could also try "renormalizing diffuseEnergy" to the luminance of
-    // diffuseColor. 
-    // For now, we use (bsdfData.diffuseColor * preLightData.diffuseEnergy) directly:
-    float3 GTAOMultiBounceTintBase = (bsdfData.diffuseColor * preLightData.diffuseEnergy);
-    float3 diffuseOcclusion = GetDiffuseOcclusion(GTAOMultiBounceTintBase, surfaceData.ambientOcclusion, preLightData.screenSpaceAmbientOcclusion);
-    //float3 diffuseOcclusion = GTAOMultiBounce(min(surfaceData.ambientOcclusion, preLightData.screenSpaceAmbientOcclusion), bsdfData.diffuseColor);
-    return builtinData.bakeDiffuseLighting * preLightData.diffuseFGD * preLightData.diffuseEnergy * diffuseOcclusion * bsdfData.diffuseColor + builtinData.emissiveColor;
+    // The lobe specific specular occlusion data, along with the result of the screen space occlusion sampling 
+    // will be computed in PreLightData.
 }
-
 
 //-----------------------------------------------------------------------------
 // light transport functions
@@ -2622,7 +2583,7 @@ void EvaluateBSDF_GetNormalUnclampedNdotV(BSDFData bsdfData, PreLightData preLig
 DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
                                         float3 V, PositionInputs posInput, PreLightData preLightData,
                                         DirectionalLightData lightData, BSDFData bsdfData,
-                                        BakeLightingData bakeLightingData)
+                                        BuiltinData builtinData)
 {
     DirectLighting lighting;
     ZERO_INITIALIZE(DirectLighting, lighting);
@@ -2645,7 +2606,7 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
     // color and attenuation are outputted  by EvaluateLight:
     float3 color;
     float attenuation;
-    EvaluateLight_Directional(lightLoopContext, posInput, lightData, bakeLightingData, shadowBiasNormal, L, color, attenuation);
+    EvaluateLight_Directional(lightLoopContext, posInput, lightData, builtinData, shadowBiasNormal, L, color, attenuation);
 
     float intensity = max(0, attenuation); // Warning: attenuation can be greater than 1 due to the inverse square attenuation (when position is close to light)
 
@@ -2702,7 +2663,7 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
 
 DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
                                      float3 V, PositionInputs posInput,
-                                     PreLightData preLightData, LightData lightData, BSDFData bsdfData, BakeLightingData bakeLightingData)
+                                     PreLightData preLightData, LightData lightData, BSDFData bsdfData, BuiltinData builtinData)
 {
     DirectLighting lighting;
     ZERO_INITIALIZE(DirectLighting, lighting);
@@ -2728,7 +2689,7 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
     float3 color;
     float attenuation;
 
-    EvaluateLight_Punctual(lightLoopContext, posInput, lightData, bakeLightingData, shadowBiasNormal, L,
+    EvaluateLight_Punctual(lightLoopContext, posInput, lightData, builtinData, shadowBiasNormal, L,
                            lightToSample, distances, color, attenuation);
 
 
@@ -2788,7 +2749,7 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
 
 DirectLighting EvaluateBSDF_Line(   LightLoopContext lightLoopContext,
                                     float3 V, PositionInputs posInput,
-                                    PreLightData preLightData, LightData lightData, BSDFData bsdfData, BakeLightingData bakeLightingData)
+                                    PreLightData preLightData, LightData lightData, BSDFData bsdfData, BuiltinData builtinData)
 {
     DirectLighting lighting;
     ZERO_INITIALIZE(DirectLighting, lighting);
@@ -2925,7 +2886,7 @@ DirectLighting EvaluateBSDF_Line(   LightLoopContext lightLoopContext,
 
 DirectLighting EvaluateBSDF_Rect(   LightLoopContext lightLoopContext,
                                     float3 V, PositionInputs posInput,
-                                    PreLightData preLightData, LightData lightData, BSDFData bsdfData, BakeLightingData bakeLightingData)
+                                    PreLightData preLightData, LightData lightData, BSDFData bsdfData, BuiltinData builtinData)
 {
     DirectLighting lighting;
     ZERO_INITIALIZE(DirectLighting, lighting);
@@ -3074,15 +3035,15 @@ DirectLighting EvaluateBSDF_Rect(   LightLoopContext lightLoopContext,
 DirectLighting EvaluateBSDF_Area(LightLoopContext lightLoopContext,
     float3 V, PositionInputs posInput,
     PreLightData preLightData, LightData lightData,
-    BSDFData bsdfData, BakeLightingData bakeLightingData)
+    BSDFData bsdfData, BuiltinData builtinData)
 {
     if (lightData.lightType == GPULIGHTTYPE_LINE)
     {
-        return EvaluateBSDF_Line(lightLoopContext, V, posInput, preLightData, lightData, bsdfData, bakeLightingData);
+        return EvaluateBSDF_Line(lightLoopContext, V, posInput, preLightData, lightData, bsdfData, builtinData);
     }
     else
     {
-        return EvaluateBSDF_Rect(lightLoopContext, V, posInput, preLightData, lightData, bsdfData, bakeLightingData);
+        return EvaluateBSDF_Rect(lightLoopContext, V, posInput, preLightData, lightData, bsdfData, builtinData);
     }
 }
 
@@ -3258,7 +3219,7 @@ IndirectLighting EvaluateBSDF_Env(  LightLoopContext lightLoopContext,
 
 void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
                         float3 V, PositionInputs posInput,
-                        PreLightData preLightData, BSDFData bsdfData, BakeLightingData bakeLightingData, AggregateLighting lighting,
+                        PreLightData preLightData, BSDFData bsdfData, BuiltinData builtinData, AggregateLighting lighting,
                         out float3 diffuseLighting, out float3 specularLighting)
 {
     // Indirect diffuse occlusion has already been applied in GetBakedDiffuseLighting() and specular occlusion
@@ -3277,16 +3238,22 @@ void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
     // Subsurface scattering mode
     float3 modifiedDiffuseColor = GetModifiedDiffuseColorForSSS(bsdfData);
 
-    // Apply the albedo to the direct diffuse lighting (only once). The indirect (baked)
-    // diffuse lighting has already had the albedo applied in GetBakedDiffuseLighting().
-    diffuseLighting = modifiedDiffuseColor * lighting.direct.diffuse + bakeLightingData.bakeDiffuseLighting;
+    // Compute diffuseOcclusion combining both the effects of the occlusion from data and from screen space, the
+    // later which has already been sampled in GetPreLightData (also see comments about GTAOMultiBounceTintBase
+    // above).
+    float3 diffuseOcclusion = GetDiffuseOcclusion(GTAOMultiBounceTintBase, bsdfData.ambientOcclusion, preLightData.screenSpaceAmbientOcclusion);
+
+    // Apply the albedo to the direct diffuse lighting (only once). The indirect (baked) diffuse lighting has
+    // already had the albedo applied in ModifyBakedDiffuseLighting() but we now also apply the diffuse occlusion
+    // on it. Specular occlusion has been applied per lobe during specular lighting evaluations before.
+    // We also add emissive since it is not merged with bakeDiffuseLighting in ModifyBakedDiffuseLighting.
+    // (also cf lit deferred EncodeToGBuffer function).
+    diffuseLighting = (modifiedDiffuseColor * lighting.direct.diffuse) + (builtinData.bakeDiffuseLighting * diffuseOcclusion) + builtinData.emissiveColor;
 
     specularLighting = lighting.direct.specular + lighting.indirect.specularReflected;
 
 #ifdef DEBUG_DISPLAY
-    // Recompute diffuseOcclusion for debug display here (see comments about GTAOMultiBounceTintBase above).
     // For specularOcclusion we display red to indicate there's not one value possible here.
-    float3 diffuseOcclusion = GetDiffuseOcclusion(GTAOMultiBounceTintBase, bsdfData.ambientOcclusion, preLightData.screenSpaceAmbientOcclusion);
     AmbientOcclusionFactor aoFactor;
 
     float3 specularOcclusion = float3(1.0,0.0,0.0);
@@ -3300,7 +3267,7 @@ void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
 
     GetAmbientOcclusionFactor(diffuseOcclusion, specularOcclusion, directAmbientOcclusion /* not used for now in PostEvaluateBSDFDebugDisplay */ , aoFactor);
 
-    PostEvaluateBSDFDebugDisplay(aoFactor, bakeLightingData, lighting, bsdfData.diffuseColor, diffuseLighting, specularLighting);
+    PostEvaluateBSDFDebugDisplay(aoFactor, builtinData, lighting, bsdfData.diffuseColor, diffuseLighting, specularLighting);
 #endif
 }
 

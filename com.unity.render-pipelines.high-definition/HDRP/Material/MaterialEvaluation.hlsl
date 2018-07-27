@@ -137,24 +137,23 @@ void GetAmbientOcclusionFactor(float3 indirectAmbientOcclusion, float3 indirectS
     aoFactor.directAmbientOcclusion = directAmbientOcclusion;
 }
 
-void ApplyAmbientOcclusionFactor(AmbientOcclusionFactor aoFactor, inout BakeLightingData bakeLightingData, inout AggregateLighting lighting)
+void ApplyAmbientOcclusionFactor(AmbientOcclusionFactor aoFactor, inout BuiltinData builtinData, inout AggregateLighting lighting)
 {
-    // Note: In case of Lit, bakeLightingData.bakeDiffuseLighting contain indirect diffuse + emissive,
-    // so ambient occlusion is multiplied by emissive which is wrong but not a big deal.
-    // Also, we have double occlusion for diffuse lighting: 
-    // The baked diffuse lighting part from builtinData.bakeDiffuseLighting = SampleBakedGI() already
-    // had precomputed (aka "FromData") AO applied, and will get double occluded from screen space AO
-    // (this was done to avoid storing AOFromData in the GBuffer, hence why GetScreenSpaceAmbientOcclusion*()
-    // is called with AOFromData = 1.0 in Lit:PostEvaluateBSDF(), hence why we only have SSAO in the aoFactor
-    // here)
-    bakeLightingData.bakeDiffuseLighting *= aoFactor.indirectAmbientOcclusion;
+    // Note: In case of deferred Lit, builtinData.bakeDiffuseLighting contains indirect diffuse * surfaceData.ambientOcclusion + emissive,
+    // so SSAO is multiplied by emissive which is wrong.
+    // Also, we have double occlusion for diffuse lighting since it already had precomputed AO (aka "FromData") applied
+    // (the * surfaceData.ambientOcclusion above)
+    // This is a tradeoff to avoid storing the precomputed (from data) AO in the GBuffer.
+    // (This is also why GetScreenSpaceAmbientOcclusion*() is effectively called with AOFromData = 1.0 in Lit:PostEvaluateBSDF() in the 
+    // deferred case since DecodeFromGBuffer will init bsdfData.ambientOcclusion to 1.0 and we will only have SSAO in the aoFactor here)
+    builtinData.bakeDiffuseLighting *= aoFactor.indirectAmbientOcclusion;
     lighting.indirect.specularReflected *= aoFactor.indirectSpecularOcclusion;
     lighting.direct.diffuse *= aoFactor.directAmbientOcclusion;
 }
 
 #ifdef DEBUG_DISPLAY
 // mipmapColor is color use to store texture streaming information in XXXData.hlsl (look for DEBUGMIPMAPMODE_NONE)
-void PostEvaluateBSDFDebugDisplay(  AmbientOcclusionFactor aoFactor, BakeLightingData bakeLightingData, AggregateLighting lighting, float3 mipmapColor,
+void PostEvaluateBSDFDebugDisplay(  AmbientOcclusionFactor aoFactor, BuiltinData builtinData, AggregateLighting lighting, float3 mipmapColor,
                                     inout float3 diffuseLighting, inout float3 specularLighting)
 {
     if (_DebugLightingMode != 0)
@@ -164,7 +163,8 @@ void PostEvaluateBSDFDebugDisplay(  AmbientOcclusionFactor aoFactor, BakeLightin
         switch (_DebugLightingMode)
         {
         case DEBUGLIGHTINGMODE_LUX_METER:
-            diffuseLighting = lighting.direct.diffuse + bakeLightingData.bakeDiffuseLighting;
+            // Note: We don't include emissive here (and in deferred it is correct as lux calculation of bakeDiffuseLighting don't consider emissive)
+            diffuseLighting = lighting.direct.diffuse + builtinData.bakeDiffuseLighting;
 
             //Compress lighting values for color picker if enabled
             if (_ColorPickerMode != COLORPICKERDEBUGMODE_NONE)
@@ -196,9 +196,9 @@ void PostEvaluateBSDFDebugDisplay(  AmbientOcclusionFactor aoFactor, BakeLightin
         case DEBUGLIGHTINGMODE_VISUALIZE_SHADOW_MASKS:
             #ifdef SHADOWS_SHADOWMASK
             diffuseLighting = float3(
-                bakeLightingData.bakeShadowMask.r / 2 + bakeLightingData.bakeShadowMask.g / 2,
-                bakeLightingData.bakeShadowMask.g / 2 + bakeLightingData.bakeShadowMask.b / 2,
-                bakeLightingData.bakeShadowMask.b / 2 + bakeLightingData.bakeShadowMask.a / 2
+                builtinData.shadowMask0 / 2 + builtinData.shadowMask1 / 2,
+                builtinData.shadowMask1 / 2 + builtinData.shadowMask2 / 2,
+                builtinData.shadowMask2 / 2 + builtinData.shadowMask3 / 2
             );
             specularLighting = float3(0, 0, 0);
             #endif
