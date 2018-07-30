@@ -1,3 +1,4 @@
+using System;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
@@ -17,13 +18,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Current = Max - 1
         }
 
+        [Serializable]
         public struct ProbeCaptureProperties
         {
-            public CaptureProperties common;
-            public int cubemapSize;
         }
 
-        public ProbeCaptureProperties captureSettings;
+        // TODO: maybe set this one as private and expose properties
+        public ProbeCaptureProperties probeCaptureProperties;
 
         public override Hash128 ComputeBakePropertyHashes()
         {
@@ -50,6 +51,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             captureRotation = viewerRotation;
         }
 
+        // ------
 
         [SerializeField, FormerlySerializedAs("version")]
         int m_Version;

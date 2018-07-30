@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
@@ -41,11 +39,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             // = Step 1 =
             // Allocate stack variables
-            var bakedProbeCount = entitySystem.BakedProbeCount;
+            var bakedProbes = entitySystem.GetActiveBakedProbes();
+            var bakedProbeCount = bakedProbes.Length;
             var bakedProbeOnlyHashes = stackalloc Hash128[bakedProbeCount];
             var bakedProbeIDs = stackalloc int[bakedProbeCount];
             ComputeProbeStateHashesAndGetEntityIDs(
-                entitySystem.GetActiveBakedProbeEnumerator(),
+                bakedProbes,
                 bakedProbeOnlyHashes, bakedProbeIDs
             );
 
@@ -57,7 +56,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             // Baked probes depends on probes with custom textures
             var allCustomProbeHash = new Hash128();
-            ComputeAllCustomProbeHash(entitySystem.GetActiveCustomProbeEnumerator(), ref allCustomProbeHash);
+            ComputeAllCustomProbeHash(entitySystem.GetActiveCustomProbes(), ref allCustomProbeHash);
             HashUtilities.AppendHash(ref allCustomProbeHash, ref allBakedProbeHash);
 
             // TODO: calculate a custom hash for light that hashes additional data as well.
@@ -99,7 +98,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 // Notify Unity we are baking probes
                 var progress = (bakedProbeCount != 0) ? 1.0f - ((float)addCount / bakedProbeCount) : 1.0f; ;
                 handle.EnterStage(
-                    (int)HDReflectionSystem.BakeStages.ReflectionProbes,
+                    (int)HDBakedReflectionSystem.BakeStages.ReflectionProbes,
                     string.Format("Reflection Probes | {0} jobs", addCount),
                     progress
                 );
@@ -114,7 +113,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     CoreUnsafeUtils.CombineHashes(bakedProbeCount, bakedProbeOutputHashes, &allProbeOutputHash);
                     if (tickedRenderer.isComplete && tickedRenderer.inputHash == allProbeOutputHash)
                         bakingComplete = true;
-                    else
+                    else if (tickedRenderer.inputHash != allProbeOutputHash)
                     {
                         // We must restart the renderer with the new data
                         tickedRenderer.Cancel();
@@ -184,7 +183,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
 
             // Notify Unity we completed the baking
-            handle.ExitStage((int)HDReflectionSystem.BakeStages.ReflectionProbes);
+            handle.ExitStage((int)HDBakedReflectionSystem.BakeStages.ReflectionProbes);
             handle.SetIsDone(true);
         }
 
@@ -207,26 +206,24 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         }
 
         void ComputeProbeStateHashesAndGetEntityIDs(
-            IEnumerator<HDProbe> enumerator,
+            HDProbe[] probes,
             Hash128* bakedProbeOnlyHashes,
             int* bakedProbeIDs
         )
         {
-            var i = 0;
-            while (enumerator.MoveNext())
+            for (int i = 0; i < probes.Length; ++i)
             {
-                var bakedProbe = enumerator.Current;
+                var bakedProbe = probes[i];
                 bakedProbeIDs[i] = bakedProbe.GetInstanceID();
                 bakedProbeOnlyHashes[i] = bakedProbe.ComputeBakePropertyHashes();
-                ++i;
             }
         }
 
-        void ComputeAllCustomProbeHash(IEnumerator<HDProbe> enumerator, ref Hash128 hash)
+        void ComputeAllCustomProbeHash(HDProbe[] probes, ref Hash128 hash)
         {
-            while (enumerator.MoveNext())
+            for (int i = 0; i < probes.Length; ++i)
             {
-                var customProbe = enumerator.Current;
+                var customProbe = probes[i];
                 if (customProbe.assets.customTexture == null)
                     continue;
 

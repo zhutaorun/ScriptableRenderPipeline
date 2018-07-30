@@ -17,7 +17,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         HDProbeTextureImporter m_TextureImporter;
 
         internal bool isComplete { get { return m_IsComplete; } }
-        internal Hash128 inputHash;
+        internal Hash128 inputHash { get { return m_InputHash; } }
 
         internal void Cancel()
         {

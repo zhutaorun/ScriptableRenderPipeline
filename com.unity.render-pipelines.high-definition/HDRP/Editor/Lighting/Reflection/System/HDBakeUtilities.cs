@@ -23,7 +23,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 var t2D = CopyCubemapToTexture2D(rt);
                 var bytes = t2D.EncodeToEXR(Texture2D.EXRFlags.CompressZIP);
+                CreateParentDirectoryIfMissing(cacheFilePath);
                 File.WriteAllBytes(cacheFilePath, bytes);
+                return;
             }
             throw new ArgumentException();
         }
@@ -65,7 +67,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return result;
         }
 
-        public static Texture2D FlipY(Texture2D source)
+        static void CreateParentDirectoryIfMissing(string path)
+        {
+            var fileInfo = new FileInfo(path);
+            if (!fileInfo.Directory.Exists)
+                fileInfo.Directory.Create();
+        }
+
+        static Texture2D FlipY(Texture2D source)
         {
             var result = new Texture2D(source.width, source.height, source.format, false);
 

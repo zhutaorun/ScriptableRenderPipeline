@@ -8,6 +8,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     [Serializable]
     public struct CameraSettings
     {
+        // HD Additional Camera Data
         public HDAdditionalCameraData.ClearColorMode clearColorMode;
         public Color backgroundColorHDR;
         public bool clearDepth;
@@ -18,9 +19,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public float shutterSpeed;
         public float iso;
         public FrameSettings frameSettings;
+
+        // Legacy Camera
+        public float farClipPlane;
+        public float nearClipPlane;
+        public float fieldOfview;
+        public bool useOcclusionCulling;
+        public int cullingMask;
+
+        // Post process
+        public PostProcessLayer postProcessLayer;
     }
 
-    public enum ReflectionProbeWorkflowType
+    public enum HDReflectionProbeMode
     {
         Baked,
         Custom,
@@ -33,10 +44,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [Serializable]
         public struct CaptureProperties
         {
-            public float farClipPlane;
-            public float nearClipPlane;
-            public float fieldOfview;
-            public ReflectionProbeWorkflowType workflowType;
+            public HDReflectionProbeMode mode;
             public CameraSettings cameraSettings;
         }
 
@@ -46,9 +54,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Texture bakedTexture;        // TODO: texture should not be serialized here
             public Texture customTexture;       // TODO: otherwise, you can have like the baked texture
             public Texture realtimeTexture;     // TODO: included in build for a realtime probe...
-            public FrameSettings captureFrameSettings;
-            public PostProcessLayer postProcessLayer;
         }
+
+        // TODO: maybe set this one as private and use properties to access its fields
+        public CaptureProperties captureProperties;
 
         public Texture bakedTexture { get { return assets.bakedTexture; } set { assets.bakedTexture = value; } }
 
@@ -121,6 +130,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         protected virtual void OnDisable()
         {
             HDReflectionEntitySystem.instance.Unregister(this);
+        }
+
+        protected virtual void OnValidate()
+        {
+            HDReflectionEntitySystem.instance.Unregister(this);
+            HDReflectionEntitySystem.instance.Register(this);
         }
 
         void ISerializationCallbackReceiver.OnBeforeSerialize()

@@ -5,35 +5,68 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     class HDReflectionEntitySystem
     {
+        class IterableHashSet<T>
+        {
+            HashSet<T> m_Storage = new HashSet<T>();
+            T[] m_LinearStorage = null;
+            bool m_LinearStorageDirty = true;
+
+            public bool Add(T value)
+            {
+                var success = m_Storage.Add(value);
+                m_LinearStorageDirty |= m_LinearStorageDirty;
+                return success;
+            }
+
+            public bool Remove(T value)
+            {
+                var success = m_Storage.Remove(value);
+                m_LinearStorageDirty |= m_LinearStorageDirty;
+                return success;
+            }
+
+            public T[] linearStorage
+            {
+                get
+                {
+                    if (m_LinearStorageDirty)
+                    {
+                        m_LinearStorageDirty = false;
+                        Array.Resize(ref m_LinearStorage, m_Storage.Count);
+                        m_Storage.CopyTo(m_LinearStorage);
+                    }
+                    return m_LinearStorage;
+                }
+            }
+        }
+
         static HDReflectionEntitySystem s_Instance = null;
-        public static HDReflectionEntitySystem instance { get { return s_Instance; } }
+        public static HDReflectionEntitySystem instance
+        { get { return s_Instance ?? (s_Instance = new HDReflectionEntitySystem()); } }
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        static void Initialize()
+        IterableHashSet<HDProbe> m_ActiveBakedProbes = new IterableHashSet<HDProbe>();
+        IterableHashSet<HDProbe> m_ActiveCustomProbes = new IterableHashSet<HDProbe>();
+
+        internal HDProbe[] GetActiveBakedProbes() { return m_ActiveBakedProbes.linearStorage; }
+        internal HDProbe[] GetActiveCustomProbes() { return m_ActiveCustomProbes.linearStorage; }
+
+        internal void Register(HDProbe probe)
         {
-            s_Instance = new HDReflectionEntitySystem();
+            switch (probe.captureProperties.mode)
+            {
+                case HDReflectionProbeMode.Baked:
+                    m_ActiveBakedProbes.Add(probe);
+                    break;
+                case HDReflectionProbeMode.Custom:
+                    m_ActiveCustomProbes.Add(probe);
+                    break;
+            }
         }
 
-        public int BakedProbeCount { get; internal set; }
-
-        internal IEnumerator<HDProbe> GetActiveBakedProbeEnumerator()
+        internal void Unregister(HDProbe probe)
         {
-            throw new NotImplementedException();
-        }
-
-        internal IEnumerator<HDProbe> GetActiveCustomProbeEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-
-        internal void Register(HDProbe hDProbe)
-        {
-            throw new NotImplementedException();
-        }
-
-        internal void Unregister(HDProbe hDProbe)
-        {
-            throw new NotImplementedException();
+            m_ActiveBakedProbes.Remove(probe);
+            m_ActiveCustomProbes.Remove(probe);
         }
     }
 }

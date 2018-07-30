@@ -9,7 +9,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     ///
     /// It is intended to be a storage only for the editor.
     /// </summary>
-    class HDLightingSceneAsset : MonoBehaviour, ISerializationCallbackReceiver
+    class HDLightingSceneAsset : MonoBehaviour
     {
         [Serializable]
         struct Data
@@ -40,34 +40,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return asset;
         }
 
-        Dictionary<HDProbe, int> m_IndexByProbe = new Dictionary<HDProbe, int>();
-
         [SerializeField]
         Data[] m_Data;
 
-        public void OnBeforeSerialize()
-        {
-        }
-
-        public void OnAfterDeserialize()
-        {
-            m_IndexByProbe.Clear();
-
-            if (m_Data == null)
-                return;
-
-            for (int i = 0; i < m_Data.Length; ++i)
-            {
-                var probe = m_Data[i].gameObject.GetComponent<HDProbe>();
-                if (probe != null)
-                    m_IndexByProbe.Add(probe, i);
-            }
-        }
-
         internal bool TryGetBakedTextureFor(HDProbe probe, out Texture bakedTexture)
         {
-            int index;
-            if (m_IndexByProbe.TryGetValue(probe, out index))
+            int index = IndexOf(probe);
+            if (index >= 0)
             {
                 var data = m_Data[index];
                 bakedTexture = data.bakedTexture;
@@ -80,8 +59,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         internal void SetBakedTextureFor(HDProbe probe, Texture bakedTexture)
         {
-            int index;
-            if (!m_IndexByProbe.TryGetValue(probe, out index))
+            int index = IndexOf(probe);
+            if (index == -1)
             {
                 Array.Resize(ref m_Data, m_Data.Length + 1);
                 index = m_Data.Length - 1;
@@ -91,6 +70,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var data = m_Data[index];
             data.bakedTexture = bakedTexture;
             m_Data[index] = data;
+        }
+
+        int IndexOf(HDProbe probe)
+        {
+            for (int i = 0; i < m_Data.Length; ++i)
+            {
+                if (m_Data[i].gameObject == probe.gameObject)
+                    return i;
+            }
+            return -1;
         }
     }
 }

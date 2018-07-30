@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -12,10 +13,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var planar = probe as PlanarReflectionProbe;
             if (standard != null)
             {
-                var c = standard.captureSettings;
-                var rt = new RenderTexture(c.cubemapSize, c.cubemapSize, 1, k_CubemapFormat)
+                var c = standard.probeCaptureProperties;
+                var cubemapSize = (int)((HDRenderPipelineAsset)GraphicsSettings.renderPipelineAsset)
+                        .renderPipelineSettings
+                        .lightLoopSettings
+                        .reflectionCubemapSize;
+                var rt = new RenderTexture(cubemapSize, cubemapSize, 1, k_CubemapFormat)
                 {
-                    dimension = UnityEngine.Rendering.TextureDimension.Cube
+                    dimension = TextureDimension.Cube
                 };
                 return rt;
             }

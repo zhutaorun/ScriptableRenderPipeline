@@ -117,6 +117,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cameraSettings.frameSettings.CopyTo(m_FrameSettings);
             cameraSettings.frameSettings.CopyTo(m_FrameSettingsRuntime);
             m_frameSettingsIsDirty = true; // Let's be sure it is dirty for update
+
+            var camera = GetComponent<Camera>();
+            camera.nearClipPlane = cameraSettings.nearClipPlane;
+            camera.farClipPlane = cameraSettings.farClipPlane;
+            camera.fieldOfView = cameraSettings.fieldOfview;
+            camera.useOcclusionCulling = cameraSettings.useOcclusionCulling;
+            camera.cullingMask = cameraSettings.cullingMask;
         }
 
         // This is the function use outside to access FrameSettings. It return the current state of FrameSettings for the camera

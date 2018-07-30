@@ -66,18 +66,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public uint bounces;
     }
 
-    unsafe class HDReflectionSystem : IScriptableBakedReflectionSystem
+    unsafe class HDBakedReflectionSystem : IScriptableBakedReflectionSystem
     {
         public enum BakeStages
         {
             ReflectionProbes
         }
 
-        //[InitializeOnLoadMethod]
+        [InitializeOnLoadMethod]
         static void RegisterSystem()
         {
-            ScriptableBakedReflectionSystemSettings.system = new HDReflectionSystem();
-
+            ScriptableBakedReflectionSystemSettings.system = new HDBakedReflectionSystem();
         }
 
         BakedProbeHashes m_BakedProbeState = new BakedProbeHashes();
@@ -109,6 +108,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public void SynchronizeReflectionProbes()
         {
+        }
+
+        public bool BakeAllReflectionProbes()
+        {
+            var baker = new HDReflectionSystemBakeAllReflectionProbes
+            {
+                entitySystem = HDReflectionEntitySystem.instance,
+                settings = new ReflectionSettings() // TODO: Set lighting settings here
+            };
+            return baker.BakeAllReflectionProbes();
         }
 
         public void Tick(SceneStateHash sceneStateHash, IScriptableBakedReflectionSystemStageNotifier handle)

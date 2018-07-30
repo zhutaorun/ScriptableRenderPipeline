@@ -11,7 +11,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         interface IProbeTextureImporter<T>
             where T : HDProbe
         {
-            Texture ImportBakedTextureFromFile(T probe, string pathInCache, string pathInAssets);
+            Texture ImportBakedTextureFromAssetPath(T probe, string pathInAssets);
             string GetBakedPathFor(T probe);
             string GetCacheBakePathFor(T probe, Hash128 hash);
         }
@@ -28,7 +28,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 throw new NotImplementedException();
             }
 
-            public Texture ImportBakedTextureFromFile(PlanarReflectionProbe probe, string pathInCache, string pathInAssets)
+            public Texture ImportBakedTextureFromAssetPath(PlanarReflectionProbe probe, string pathInAssets)
             {
                 throw new NotImplementedException();
             }
@@ -38,7 +38,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             public string GetBakedPathFor(HDAdditionalReflectionData probe)
             {
-                return Path.Combine(probe.gameObject.scene.path, probe.name + ".exr");
+                var scenePath = probe.gameObject.scene.path;
+                var filename = Path.GetFileNameWithoutExtension(scenePath);
+                var directoryName = Path.Combine(Path.GetDirectoryName(scenePath), filename);
+                return Path.Combine(directoryName, probe.name + ".exr");
             }
 
             public string GetCacheBakePathFor(HDAdditionalReflectionData probe, Hash128 hash)
@@ -52,12 +55,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 return bakedTexturePathInCache;
             }
 
-            public Texture ImportBakedTextureFromFile(HDAdditionalReflectionData probe, string pathInCache, string pathInAssets)
+            public Texture ImportBakedTextureFromAssetPath(HDAdditionalReflectionData probe, string pathInAssets)
             {
-                Assert.IsTrue(File.Exists(pathInCache));
-                Assert.IsTrue(File.Exists(pathInAssets));
-
-                File.Copy(pathInCache, pathInAssets);
                 var importer = (TextureImporter)AssetImporter.GetAtPath(pathInAssets);
                 importer.textureShape = TextureImporterShape.TextureCube;
                 importer.textureCompression = TextureImporterCompression.Compressed;
@@ -97,16 +96,32 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         internal Texture ImportBakedTextureFromFile(
             HDProbe probe,
-            string bakedTexturePathInCache,
-            string bakedPath
+            string pathInCache,
+            string pathInAssets
+        )
+        {
+            Assert.IsTrue(File.Exists(pathInCache));
+
+            var targetFile = new FileInfo(pathInAssets);
+            if (!targetFile.Directory.Exists)
+                targetFile.Directory.Create();
+
+            File.Copy(pathInCache, pathInAssets, true);
+
+            return ImportBakedTextureFromAssetPath(probe, pathInAssets);
+        }
+
+        internal Texture ImportBakedTextureFromAssetPath(
+            HDProbe probe,
+            string pathInAssets
         )
         {
             var standard = probe as HDAdditionalReflectionData;
             var planar = probe as PlanarReflectionProbe;
             if (standard != null)
-                return m_ReflectionProbe.ImportBakedTextureFromFile(standard, bakedTexturePathInCache, bakedPath);
+                return m_ReflectionProbe.ImportBakedTextureFromAssetPath(standard, pathInAssets);
             if (planar != null)
-                return m_Planar.ImportBakedTextureFromFile(planar, bakedTexturePathInCache, bakedPath);
+                return m_Planar.ImportBakedTextureFromAssetPath(planar, pathInAssets);
 
             throw new ArgumentException();
         }

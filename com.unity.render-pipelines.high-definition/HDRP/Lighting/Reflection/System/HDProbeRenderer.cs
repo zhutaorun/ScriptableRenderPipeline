@@ -3,7 +3,7 @@ using UnityEngine.Rendering.PostProcessing;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
-    class HDProbeRenderer
+    struct HDProbeRenderer
     {
         struct CommonRenderer
         {
@@ -12,9 +12,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 HDProbe.CaptureProperties captureProperties
             )
             {
-                camera.farClipPlane = captureProperties.farClipPlane;
-                camera.nearClipPlane = captureProperties.nearClipPlane;
-                camera.fieldOfView = captureProperties.fieldOfview;
+                camera.farClipPlane = captureProperties.cameraSettings.farClipPlane;
+                camera.nearClipPlane = captureProperties.cameraSettings.nearClipPlane;
+                camera.fieldOfView = captureProperties.cameraSettings.fieldOfview;
 
                 var add = camera.GetComponent<HDAdditionalCameraData>();
                 add.Import(captureProperties.cameraSettings);
@@ -55,16 +55,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     return false;
                 }
 
-                var camera = NewCamera(probe.assets.captureFrameSettings, probe.assets.postProcessLayer);
+                var camera = NewCamera(
+                    probe.captureProperties.cameraSettings.frameSettings,
+                    probe.captureProperties.cameraSettings.postProcessLayer
+                );
+                try
+                {
+                    SetupCaptureCamera(camera, probe, rtTarget, viewer);
 
-                SetupCaptureCamera(camera, probe, rtTarget, viewer);
-
-                if (cubemapTarget != null)
-                    camera.RenderToCubemap(cubemapTarget);
-                else if (rtTarget != null)
-                    camera.RenderToCubemap(rtTarget);
-
-                CoreUtils.Destroy(camera.gameObject);
+                    if (cubemapTarget != null)
+                        camera.RenderToCubemap(cubemapTarget);
+                    else if (rtTarget != null)
+                        camera.RenderToCubemap(rtTarget);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
+                finally
+                {
+                    CoreUtils.Destroy(camera.gameObject);
+                }
 
                 return true;
             }
@@ -78,12 +89,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 camera.aspect = target.width / (float)target.height;
 
-                CommonRenderer.SetupCaptureCameraSettings(camera, probe.captureSettings.common);
-                CommonRenderer.SetupCaptureCameraTransform(camera, probe, viewer.position, viewer.rotation);
+                CommonRenderer.SetupCaptureCameraSettings(camera, probe.captureProperties);
+                CommonRenderer.SetupCaptureCameraTransform(
+                    camera, probe,
+                    viewer != null ? viewer.position : Vector3.zero,
+                    viewer != null ? viewer.rotation : Quaternion.identity
+                );
             }
         }
 
-        ReflectionProbeRenderer m_ReflectionProbeRenderer = new ReflectionProbeRenderer();
+        ReflectionProbeRenderer m_ReflectionProbeRenderer;
 
         public bool Render(HDProbe probe, Texture target, Transform viewer)
         {
