@@ -14,7 +14,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 camera.farClipPlane = captureProperties.cameraSettings.farClipPlane;
                 camera.nearClipPlane = captureProperties.cameraSettings.nearClipPlane;
-                camera.fieldOfView = captureProperties.cameraSettings.fieldOfview;
+                camera.fieldOfView = 90;
 
                 var add = camera.GetComponent<HDAdditionalCameraData>();
                 add.Import(captureProperties.cameraSettings);
@@ -63,10 +63,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     SetupCaptureCamera(camera, probe, rtTarget, viewer);
 
+                    var renderingSuccess = false;
                     if (cubemapTarget != null)
-                        camera.RenderToCubemap(cubemapTarget);
+                        renderingSuccess = camera.RenderToCubemap(cubemapTarget);
                     else if (rtTarget != null)
-                        camera.RenderToCubemap(rtTarget);
+                        renderingSuccess = camera.RenderToCubemap(rtTarget);
                 }
                 catch (Exception e)
                 {

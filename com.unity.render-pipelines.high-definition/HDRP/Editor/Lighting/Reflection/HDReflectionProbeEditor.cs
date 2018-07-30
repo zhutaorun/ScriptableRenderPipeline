@@ -82,7 +82,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             p.Apply();
 
-            //HideAdditionalComponents(false);
+            HideAdditionalComponents(true);
 
             HDReflectionProbeUI.DoShortcutKey(p, this);
         }

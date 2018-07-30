@@ -20,8 +20,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         .reflectionCubemapSize;
                 var rt = new RenderTexture(cubemapSize, cubemapSize, 1, k_CubemapFormat)
                 {
-                    dimension = TextureDimension.Cube
+                    dimension = TextureDimension.Cube,
+                    enableRandomWrite = true,
+                    autoGenerateMips = false,
+                    useMipMap = false,
+                    name  = "Render Target For " + probe.name
                 };
+                rt.Create();
                 return rt;
             }
             if (planar != null)
