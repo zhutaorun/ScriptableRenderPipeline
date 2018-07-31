@@ -16,6 +16,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             public GameObject gameObject;
             public Texture bakedTexture;
+            public RenderData renderData;
         }
 
         public static HDLightingSceneAsset GetOrCreateForScene(Scene scene)
@@ -57,7 +58,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return false;
         }
 
-        internal void SetBakedTextureFor(HDProbe probe, Texture bakedTexture)
+        internal void SetBakedTextureFor(HDProbe probe, Texture bakedTexture, RenderData renderData)
         {
             int index = IndexOf(probe);
             if (index == -1)
@@ -69,6 +70,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             var data = m_Data[index];
             data.bakedTexture = bakedTexture;
+            data.renderData = renderData;
             m_Data[index] = data;
         }
 

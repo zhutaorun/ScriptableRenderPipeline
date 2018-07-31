@@ -13,7 +13,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             Texture ImportBakedTextureFromAssetPath(T probe, string pathInAssets);
             string GetBakedPathFor(T probe);
-            string GetCacheBakePathFor(T probe, Hash128 hash);
+            void GetCacheBakePathFor(T probe, Hash128 hash, out string cachePath, out string cacheDataPath);
         }
 
         struct CommonTextureImporter
@@ -26,14 +26,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 return Path.Combine(directoryName, probe.name + ".exr");
             }
 
-            public static string GetCacheBakePathFor(HDProbe probe, Hash128 hash)
+            public static void GetCacheBakePathFor(
+                HDProbe probe, Hash128 hash,
+                out string cachePath, out string cacheDataPath
+            )
             {
-                var bakedTexturePathInCache = HDBakeUtilities.GetCacheBakePath(
-                    probe.gameObject.scene.path,
-                    hash,
-                    ".exr"
-                );
-                return bakedTexturePathInCache;
+                cachePath = HDBakeUtilities.GetCacheBakePath(probe.gameObject.scene.path, hash, ".exr");
+                cacheDataPath = HDBakeUtilities.GetCacheBakePath(probe.gameObject.scene.path, hash, "-data.exr");
             }
         }
 
@@ -44,9 +43,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 return CommonTextureImporter.GetBakedPathFor(probe);
             }
 
-            public string GetCacheBakePathFor(PlanarReflectionProbe probe, Hash128 hash)
+            public void GetCacheBakePathFor(
+                PlanarReflectionProbe probe, Hash128 hash,
+                out string cachePath, out string cacheDataPath
+            )
             {
-                return CommonTextureImporter.GetCacheBakePathFor(probe, hash);
+                CommonTextureImporter.GetCacheBakePathFor(probe, hash, out cachePath, out cacheDataPath);
             }
 
             public Texture ImportBakedTextureFromAssetPath(PlanarReflectionProbe probe, string pathInAssets)
@@ -68,9 +70,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 return CommonTextureImporter.GetBakedPathFor(probe);
             }
 
-            public string GetCacheBakePathFor(HDAdditionalReflectionData probe, Hash128 hash)
+            public void GetCacheBakePathFor(
+                HDAdditionalReflectionData probe, Hash128 hash,
+                out string cachePath, out string cacheDataPath
+            )
             {
-                return CommonTextureImporter.GetCacheBakePathFor(probe, hash);
+                CommonTextureImporter.GetCacheBakePathFor(probe, hash, out cachePath, out cacheDataPath);
             }
 
             public Texture ImportBakedTextureFromAssetPath(HDAdditionalReflectionData probe, string pathInAssets)
@@ -100,15 +105,28 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             throw new ArgumentException();
         }
 
-        internal string GetCacheBakePathFor(HDProbe probe, Hash128 bakedOutputHash)
+        internal void GetCacheBakePathFor(
+            HDProbe probe, Hash128 bakedOutputHash,
+            out string cacheFilePath, out string cacheDataFilePath
+        )
         {
             var standard = probe as HDAdditionalReflectionData;
             var planar = probe as PlanarReflectionProbe;
             if (standard != null)
-                return m_ReflectionProbe.GetCacheBakePathFor(standard, bakedOutputHash);
+            {
+                m_ReflectionProbe.GetCacheBakePathFor(
+                    standard, bakedOutputHash,
+                    out cacheFilePath, out cacheDataFilePath
+                );
+                return;
+            }
             if (planar != null)
-                return m_Planar.GetCacheBakePathFor(planar, bakedOutputHash);
-
+            {
+                m_Planar.GetCacheBakePathFor(
+                    planar, bakedOutputHash,
+                    out cacheFilePath, out cacheDataFilePath
+                );
+            }
             throw new ArgumentException();
         }
 

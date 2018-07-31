@@ -45,6 +45,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public abstract ReflectionProbeMode mode { get; }
         public abstract Texture texture { get; }
+        public abstract RenderData renderData { get; }
         // Position of the center of the probe in capture space
         public abstract float weight { get; }
         public abstract float multiplier { get; }
@@ -106,6 +107,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
+        public override RenderData renderData { get { return probe.probe.GetComponent<HDProbe>().renderData; } }
         public override Texture texture { get { return probe.probe.GetComponent<HDProbe>().bakedTexture ; } }
         public override ReflectionProbeMode mode { get { return probe.probe.mode; } }
         public override EnvShapeType influenceShapeType { get { return ConvertShape(additional.influenceVolume.shape); } }
@@ -179,6 +181,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             planarReflectionProbe = probe;
         }
 
+        public override RenderData renderData { get { return planarReflectionProbe.renderData; } }
         public override Matrix4x4 influenceToWorld { get { return planarReflectionProbe.influenceToWorld; } }
         public override Texture texture { get { return planarReflectionProbe.texture; } }
         public override EnvShapeType influenceShapeType { get { return ConvertShape(planarReflectionProbe.influenceVolume.shape); } }

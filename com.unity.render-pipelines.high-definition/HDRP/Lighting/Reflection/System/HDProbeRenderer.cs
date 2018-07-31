@@ -34,12 +34,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         interface IProbeRenderer<T>
             where T : HDProbe
         {
-            bool Render(T probe, Texture target, Transform viewer);
+            bool Render(T probe, Texture target, Transform viewer, out RenderData renderData);
         }
 
         struct ReflectionProbeRenderer : IProbeRenderer<HDAdditionalReflectionData>
         {
-            public bool Render(HDAdditionalReflectionData probe, Texture target, Transform viewer)
+            public bool Render(
+                HDAdditionalReflectionData probe,
+                Texture target,
+                Transform viewer,
+                out RenderData renderData
+            )
             {
                 var cubemapTarget = target as Cubemap;
                 var rtTarget = target as RenderTexture;
@@ -47,6 +52,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     && (rtTarget == null || rtTarget.dimension != UnityEngine.Rendering.TextureDimension.Cube))
                 {
                     Debug.LogWarningFormat("Trying to render a reflection probe in an invalid target: {0}", target);
+                    renderData = default(RenderData);
                     return false;
                 }
 
@@ -79,6 +85,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     CoreUtils.Destroy(camera.gameObject);
                 }
 
+                renderData = new RenderData();
                 return true;
             }
 
@@ -100,14 +107,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         struct PlanarProbeRenderer : IProbeRenderer<PlanarReflectionProbe>
         {
-            public bool Render(PlanarReflectionProbe probe, Texture target, Transform viewer)
+            public bool Render(
+                PlanarReflectionProbe probe,
+                Texture target,
+                Transform viewer,
+                out RenderData renderData
+            )
             {
                 var rtTarget = target as RenderTexture;
                 if ((rtTarget == null || rtTarget.dimension != UnityEngine.Rendering.TextureDimension.Tex2D))
                 {
                     Debug.LogWarningFormat("Trying to render a reflection probe in an invalid target: {0}", target);
+                    renderData = default(RenderData);
                     return false;
                 }
+
+                renderData = new RenderData();
 
                 var camera = NewCamera(
                     probe.captureProperties.cameraSettings.frameSettings,
@@ -122,6 +137,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     camera.targetTexture = rtTarget;
                     camera.Render();
                     camera.targetTexture = null;
+                    renderData = new RenderData
+                    {
+                        projectionMatrix = camera.projectionMatrix,
+                        worldToCameraMatrix = camera.worldToCameraMatrix
+                    };
                 }
                 catch (Exception e)
                 {
@@ -171,20 +191,24 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 camera.transform.position = capturePosition;
                 camera.transform.rotation = captureRotation;
+                camera.projectionMatrix = projection;
+                camera.worldToCameraMatrix = worldToCamera;
             }
         }
 
         ReflectionProbeRenderer m_ReflectionProbeRenderer;
         PlanarProbeRenderer m_PlanarProbeRenderer;
 
-        public bool Render(HDProbe probe, Texture target, Transform viewer)
+        public bool Render(HDProbe probe, Texture target, Transform viewer, out RenderData renderData)
         {
             var standard = probe as HDAdditionalReflectionData;
             var planar = probe as PlanarReflectionProbe;
             if (standard != null)
-                return m_ReflectionProbeRenderer.Render(standard, target, viewer);
+                return m_ReflectionProbeRenderer.Render(standard, target, viewer, out renderData);
             if (planar != null)
-                return m_PlanarProbeRenderer.Render(planar, target, viewer);
+                return m_PlanarProbeRenderer.Render(planar, target, viewer, out renderData);
+
+            renderData = default(RenderData);
             return false;
         }
 

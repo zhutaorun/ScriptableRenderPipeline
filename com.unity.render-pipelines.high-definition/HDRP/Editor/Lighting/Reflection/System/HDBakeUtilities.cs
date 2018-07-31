@@ -1,8 +1,10 @@
 using System;
 using System.IO;
+using System.Xml.Serialization;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Experimental.Rendering.HDPipeline;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.PostProcessing;
 
@@ -86,6 +88,20 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 default:
                     throw new ArgumentException();
             }
+        }
+
+        internal static void WriteRenderDataTo(RenderData renderData, string cacheDataFilePath)
+        {
+            var xmlSerializer = new XmlSerializer(typeof(RenderData));
+            using (var stream = new FileStream(cacheDataFilePath, FileMode.OpenOrCreate))
+                xmlSerializer.Serialize(stream, renderData);
+        }
+
+        internal static RenderData LoadRenderDataFrom(string cacheDataFilePath)
+        {
+            var xmlSerializer = new XmlSerializer(typeof(RenderData));
+            using (var stream = new FileStream(cacheDataFilePath, FileMode.Open))
+                return (RenderData)xmlSerializer.Deserialize(stream);
         }
 
         static void CreateParentDirectoryIfMissing(string path)

@@ -38,6 +38,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Realtime
     }
 
+    [Serializable]
+    public struct RenderData
+    {
+        // Capture data for planar probes
+        public Matrix4x4 worldToCameraMatrix;
+        public Matrix4x4 projectionMatrix;
+    }
+
     [ExecuteInEditMode]
     public abstract class HDProbe : MonoBehaviour, ISerializationCallbackReceiver
     {
@@ -52,15 +60,30 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         internal struct Assets
         {
             public Texture bakedTexture;        // TODO: texture should not be serialized here
+            public RenderData bakedData;
             public Texture customTexture;       // TODO: otherwise, you can have like the baked texture
+            public RenderData customData;
             public Texture realtimeTexture;     // TODO: included in build for a realtime probe...
+            public RenderData realtimeData;
         }
 
         // TODO: maybe set this one as private and use properties to access its fields
         public CaptureProperties captureProperties;
 
         public Texture bakedTexture { get { return assets.bakedTexture; } set { assets.bakedTexture = value; } }
+        public RenderData bakedRenderData { get { return assets.bakedData; } set { assets.bakedData = value; } }
 
+        public RenderData renderData
+        {
+            get
+            {
+                switch (captureProperties.mode)
+                {
+                    case HDReflectionProbeMode.Baked: return bakedRenderData;
+                    default: throw new ArgumentException();
+                }
+            }
+        }
         public Texture texture
         {
             get

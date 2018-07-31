@@ -124,7 +124,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
         public Texture customTexture { get { return m_CustomTexture; } set { m_CustomTexture = value; } }
-        public Texture bakedTexture { get { return m_BakedTexture; } set { m_BakedTexture = value; }}
         public RenderTexture realtimeTexture { get { return m_RealtimeTexture; } internal set { m_RealtimeTexture = value; } }
         public FrameSettings frameSettings { get { return m_FrameSettings; } }
         public float captureNearPlane { get { return m_CaptureNearPlane; } }

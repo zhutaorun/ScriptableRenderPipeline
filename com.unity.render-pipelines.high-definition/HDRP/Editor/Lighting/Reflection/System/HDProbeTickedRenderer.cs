@@ -70,10 +70,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var hash = m_ToBakeHashes[index];
 
             var renderTarget = HDProbeRendererUtilities.CreateRenderTarget(probe);
-            m_Renderer.Render(probe, renderTarget, null);
+            RenderData renderData;
+            m_Renderer.Render(probe, renderTarget, null, out renderData);
 
-            var cacheFilePath = m_TextureImporter.GetCacheBakePathFor(probe, hash);
+            string cacheFilePath, cacheDataFilePath;
+            m_TextureImporter.GetCacheBakePathFor(probe, hash, out cacheFilePath, out cacheDataFilePath);
             HDBakeUtilities.WriteBakedTextureTo(renderTarget, cacheFilePath);
+            HDBakeUtilities.WriteRenderDataTo(renderData, cacheDataFilePath);
 
             m_IsComplete = m_NextIndexToBake >= m_ToBakeProbeInstanceIDs.Length;
             m_IsRunning = !m_IsComplete;

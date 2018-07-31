@@ -33,7 +33,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                     // Render probe
                     var renderTarget = HDProbeRendererUtilities.CreateRenderTarget(probe);
-                    renderer.Render(probe, renderTarget, null);
+                    RenderData renderData;
+                    renderer.Render(probe, renderTarget, null, out renderData);
 
                     // Save rendered texture to disk
                     HDBakeUtilities.WriteBakedTextureTo(renderTarget, bakedPath);
@@ -48,8 +49,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                     // Set baked texture in lighting asset
                     var lightingAsset = HDLightingSceneAsset.GetOrCreateForScene(probeScene);
-                    lightingAsset.SetBakedTextureFor(probe, bakedTexture);
+                    lightingAsset.SetBakedTextureFor(probe, bakedTexture, renderData);
                     probe.bakedTexture = bakedTexture;
+                    probe.bakedRenderData = renderData;
                     EditorUtility.SetDirty(lightingAsset);
                 }
                 catch (Exception e)

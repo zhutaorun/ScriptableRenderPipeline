@@ -150,7 +150,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         var probeScene = probe.gameObject.scene;
                         var bakedOutputHash = bakedProbeOutputHashes[index];
                         var probeOnlyHash = bakedProbeOnlyHashes[index];
-                        var bakedTexturePathInCache = textureImporter.GetCacheBakePathFor(probe, bakedOutputHash);
+                        string bakedTexturePathInCache, bakedRenderDataPathInCache;
+                        textureImporter.GetCacheBakePathFor(
+                            probe, bakedOutputHash,
+                            out bakedTexturePathInCache, out bakedRenderDataPathInCache
+                        );
 
                         if (!File.Exists(bakedTexturePathInCache))
                             continue;
@@ -169,8 +173,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                             bakedTexturePathInCache,
                             bakedPath
                         );
+                        var renderData = HDBakeUtilities.LoadRenderDataFrom(bakedRenderDataPathInCache);
 
-                        lightingAsset.SetBakedTextureFor(probe, bakedTexture);
+                        lightingAsset.SetBakedTextureFor(probe, bakedTexture, renderData);
                         probe.bakedTexture = bakedTexture;
 
                         EditorUtility.SetDirty(lightingAsset);
