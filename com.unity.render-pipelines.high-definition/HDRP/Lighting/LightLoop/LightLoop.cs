@@ -1834,7 +1834,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             HDAdditionalReflectionData additional = probe.probe.GetComponent<HDAdditionalReflectionData>();
 
                             // probe.texture can be null when we are adding a reflection probe in the editor
-                            if (probe.texture == null || envLightCount >= k_MaxEnvLightsOnScreen)
+                            if (additional.texture == null || envLightCount >= k_MaxEnvLightsOnScreen)
                                 continue;
 
                             // Work around the culling issues. TODO: fix culling in C++.

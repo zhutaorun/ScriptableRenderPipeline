@@ -61,6 +61,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public Texture bakedTexture { get { return assets.bakedTexture; } set { assets.bakedTexture = value; } }
 
+        public Texture texture
+        {
+            get
+            {
+                switch (captureProperties.mode)
+                {
+                    case HDReflectionProbeMode.Baked: return bakedTexture;
+                    default: throw new ArgumentException();
+                }
+            }
+        }
+
         public abstract Hash128 ComputeBakePropertyHashes();
         public abstract void GetCaptureTransformFor(
             Vector3 viewerPosition, Quaternion viewerRotation,

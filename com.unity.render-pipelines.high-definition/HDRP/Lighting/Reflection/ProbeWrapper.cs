@@ -106,7 +106,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        public override Texture texture { get { return probe.texture; } }
+        public override Texture texture { get { return probe.probe.GetComponent<HDProbe>().bakedTexture ; } }
         public override ReflectionProbeMode mode { get { return probe.probe.mode; } }
         public override EnvShapeType influenceShapeType { get { return ConvertShape(additional.influenceVolume.shape); } }
         public override float weight { get { return additional.weight; } }
