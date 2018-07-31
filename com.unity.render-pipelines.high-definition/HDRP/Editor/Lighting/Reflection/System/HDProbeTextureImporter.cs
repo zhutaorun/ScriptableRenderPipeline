@@ -16,27 +16,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             string GetCacheBakePathFor(T probe, Hash128 hash);
         }
 
-        struct HDPlanarTextureImporter : IProbeTextureImporter<PlanarReflectionProbe>
+        struct CommonTextureImporter
         {
-            public string GetBakedPathFor(PlanarReflectionProbe probe)
-            {
-                throw new NotImplementedException();
-            }
-
-            public string GetCacheBakePathFor(PlanarReflectionProbe probe, Hash128 hash)
-            {
-                throw new NotImplementedException();
-            }
-
-            public Texture ImportBakedTextureFromAssetPath(PlanarReflectionProbe probe, string pathInAssets)
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        struct HDReflectionProbeTextureImporter : IProbeTextureImporter<HDAdditionalReflectionData>
-        {
-            public string GetBakedPathFor(HDAdditionalReflectionData probe)
+            public static string GetBakedPathFor(HDProbe probe)
             {
                 var scenePath = probe.gameObject.scene.path;
                 var filename = Path.GetFileNameWithoutExtension(scenePath);
@@ -44,15 +26,51 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 return Path.Combine(directoryName, probe.name + ".exr");
             }
 
-            public string GetCacheBakePathFor(HDAdditionalReflectionData probe, Hash128 hash)
+            public static string GetCacheBakePathFor(HDProbe probe, Hash128 hash)
             {
                 var bakedTexturePathInCache = HDBakeUtilities.GetCacheBakePath(
                     probe.gameObject.scene.path,
                     hash,
                     ".exr"
                 );
-
                 return bakedTexturePathInCache;
+            }
+        }
+
+        struct HDPlanarTextureImporter : IProbeTextureImporter<PlanarReflectionProbe>
+        {
+            public string GetBakedPathFor(PlanarReflectionProbe probe)
+            {
+                return CommonTextureImporter.GetBakedPathFor(probe);
+            }
+
+            public string GetCacheBakePathFor(PlanarReflectionProbe probe, Hash128 hash)
+            {
+                return CommonTextureImporter.GetCacheBakePathFor(probe, hash);
+            }
+
+            public Texture ImportBakedTextureFromAssetPath(PlanarReflectionProbe probe, string pathInAssets)
+            {
+                var importer = (TextureImporter)AssetImporter.GetAtPath(pathInAssets);
+                importer.textureShape = TextureImporterShape.Texture2D;
+                importer.textureCompression = TextureImporterCompression.Compressed;
+                importer.sRGBTexture = false;
+                importer.SaveAndReimport();
+
+                return AssetDatabase.LoadAssetAtPath<Texture2D>(pathInAssets);
+            }
+        }
+
+        struct HDReflectionProbeTextureImporter : IProbeTextureImporter<HDAdditionalReflectionData>
+        {
+            public string GetBakedPathFor(HDAdditionalReflectionData probe)
+            {
+                return CommonTextureImporter.GetBakedPathFor(probe);
+            }
+
+            public string GetCacheBakePathFor(HDAdditionalReflectionData probe, Hash128 hash)
+            {
+                return CommonTextureImporter.GetCacheBakePathFor(probe, hash);
             }
 
             public Texture ImportBakedTextureFromAssetPath(HDAdditionalReflectionData probe, string pathInAssets)

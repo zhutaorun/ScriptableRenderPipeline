@@ -19,9 +19,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         internal static void WriteBakedTextureTo(Texture renderTarget, string cacheFilePath)
         {
             var rt = renderTarget as RenderTexture;
-            if (rt != null && rt.dimension == TextureDimension.Cube)
+            if (rt != null)
             {
-                var t2D = CopyCubemapToTexture2D(rt);
+                var t2D = CopyRenderTargetToTexture2D(rt);
                 var bytes = t2D.EncodeToEXR(Texture2D.EXRFlags.CompressZIP);
                 CreateParentDirectoryIfMissing(cacheFilePath);
                 File.WriteAllBytes(cacheFilePath, bytes);
@@ -31,15 +31,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         }
 
         /// <summary>
-        /// Export a cubemap to a texture2D.
-        /// 
-        /// The Texture2D size is (size * 6, size) and the layout is +X,-X,+Y,-Y,+Z,-Z
+        /// Export a render texture to a texture2D.
+        ///
+        /// <list type="bullet">
+        /// <item>Cubemap will be exported in a Texture2D of size (size * 6, size) and with a layout +X,-X,+Y,-Y,+Z,-Z</item>
+        /// <item>Texture2D will be copied to a Texture2D</item>
+        /// </list>
         /// </summary>
         /// <param name="source"></param>
-        /// <returns></returns>
-        public static Texture2D CopyCubemapToTexture2D(RenderTexture source)
+        /// <returns>The copied Texture2D.</returns>
+        public static Texture2D CopyRenderTargetToTexture2D(RenderTexture source)
         {
-            Assert.AreEqual(TextureDimension.Cube, source.dimension);
             TextureFormat format = TextureFormat.RGBAFloat;
             switch (source.format)
             {
@@ -50,21 +52,40 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     break;
             }
 
-            var resolution = source.width;
-
-            var result = new Texture2D(resolution * 6, resolution, format, false);
-
-            var offset = 0;
-            for (var i = 0; i< 6; ++i)
+            switch (source.dimension)
             {
-                Graphics.SetRenderTarget(source, 0, (CubemapFace) i);
-                result.ReadPixels(new Rect(0, 0, resolution, resolution), offset, 0);
-                result.Apply();
-                offset += resolution;
-            }
-            Graphics.SetRenderTarget(null);
+                case TextureDimension.Cube:
+                    {
+                        var resolution = source.width;
+                        var result = new Texture2D(resolution * 6, resolution, format, false);
 
-            return result;
+                        var offset = 0;
+                        for (var i = 0; i < 6; ++i)
+                        {
+                            Graphics.SetRenderTarget(source, 0, (CubemapFace)i);
+                            result.ReadPixels(new Rect(0, 0, resolution, resolution), offset, 0);
+                            result.Apply();
+                            offset += resolution;
+                        }
+                        Graphics.SetRenderTarget(null);
+
+                        return result;
+                    }
+                case TextureDimension.Tex2D:
+                    {
+                        var resolution = source.width;
+                        var result = new Texture2D(resolution, resolution, format, false);
+
+                        Graphics.SetRenderTarget(source, 0);
+                        result.ReadPixels(new Rect(0, 0, resolution, resolution), 0, 0);
+                        result.Apply();
+                        Graphics.SetRenderTarget(null);
+
+                        return result;
+                    }
+                default:
+                    throw new ArgumentException();
+            }
         }
 
         static void CreateParentDirectoryIfMissing(string path)

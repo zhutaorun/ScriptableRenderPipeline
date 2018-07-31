@@ -65,10 +65,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Internal
                     {
                         switch (planarProbe.capturePositionMode)
                         {
-                            case PlanarReflectionProbe.CapturePositionMode.Static:
+                            case PlanarReflectionProbe.CapturePositionMode.MirrorReference:
                                 m_PlanarReflectionProbe_RealtimeUpdate.Add(planarProbe);
                                 break;
-                            case PlanarReflectionProbe.CapturePositionMode.MirrorCamera:
+                            case PlanarReflectionProbe.CapturePositionMode.MirrorViewer:
                                 m_PlanarReflectionProbe_PerCamera_RealtimeUpdate.Add(planarProbe);
                                 break;
                         }
@@ -313,7 +313,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Internal
             if (viewerCamera != null
                 && probe.mode == ReflectionProbeMode.Realtime
                 && probe.refreshMode == ReflectionProbeRefreshMode.EveryFrame
-                && probe.capturePositionMode == PlanarReflectionProbe.CapturePositionMode.MirrorCamera)
+                && probe.capturePositionMode == PlanarReflectionProbe.CapturePositionMode.MirrorViewer)
                 CalculateMirroredCaptureCameraProperties(probe, viewerCamera, out nearClipPlane, out farClipPlane, out aspect, out fov, out clearFlags, out backgroundColor, out worldToCamera, out projection, out capturePosition, out captureRotation);
             else
                 CalculateStaticCaptureCameraProperties(probe, out nearClipPlane, out farClipPlane, out aspect, out fov, out clearFlags, out backgroundColor, out worldToCamera, out projection, out capturePosition, out captureRotation);
@@ -324,7 +324,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Internal
             return viewerCamera != null
                 && probe.mode == ReflectionProbeMode.Realtime
                 && probe.refreshMode == ReflectionProbeRefreshMode.EveryFrame
-                && probe.capturePositionMode == PlanarReflectionProbe.CapturePositionMode.MirrorCamera;
+                && probe.capturePositionMode == PlanarReflectionProbe.CapturePositionMode.MirrorViewer;
         }
 
         static void CalculateStaticCaptureCameraProperties(PlanarReflectionProbe probe, out float nearClipPlane, out float farClipPlane, out float aspect, out float fov, out CameraClearFlags clearFlags, out Color backgroundColor, out Matrix4x4 worldToCamera, out Matrix4x4 projection, out Vector3 capturePosition, out Quaternion captureRotation)

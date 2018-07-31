@@ -29,8 +29,26 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 rt.Create();
                 return rt;
             }
+
             if (planar != null)
-                throw new NotImplementedException();
+            {
+                var c = planar.probeCaptureProperties;
+                var textureSize = (int)((HDRenderPipelineAsset)GraphicsSettings.renderPipelineAsset)
+                    .renderPipelineSettings
+                    .lightLoopSettings
+                    .planarReflectionTextureSize;
+                var rt = new RenderTexture(textureSize, textureSize, 1, k_CubemapFormat)
+                {
+                    dimension = TextureDimension.Tex2D,
+                    enableRandomWrite = true,
+                    autoGenerateMips = false,
+                    useMipMap = false,
+                    name = "Render Target For " + probe.name
+                };
+                rt.Create();
+                return rt;
+            }
+                
             throw new ArgumentException();
         }
     }

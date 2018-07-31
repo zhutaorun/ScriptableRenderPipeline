@@ -52,8 +52,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (!e.sceneViewEditing)
                 return;
 
-
-
             DrawVerticalRay(reflectionProbe.transform);
         }
 

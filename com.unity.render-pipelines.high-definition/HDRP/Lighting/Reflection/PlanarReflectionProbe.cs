@@ -12,15 +12,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [Serializable]
         public struct PlanarCaptureProperties
         {
-            public CaptureProperties common;
             public CapturePositionMode capturePositionMode;
+            public Vector3 localReferencePosition;
         }
 
-        public PlanarCaptureProperties captureSettings;
+        public PlanarCaptureProperties probeCaptureProperties;
 
         public override Hash128 ComputeBakePropertyHashes()
         {
-            throw new NotImplementedException();
+            var capturePropertiesHash = new Hash128();
+            HashUtilities.ComputeHash128(ref captureProperties, ref capturePropertiesHash);
+            var probeCapturePropertiesHash = new Hash128();
+            HashUtilities.ComputeHash128(ref probeCaptureProperties, ref probeCapturePropertiesHash);
+            HashUtilities.AppendHash(ref capturePropertiesHash, ref probeCapturePropertiesHash);
+            return probeCapturePropertiesHash;
         }
 
         public override void GetCaptureTransformFor(
@@ -28,7 +33,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             out Vector3 capturePosition, out Quaternion captureRotation
         )
         {
-            throw new NotImplementedException();
+            switch (probeCaptureProperties.capturePositionMode)
+            {
+                case CapturePositionMode.MirrorReference:
+                {
+                    viewerPosition = probeCaptureProperties.localReferencePosition;
+                    viewerRotation = Quaternion.LookRotation(transform.position - viewerPosition);
+                    break;
+                }
+            }
+
+            var reflectionMatrix = GeometryUtils.CalculateReflectionMatrix(
+                new Plane(transform.forward, transform.position)
+            );
+            capturePosition = reflectionMatrix.MultiplyPoint(viewerPosition);
+            var forward = reflectionMatrix.MultiplyVector(viewerRotation * Vector3.forward);
+            var up = reflectionMatrix.MultiplyVector(viewerRotation * Vector3.up);
+            captureRotation = Quaternion.LookRotation(forward, up);
         }
 
         [SerializeField, FormerlySerializedAs("version")]
@@ -36,8 +57,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public enum CapturePositionMode
         {
-            Static,
-            MirrorCamera,
+            MirrorReference,
+            MirrorViewer,
         }
 
         [SerializeField]
@@ -53,7 +74,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [SerializeField]
         float m_CaptureFarPlane = 1000;
         [SerializeField]
-        CapturePositionMode m_CapturePositionMode = CapturePositionMode.Static;
+        CapturePositionMode m_CapturePositionMode = CapturePositionMode.MirrorReference;
         [SerializeField]
         Vector3 m_CaptureMirrorPlaneLocalPosition;
         [SerializeField]
@@ -165,7 +186,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 return mode == ReflectionProbeMode.Realtime
                     && refreshMode == ReflectionProbeRefreshMode.EveryFrame
-                    && capturePositionMode == CapturePositionMode.MirrorCamera;
+                    && capturePositionMode == CapturePositionMode.MirrorViewer;
             }
         }
 

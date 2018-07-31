@@ -14,25 +14,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 camera.farClipPlane = captureProperties.cameraSettings.farClipPlane;
                 camera.nearClipPlane = captureProperties.cameraSettings.nearClipPlane;
-                camera.fieldOfView = 90;
 
                 var add = camera.GetComponent<HDAdditionalCameraData>();
                 add.Import(captureProperties.cameraSettings);
             }
 
-            public static void SetupCaptureCameraTransform(
+            public static void SetupCaptureCamera(
                 Camera camera,
                 HDProbe probe,
-                Vector3 viewerPosition, Quaternion viewerRotation
+                RenderTexture target,
+                Transform viewer
             )
             {
-                Vector3 position; Quaternion rotation;
-                probe.GetCaptureTransformFor(
-                    viewerPosition, viewerRotation,
-                    out position, out rotation
-                );
-                camera.transform.position = position;
-                camera.transform.rotation = rotation;
+                camera.aspect = target.width / (float)target.height;
+                SetupCaptureCameraSettings(camera, probe.captureProperties);
             }
         }
 
@@ -61,7 +56,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 );
                 try
                 {
-                    SetupCaptureCamera(camera, probe, rtTarget, viewer);
+                    CommonRenderer.SetupCaptureCamera(camera, probe, rtTarget, viewer);
+                    camera.fieldOfView = 90;
+                    SetupCaptureCameraTransform(
+                        camera, probe,
+                        viewer != null ? viewer.position : camera.transform.position,
+                        viewer != null ? viewer.rotation : camera.transform.rotation
+                    );
 
                     var renderingSuccess = false;
                     if (cubemapTarget != null)
@@ -81,25 +82,100 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return true;
             }
 
-            void SetupCaptureCamera(
+            static void SetupCaptureCameraTransform(
                 Camera camera,
-                HDAdditionalReflectionData probe,
-                RenderTexture target,
-                Transform viewer
+                HDProbe probe,
+                Vector3 viewerPosition, Quaternion viewerRotation
             )
             {
-                camera.aspect = target.width / (float)target.height;
-
-                CommonRenderer.SetupCaptureCameraSettings(camera, probe.captureProperties);
-                CommonRenderer.SetupCaptureCameraTransform(
-                    camera, probe,
-                    viewer != null ? viewer.position : Vector3.zero,
-                    viewer != null ? viewer.rotation : Quaternion.identity
+                Vector3 position; Quaternion rotation;
+                probe.GetCaptureTransformFor(
+                    viewerPosition, viewerRotation,
+                    out position, out rotation
                 );
+                camera.transform.position = position;
+                camera.transform.rotation = rotation;
+            }
+        }
+
+        struct PlanarProbeRenderer : IProbeRenderer<PlanarReflectionProbe>
+        {
+            public bool Render(PlanarReflectionProbe probe, Texture target, Transform viewer)
+            {
+                var rtTarget = target as RenderTexture;
+                if ((rtTarget == null || rtTarget.dimension != UnityEngine.Rendering.TextureDimension.Tex2D))
+                {
+                    Debug.LogWarningFormat("Trying to render a reflection probe in an invalid target: {0}", target);
+                    return false;
+                }
+
+                var camera = NewCamera(
+                    probe.captureProperties.cameraSettings.frameSettings,
+                    probe.captureProperties.cameraSettings.postProcessLayer
+                );
+                try
+                {
+                    CommonRenderer.SetupCaptureCamera(camera, probe, rtTarget, viewer);
+                    camera.fieldOfView = probe.captureProperties.cameraSettings.fieldOfview;
+                    SetupCaptureCameraMatrices(camera, probe, viewer);
+
+                    camera.targetTexture = rtTarget;
+                    camera.Render();
+                    camera.targetTexture = null;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
+                finally
+                {
+                    CoreUtils.Destroy(camera.gameObject);
+                }
+
+                return true;
+            }
+
+            static void SetupCaptureCameraMatrices(Camera camera, PlanarReflectionProbe probe, Transform viewer)
+            {
+                var referencePosition = probe.probeCaptureProperties.localReferencePosition;
+                var referenceRotation = Quaternion.LookRotation(probe.transform.position - referencePosition);
+
+                if (probe.probeCaptureProperties.capturePositionMode
+                    == PlanarReflectionProbe.CapturePositionMode.MirrorViewer
+                    && viewer != null)
+                {
+                    referencePosition = viewer.position;
+                    referenceRotation = viewer.rotation;
+                }
+
+                var mirrorPlanePosition = probe.transform.position;
+                var mirrorPlaneNormal = probe.transform.forward;
+
+                var worldToCapture = GeometryUtils.CalculateWorldToCameraMatrixRHS(referencePosition, referenceRotation);
+                var reflectionMatrix = GeometryUtils.CalculateReflectionMatrix(
+                    new Plane(mirrorPlaneNormal, mirrorPlanePosition)
+                );
+                var worldToCamera = worldToCapture * reflectionMatrix;
+
+                var clipPlane = GeometryUtils.CameraSpacePlane(worldToCamera, mirrorPlanePosition, mirrorPlaneNormal);
+                var sourceProj = Matrix4x4.Perspective(
+                    camera.fieldOfView, camera.aspect, camera.nearClipPlane, camera.farClipPlane
+                );
+                var projection = GeometryUtils.CalculateObliqueMatrix(sourceProj, clipPlane);
+
+                var capturePosition = reflectionMatrix.MultiplyPoint(referencePosition);
+
+                var forward = reflectionMatrix.MultiplyVector(referenceRotation * Vector3.forward);
+                var up = reflectionMatrix.MultiplyVector(referenceRotation * Vector3.up);
+                var captureRotation = Quaternion.LookRotation(forward, up);
+
+                camera.transform.position = capturePosition;
+                camera.transform.rotation = captureRotation;
             }
         }
 
         ReflectionProbeRenderer m_ReflectionProbeRenderer;
+        PlanarProbeRenderer m_PlanarProbeRenderer;
 
         public bool Render(HDProbe probe, Texture target, Transform viewer)
         {
@@ -108,7 +184,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (standard != null)
                 return m_ReflectionProbeRenderer.Render(standard, target, viewer);
             if (planar != null)
-                throw new NotImplementedException();
+                return m_PlanarProbeRenderer.Render(planar, target, viewer);
             return false;
         }
 

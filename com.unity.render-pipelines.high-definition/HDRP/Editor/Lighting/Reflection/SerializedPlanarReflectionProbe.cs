@@ -39,7 +39,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 return refreshMode.intValue == (int)ReflectionProbeRefreshMode.EveryFrame
                     && mode.intValue == (int)ReflectionProbeMode.Realtime
-                    && capturePositionMode.intValue == (int)PlanarReflectionProbe.CapturePositionMode.MirrorCamera;
+                    && capturePositionMode.intValue == (int)PlanarReflectionProbe.CapturePositionMode.MirrorViewer;
             }
         }
 
@@ -91,7 +91,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             mode.enumValueIndex = (int)ReflectionProbeMode.Realtime;
             refreshMode.enumValueIndex = (int)ReflectionProbeRefreshMode.EveryFrame;
-            capturePositionMode.enumValueIndex = (int)PlanarReflectionProbe.CapturePositionMode.MirrorCamera;
+            capturePositionMode.enumValueIndex = (int)PlanarReflectionProbe.CapturePositionMode.MirrorViewer;
 
             var updateProxyVolume = reflectionProxyVolume != null
                 && serializedObject.targetObjects.Length != reflectionProxyVolume.serializedObject.targetObjects.Length;
