@@ -14,7 +14,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             UseInfluenceVolume,
             // Add new version here and they will automatically be the Current one
             Max,
-            Current = Max - 1            
+            Current = Max - 1
         }
 
         [SerializeField, FormerlySerializedAs("version")]
@@ -26,7 +26,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #pragma warning disable 649 //never assigned
         //data only kept for migration, to be removed in future version
         [SerializeField, System.Obsolete("influenceShape is deprecated, use influenceVolume parameters instead")]
-        Shape influenceShape;
+        InfluenceShape influenceShape;
         [SerializeField, System.Obsolete("influenceSphereRadius is deprecated, use influenceVolume parameters instead")]
         float influenceSphereRadius = 3.0f;
         [SerializeField, System.Obsolete("blendDistancePositive is deprecated, use influenceVolume parameters instead")]
@@ -45,6 +45,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         bool needMigrateToHDProbeChild = false;
         bool needMigrateToUseInfluenceVolume = false;
+
+        public void CopyTo(HDAdditionalReflectionData data)
+        {
+            influenceVolume.CopyTo(data.influenceVolume);
+            data.influenceVolume.shape = influenceVolume.shape; //force the legacy probe to refresh its size
+
+            data.mode = mode;
+            data.refreshMode = refreshMode;
+            data.multiplier = multiplier;
+            data.weight = weight;
+        }
 
         public void OnBeforeSerialize()
         {
@@ -91,9 +102,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void MigrateToUseInfluenceVolume()
         {
+            influenceVolume.boxSize = legacyProbe.size;
 #pragma warning disable CS0618 // Type or member is obsolete
-            influenceVolume.shape = influenceShape;
             influenceVolume.sphereRadius = influenceSphereRadius;
+            influenceVolume.shape = influenceShape; //must be done after each size transfert
             influenceVolume.boxBlendDistancePositive = blendDistancePositive;
             influenceVolume.boxBlendDistanceNegative = blendDistanceNegative;
             influenceVolume.boxBlendNormalDistancePositive = blendNormalDistancePositive;

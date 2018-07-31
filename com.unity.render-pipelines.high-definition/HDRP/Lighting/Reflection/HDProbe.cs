@@ -30,10 +30,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public InfluenceVolume influenceVolume { get { return m_InfluenceVolume; } private set { m_InfluenceVolume = value; } }
 
         /// <summary>Multiplier factor of reflection (non PBR parameter).</summary>
-        public float multiplier { get { return m_Multiplier; } }
+        public float multiplier { get { return m_Multiplier; } protected set { m_Multiplier = value; } }
 
         /// <summary>Weight for blending amongst probes (non PBR parameter).</summary>
-        public float weight { get { return m_Weight; } }
+        public float weight { get { return m_Weight; } protected set { m_Weight = value; } }
 
         /// <summary>The capture mode.</summary>
         public virtual ReflectionProbeMode mode
@@ -48,13 +48,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             get { return m_RefreshMode; }
             set { m_RefreshMode = value; }
         }
-        
+
         internal void Awake()
         {
             if (influenceVolume == null)
-                influenceVolume = new InfluenceVolume(this);
-            else
-                influenceVolume.Init(this);
+                influenceVolume = new InfluenceVolume();
+            influenceVolume.Init(this);
         }
 
         void ISerializationCallbackReceiver.OnBeforeSerialize()
