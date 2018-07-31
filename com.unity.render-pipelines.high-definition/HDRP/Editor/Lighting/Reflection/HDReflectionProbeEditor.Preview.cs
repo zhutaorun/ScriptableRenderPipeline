@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
@@ -12,10 +13,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 return false;  // We only handle one preview for reflection probes
 
             // Ensure valid cube map editor (if possible)
-            if (ValidPreviewSetup() && m_CubemapEditor == null)
+            ReflectionProbe reflectionProbe;
+            HDProbe probe;
+            if (TryGetPreviewSetup(out reflectionProbe, out probe) && m_CubemapEditor == null)
             {
                 Editor editor = m_CubemapEditor;
-                CreateCachedEditor(((ReflectionProbe)target).texture, typeof(HDCubemapInspector), ref editor);
+                CreateCachedEditor(probe.texture, typeof(HDCubemapInspector), ref editor);
                 m_CubemapEditor = editor as HDCubemapInspector;
             }
 
@@ -25,7 +28,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public override void OnPreviewSettings()
         {
-            if (!ValidPreviewSetup()
+            ReflectionProbe reflectionProbe;
+            HDProbe probe;
+            if (!TryGetPreviewSetup(out reflectionProbe, out probe)
                 || m_CubemapEditor == null)
                 return;
 
@@ -34,7 +39,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public override void OnPreviewGUI(Rect position, GUIStyle style)
         {
-            if (!ValidPreviewSetup()
+            ReflectionProbe reflectionProbe;
+            HDProbe probe;
+            if (!TryGetPreviewSetup(out reflectionProbe, out probe)
                 || m_CubemapEditor == null)
             {
                 GUILayout.BeginHorizontal();
@@ -53,10 +60,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 m_CubemapEditor.DrawPreview(position);
         }
 
-        bool ValidPreviewSetup()
+        bool TryGetPreviewSetup(out ReflectionProbe reflectionProbe, out HDProbe probe)
         {
-            var p = target as ReflectionProbe;
-            return p != null && p.texture != null;
+            reflectionProbe = target as ReflectionProbe;
+            probe = reflectionProbe != null ? reflectionProbe.GetComponent<HDProbe>() : null;
+            return probe != null && probe.texture != null;
         }
 
         private void OnDestroy()
