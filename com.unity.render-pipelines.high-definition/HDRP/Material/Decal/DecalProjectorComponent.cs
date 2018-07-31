@@ -68,20 +68,24 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public event OnMaterialChangeDelegate OnMaterialChange;
 
         public void OnValidate()
-        {
-            // handle material changes
-            if (m_OldMaterial != m_Material)
+        {            
+            if (m_Handle != null) // don't do anything if OnEnable hasn't been called yet when scene is loading.
             {
-                if (m_Handle != null)
-                    DecalSystem.instance.RemoveDecal(m_Handle);
                 Vector4 uvScaleBias = new Vector4(m_UVScale.x, m_UVScale.y, m_UVBias.x, m_UVBias.y);
-                m_Handle = DecalSystem.instance.AddDecal(transform, m_DrawDistance, m_FadeScale, uvScaleBias, m_AffectsTransparency, m_Material);
-                m_OldMaterial = m_Material;
+                if (m_OldMaterial != m_Material)
+                {	                	
+                	m_Handle = DecalSystem.instance.AddDecal(transform, m_DrawDistance, m_FadeScale, uvScaleBias, m_AffectsTransparency, m_Material);
+                	m_OldMaterial = m_Material;
 
-                // notify the editor that material has changed so it can update the shader foldout
-                if (OnMaterialChange != null)
+                    // notify the editor that material has changed so it can update the shader foldout
+                    if (OnMaterialChange != null)
+                    {
+                        OnMaterialChange();
+                    }
+                }
+                else // no material change, just update whatever else changed
                 {
-                    OnMaterialChange();
+                    DecalSystem.instance.UpdateCachedData(transform, m_DrawDistance, m_FadeScale, uvScaleBias, m_AffectsTransparency, m_Handle);
                 }
             }
 
