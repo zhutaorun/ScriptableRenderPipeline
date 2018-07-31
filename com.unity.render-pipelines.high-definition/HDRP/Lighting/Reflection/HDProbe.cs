@@ -68,6 +68,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         // TODO: maybe set this one as private and use properties to access its fields
+        // TODO: move to internal visibility
+        // TODO: create getter/setter to expose fields for scripting
         public CaptureProperties captureProperties;
 
         public Texture bakedTexture { get { return assets.bakedTexture; } set { assets.bakedTexture = value; } }

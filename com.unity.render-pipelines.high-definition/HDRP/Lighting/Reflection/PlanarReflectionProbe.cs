@@ -96,14 +96,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             get
             {
-                switch (mode)
+                switch (captureProperties.mode)
                 {
                     default:
-                    case ReflectionProbeMode.Baked:
+                    case HDReflectionProbeMode.Baked:
                         return bakedTexture;
-                    case ReflectionProbeMode.Custom:
+                    case HDReflectionProbeMode.Custom:
                         return customTexture;
-                    case ReflectionProbeMode.Realtime:
+                    case HDReflectionProbeMode.Realtime:
                         return realtimeTexture;
                 }
             }
