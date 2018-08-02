@@ -91,7 +91,7 @@ Navigate to **Edit > Render Pipelines > Upgrade Project Materials to High Defini
 
 # The HD Render Pipeline Lit Shader
 
-The lit shader is the default shader when using HDRenderPipeline (HDRP). This shader can be set with subsurface scattering, iridescence, vertex or pixel displacement and many other new parameters. This shader allows to users to produce more realistic assets with the use of HDRP. A version call LitTessellation is used to activate the tessellation.
+The lit shader is the default shader when using HDRenderPipeline (HDRP). This shader can be set with subsurface scattering, iridescence, vertex or pixel displacement and many other new parameters. This shader allows to users to produce more realistic assets with the use of HDRP. A version call Tessellated Lit is used to activate the tessellation.
 
 ## Creating a Lit Shader
 
@@ -419,7 +419,7 @@ The translucency is manage by a profile and a thickness map like for the subsurf
 
 ## How to set a Lit Shader Tessellation?
 
-From a lit shader, use the shader rollout menu to choose the LayeredLitTessellation shader.
+From a lit shader, use the shader rollout menu to choose the Layered Tessellated Lit shader.
 
 ![](Images/LitShader21.png)
 

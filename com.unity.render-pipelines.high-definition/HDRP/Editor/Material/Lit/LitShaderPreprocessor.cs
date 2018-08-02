@@ -78,9 +78,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             // Add name of the shader and corresponding delegate to call to strip variant
             stripperFuncs.Add("HDRenderPipeline/Lit", LitShaderStripper);
-            stripperFuncs.Add("HDRenderPipeline/LitTessellation", LitShaderStripper);
+            stripperFuncs.Add("HDRenderPipeline/Tessellated Lit", LitShaderStripper);
             stripperFuncs.Add("HDRenderPipeline/LayeredLit", LitShaderStripper);
-            stripperFuncs.Add("HDRenderPipeline/LayeredLitTessellation", LitShaderStripper);
+            stripperFuncs.Add("HDRenderPipeline/Layered Tessellated Lit", LitShaderStripper);
         }
     }
 }

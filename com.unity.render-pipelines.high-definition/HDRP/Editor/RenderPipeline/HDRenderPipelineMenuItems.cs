@@ -23,7 +23,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             foreach (var mat in materials)
             {
-                if (mat.shader.name == "HDRenderPipeline/LitTessellation")
+                if (mat.shader.name == "HDRenderPipeline/Tessellated Lit")
                 {
                     mat.shader = litShader;
                     // We remove all keyword already present
@@ -31,7 +31,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     LitGUI.SetupMaterialKeywordsAndPass(mat);
                     EditorUtility.SetDirty(mat);
                 }
-                else if (mat.shader.name == "HDRenderPipeline/LayeredLitTessellation")
+                else if (mat.shader.name == "HDRenderPipeline/Layered Tessellated Lit")
                 {
                     mat.shader = layeredLitShader;
                     // We remove all keyword already present
@@ -156,7 +156,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             foreach (var mat in materials)
             {
-                if (mat.shader.name == "HDRenderPipeline/LayeredLit" || mat.shader.name == "HDRenderPipeline/LayeredLitTessellation")
+                if (mat.shader.name == "HDRenderPipeline/LayeredLit" || mat.shader.name == "HDRenderPipeline/Layered Tessellated Lit")
                 {
                     CoreEditorUtils.CheckOutFile(VCSEnabled, mat);
                     LayeredLitGUI.SynchronizeAllLayers(mat);

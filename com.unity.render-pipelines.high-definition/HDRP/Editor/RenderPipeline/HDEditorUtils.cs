@@ -13,9 +13,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static Dictionary<string, MaterialResetter> k_MaterialResetters = new Dictionary<string, MaterialResetter>()
         {
             { "HDRenderPipeline/LayeredLit",  LayeredLitGUI.SetupMaterialKeywordsAndPass },
-            { "HDRenderPipeline/LayeredLitTessellation", LayeredLitGUI.SetupMaterialKeywordsAndPass },
+            { "HDRenderPipeline/Layered Tessellated Lit", LayeredLitGUI.SetupMaterialKeywordsAndPass },
             { "HDRenderPipeline/Lit", LitGUI.SetupMaterialKeywordsAndPass },
-            { "HDRenderPipeline/LitTessellation", LitGUI.SetupMaterialKeywordsAndPass },
+            { "HDRenderPipeline/Tessellated Lit", LitGUI.SetupMaterialKeywordsAndPass },
             { "HDRenderPipeline/Unlit", UnlitGUI.SetupMaterialKeywordsAndPass },
             { "HDRenderPipeline/Decal", DecalUI.SetupMaterialKeywordsAndPass }
         };

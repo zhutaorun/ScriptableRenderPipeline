@@ -182,10 +182,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         string.Format("{0} / {1} materials updated.", i, length),
                         i / (float)(length - 1));
 
-                    if (mat.shader.name == "HDRenderPipeline/LitTessellation" ||
+                    if (mat.shader.name == "HDRenderPipeline/Tessellated Lit" ||
                         mat.shader.name == "HDRenderPipeline/Lit" ||
                         mat.shader.name == "HDRenderPipeline/LayeredLit" ||
-                        mat.shader.name == "HDRenderPipeline/LayeredLitTessellation" ||
+                        mat.shader.name == "HDRenderPipeline/Layered Tessellated Lit" ||
                         mat.shader.name == "HDRenderPipeline/StackLit" ||
                         mat.shader.name == "HDRenderPipeline/Unlit" ||
                         mat.shader.name == "HDRenderPipeline/Decal"
