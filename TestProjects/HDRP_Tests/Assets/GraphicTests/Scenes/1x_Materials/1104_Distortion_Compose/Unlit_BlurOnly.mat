@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Unlit_Add_All
+  m_Name: Unlit_BlurOnly
   m_Shader: {fileID: 4800000, guid: c4edd00ff2db5b24391a4fcb1762e459, type: 3}
   m_ShaderKeywords: _BLENDMODE_ALPHA _DOUBLESIDED_ON _ENABLE_FOG_ON_TRANSPARENT _SURFACE_TYPE_TRANSPARENT
   m_LightmapFlags: 4
@@ -16,7 +16,19 @@ Material:
   m_CustomRenderQueue: 3000
   stringTagMap:
     RenderType: Transparent
-  disabledShaderPasses: []
+  disabledShaderPasses:
+  - Forward
+  - DepthOnly
+  - DepthForwardOnly
+  - ForwardOnly
+  - GBuffer
+  - GBufferWithPrepass
+  - MOTIONVECTORS
+  - TransparentDepthPrepass
+  - TransparentBackface
+  - TransparentDepthPostpass
+  - META
+  - SHADOWCASTER
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -105,7 +117,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _UnlitColorMap:
-        m_Texture: {fileID: 2800000, guid: 425cb0bdde126984cac7cd8b4f89c090, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
@@ -141,8 +153,8 @@ Material:
     - _DistortionDepthTest: 0
     - _DistortionDstBlend: 1
     - _DistortionEnable: 1
-    - _DistortionOnly: 0
-    - _DistortionScale: 20
+    - _DistortionOnly: 1
+    - _DistortionScale: 0
     - _DistortionSrcBlend: 1
     - _DistortionVectorBias: -1
     - _DistortionVectorScale: 2
