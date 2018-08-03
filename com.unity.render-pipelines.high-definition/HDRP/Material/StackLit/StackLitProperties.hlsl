@@ -75,22 +75,9 @@ SAMPLER(sampler_DetailNormalMap);
 TEXTURE2D(_EmissiveColorMap);
 SAMPLER(sampler_EmissiveColorMap);
 
-TEXTURE2D(_SharedSamplerMap0);
-SAMPLER(sampler_SharedSamplerMap0);
-TEXTURE2D(_SharedSamplerMap1);
-SAMPLER(sampler_SharedSamplerMap1);
-TEXTURE2D(_SharedSamplerMap2);
-SAMPLER(sampler_SharedSamplerMap2);
-TEXTURE2D(_SharedSamplerMap3);
-SAMPLER(sampler_SharedSamplerMap3);
-TEXTURE2D(_SharedSamplerMap4);
-SAMPLER(sampler_SharedSamplerMap4);
-
-
 CBUFFER_START(UnityPerMaterial)
 
 float4 _BaseColor;
-float _BaseColorUseMap;
 float4 _BaseColorMap_ST;
 float4 _BaseColorMap_TexelSize;
 float4 _BaseColorMap_MipInfo;
@@ -98,7 +85,6 @@ float _BaseColorMapUV;
 float _BaseColorMapUVLocal;
 
 float4 _SpecularColor;
-float _SpecularColorUseMap;
 float4 _SpecularColorMap_ST;
 float4 _SpecularColorMap_TexelSize;
 float4 _SpecularColorMap_MipInfo;
@@ -141,8 +127,6 @@ float _NormalMapObjSpace;
 float4 _NormalMap_ST;
 float4 _NormalMap_TexelSize;
 float4 _NormalMap_MipInfo;
-
-float _BentNormalUseMap;
 
 float _AmbientOcclusion;
 float _AmbientOcclusionUseMap;
@@ -282,7 +266,6 @@ float4 _ThicknessMapChannelMask;
 float4 _ThicknessMapRange;
 
 // Details
-float _DetailMaskUseMap;
 float _DetailMaskMapUV;
 float _DetailMaskMapUVLocal;
 float4 _DetailMaskMap_ST;
@@ -290,7 +273,6 @@ float4 _DetailMaskMap_TexelSize;
 float4 _DetailMaskMap_MipInfo;
 float4 _DetailMaskMapChannelMask;
 
-float _DetailSmoothnessUseMap;
 float _DetailSmoothnessMapUV;
 float _DetailSmoothnessMapUVLocal;
 float4 _DetailSmoothnessMap_ST;
@@ -310,7 +292,6 @@ float4 _DetailNormalMap_MipInfo;
 
 
 float3 _EmissiveColor;
-float _EmissiveColorUseMap; // for sampler sharing
 float4 _EmissiveColorMap_ST;
 float4 _EmissiveColorMap_TexelSize;
 float4 _EmissiveColorMap_MipInfo;
@@ -332,40 +313,6 @@ float _DistortionVectorBias;
 float _DistortionBlurScale;
 float _DistortionBlurRemapMin;
 float _DistortionBlurRemapMax;
-
-float _EnableSamplerSharing;
-
-// Note: TODO UV, _ST etc are dummy, just to reuse some macros to touch the texture object themselves
-// so the shader will compile and make the samplers (what we really want) available.
-float _SharedSamplerMap0UV;
-float _SharedSamplerMap0UVLocal;
-float4 _SharedSamplerMap0_ST;
-float4 _SharedSamplerMap0_TexelSize;
-float4 _SharedSamplerMap0_MipInfo;
-
-float _SharedSamplerMap1UV;
-float _SharedSamplerMap1UVLocal;
-float4 _SharedSamplerMap1_ST;
-float4 _SharedSamplerMap1_TexelSize;
-float4 _SharedSamplerMap1_MipInfo;
-
-float _SharedSamplerMap2UV;
-float _SharedSamplerMap2UVLocal;
-float4 _SharedSamplerMap2_ST;
-float4 _SharedSamplerMap2_TexelSize;
-float4 _SharedSamplerMap2_MipInfo;
-
-float _SharedSamplerMap3UV;
-float _SharedSamplerMap3UVLocal;
-float4 _SharedSamplerMap3_ST;
-float4 _SharedSamplerMap3_TexelSize;
-float4 _SharedSamplerMap3_MipInfo;
-
-float _SharedSamplerMap4UV;
-float _SharedSamplerMap4UVLocal;
-float4 _SharedSamplerMap4_ST;
-float4 _SharedSamplerMap4_TexelSize;
-float4 _SharedSamplerMap4_MipInfo;
 
 // Caution: C# code in BaseLitUI.cs call LightmapEmissionFlagsProperty() which assume that there is an existing "_EmissionColor"
 // value that exist to identify if the GI emission need to be enabled.

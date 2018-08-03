@@ -694,137 +694,59 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     m_ConstantPropertyName, constantName, PropertyName);
             }
 
-            public static void SetupUseMapOfTextureMaterialProperty(Material material, TextureSamplerSharing.SamplerClient samplerClient, int slotAssigned, bool isExternalSampler)
+            public static void SetupTextureMaterialProperty(Material material, string basePropertyName)
             {
-                string useMapPropertyName = samplerClient.BasePropertyName + "UseMap";
-                // It really should have it if we added it to the potential sharer (clients) of TextureSamplerSharing
-                // (see SetupTextureMaterialProperty)
-                if (material.HasProperty(useMapPropertyName))
-                {
-                    // UseMap = 0.0f means no slots assigned.
-                    //
-                    // UseMap = 1.0f just means a texture was assigned (eg could mean the texture's own sampler, but since
-                    // it is compilation that determines potential sampler usage, not very useful.)
-                    //
-                    // We use it eg for _BentNormalMap to indicate with 1.0f that it is enabled, but the bent normal map never has
-                    // its own sampler, and doesn't have one assigned by the sharing system since it always uses the one of the normal
-                    // map.
-                    // We also use numbers starting at 1 (but not overlapping SharedSamplerID.First) for built-in samplers that we know
-                    // are used anyways by internal LUTs (like FGD), lightloop (since we're a forward shader) and shadow sampling.
-                    //
-                    // By default, an enabled map that has the UseMap property will have the later set to 1.0f by 
-                    // SetupTextureMaterialProperty().
-                    //
-                    // For whatever reason we don't get a callback here to adjust "UseMap" (eg we ran out of sampler slots),
-                    // we will use the sampler that have the id == 1.0f (see TextureSamplerSharing.cs and TextureSamplerSharing.hlsl)
-                    material.SetFloat(useMapPropertyName, (isExternalSampler == false) ? (int)(SharedSamplerID.First) + slotAssigned : 1.0f + slotAssigned);
-                }
-            }
-
-            //
-            // allowUnassignedSampling allows to set UseMap to 1 even though no texture is assigned.
-            // Useful in case we want to sample the default symbolic value.
-            //
-            // enableMap allows to set UseMap to 0 even when a texture is assigned.
-            // Useful in case there's no feature keyword to exclude sampling and we want to avoid it.
-            //
-            // TextureSamplerSharing object is mandatory if _USE_SAMPLER_SHARING is set, otherwise, it is useless
-            // as it will set UseMap properties to various shared sampler slots (numbers starting at 2.0) but the
-            // shader code will only test if(UseMap) so it should be ok. The shader code samples with the texture's
-            // own sampler when that keyword isn't set.
-            public static void SetupTextureMaterialProperty(Material material, string basePropertyName, bool enableMap = true, bool allowUnassignedSampling = false, TextureSamplerSharing samplerSharing = null)
-            {
-
                 // TODO: Caution this can generate a lot of garbage collection call ?
                 string useMapPropertyName = basePropertyName + "UseMap";
                 string mapPropertyName = basePropertyName + "Map";
-                string mapSamplerSharingPropertyName = basePropertyName + "MapSamplerSharing";
                 string remapPropertyName = basePropertyName + "MapRemap";
                 string invertPropertyName = basePropertyName + "MapRemapInverted";
                 string rangePropertyName = basePropertyName + "MapRange";
                 string channelPropertyName = basePropertyName + "MapChannel";
                 string channelMaskPropertyName = basePropertyName + "MapChannelMask";
 
-                Texture texture = material.GetTexture(mapPropertyName);
-                if (enableMap && (allowUnassignedSampling || texture))
+                if (material.GetTexture(mapPropertyName))
                 {
+                    if (material.HasProperty(remapPropertyName) && material.HasProperty(rangePropertyName))
+                    {
+                        Vector4 rangeVector = material.GetVector(remapPropertyName);
+                        if (material.HasProperty(invertPropertyName) && material.GetFloat(invertPropertyName) > 0.0f)
+                        {
+                            float s = rangeVector.x;
+                            rangeVector.x = rangeVector.y;
+                            rangeVector.y = s;
+                        }
+
+                        material.SetVector(rangePropertyName, rangeVector);
+                    }
+
                     if (material.HasProperty(useMapPropertyName))
                     {
                         material.SetFloat(useMapPropertyName, 1.0f);
-
-                        // If useMap property is there, and we gave a sampler sharing object, add it to the potential
-                        // texture properties that will share a sampler
-                        // unless we escape the feature through the *MapSamplerSharing == 0.0f property.
-                        if (samplerSharing != null)
-                        {
-                            // If sampler sharing property is not there or it isn't 0.0, sampler sharing is enabled,
-                            // otherwise, if we opt-out, we need to ask the sampler sharing system to allocate a
-                            // sampler just for this property:
-                            bool makeUnique = material.HasProperty(mapSamplerSharingPropertyName) && (material.GetFloat(mapSamplerSharingPropertyName) == 0.0f);
-                            if (texture == null)
-                            {
-                                // This can happen if we allow allowUnassignedSampling. In that case, we sample a single default value,
-                                // any sampler will do (short of bordercolor sampling mode, but Unity doesn't expose that)
-                                samplerSharing.AddClientForExistingSampler(basePropertyName, ExternalExistingSampler.LinearClamp);
-                            }
-                            else
-                            {
-                                samplerSharing.AddClient(basePropertyName, texture, makeUnique, tryExistingExternalSamplers: true);
-                            }
-                        }
                     }
 
-                    if (texture)
+                    if (material.HasProperty(channelPropertyName))
                     {
-                        if (material.HasProperty(remapPropertyName) && material.HasProperty(rangePropertyName))
+                        int channel = (int)material.GetFloat(channelPropertyName);
+                        switch (channel)
                         {
-                            Vector4 rangeVector = material.GetVector(remapPropertyName);
-                            if (material.HasProperty(invertPropertyName) && material.GetFloat(invertPropertyName) > 0.0f)
-                            {
-                                float s = rangeVector.x;
-                                rangeVector.x = rangeVector.y;
-                                rangeVector.y = s;
-                            }
-
-                            material.SetVector(rangePropertyName, rangeVector);
-                        }
-
-                        if (material.HasProperty(channelPropertyName))
-                        {
-                            int channel = (int)material.GetFloat(channelPropertyName);
-                            switch (channel)
-                            {
-                                case 0:
-                                    material.SetVector(channelMaskPropertyName, new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
-                                    break;
-                                case 1:
-                                    material.SetVector(channelMaskPropertyName, new Vector4(0.0f, 1.0f, 0.0f, 0.0f));
-                                    break;
-                                case 2:
-                                    material.SetVector(channelMaskPropertyName, new Vector4(0.0f, 0.0f, 1.0f, 0.0f));
-                                    break;
-                                case 3:
-                                    material.SetVector(channelMaskPropertyName, new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
-                                    break;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (material.HasProperty(rangePropertyName))
-                        {
-                            material.SetVector(rangePropertyName, new Vector4(0.0f, 1.0f, 0.0f, 0.0f));
-                        }
-                        if (material.HasProperty(channelPropertyName))
-                        {
-                            material.SetVector(channelMaskPropertyName, new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
+                            case 0:
+                                material.SetVector(channelMaskPropertyName, new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
+                                break;
+                            case 1:
+                                material.SetVector(channelMaskPropertyName, new Vector4(0.0f, 1.0f, 0.0f, 0.0f));
+                                break;
+                            case 2:
+                                material.SetVector(channelMaskPropertyName, new Vector4(0.0f, 0.0f, 1.0f, 0.0f));
+                                break;
+                            case 3:
+                                material.SetVector(channelMaskPropertyName, new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+                                break;
                         }
                     }
                 }
                 else
                 {
-                    // No texture sampling wanted:
-
                     if (material.HasProperty(useMapPropertyName))
                     {
                         material.SetFloat(useMapPropertyName, 0.0f);

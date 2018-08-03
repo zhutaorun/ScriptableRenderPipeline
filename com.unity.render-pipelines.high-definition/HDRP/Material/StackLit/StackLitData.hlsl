@@ -5,9 +5,10 @@
 #include "HDRP/Material/MaterialUtilities.hlsl"
 
 //-----------------------------------------------------------------------------
-// Normal Map Filtering: Definitions, Config (see NormalMapAverageLengthTexturePostprocessor.cs)
+// Texture Mapping
 //-----------------------------------------------------------------------------
 
+// Normal Map Filtering:
 // Config set according to settings in the importer (see C# code NormalMapAverageLengthTexturePostprocessor.cs).
 #define NORMALMAP_USES_VARIANCE // define if the importer is set to generate variance directly.
 #define NORMALMAP_LOWEST_AVERAGE_NORMAL_LENGTH 0.8695
@@ -18,10 +19,6 @@
 #else
 #define NORMALMAP_NEUTRAL_DISPERSION_VALUE 1.0
 #endif
-
-//-----------------------------------------------------------------------------
-// Texture Mapping
-//-----------------------------------------------------------------------------
 
 #define TEXCOORD_INDEX_UV0          (0)
 #define TEXCOORD_INDEX_UV1          (1)
@@ -206,9 +203,6 @@ float4 SampleTexture2DTriplanarNormalScaleBias(TEXTURE2D_ARGS(textureName, sampl
         }
     }
 }
-//-----------------------------------------------------------------------------
-// Texture Mapping: Macros - Note the sampler sharing code need those name as is:
-//-----------------------------------------------------------------------------
 
 #define SAMPLE_TEXTURE2D_SCALE_BIAS(name) SampleTexture2DTriplanarScaleBias(name, sampler##name, name##UV, name##UVLocal, name##_ST, uvMapping)
 #define SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(name, scale, objSpace) SampleTexture2DTriplanarNormalScaleBias(name, sampler##name, name##UV, name##UVLocal, name##_ST, objSpace, uvMapping, scale)
@@ -217,38 +211,6 @@ float4 SampleTexture2DTriplanarNormalScaleBias(TEXTURE2D_ARGS(textureName, sampl
 
 #define SAMPLE_TEXTURE2D_SCALE_BIAS_LOD(name, lod) SampleTexture2DScaleBiasLod(name, sampler##name, name##UV, name##UVLocal, name##_ST, lod, uvMapping) // for testing
 
-#define SAMPLE_TEXTURE2D_SMP_SCALE_BIAS(name, samplerName) SampleTexture2DTriplanarScaleBias(name, samplerName, name##UV, name##UVLocal, name##_ST, uvMapping)
-#define SAMPLE_TEXTURE2D_SMP_NORMAL_SCALE_BIAS(name, samplerName, scale, objSpace) SampleTexture2DTriplanarNormalScaleBias(name, samplerName, name##UV, name##UVLocal, name##_ST, objSpace, uvMapping, scale)
-#define SAMPLE_TEXTURE2D_SMP_NORMAL_PROPNAME_SCALE_BIAS(name, samplerName, propname, scale, objSpace) SampleTexture2DTriplanarNormalScaleBias(name, samplerName, propname##UV, propname##UVLocal, propname##_ST, objSpace, uvMapping, scale)
-
-//-----------------------------------------------------------------------------
-// Texture Mapping: Sampler Sharing
-//-----------------------------------------------------------------------------
-
-// The following include needs those defined and uses the _USE_SAMPLER_SHARING keyword:
-
-//#define SAMPLE_TEXTURE2D_SCALE_BIAS(name)
-//#define SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(name, scale, objSpace)
-//#define SAMPLE_TEXTURE2D_NORMAL_PROPNAME_SCALE_BIAS(name, propname, scale, objSpace)
-
-//#define SAMPLE_TEXTURE2D_SMP_SCALE_BIAS(name, samplerName)
-//#define SAMPLE_TEXTURE2D_SMP_NORMAL_SCALE_BIAS(name, samplerName, scale, objSpace)
-//#define SAMPLE_TEXTURE2D_SMP_NORMAL_PROPNAME_SCALE_BIAS(name, samplerName, propname, scale, objSpace)
-
-#include "HDRP/Material/StackLit/TextureSamplerSharing.hlsl"
-
-// Which makes these available, which default to the first 3 above when sampler sharing
-// is disabled: (eg SHARED_SAMPLING behaves like SAMPLE_TEXTURE2D_SCALE_BIAS)
-
-//  SHARED_SAMPLING(lvalue, swizzle, useMapProperty, name)
-//  SHARED_SAMPLING_NORMAL(lvalue, useMapProperty, name, scale, objSpace)
-//  SHARED_SAMPLING_NORMAL_PROPNAME(lvalue, useMapProperty, name, propname, scale, objSpace)
-//
-
-
-//-----------------------------------------------------------------------------
-// Normal Map Filtering: Tools
-//-----------------------------------------------------------------------------
 
 float DecodeNormalDispersionMeasureToVariance(float gradientW)
 {
@@ -334,15 +296,8 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     // -------------------------------------------------------------
     // Surface Data
     // -------------------------------------------------------------
-    float4 sampledBaseColor = float4(1.0, 1.0, 1.0, 1.0);
-    DUMMY_USE_OF_SHARED_TEXTURES(sampledBaseColor);
-    
-    //if (_BaseColorUseMap) we should always sample this. In case of sampler sharing, if UseMap is not set, we consider opaque white sampled.
-    {
-        SHARED_SAMPLING(sampledBaseColor, rgba, _BaseColorUseMap, _BaseColorMap); //SHARED_SAMPLING(lvalue, swizzle, useMapProperty, name)
-    }
 
-    float alpha = sampledBaseColor.a * _BaseColor.a;
+    float alpha = SAMPLE_TEXTURE2D_SCALE_BIAS(_BaseColorMap).a * _BaseColor.a;
 #ifdef _ALPHATEST_ON
     //NEWLITTODO: Once we include those passes in the main StackLit.shader, add handling of CUTOFF_TRANSPARENT_DEPTH_PREPASS and _POSTPASS
     // and the related properties (in the .shader) and uniforms (in the StackLitProperties file) _AlphaCutoffPrepass, _AlphaCutoffPostpass
@@ -353,13 +308,12 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.materialFeatures = MATERIALFEATUREFLAGS_STACK_LIT_STANDARD;
 
     // Standard
-    surfaceData.baseColor = sampledBaseColor.rgb * _BaseColor.rgb;
+    surfaceData.baseColor = SAMPLE_TEXTURE2D_SCALE_BIAS(_BaseColorMap).rgb * _BaseColor.rgb;
 
     float4 gradient = float4(0.0, 0.0, 0.0, NORMALMAP_NEUTRAL_DISPERSION_VALUE);
-    if (_NormalUseMap) // we don't need the test if sampler sharing is enabled, we use a switch but compiler will deal with it
+    if (_NormalUseMap)
     {
-        //gradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_NormalMap, _NormalScale, _NormalMapObjSpace);
-        SHARED_SAMPLING_NORMAL(gradient, _NormalUseMap, _NormalMap, _NormalScale, _NormalMapObjSpace);
+        gradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_NormalMap, _NormalScale, _NormalMapObjSpace);
     }
 
     float4 bentGradient = float4(0.0, 0.0, 0.0, NORMALMAP_NEUTRAL_DISPERSION_VALUE);
@@ -368,27 +322,12 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     // can alias like everything else.
     // TODO
 #ifdef _BENTNORMALMAP
-    if (_BentNormalUseMap) // note here: we piggy back on the normal map sampler, we thus must test this here for actual assignment of the bent normal map
-    {
-        //bentGradient = SAMPLE_TEXTURE2D_NORMAL_PROPNAME_SCALE_BIAS(_BentNormalMap, _NormalMap, _NormalScale, _NormalMapObjSpace);
-        SHARED_SAMPLING_NORMAL_PROPNAME(bentGradient, _NormalUseMap, _BentNormalMap, _NormalMap, _NormalScale, _NormalMapObjSpace);
-        // ...note above how we use "_NormalUseMap" and NOT "_BentNormalUseMap" for the sampler number to use!
-    }
+    bentGradient = SAMPLE_TEXTURE2D_NORMAL_PROPNAME_SCALE_BIAS(_BentNormalMap, _NormalMap, _NormalScale, _NormalMapObjSpace);
 #endif
 
-    surfaceData.perceptualSmoothnessA = _SmoothnessA;
-    if (_SmoothnessAUseMap) // we still need to escape the dot if we dont sample
-    {
-        float4 tmp = (float4)0;
-        DUMMY_USE_OF_SHARED_TEXTURES(tmp);
-
-        //SHARED_SAMPLING(lvalue, swizzle, useMapProperty, name)
-        SHARED_SAMPLING(tmp, rgba, _SmoothnessAUseMap, _SmoothnessAMap);
-        //surfaceData.perceptualSmoothnessA = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_SmoothnessAMap), _SmoothnessAMapChannelMask);
-        surfaceData.perceptualSmoothnessA = dot(tmp, _SmoothnessAMapChannelMask);
-        surfaceData.perceptualSmoothnessA = lerp(_SmoothnessAMapRange.x, _SmoothnessAMapRange.y, surfaceData.perceptualSmoothnessA);
-    }
-    //surfaceData.perceptualSmoothnessA = lerp(_SmoothnessA, surfaceData.perceptualSmoothnessA, _SmoothnessAUseMap);
+    surfaceData.perceptualSmoothnessA = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_SmoothnessAMap), _SmoothnessAMapChannelMask);
+    surfaceData.perceptualSmoothnessA = lerp(_SmoothnessAMapRange.x, _SmoothnessAMapRange.y, surfaceData.perceptualSmoothnessA);
+    surfaceData.perceptualSmoothnessA = lerp(_SmoothnessA, surfaceData.perceptualSmoothnessA, _SmoothnessAUseMap);
 
     // Metallic / specular color
     surfaceData.dielectricIor = _DielectricIor; // shouldn't be needed if _MATERIAL_FEATURE_SPECULAR_COLOR
@@ -398,34 +337,20 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.metallic = 0.0;
 #ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_SPECULAR_COLOR;
-    if (_SpecularColorUseMap)
-    {
-        SHARED_SAMPLING(surfaceData.specularColor, rgb, _SpecularColorUseMap, _SpecularColorMap);
-        //surfaceData.specularColor = SAMPLE_TEXTURE2D_SCALE_BIAS(_SpecularColorMap).rgb;
-        surfaceData.specularColor *= _SpecularColor.rgb;
-    }
+    
+    surfaceData.specularColor = SAMPLE_TEXTURE2D_SCALE_BIAS(_SpecularColorMap).rgb * _SpecularColor.rgb;
     // Reproduce the energy conservation done in legacy Unity. Not ideal but better for compatibility and users can unchek it
     surfaceData.baseColor *= _EnergyConservingSpecularColor > 0.0 ? (1.0 - Max3(surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b)) : 1.0;
 #else
-    surfaceData.metallic = _Metallic;
-    if (_MetallicUseMap)
-    {
-        float4 tmp = (float4)0;
-        SHARED_SAMPLING(tmp, rgba, _MetallicUseMap, _MetallicMap);
-        surfaceData.metallic = dot(tmp, _MetallicMapChannelMask);
-        surfaceData.metallic = lerp(_MetallicMapRange.x, _MetallicMapRange.y, surfaceData.metallic);
-    }
+    surfaceData.metallic = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_MetallicMap), _MetallicMapChannelMask);
+    surfaceData.metallic = lerp(_MetallicMapRange.x, _MetallicMapRange.y, surfaceData.metallic);
+    surfaceData.metallic = lerp(_Metallic, surfaceData.metallic, _MetallicUseMap);
 #endif
 
     // Ambient Occlusion
-    surfaceData.ambientOcclusion = _AmbientOcclusion;
-    if (_AmbientOcclusionUseMap)
-    {
-        float4 tmp = (float4)0;
-        SHARED_SAMPLING(tmp, rgba, _AmbientOcclusionUseMap, _AmbientOcclusionMap);
-        surfaceData.ambientOcclusion = dot(tmp, _AmbientOcclusionMapChannelMask);
-        surfaceData.ambientOcclusion = lerp(_AmbientOcclusionMapRange.x, _AmbientOcclusionMapRange.y, surfaceData.ambientOcclusion);
-    }
+    surfaceData.ambientOcclusion = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_AmbientOcclusionMap), _AmbientOcclusionMapChannelMask);
+    surfaceData.ambientOcclusion = lerp(_AmbientOcclusionMapRange.x, _AmbientOcclusionMapRange.y, surfaceData.ambientOcclusion);
+    surfaceData.ambientOcclusion = lerp(_AmbientOcclusion, surfaceData.ambientOcclusion, _AmbientOcclusionUseMap);
 
     // Dual specular lobe
     surfaceData.lobeMix = 0.0;
@@ -439,23 +364,13 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 #ifdef _MATERIAL_FEATURE_HAZY_GLOSS
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_HAZY_GLOSS;
 
-    surfaceData.haziness = _Haziness;
-    if (_HazinessUseMap)
-    {
-        float4 tmp = (float4)0;
-        SHARED_SAMPLING(tmp, rgba, _HazinessUseMap, _HazinessMap);
-        surfaceData.haziness = dot(tmp, _HazinessMapChannelMask);
-        surfaceData.haziness = lerp(_HazinessMapRange.x, _HazinessMapRange.y, surfaceData.haziness);
-    }
+    surfaceData.haziness = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_HazinessMap), _HazinessMapChannelMask);
+    surfaceData.haziness = lerp(_HazinessMapRange.x, _HazinessMapRange.y, surfaceData.haziness);
+    surfaceData.haziness = lerp(_Haziness, surfaceData.haziness, _HazinessUseMap);
 
-    surfaceData.hazeExtent = _HazeExtent;
-    if (_HazeExtentUseMap)
-    {
-        float4 tmp = (float4)0;
-        SHARED_SAMPLING(tmp, rgba, _HazeExtentUseMap, _HazeExtentMap);
-        surfaceData.hazeExtent = dot(tmp, _HazeExtentMapChannelMask);
-        surfaceData.hazeExtent = lerp(_HazeExtentMapRange.x, _HazeExtentMapRange.y, surfaceData.hazeExtent);
-    }
+    surfaceData.hazeExtent = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_HazeExtentMap), _HazeExtentMapChannelMask);
+    surfaceData.hazeExtent = lerp(_HazeExtentMapRange.x, _HazeExtentMapRange.y, surfaceData.hazeExtent);
+    surfaceData.hazeExtent = lerp(_HazeExtent, surfaceData.hazeExtent, _HazeExtentUseMap);
     surfaceData.hazeExtent *= _HazeExtentMapRangeScale;
 #ifndef _MATERIAL_FEATURE_SPECULAR_COLOR
     // base parametrization is baseColor + metallic, use value / option regarding how high can hazeExtent and f0 go:
@@ -468,23 +383,13 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 #endif
 
 #else // else not def _MATERIAL_FEATURE_HAZY_GLOSS
-    surfaceData.lobeMix = _LobeMix;
-    if (_LobeMixUseMap)
-    {
-        float4 tmp = (float4)0;
-        SHARED_SAMPLING(tmp, rgba, _LobeMixUseMap, _LobeMixMap);
-        surfaceData.lobeMix = dot(tmp, _LobeMixMapChannelMask);
-        surfaceData.lobeMix = lerp(_LobeMixMapRange.x, _LobeMixMapRange.y, surfaceData.lobeMix);
-    }
+    surfaceData.lobeMix = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_LobeMixMap), _LobeMixMapChannelMask);
+    surfaceData.lobeMix = lerp(_LobeMixMapRange.x, _LobeMixMapRange.y, surfaceData.lobeMix);
+    surfaceData.lobeMix = lerp(_LobeMix, surfaceData.lobeMix, _LobeMixUseMap);
 
-    surfaceData.perceptualSmoothnessB = _SmoothnessB;
-    if (_SmoothnessBUseMap)
-    {
-        float4 tmp = (float4)0;
-        SHARED_SAMPLING(tmp, rgba, _SmoothnessBUseMap, _SmoothnessBMap);
-        surfaceData.perceptualSmoothnessB = dot(tmp, _SmoothnessBMapChannelMask);
-        surfaceData.perceptualSmoothnessB = lerp(_SmoothnessBMapRange.x, _SmoothnessBMapRange.y, surfaceData.perceptualSmoothnessB);
-    }
+    surfaceData.perceptualSmoothnessB = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_SmoothnessBMap), _SmoothnessBMapChannelMask);
+    surfaceData.perceptualSmoothnessB = lerp(_SmoothnessBMapRange.x, _SmoothnessBMapRange.y, surfaceData.perceptualSmoothnessB);
+    surfaceData.perceptualSmoothnessB = lerp(_SmoothnessB, surfaceData.perceptualSmoothnessB, _SmoothnessBUseMap);
 #endif // _MATERIAL_FEATURE_HAZY_GLOSS
 #endif // _MATERIAL_FEATURE_DUAL_SPECULAR_LOBE
 
@@ -493,7 +398,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.anisotropyB = 0.0;
 #ifdef _MATERIAL_FEATURE_ANISOTROPY
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_ANISOTROPY;
-    // TODO: manage anistropy map and tangent vectors
+    // TODO: manage anistropy map
     //surfaceData.anisotropy = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_AnistropyMap), _AnistropyMapChannelMask);
     //surfaceData.anisotropy = lerp(_AnistropyMapRange.x, _AnistropyMapRange.y, surfaceData.anisotropy);
     surfaceData.anisotropyA = _AnisotropyA; // In all cases we must multiply anisotropy with the map
@@ -506,16 +411,9 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     float4 coatGradient = float4(0.0, 0.0, 0.0, NORMALMAP_NEUTRAL_DISPERSION_VALUE);
 #ifdef _MATERIAL_FEATURE_COAT
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_COAT;
-
-    surfaceData.coatPerceptualSmoothness = _CoatSmoothness;
-    if (_CoatSmoothnessUseMap)
-    {
-        float4 tmp = (float4)0;
-        SHARED_SAMPLING(tmp, rgba, _CoatSmoothnessUseMap, _CoatSmoothnessMap);
-        surfaceData.coatPerceptualSmoothness = dot(tmp, _CoatSmoothnessMapChannelMask);
-        surfaceData.coatPerceptualSmoothness = lerp(_CoatSmoothnessMapRange.x, _CoatSmoothnessMapRange.y, surfaceData.coatPerceptualSmoothness);
-    }
-    // TODOTODO maps
+    surfaceData.coatPerceptualSmoothness = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_CoatSmoothnessMap), _CoatSmoothnessMapChannelMask);
+    surfaceData.coatPerceptualSmoothness = lerp(_CoatSmoothnessMapRange.x, _CoatSmoothnessMapRange.y, surfaceData.coatPerceptualSmoothness);
+    surfaceData.coatPerceptualSmoothness = lerp(_CoatSmoothness, surfaceData.coatPerceptualSmoothness, _CoatSmoothnessUseMap);
     surfaceData.coatIor = _CoatIor;
     surfaceData.coatThickness = _CoatThickness;
     surfaceData.coatExtinction = _CoatExtinction; // in thickness^-1 units
@@ -524,8 +422,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_COAT_NORMAL_MAP;
     if (_CoatNormalUseMap)
     {
-        //coatGradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_CoatNormalMap, _CoatNormalScale, _CoatNormalMapObjSpace);
-        SHARED_SAMPLING_NORMAL(coatGradient, _CoatNormalUseMap, _CoatNormalMap, _CoatNormalScale, _CoatNormalMapObjSpace);
+        coatGradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_CoatNormalMap, _CoatNormalScale, _CoatNormalMapObjSpace);
     }
 #endif
 
@@ -539,24 +436,12 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 #ifdef _MATERIAL_FEATURE_IRIDESCENCE
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_IRIDESCENCE;
     surfaceData.iridescenceIor = _IridescenceIor;
-
-    surfaceData.iridescenceThickness = _IridescenceThickness;
-    if (_IridescenceThicknessUseMap)
-    {
-        float4 tmp = (float4)0;
-        SHARED_SAMPLING(tmp, rgba, _IridescenceThicknessUseMap, _IridescenceThicknessMap);
-        surfaceData.iridescenceThickness = dot(tmp, _IridescenceThicknessMapChannelMask);
-        surfaceData.iridescenceThickness = lerp(_IridescenceThicknessMapRange.x, _IridescenceThicknessMapRange.y, surfaceData.iridescenceThickness);
-    }
-
-    surfaceData.iridescenceMask = _IridescenceMask;
-    if (_IridescenceMaskUseMap)
-    {
-        float4 tmp = (float4)0;
-        SHARED_SAMPLING(tmp, rgba, _IridescenceMaskUseMap, _IridescenceMaskMap);
-        surfaceData.iridescenceMask = dot(tmp, _IridescenceMaskMapChannelMask);
-        surfaceData.iridescenceMask = lerp(_IridescenceMaskMapRange.x, _IridescenceMaskMapRange.y, surfaceData.iridescenceMask);
-    }
+    surfaceData.iridescenceThickness = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_IridescenceThicknessMap), _IridescenceThicknessMapChannelMask);
+    surfaceData.iridescenceThickness = lerp(_IridescenceThicknessMapRange.x, _IridescenceThicknessMapRange.y, surfaceData.iridescenceThickness);
+    surfaceData.iridescenceThickness = lerp(_IridescenceThickness, surfaceData.iridescenceThickness, _IridescenceThicknessUseMap);
+    surfaceData.iridescenceMask = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_IridescenceMaskMap), _IridescenceMaskMapChannelMask);
+    surfaceData.iridescenceMask = lerp(_IridescenceMaskMapRange.x, _IridescenceMaskMapRange.y, surfaceData.iridescenceMask);
+    surfaceData.iridescenceMask = lerp(_IridescenceMask, surfaceData.iridescenceMask, _IridescenceMaskUseMap);
 
 #else
     surfaceData.iridescenceIor = 1.0;
@@ -572,60 +457,35 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 
 #ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_SUBSURFACE_SCATTERING;
-
-    surfaceData.subsurfaceMask = _SubsurfaceMask;
-    if (_SubsurfaceMaskUseMap)
-    {
-        float4 tmp = (float4)0;
-        SHARED_SAMPLING(tmp, rgba, _SubsurfaceMaskUseMap, _SubsurfaceMaskMap);
-        surfaceData.subsurfaceMask = dot(tmp, _SubsurfaceMaskMapChannelMask);
-        surfaceData.subsurfaceMask = lerp(_SubsurfaceMaskMapRange.x, _SubsurfaceMaskMapRange.y, surfaceData.subsurfaceMask);
-    }
+    surfaceData.subsurfaceMask = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_SubsurfaceMaskMap), _SubsurfaceMaskMapChannelMask);
+    surfaceData.subsurfaceMask = lerp(_SubsurfaceMaskMapRange.x, _SubsurfaceMaskMapRange.y, surfaceData.subsurfaceMask);
+    surfaceData.subsurfaceMask = lerp(_SubsurfaceMask, surfaceData.subsurfaceMask, _SubsurfaceMaskUseMap);
 #else
     surfaceData.subsurfaceMask = 0.0;
 #endif
 
 #ifdef _MATERIAL_FEATURE_TRANSMISSION
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_TRANSMISSION;
-
-    surfaceData.thickness = _Thickness;
-    if (_ThicknessUseMap)
-    {
-        float4 tmp = (float4)0;
-        SHARED_SAMPLING(tmp, rgba, _ThicknessUseMap, _ThicknessMap);
-        surfaceData.thickness = dot(tmp, _ThicknessMapChannelMask);
-        surfaceData.thickness = lerp(_ThicknessMapRange.x, _ThicknessMapRange.y, surfaceData.thickness);
-    }
+    surfaceData.thickness = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_ThicknessMap), _ThicknessMapChannelMask);
+    surfaceData.thickness = lerp(_ThicknessMapRange.x, _ThicknessMapRange.y, surfaceData.thickness);
+    surfaceData.thickness = lerp(_Thickness, surfaceData.thickness, _ThicknessUseMap);
 #else
     surfaceData.thickness = 1.0;
 #endif
 
 #ifdef _DETAILMAP
-    //float detailMask = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_DetailMaskMap), _DetailMaskMapChannelMask);
-    float detailMask;
-    {
-        float4 tmp = (float4)0;
-        SHARED_SAMPLING(tmp, rgba, _DetailMaskUseMap, _DetailMaskMap);
-        detailMask = dot(tmp, _DetailMaskMapChannelMask);
-    }
+    float detailMask = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_DetailMaskMap), _DetailMaskMapChannelMask);
 
     float4 detailGradient = float4(0.0, 0.0, 0.0, NORMALMAP_NEUTRAL_DISPERSION_VALUE);
     if (_DetailNormalUseMap)
     {
-        //detailGradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_DetailNormalMap, _DetailNormalScale, 0.0);
-        SHARED_SAMPLING_NORMAL(detailGradient, _DetailNormalUseMap, _DetailNormalMap, _DetailNormalScale, 0.0);
+        detailGradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_DetailNormalMap, _DetailNormalScale, 0.0);
     }
 
     gradient = AddDetailGradient(gradient, detailGradient, detailMask);
     bentGradient = AddDetailGradient(bentGradient, detailGradient, detailMask);
 
-    //float detailPerceptualSmoothness = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_DetailSmoothnessMap), _DetailSmoothnessMapChannelMask);
-    float detailPerceptualSmoothness;
-    {
-        float4 tmp = (float4)0;
-        SHARED_SAMPLING(tmp, rgba, _DetailSmoothnessUseMap, _DetailSmoothnessMap);
-        detailPerceptualSmoothness = dot(tmp, _DetailSmoothnessMapChannelMask);
-    }
+    float detailPerceptualSmoothness = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_DetailSmoothnessMap), _DetailSmoothnessMapChannelMask);
     //debug: TODO either lineargrey or grey won't give 0.5 but 0.215 or 0.211
     //surfaceData.dielectricIor = detailPerceptualSmoothness;
     detailPerceptualSmoothness = lerp(_DetailSmoothnessMapRange.x, _DetailSmoothnessMapRange.y, detailPerceptualSmoothness);
@@ -716,7 +576,6 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     // For back lighting we use the oposite vertex normal 
     InitBuiltinData(alpha, surfaceData.normalWS, -input.worldToTangent[2], input.positionRWS, input.texCoord1, input.texCoord2, builtinData);
 
-    // TODOTODO
     builtinData.emissiveColor = _EmissiveColor * lerp(float3(1.0, 1.0, 1.0), surfaceData.baseColor.rgb, _AlbedoAffectEmissive);
     builtinData.emissiveColor *= SAMPLE_TEXTURE2D_SCALE_BIAS(_EmissiveColorMap).rgb;
 
