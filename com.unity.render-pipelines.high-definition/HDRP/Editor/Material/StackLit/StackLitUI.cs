@@ -155,6 +155,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string k_GeometricNormalFilteringEnabled = "_GeometricNormalFilteringEnabled";
         protected const string k_TextureNormalFilteringEnabled = "_TextureNormalFilteringEnabled";
 
+        protected const string k_EnableSamplerSharing = "_EnableSamplerSharing";
+
         #endregion
 
         // Add the properties into an array.
@@ -170,6 +172,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         private Property EnableAnisotropy;
         private Property EnableDualSpecularLobe;
         private Property EnableIridescence;
+
+        private Property EnableSamplerSharing;
 
         private Property EnableGeometricNormalFiltering;
         private Property EnableTextureNormalFiltering;
@@ -212,6 +216,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             EnableAnisotropy = new Property(this, k_EnableAnisotropy, "Enable Anisotropy", "Enable anisotropy, correct anisotropy for punctual light but very coarse approximated for reflection", true);
             EnableDualSpecularLobe = new Property(this, k_EnableDualSpecularLobe, "Enable Dual Specular Lobe", "Enable a second specular lobe, aim to simulate a mix of a narrow and a haze lobe that better match measured material", true);
             EnableIridescence = new Property(this, k_EnableIridescence, "Enable Iridescence", "Enable physically based iridescence layer", true);
+            EnableSamplerSharing = new Property(this, k_EnableSamplerSharing, "Enable Sampler Sharing", "Enable Sampler Sharing", true);
 
             EnableGeometricNormalFiltering = new Property(this, k_GeometricNormalFilteringEnabled, "Enable Geometric Normal filtering", "Enable specular antialiasing", true);
             EnableTextureNormalFiltering = new Property(this, k_TextureNormalFilteringEnabled, "Enable Normal Texture filtering", "Require normal map to use _NA or _OSNA suffix for normal map name", true);
@@ -319,7 +324,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     EnableCoatNormalMap,
                     EnableIridescence,
                     EnableSSS,
-                    EnableTransmission
+                    EnableTransmission,
+                    EnableSamplerSharing
                 }),
 
                 StandardMetallicGroup,
@@ -481,31 +487,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             //TODO: disable DBUFFER
 
-            TextureProperty.SetupTextureMaterialProperty(material, k_Metallic);
-            TextureProperty.SetupTextureMaterialProperty(material, k_SmoothnessA);
-            TextureProperty.SetupTextureMaterialProperty(material, k_SmoothnessB);
-            TextureProperty.SetupTextureMaterialProperty(material, k_LobeMix);
-            TextureProperty.SetupTextureMaterialProperty(material, k_Haziness);
-            TextureProperty.SetupTextureMaterialProperty(material, k_HazeExtent);
-            TextureProperty.SetupTextureMaterialProperty(material, k_AmbientOcclusion);
-            TextureProperty.SetupTextureMaterialProperty(material, k_SubsurfaceMask);
-            TextureProperty.SetupTextureMaterialProperty(material, k_Thickness);
-            TextureProperty.SetupTextureMaterialProperty(material, k_AnisotropyA);
-            TextureProperty.SetupTextureMaterialProperty(material, k_AnisotropyB);
-            TextureProperty.SetupTextureMaterialProperty(material, k_IridescenceThickness);
-            TextureProperty.SetupTextureMaterialProperty(material, k_IridescenceMask);
-            TextureProperty.SetupTextureMaterialProperty(material, k_CoatSmoothness);
-
-            // details
-            TextureProperty.SetupTextureMaterialProperty(material, k_DetailMask);
-            TextureProperty.SetupTextureMaterialProperty(material, k_DetailSmoothness);
-
-            TextureProperty.SetupTextureMaterialProperty(material, k_Normal);
-            TextureProperty.SetupTextureMaterialProperty(material, k_CoatNormal);
-            TextureProperty.SetupTextureMaterialProperty(material, k_DetailNormal);
-
             bool detailsEnabled = material.HasProperty(k_EnableDetails) && material.GetFloat(k_EnableDetails) > 0.0f;
-            CoreUtils.SetKeyword(material, "_DETAILMAP", detailsEnabled);
+            CoreUtils.SetKeyword(material, "_DETAILMAP", detailsEnabled); // todo: should be reserved for actual map present
 
             bool bentNormalMapPresent = material.HasProperty(k_BentNormalMap) && material.GetTexture(k_BentNormalMap);
             CoreUtils.SetKeyword(material, "_BENTNORMALMAP", bentNormalMapPresent);
@@ -575,18 +558,68 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             CoreUtils.SetKeyword(material, "_VLAYERED_USE_REFRACTED_ANGLES_FOR_BASE", vlayerUseRefractedAnglesForBase);
 
             //
+            // Setup texture material properties used for sampling and processing map values:
+            //
+            bool samplerSharingEnabled = material.HasProperty(k_EnableSamplerSharing) && material.GetFloat(k_EnableSamplerSharing) > 0.0f;
+            TextureSamplerSharing samplerSharing = samplerSharingEnabled ? 
+                new TextureSamplerSharing(material, (a, b, c) => TextureProperty.SetupUseMapOfTextureMaterialProperty(material, a, b, c)) : null;
+            if (samplerSharingEnabled)
+            {
+                // We want to enable all our samples to try to use even the engine parsed-by-named ones that
+                // are used in the shader:
+                samplerSharing.AddExternalExistingSamplerStates();
+            }
+            TextureProperty.SetupTextureMaterialProperty(material, k_BaseColor,            enableMap: true, allowUnassignedSampling: true, samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_Normal,               enableMap: true, allowUnassignedSampling: false, samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_Metallic,             enableMap: (!specularColorEnabled), samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_SpecularColor,        enableMap: specularColorEnabled, allowUnassignedSampling: true, samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_SmoothnessA,          enableMap: true, samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_SmoothnessB,          enableMap: (dualSpecularLobeEnabled && !hazyGlossEnabled), samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_LobeMix,              enableMap: (dualSpecularLobeEnabled && !hazyGlossEnabled), samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_Haziness,             enableMap: (dualSpecularLobeEnabled && hazyGlossEnabled), samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_HazeExtent,           enableMap: (dualSpecularLobeEnabled && hazyGlossEnabled), samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_AmbientOcclusion,     enableMap: true, samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_SubsurfaceMask,       enableMap: sssEnabled, samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_Thickness,            enableMap: (sssEnabled || transmissionEnabled), samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_AnisotropyA,          enableMap: anisotropyEnabled, samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_AnisotropyB,          enableMap: anisotropyEnabled, samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_IridescenceThickness, enableMap: iridescenceEnabled, samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_IridescenceMask,      enableMap: iridescenceEnabled, samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_CoatSmoothness,       enableMap: coatEnabled, samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_CoatNormal,           enableMap: coatEnabled, samplerSharing: samplerSharing);
+
+            // details
+            TextureProperty.SetupTextureMaterialProperty(material, k_DetailMask, enableMap: detailsEnabled, allowUnassignedSampling: true, samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_DetailSmoothness, enableMap: detailsEnabled, allowUnassignedSampling: true, samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_DetailNormal, enableMap: detailsEnabled, allowUnassignedSampling: false, samplerSharing: samplerSharing);
+
+            TextureProperty.SetupTextureMaterialProperty(material, k_EmissiveColor, enableMap: true, allowUnassignedSampling: true, samplerSharing: samplerSharing);
+
+
+            if (samplerSharingEnabled)
+            {
+                int sharedSamplersUsedNum = samplerSharing.DoClientAssignment();
+                // TODO : set limiting keyword for the different cases of the shader switch?
+            }
+            CoreUtils.SetKeyword(material, "_USE_SAMPLER_SHARING", samplerSharingEnabled);
+
+            //
             // Check if we are using specific UVs (but only for potentially used maps):
             //
+            TextureProperty.UVMapping baseColorMapUV            = (TextureProperty.UVMapping)material.GetFloat(k_BaseColorMapUV);
+            TextureProperty.UVMapping normalMapUV               = (TextureProperty.UVMapping)material.GetFloat(k_NormalMapUV);
             TextureProperty.UVMapping metallicMapUV             = specularColorEnabled ? TextureProperty.UVMapping.UV0 : (TextureProperty.UVMapping)material.GetFloat(k_MetallicMapUV);
             TextureProperty.UVMapping specularColorMapUV        = specularColorEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_SpecularColorMapUV) : TextureProperty.UVMapping.UV0;
+            TextureProperty.UVMapping smoothnessAMapUV          = (TextureProperty.UVMapping)material.GetFloat(k_SmoothnessAMapUV);
             TextureProperty.UVMapping smoothnessBMapUV          = (dualSpecularLobeEnabled && !hazyGlossEnabled) ? (TextureProperty.UVMapping)material.GetFloat(k_SmoothnessBMapUV) : TextureProperty.UVMapping.UV0;
             TextureProperty.UVMapping lobeMixMapUV              = (dualSpecularLobeEnabled && !hazyGlossEnabled) ? (TextureProperty.UVMapping)material.GetFloat(k_LobeMixMapUV) : TextureProperty.UVMapping.UV0;
             TextureProperty.UVMapping hazinessMapUV             = (dualSpecularLobeEnabled && hazyGlossEnabled) ? (TextureProperty.UVMapping)material.GetFloat(k_HazinessMapUV) : TextureProperty.UVMapping.UV0;
             TextureProperty.UVMapping hazeExtentMapUV           = (dualSpecularLobeEnabled && hazyGlossEnabled) ? (TextureProperty.UVMapping)material.GetFloat(k_HazeExtentMapUV) : TextureProperty.UVMapping.UV0;
+            TextureProperty.UVMapping ambientOcclusionMapUV     = (TextureProperty.UVMapping)material.GetFloat(k_AmbientOcclusionMapUV);
             TextureProperty.UVMapping subsurfaceMaskMapUV       = sssEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_SubsurfaceMaskMapUV) : TextureProperty.UVMapping.UV0;
             TextureProperty.UVMapping thicknessMapUV            = sssEnabled || transmissionEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_ThicknessMapUV) : TextureProperty.UVMapping.UV0;
-            TextureProperty.UVMapping anisotropyAMapUV           = anisotropyEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_AnisotropyAMapUV) : TextureProperty.UVMapping.UV0;
-            TextureProperty.UVMapping anisotropyBMapUV           = anisotropyEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_AnisotropyBMapUV) : TextureProperty.UVMapping.UV0;
+            TextureProperty.UVMapping anisotropyAMapUV          = anisotropyEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_AnisotropyAMapUV) : TextureProperty.UVMapping.UV0;
+            TextureProperty.UVMapping anisotropyBMapUV          = anisotropyEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_AnisotropyBMapUV) : TextureProperty.UVMapping.UV0;
             TextureProperty.UVMapping iridescenceThicknessMapUV = iridescenceEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_IridescenceThicknessMapUV) : TextureProperty.UVMapping.UV0;
             TextureProperty.UVMapping iridescenceMaskMapUV      = iridescenceEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_IridescenceMaskMapUV) : TextureProperty.UVMapping.UV0;
             TextureProperty.UVMapping coatSmoothnessMapUV       = coatEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_CoatSmoothnessMapUV) : TextureProperty.UVMapping.UV0;
@@ -595,14 +628,20 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             TextureProperty.UVMapping detailSmoothnessMapUV     = detailsEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_DetailSmoothnessMapUV) : TextureProperty.UVMapping.UV0;
             TextureProperty.UVMapping detailNormalMapUV         = detailsEnabled ? (TextureProperty.UVMapping)material.GetFloat(k_DetailNormalMapUV) : TextureProperty.UVMapping.UV0;
 
+            TextureProperty.UVMapping emissiveColorMapUV = (TextureProperty.UVMapping)material.GetFloat(k_EmissiveColorMapUV);
+
             TextureProperty.UVMapping[] uvIndices = new[]
             {
+                baseColorMapUV,
+                normalMapUV,
                 metallicMapUV,
                 specularColorMapUV,
+                smoothnessAMapUV,
                 smoothnessBMapUV,
                 lobeMixMapUV,
                 hazinessMapUV,
                 hazeExtentMapUV,
+                ambientOcclusionMapUV,
                 subsurfaceMaskMapUV,
                 thicknessMapUV,
                 anisotropyAMapUV,
@@ -614,11 +653,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 detailMaskMapUV,
                 detailSmoothnessMapUV,
                 detailNormalMapUV,
-                (TextureProperty.UVMapping)material.GetFloat(k_BaseColorMapUV),
-                (TextureProperty.UVMapping)material.GetFloat(k_NormalMapUV),
-                (TextureProperty.UVMapping)material.GetFloat(k_SmoothnessAMapUV),
-                (TextureProperty.UVMapping)material.GetFloat(k_AmbientOcclusionMapUV),
-                (TextureProperty.UVMapping)material.GetFloat(k_EmissiveColorMapUV),
+                emissiveColorMapUV,
             };
 
             // Set keyword for mapping

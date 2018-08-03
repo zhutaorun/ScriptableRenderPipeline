@@ -12,6 +12,7 @@ Shader "HDRenderPipeline/StackLit"
         // Be careful, do not change the name here to _Color. It will conflict with the "fake" parameters (see end of properties) required for GI.
         _BaseColor("BaseColor", Color) = (1,1,1,1)
         _BaseColorMap("BaseColor Map", 2D) = "white" {}
+        _BaseColorUseMap("BaseColor UseMap", Float) = 0
         [HideInInspector] _BaseColorMapShow("BaseColor Map Show", Float) = 0
         _BaseColorMapUV("BaseColor Map UV", Float) = 0.0
         _BaseColorMapUVLocal("BaseColorMap UV Local", Float) = 0.0
@@ -33,6 +34,7 @@ Shader "HDRenderPipeline/StackLit"
 
         _SpecularColor("SpecularColor", Color) = (1,1,1,1)
         _SpecularColorMap("SpecularColor Map", 2D) = "white" {}
+        _SpecularColorUseMap("SpecularColor UseMap", Float) = 0
         [HideInInspector] _SpecularColorMapShow("SpecularColor Map Show", Float) = 0
         _SpecularColorMapUV("SpecularColor Map UV", Float) = 0.0
         _SpecularColorMapUVLocal("SpecularColorMap UV Local", Float) = 0.0
@@ -158,6 +160,7 @@ Shader "HDRenderPipeline/StackLit"
         [ToggleUI] _CoatSmoothnessMapRemapInverted("Invert CoatSmoothness Remap", Float) = 0.0
         [HideInInspector] _CoatSmoothnessMapRange("CoatSmoothness Range", Vector) = (0, 1, 0, 0)
 
+        // TODOTODO
         _CoatIor("Coat IOR", Range(1.0001, 2.0)) = 1.5
         _CoatThickness("Coat Thickness", Range(0.0, 0.99)) = 0.0
         _CoatExtinction("Coat Extinction Coefficient", Color) = (1,1,1) // in thickness^-1 units
@@ -181,6 +184,7 @@ Shader "HDRenderPipeline/StackLit"
 
         [HideInInspector] _BentNormalMapShow("Bent NormalMap Show", Float) = 0.0
         _BentNormalMap("Bent NormalMap", 2D) = "bump" {}     // Tangent space bent normal map
+        _BentNormalUseMap("Bent Normal UseMap", Float) = 0
         //_BentNormalMapUV("Bent NormalMapUV", Float) = 0.0
         //_BentNormalMapUVLocal("Bent NormalMapUV Local", Float) = 0.0
         //_BentNormalMapObjSpace("Bent NormalMap ObjSpace", Float) = 0.0
@@ -201,10 +205,12 @@ Shader "HDRenderPipeline/StackLit"
         [HideInInspector] _AmbientOcclusionMapChannelMask("AmbientOcclusion Map Channel Mask", Vector) = (1, 0, 0, 0)
         _AmbientOcclusionMapRemap("AmbientOcclusion Remap", Vector) = (0, 1, 0, 0)
         [HideInInspector] _AmbientOcclusionMapRange("AmbientOcclusion Range", Vector) = (0, 1, 0, 0)
+        [HideInInspector] _AmbientOcclusionMapSamplerSharing("AmbientOcclusionMap Sampler Sharing Setting", Float) = 0 // TEST: escape it
 
         [HideInInspector] _EmissiveColorMapShow("Emissive Color Map Show", Float) = 0.0
         [HDR] _EmissiveColor("EmissiveColor", Color) = (0, 0, 0)
         _EmissiveColorMap("Emissive Color Map", 2D) = "white" {}
+        _EmissiveColorUseMap("Emissive Color Use Map", Float) = 0
         _EmissiveColorMapUV("Emissive Color Map UV", Range(0.0, 1.0)) = 0
         _EmissiveColorMapUVLocal("Emissive Color Map UV Local", Float) = 0.0
         [ToggleUI] _AlbedoAffectEmissive("Albedo Affect Emissive", Float) = 0.0
@@ -264,6 +270,7 @@ Shader "HDRenderPipeline/StackLit"
         [ToggleUI] _EnableDetails("Enable Details", Float) = 0.0
         [HideInInspector] _DetailMaskMapShow("DetailMask Map Show", Float) = 0
         _DetailMaskMap("DetailMask Map", 2D) = "white" {}
+        _DetailMaskUseMap("DetailMask UseMap", Float) = 0
         _DetailMaskMapUV("DetailMask Map UV", Float) = 0.0
         _DetailMaskMapUVLocal("DetailMask Map UV Local", Float) = 0.0
         _DetailMaskMapChannel("DetailMask Map Channel", Float) = 0.0
@@ -278,6 +285,7 @@ Shader "HDRenderPipeline/StackLit"
 
         [HideInInspector] _DetailSmoothnessMapShow("DetailSmoothness Map Show", Float) = 0
         _DetailSmoothnessMap("DetailSmoothness Map", 2D) = "lineargrey" {} // Neutral is 0.5 for detail map
+        _DetailSmoothnessUseMap("DetailSmoothness Use Map", Float) = 0
         _DetailSmoothnessMapUV("DetailSmoothness Map UV", Float) = 0.0
         _DetailSmoothnessMapUVLocal("DetailSmoothness Map UV Local", Float) = 0.0
         _DetailSmoothnessMapChannel("DetailSmoothness Map Channel", Float) = 0.0
@@ -341,6 +349,15 @@ Shader "HDRenderPipeline/StackLit"
         [Enum(Flip, 0, Mirror, 1, None, 2)] _DoubleSidedNormalMode("Double sided normal mode", Float) = 1 // This is for the editor only, see BaseLitUI.cs: _DoubleSidedConstants will be set based on the mode.
         [HideInInspector] _DoubleSidedConstants("_DoubleSidedConstants", Vector) = (1, 1, -1, 0)
 
+        // Shared samplers
+        [ToggleUI] _EnableSamplerSharing("Enable Sampler Sharing", Float) = 0.0
+        _SharedSamplerMap0("SharedSamplerMap0", 2D) = "black" {}
+        _SharedSamplerMap1("SharedSamplerMap1", 2D) = "black" {}
+        _SharedSamplerMap2("SharedSamplerMap2", 2D) = "black" {}
+        _SharedSamplerMap3("SharedSamplerMap3", 2D) = "black" {}
+        _SharedSamplerMap4("SharedSamplerMap4", 2D) = "black" {}
+        // test: the editor should count 5
+        _SharedSamplerMap6("SharedSamplerMap6", 2D) = "black" {}
 
         // Sections show values.
         [HideInInspector] _MaterialFeaturesShow("_MaterialFeaturesShow", Float) = 1.0
@@ -383,6 +400,8 @@ Shader "HDRenderPipeline/StackLit"
     #pragma shader_feature _DETAILMAP
     #pragma shader_feature _BENTNORMALMAP
     #pragma shader_feature _ENABLESPECULAROCCLUSION // This will control SO whether bent normals are there or not (cf Lit where only bent normals have effect with this keyword)
+
+    #pragma shader_feature _USE_SAMPLER_SHARING
 
     //#pragma shader_feature _REQUIRE_UV2
     //#pragma shader_feature _REQUIRE_UV3
