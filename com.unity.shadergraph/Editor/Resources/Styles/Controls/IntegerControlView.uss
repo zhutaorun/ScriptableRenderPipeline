@@ -6,7 +6,8 @@ IntegerControlView {
     padding-bottom: 4;
 }
 
-IntegerControlView > IntegerField {
+IntegerControlView > IntegerField,
+IntegerControlView > IntegerInput {
     margin-left: 0;
     margin-right: 0;
     min-width: 30;

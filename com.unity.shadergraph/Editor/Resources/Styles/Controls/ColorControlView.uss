@@ -1,4 +1,5 @@
-ColorControlView > ColorField {
+ColorControlView > ColorField,
+ColorControlView > ColorInput {
     flex-direction: row;
 }
 
@@ -6,7 +7,8 @@ ColorControlView > #enumPanel {
     flex-direction: row;
 }
 
-ColorControlView > #enumPanel > EnumField {
+ColorControlView > #enumPanel > EnumField,
+ColorControlView > #enumPanel > EnumInput {
     flex: 1;
     margin-left: 0;
     margin-right: 8;

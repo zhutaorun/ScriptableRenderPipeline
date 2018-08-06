@@ -7,7 +7,11 @@ using UnityEngine.Experimental.UIElements.StyleSheets;
 using UnityEditor.ShaderGraph;
 using UnityEditor.ShaderGraph.Drawing.Controls;
 using Object = UnityEngine.Object;
-
+#if UNITY_2019_1_OR_NEWER
+using GradientInputField = UnityEditor.Experimental.UIElements.GradientInput;
+#else
+using GradientInputField = UnityEditor.Experimental.UIElements.GradientField;
+#endif
 namespace UnityEditor.ShaderGraph.Drawing.Slots
 {
     public class GradientSlotControlView : VisualElement
@@ -32,7 +36,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
             m_GradientObject.gradient.SetKeys(m_Slot.value.colorKeys, m_Slot.value.alphaKeys);
             m_GradientObject.gradient.mode = m_Slot.value.mode;
 
-            var gradientField = new GradientField() { value = m_GradientObject.gradient };
+            var gradientField = new GradientInputField() { value = m_GradientObject.gradient };
             gradientField.OnValueChanged(OnValueChanged);
             Add(gradientField);
         }

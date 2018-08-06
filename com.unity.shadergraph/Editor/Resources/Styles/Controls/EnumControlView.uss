@@ -2,7 +2,8 @@ EnumControlView {
     flex-direction: row;
 }
 
-EnumControlView > EnumField {
+EnumControlView > EnumField,
+EnumControlView > EnumInput {
     width: 80;
     flex: 1;
     margin-left: 0;

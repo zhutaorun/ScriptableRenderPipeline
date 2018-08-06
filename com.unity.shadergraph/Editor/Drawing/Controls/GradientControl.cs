@@ -5,6 +5,11 @@ using UnityEditor.Graphing;
 using UnityEngine.Experimental.UIElements;
 using UnityEditor.Experimental.UIElements;
 using UnityEditor.ShaderGraph;
+#if UNITY_2019_1_OR_NEWER
+using GradientInputField = UnityEditor.Experimental.UIElements.GradientInput;
+#else
+using GradientInputField = UnityEditor.Experimental.UIElements.GradientField;
+#endif
 
 namespace UnityEditor.ShaderGraph.Drawing.Controls
 {
@@ -66,7 +71,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             if (!string.IsNullOrEmpty(label))
                 gradientPanel.Add(new Label(label));
 
-            var gradientField = new GradientField() { value = m_GradientObject.gradient };
+            var gradientField = new GradientInputField() { value = m_GradientObject.gradient };
             gradientField.OnValueChanged(OnValueChanged);
             gradientPanel.Add(gradientField);
 

@@ -87,9 +87,9 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             this.MarkDirtyRepaint();
         }
 
-        FloatField AddField(VisualElement panel, string label, int index, Vector3 initValiue)
+        FloatField AddField(VisualElement panel, string label, int index, Vector3 initValue)
         {
-            var field = new FloatField { userData = index, value = initValiue[index] };
+            var field = new FloatField { userData = index, value = initValue[index] };
 
             if (label != "")
             {

@@ -10,6 +10,26 @@ using Toggle = UnityEngine.Experimental.UIElements.Toggle;
 #if UNITY_2018_3_OR_NEWER
 using ContextualMenu = UnityEngine.Experimental.UIElements.DropdownMenu;
 #endif
+#if UNITY_2019_1_OR_NEWER
+using TextInputField = UnityEngine.Experimental.UIElements.TextInput;
+using IntegerInputField = UnityEditor.Experimental.UIElements.IntegerInput;
+using EnumInputField = UnityEditor.Experimental.UIElements.EnumInput;
+using ColorInputField = UnityEditor.Experimental.UIElements.ColorInput;
+using ObjectInputField = UnityEditor.Experimental.UIElements.ObjectInput;
+using Vector2InputField = UnityEditor.Experimental.UIElements.Vector2Input;
+using Vector3InputField = UnityEditor.Experimental.UIElements.Vector3Input;
+using Vector4InputField = UnityEditor.Experimental.UIElements.Vector4Input;
+#else
+using TextInputField = UnityEngine.Experimental.UIElements.TextField;
+using IntegerInputField = UnityEditor.Experimental.UIElements.IntegerField;
+using EnumInputField = UnityEditor.Experimental.UIElements.EnumField;
+using ColorInputField = UnityEditor.Experimental.UIElements.ColorField;
+using ObjectInputField = UnityEditor.Experimental.UIElements.ObjectField;
+using Vector2InputField = UnityEditor.Experimental.UIElements.Vector2Field;
+using Vector3InputField = UnityEditor.Experimental.UIElements.Vector3Field;
+using Vector4InputField = UnityEditor.Experimental.UIElements.Vector4Field;
+#endif
+
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
@@ -19,7 +39,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         IShaderProperty m_Property;
         Toggle m_ExposedToogle;
-        TextField m_ReferenceNameField;
+        TextInputField m_ReferenceNameField;
 
         static Type s_ContextualMenuManipulator = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypesOrNothing()).FirstOrDefault(t => t.FullName == "UnityEngine.Experimental.UIElements.ContextualMenuManipulator");
 
@@ -40,7 +60,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_ExposedToogle.value = property.generatePropertyBlock;
             AddRow("Exposed", m_ExposedToogle);
 
-            m_ReferenceNameField = new TextField(512, false, false, ' ');
+            m_ReferenceNameField = new TextInputField(512, false, false, ' ');
             m_ReferenceNameField.AddStyleSheetPath("Styles/PropertyNameReferenceField");
             AddRow("Reference", m_ReferenceNameField);
             m_ReferenceNameField.value = property.referenceName;
@@ -76,7 +96,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 if (floatProperty.floatType == FloatType.Integer)
                 {
-                    var field = new IntegerField { value = (int)floatProperty.value };
+                    var field = new IntegerInputField { value = (int)floatProperty.value };
                     field.OnValueChanged(intEvt =>
                         {
                             floatProperty.value = (float)intEvt.newValue;
@@ -95,7 +115,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     floatRow = AddRow("Default", floatField);
                 }
 
-                var floatModeField = new EnumField((Enum)floatProperty.floatType);
+                var floatModeField = new EnumInputField((Enum)floatProperty.floatType);
                 floatModeField.value = floatProperty.floatType;
                 floatModeField.OnValueChanged(evt =>
                     {
@@ -139,7 +159,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                                 break;
                             case FloatType.Integer:
                                 RemoveElements(new VisualElement[] {floatRow, intRow, modeRow, minRow, maxRow});
-                                var intField = new IntegerField { value = (int)floatProperty.value };
+                                var intField = new IntegerInputField { value = (int)floatProperty.value };
                                 intField.OnValueChanged(intEvt =>
                             {
                                 floatProperty.value = (float)intEvt.newValue;
@@ -189,7 +209,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             else if (property is Vector2ShaderProperty)
             {
                 var vectorProperty = (Vector2ShaderProperty)property;
-                var field = new Vector2Field { value = vectorProperty.value };
+                var field = new Vector2InputField { value = vectorProperty.value };
                 field.OnValueChanged(evt =>
                     {
                         vectorProperty.value = evt.newValue;
@@ -200,7 +220,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             else if (property is Vector3ShaderProperty)
             {
                 var vectorProperty = (Vector3ShaderProperty)property;
-                var field = new Vector3Field { value = vectorProperty.value };
+                var field = new Vector3InputField { value = vectorProperty.value };
                 field.OnValueChanged(evt =>
                     {
                         vectorProperty.value = evt.newValue;
@@ -211,7 +231,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             else if (property is Vector4ShaderProperty)
             {
                 var vectorProperty = (Vector4ShaderProperty)property;
-                var field = new Vector4Field { value = vectorProperty.value };
+                var field = new Vector4InputField { value = vectorProperty.value };
                 field.OnValueChanged(evt =>
                     {
                         vectorProperty.value = evt.newValue;
@@ -222,14 +242,14 @@ namespace UnityEditor.ShaderGraph.Drawing
             else if (property is ColorShaderProperty)
             {
                 var colorProperty = (ColorShaderProperty)property;
-                var colorField = new ColorField { value = property.defaultValue, showEyeDropper = false, hdr = colorProperty.colorMode == ColorMode.HDR };
+                var colorField = new ColorInputField { value = property.defaultValue, showEyeDropper = false, hdr = colorProperty.colorMode == ColorMode.HDR };
                 colorField.OnValueChanged(evt =>
                     {
                         colorProperty.value = evt.newValue;
                         DirtyNodes();
                     });
                 AddRow("Default", colorField);
-                var colorModeField = new EnumField((Enum)colorProperty.colorMode);
+                var colorModeField = new EnumInputField((Enum)colorProperty.colorMode);
                 colorModeField.OnValueChanged(evt =>
                     {
                         if (colorProperty.colorMode == (ColorMode)evt.newValue)
@@ -244,7 +264,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             else if (property is TextureShaderProperty)
             {
                 var textureProperty = (TextureShaderProperty)property;
-                var field = new ObjectField { value = textureProperty.value.texture, objectType = typeof(Texture) };
+                var field = new ObjectInputField { value = textureProperty.value.texture, objectType = typeof(Texture) };
                 field.OnValueChanged(evt =>
                     {
                         textureProperty.value.texture = (Texture)evt.newValue;
@@ -255,7 +275,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             else if (property is Texture2DArrayShaderProperty)
             {
                 var textureProperty = (Texture2DArrayShaderProperty)property;
-                var field = new ObjectField { value = textureProperty.value.textureArray, objectType = typeof(Texture2DArray) };
+                var field = new ObjectInputField { value = textureProperty.value.textureArray, objectType = typeof(Texture2DArray) };
                 field.OnValueChanged(evt =>
                     {
                         textureProperty.value.textureArray = (Texture2DArray)evt.newValue;
@@ -266,7 +286,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             else if (property is Texture3DShaderProperty)
             {
                 var textureProperty = (Texture3DShaderProperty)property;
-                var field = new ObjectField { value = textureProperty.value.texture, objectType = typeof(Texture3D) };
+                var field = new ObjectInputField { value = textureProperty.value.texture, objectType = typeof(Texture3D) };
                 field.OnValueChanged(evt =>
                     {
                         textureProperty.value.texture = (Texture3D)evt.newValue;
@@ -277,7 +297,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             else if (property is CubemapShaderProperty)
             {
                 var cubemapProperty = (CubemapShaderProperty)property;
-                var field = new ObjectField { value = cubemapProperty.value.cubemap, objectType = typeof(Cubemap) };
+                var field = new ObjectInputField { value = cubemapProperty.value.cubemap, objectType = typeof(Cubemap) };
                 field.OnValueChanged(evt =>
                     {
                         cubemapProperty.value.cubemap = (Cubemap)evt.newValue;

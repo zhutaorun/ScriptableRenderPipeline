@@ -3,7 +3,8 @@ GradientSlotControlView {
     align-items: center;
 }
 
-GradientSlotControlView > GradientField {
+GradientSlotControlView > GradientField,
+GradientSlotControlView > GradientInput {
     margin-left: 0;
     margin-right: 0;
     width: 41;

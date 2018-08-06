@@ -3,7 +3,8 @@ ColorRGBSlotControlView {
     align-items: center;
 }
 
-ColorRGBSlotControlView > ColorField {
+ColorRGBSlotControlView > ColorField,
+ColorRGBSlotControlView > ColorInput {
     width: 41;
     margin-left: 0;
     margin-right: 0;

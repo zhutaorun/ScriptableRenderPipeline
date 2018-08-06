@@ -215,7 +215,8 @@ ObjectControlView {
     flex-direction: row;
 }
 
-ObjectControlView > ObjectField {
+ObjectControlView > ObjectField,
+ObjectControlView > ObjectInput {
     flex: 1;
 }
 

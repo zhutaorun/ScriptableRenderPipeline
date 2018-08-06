@@ -6,7 +6,8 @@ EnumConversionControlView {
     padding-bottom: 4;
 }
 
-EnumConversionControlView > EnumField {
+EnumConversionControlView > EnumField,
+EnumConversionControlView > EnumInput {
     flex: 1;
     margin-left: 0;
     margin-right: 0;

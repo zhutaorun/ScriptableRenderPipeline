@@ -2,7 +2,11 @@ using System;
 using UnityEditor.Experimental.UIElements;
 using UnityEditor.Graphing;
 using UnityEngine.Experimental.UIElements;
-
+#if UNITY_2019_1_OR_NEWER
+using EnumInputField = UnityEditor.Experimental.UIElements.EnumInput;
+#else
+using EnumInputField = UnityEditor.Experimental.UIElements.EnumField;
+#endif
 namespace UnityEditor.ShaderGraph.Drawing.Slots
 {
     public class UVSlotControlView : VisualElement
@@ -13,7 +17,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
         {
             AddStyleSheetPath("Styles/Controls/UVSlotControlView");
             m_Slot = slot;
-            var enumField = new EnumField(slot.channel);
+            var enumField = new EnumInputField(slot.channel);
             enumField.OnValueChanged(OnValueChanged);
             Add(enumField);
         }

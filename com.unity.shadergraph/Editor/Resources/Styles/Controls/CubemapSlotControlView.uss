@@ -3,7 +3,8 @@ CubemapSlotControlView {
     align-items: center;
 }
 
-CubemapSlotControlView > ObjectField {
+CubemapSlotControlView > ObjectField,
+CubemapSlotControlView > ObjectInput {
     margin-top: 0;
     margin-bottom: 0;
     margin-left: 0;

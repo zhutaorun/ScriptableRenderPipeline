@@ -2,7 +2,8 @@ ChannelEnumControlView {
     flex-direction: row;
 }
 
-ChannelEnumControlView > .popupField {
+ChannelEnumControlView > .popupField,
+ChannelEnumControlView > .popupInput {
     width: 76;
     flex: 0;
     margin-left: 0;

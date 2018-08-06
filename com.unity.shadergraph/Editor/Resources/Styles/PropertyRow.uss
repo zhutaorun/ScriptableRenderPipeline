@@ -1,7 +1,9 @@
 PropertyRow EnumField,
 PropertyRow Label,
 PropertyRow Toggle,
-PropertyRow DoubleField {
+PropertyRow DoubleField,
+PropertyRow EnumInput,
+PropertyRow DoubleInput {
     margin-left: 0;
     margin-right: 0;
 }

@@ -20,7 +20,8 @@ DielectricSpecularControlView > #enumPanel > Label {
     width: 60;
 }
 
-DielectricSpecularControlView > #enumPanel > EnumField {
+DielectricSpecularControlView > #enumPanel > EnumField,
+DielectricSpecularControlView > #enumPanel > EnumInput {
     flex-grow: 1;
     margin-left: 0;
     margin-right: 0;

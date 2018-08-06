@@ -3,6 +3,11 @@ using System.Linq;
 using System.Reflection;
 using UnityEditor.Experimental.UIElements;
 using UnityEngine.Experimental.UIElements;
+#if UNITY_2019_1_OR_NEWER
+using EnumInputField = UnityEditor.Experimental.UIElements.EnumInput;
+#else
+using EnumInputField = UnityEditor.Experimental.UIElements.EnumField;
+#endif
 
 namespace UnityEditor.ShaderGraph.Drawing.Controls
 {
@@ -45,14 +50,14 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             var ec = (IEnumConversion)propertyInfo.GetValue(m_Node, null);
             propertyInfo.SetValue(m_Node, ec, null);
 
-            var fromField = new EnumField(currentValue.from);
+            var fromField = new EnumInputField(currentValue.from);
             fromField.OnValueChanged(OnFromChanged);
             Add(fromField);
 
             var arrowLabel = new Label("➔");
             Add(arrowLabel);
 
-            var toField = new EnumField(currentValue.to);
+            var toField = new EnumInputField(currentValue.to);
             toField.OnValueChanged(OnToChanged);
             Add(toField);
         }

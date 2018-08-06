@@ -3,7 +3,8 @@ TextureArraySlotControlView {
     align-items: center;
 }
 
-TextureArraySlotControlView > ObjectField {
+TextureArraySlotControlView > ObjectField,
+TextureArraySlotControlView > ObjectInput {
     margin-top: 0;
     margin-bottom: 0;
     margin-left: 0;
