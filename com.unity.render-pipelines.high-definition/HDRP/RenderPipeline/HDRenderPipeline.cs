@@ -652,7 +652,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             var shadowSettings = VolumeManager.instance.stack.GetComponent<HDShadowSettings>();
 
-            m_ShadowSettings.maxShadowDistance = shadowSettings.maxShadowDistance;
+            // sample-game begin: added globalMultiplier
+            m_ShadowSettings.maxShadowDistance = shadowSettings.maxShadowDistance * HDShadowSettings.shadowDistanceMultiplier;
+            // sample-game end
             //m_ShadowSettings.directionalLightNearPlaneOffset = commonSettings.shadowNearPlaneOffset;
 
             m_ShadowSettings.enabled = hdCamera.frameSettings.enableShadow;
@@ -1342,7 +1344,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             using (new ProfilingSample(cmd, "ApplyDistortion", CustomSamplerId.ApplyDistortion.GetSampler()))
             {
-                var colorPyramidRT = hdCamera.GetPreviousFrameRT((int)HDCameraFrameHistoryType.ColorPyramid);
+                var colorPyramidRT = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.ColorPyramid);
                 var pyramidScale = m_BufferPyramid.GetPyramidToScreenScale(hdCamera, colorPyramidRT);
 
                 // Need to account for the fact that the gaussian pyramid is actually rendered inside the camera viewport in a square texture so we mutiply by the PyramidToScreen scale
