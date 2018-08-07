@@ -271,9 +271,8 @@ real GetSpecularOcclusionFromBentAO(real3 V, real3 bentNormalWS, real3 normalWS,
     // Ambient occlusion is cosine weighted, thus use following equation. See slide 129
     real cosAv = sqrt(1.0 - ambientOcclusion);
     roughness = max(roughness, 0.01); // Clamp to 0.01 to avoid edge cases
-    real cosAs = exp2((-log(10.0)/log(2.0)) * Sq(roughness));
+    real cosAs = exp2((-log(10.0) / log(2.0)) * Sq(roughness));
     real cosB = dot(bentNormalWS, reflect(-V, normalWS));
-
     return SphericalCapIntersectionSolidArea(cosAv, cosAs, cosB) / (TWO_PI * (1.0 - cosAs));
 }
 
@@ -379,14 +378,13 @@ real3x3 GetLocalFrame(real3 localZ, real3 localX)
 real3x3 GetOrthoBasisViewNormal(real3 V, real3 N, real unclampedNdotV, bool testSingularity = false)
 {
     real3x3 orthoBasisViewNormal;
-
-    if (testSingularity && (abs(1.0-unclampedNdotV) <= FLT_EPS))
+    if (testSingularity && (abs(1.0 - unclampedNdotV) <= FLT_EPS))
     {
         // In this case N == V, and azimuth orientation around N shouldn't matter for the caller,
         // we can use any quaternion-based method, like Frisvad or Reynold's (Pixar): 
         orthoBasisViewNormal = GetLocalFrame(N);
     }
-    else 
+    else
     {
         orthoBasisViewNormal[0] = normalize(V - N * unclampedNdotV);
         orthoBasisViewNormal[2] = N;

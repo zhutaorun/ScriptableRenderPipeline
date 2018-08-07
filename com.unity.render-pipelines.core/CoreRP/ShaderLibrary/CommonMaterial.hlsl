@@ -131,6 +131,7 @@ float GeometricNormalFiltering(float perceptualSmoothness, float3 geometricNorma
 float TextureNormalVariance(float avgNormalLength)
 {
     float variance = 0.0;
+
     if (avgNormalLength < 1.0)
     {
         float avgNormLen2 = avgNormalLength * avgNormalLength;

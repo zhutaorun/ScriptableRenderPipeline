@@ -1824,20 +1824,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public void ApplyDebugDisplaySettings(HDCamera hdCamera, CommandBuffer cmd)
         {
             // See ShaderPassForward.hlsl: for forward shaders, if DEBUG_DISPLAY is enabled and no DebugLightingMode or DebugMipMapMod 
-            // modes have been set, lighting is automatically escaped. This isn't so for shaders supporting deferred. Since the 
-            // colorPickerModes and false color don't need DEBUG_DISPLAY anyway, make those behave like for deferred materials 
-            // by disabling DEBUG_DISPLAY independently of those:
-            if (m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled())
-            {
-                // enable globally the keyword DEBUG_DISPLAY on shader that support it with multicompile
-                cmd.EnableShaderKeyword("DEBUG_DISPLAY");
-            }
-            else
-            {
-                // TODO: Be sure that if there is no change in the state of this keyword, it doesn't imply any work on CPU side! else we will need to save the sate somewher
-                cmd.DisableShaderKeyword("DEBUG_DISPLAY");
-            }
+            // modes have been set, lighting is automatically skipped (To avoid some crashed due to lighting RT not set on console).
+            // However debug mode like colorPickerModes and false color don't need DEBUG_DISPLAY and must work with the lighting.
+            // So we will enabled DEBUG_DISPLAY independently
 
+            // Enable globally the keyword DEBUG_DISPLAY on shader that support it with multicompile
+            CoreUtils.SetKeyword(cmd, "DEBUG_DISPLAY", m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled());
+
+            if (m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled() ||
+                m_CurrentDebugDisplaySettings.colorPickerDebugSettings.colorPickerMode != ColorPickerDebugMode.None)
+            {
             if (m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled() ||
                 m_CurrentDebugDisplaySettings.colorPickerDebugSettings.colorPickerMode != ColorPickerDebugMode.None)
             {
