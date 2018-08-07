@@ -1834,9 +1834,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled() ||
                 m_CurrentDebugDisplaySettings.colorPickerDebugSettings.colorPickerMode != ColorPickerDebugMode.None)
             {
-            if (m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled() ||
-                m_CurrentDebugDisplaySettings.colorPickerDebugSettings.colorPickerMode != ColorPickerDebugMode.None)
-            {
                 // This is for texture streaming
                 m_CurrentDebugDisplaySettings.UpdateMaterials();
 
