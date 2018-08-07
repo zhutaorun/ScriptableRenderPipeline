@@ -97,9 +97,9 @@ void ADD_IDX(ComputeLayerTexCoord)( // Uv related parameters
 }
 
 // Caution: Duplicate from GetBentNormalTS - keep in sync!
-float3 ADD_IDX(GetNormalTS)(FragInputs input, LayerTexCoord layerTexCoord, float3 detailNormalTS, float detailMask)
+float4 ADD_IDX(GetNormalTS)(FragInputs input, LayerTexCoord layerTexCoord, float4 detailNormalTS, float detailMask)
 {
-    float3 normalTS;
+    float4 normalTS;
 
 #ifdef _NORMALMAP_IDX
     #ifdef _NORMALMAP_TANGENT_SPACE_IDX
@@ -108,29 +108,32 @@ float3 ADD_IDX(GetNormalTS)(FragInputs input, LayerTexCoord layerTexCoord, float
         // We forbid scale in case of object space as it make no sense
         // To be able to combine object space normal with detail map then later we will re-transform it to world space.
         // Note: There is no such a thing like triplanar with object space normal, so we call directly 2D function
+        float4 packedNormal = SAMPLE_TEXTURE2D(ADD_IDX(_NormalMapOS), SAMPLER_NORMALMAP_IDX, ADD_IDX(layerTexCoord.base).uv);
+        float normalVariance = packedNormal.z;
         #ifdef SURFACE_GRADIENT
         // /We need to decompress the normal ourselve here as UnpackNormalRGB will return a surface gradient
-        float3 normalOS = SAMPLE_TEXTURE2D(ADD_IDX(_NormalMapOS), SAMPLER_NORMALMAP_IDX, ADD_IDX(layerTexCoord.base).uv).xyz * 2.0 - 1.0;
+        float3 normalOS = packedNormal.xyz * 2.0 - 1.0;
         // no need to renormalize normalOS for SurfaceGradientFromPerturbedNormal
-        normalTS = SurfaceGradientFromPerturbedNormal(input.worldToTangent[2], TransformObjectToWorldDir(normalOS));
+        normalTS = float4(SurfaceGradientFromPerturbedNormal(input.worldToTangent[2], TransformObjectToWorldDir(normalOS)), normalVariance);
         #else
-        float3 normalOS = UnpackNormalRGB(SAMPLE_TEXTURE2D(ADD_IDX(_NormalMapOS), SAMPLER_NORMALMAP_IDX, ADD_IDX(layerTexCoord.base).uv), 1.0);
-        normalTS = TransformObjectToTangent(normalOS, input.worldToTangent);
+        float3 normalOS = UnpackNormalRGB(packedNormal, 1.0);
+        normalTS = float4(TransformObjectToTangent(normalOS, input.worldToTangent), normalVariance);
         #endif
     #endif
 
     #ifdef _DETAIL_MAP_IDX
         #ifdef SURFACE_GRADIENT
-        normalTS += detailNormalTS * detailMask;
+        normalTS.xyz += detailNormalTS.xyz * detailMask;
         #else
-        normalTS = lerp(normalTS, BlendNormalRNM(normalTS, detailNormalTS), detailMask); // todo: detailMask should lerp the angle of the quaternion rotation, not the normals
+        normalTS.xyz = lerp(normalTS.xyz, BlendNormalRNM(normalTS.xyz, detailNormalTS.xyz), detailMask); // todo: detailMask should lerp the angle of the quaternion rotation, not the normals
         #endif
+        normalTS.w = AddDetailNormalMapVariance(normalTS.w, detailNormalTS.w, detailMask);
     #endif
 #else
     #ifdef SURFACE_GRADIENT
-    normalTS = float3(0.0, 0.0, 0.0); // No gradient
+    normalTS = float4(0.0, 0.0, 0.0, 0.0); // No gradient
     #else
-    normalTS = float3(0.0, 0.0, 1.0);
+    normalTS = float4(0.0, 0.0, 1.0, 0.0);
     #endif
 #endif
 
@@ -138,13 +141,14 @@ float3 ADD_IDX(GetNormalTS)(FragInputs input, LayerTexCoord layerTexCoord, float
 }
 
 // Caution: Duplicate from GetNormalTS - keep in sync!
-float3 ADD_IDX(GetBentNormalTS)(FragInputs input, LayerTexCoord layerTexCoord, float3 normalTS, float3 detailNormalTS, float detailMask)
+// Note: There is no normalVariance for bent normal as it is coupled to a roughness map
+float3 ADD_IDX(GetBentNormalTS)(FragInputs input, LayerTexCoord layerTexCoord, float4 normalTS, float4 detailNormalTS, float detailMask)
 {
     float3 bentNormalTS;
 
 #ifdef _BENTNORMALMAP_IDX
     #ifdef _NORMALMAP_TANGENT_SPACE_IDX
-        bentNormalTS = SAMPLE_UVMAPPING_NORMALMAP(ADD_IDX(_BentNormalMap), SAMPLER_NORMALMAP_IDX, ADD_IDX(layerTexCoord.base), ADD_IDX(_NormalScale));
+        bentNormalTS = SAMPLE_UVMAPPING_NORMALMAP(ADD_IDX(_BentNormalMap), SAMPLER_NORMALMAP_IDX, ADD_IDX(layerTexCoord.base), ADD_IDX(_NormalScale)).xyz;
     #else // Object space
         // We forbid scale in case of object space as it make no sense
         // To be able to combine object space normal with detail map then later we will re-transform it to world space.
@@ -162,21 +166,21 @@ float3 ADD_IDX(GetBentNormalTS)(FragInputs input, LayerTexCoord layerTexCoord, f
 
     #ifdef _DETAIL_MAP_IDX
         #ifdef SURFACE_GRADIENT
-        bentNormalTS += detailNormalTS * detailMask;
+        bentNormalTS += detailNormalTS.xyz * detailMask;
         #else
-        bentNormalTS = lerp(bentNormalTS, BlendNormalRNM(bentNormalTS, detailNormalTS), detailMask);
+        bentNormalTS = lerp(bentNormalTS, BlendNormalRNM(bentNormalTS, detailNormalTS.xyz), detailMask);
         #endif
     #endif
 #else
     // If there is no bent normal map provided, fallback on regular normal map
-    bentNormalTS = normalTS;
+    bentNormalTS = normalTS.xyz;
 #endif
 
     return bentNormalTS;
 }
 
 // Return opacity
-float ADD_IDX(GetSurfaceData)(FragInputs input, LayerTexCoord layerTexCoord, out SurfaceData surfaceData, out float3 normalTS, out float3 bentNormalTS)
+float ADD_IDX(GetSurfaceData)(FragInputs input, LayerTexCoord layerTexCoord, out SurfaceData surfaceData, out float4 normalTS, out float3 bentNormalTS)
 {
     float alpha = SAMPLE_UVMAPPING_TEXTURE2D(ADD_IDX(_BaseColorMap), ADD_ZERO_IDX(sampler_BaseColorMap), ADD_IDX(layerTexCoord.base)).a * ADD_IDX(_BaseColor).a;
 
@@ -191,7 +195,7 @@ float ADD_IDX(GetSurfaceData)(FragInputs input, LayerTexCoord layerTexCoord, out
     DoAlphaTest(alpha, alphaCutoff);
 #endif
 
-    float3 detailNormalTS = float3(0.0, 0.0, 0.0);
+    float4 detailNormalTS = float4(0.0, 0.0, 0.0, 0.0);
     float detailMask = 0.0;
 #ifdef _DETAIL_MAP_IDX
     detailMask = 1.0;
@@ -203,7 +207,8 @@ float ADD_IDX(GetSurfaceData)(FragInputs input, LayerTexCoord layerTexCoord, out
     float detailSmoothness = detailAlbedoAndSmoothness.g * 2.0 - 1.0;
     // Resample the detail map but this time for the normal map. This call should be optimize by the compiler
     // We split both call due to trilinear mapping
-    detailNormalTS = SAMPLE_UVMAPPING_NORMALMAP_AG(ADD_IDX(_DetailMap), SAMPLER_DETAILMAP_IDX, ADD_IDX(layerTexCoord.details), ADD_IDX(_DetailNormalScale));
+    detailNormalTS.xyz = SAMPLE_UVMAPPING_NORMALMAP_AG(ADD_IDX(_DetailMap), SAMPLER_DETAILMAP_IDX, ADD_IDX(layerTexCoord.details), ADD_IDX(_DetailNormalScale)).xyz;
+    detailNormalTS.w = 0.0; // For now we can't store variance inside the detail normal map :(, so use 0.0 TODO: Made an option to use variance in place of detail albedo? Don't forget DecodeNormalMapVariance)
 #endif
 
     surfaceData.baseColor = SAMPLE_UVMAPPING_TEXTURE2D(ADD_IDX(_BaseColorMap), ADD_ZERO_IDX(sampler_BaseColorMap), ADD_IDX(layerTexCoord.base)).rgb * ADD_IDX(_BaseColor).rgb;
@@ -294,7 +299,7 @@ float ADD_IDX(GetSurfaceData)(FragInputs input, LayerTexCoord layerTexCoord, out
 
 #ifdef _TANGENTMAP
     #ifdef _NORMALMAP_TANGENT_SPACE_IDX // Normal and tangent use same space
-    float3 tangentTS = SAMPLE_UVMAPPING_NORMALMAP(_TangentMap, sampler_TangentMap, layerTexCoord.base, 1.0);
+    float3 tangentTS = SAMPLE_UVMAPPING_NORMALMAP(_TangentMap, sampler_TangentMap, layerTexCoord.base, 1.0).xyz;
     surfaceData.tangentWS = TransformTangentToWorld(tangentTS, input.worldToTangent);
     #else // Object space
     // Note: There is no such a thing like triplanar with object space normal, so we call directly 2D function

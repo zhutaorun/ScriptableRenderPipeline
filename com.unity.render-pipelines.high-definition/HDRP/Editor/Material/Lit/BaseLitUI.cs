@@ -60,8 +60,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static GUIContent supportDecalsText = new GUIContent("Enable Decal", "Allow to specify if the material can receive decal or not");
 
             public static GUIContent enableGeometricSpecularAAText = new GUIContent("Enable geometric specular AA", "This reduce specular aliasing on highly dense mesh (Particularly useful when they don't use normal map)");
+            public static GUIContent enableTextureFilteringSpecularAAText = new GUIContent("Enable texture filtering specular AA", "This reduce specular aliasing due to normal map. Require ALL normal map to use _NF or _OSNF suffix for normal map name");            
             public static GUIContent specularAAScreenSpaceVarianceText = new GUIContent("Screen space variance", "Allow to control the strength of the specular AA reduction. Higher mean more blurry result and less aliasing");
-            public static GUIContent specularAAThresholdText = new GUIContent("Threshold", "Allow to limit the effect of specular AA reduction. 0 mean don't apply reduction, higher value mean allow higher reduction");
+            public static GUIContent specularAAThresholdText = new GUIContent("Threshold", "Allow to limit the effect of specular AA reduction. The number represent the maximum added roughness (non perceptual). Should be less or equal to 0.25");
         }
 
         public enum DoubleSidedNormalMode
@@ -174,6 +175,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string kSupportDecals = "_SupportDecals";
         protected MaterialProperty enableGeometricSpecularAA = null;
         protected const string kEnableGeometricSpecularAA = "_EnableGeometricSpecularAA";
+        protected MaterialProperty enableTextureFilteringSpecularAA = null;
+        protected const string kEnableTextureFilteringSpecularAA = "_EnableTextureFilteringSpecularAA";
         protected MaterialProperty specularAAScreenSpaceVariance = null;
         protected const string kSpecularAAScreenSpaceVariance = "_SpecularAAScreenSpaceVariance";
         protected MaterialProperty specularAAThreshold = null;
@@ -224,6 +227,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             // specular AA
             enableGeometricSpecularAA = FindProperty(kEnableGeometricSpecularAA, props, false);
+            enableTextureFilteringSpecularAA = FindProperty(kEnableTextureFilteringSpecularAA, props, false);
             specularAAScreenSpaceVariance = FindProperty(kSpecularAAScreenSpaceVariance, props, false);
             specularAAThreshold = FindProperty(kSpecularAAThreshold, props, false);
         }
@@ -274,17 +278,37 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             m_MaterialEditor.ShaderProperty(supportDecals, StylesBaseLit.supportDecalsText);
 
-            if (enableGeometricSpecularAA != null)
+            if (enableGeometricSpecularAA != null || enableTextureFilteringSpecularAA != null)
             {
-                m_MaterialEditor.ShaderProperty(enableGeometricSpecularAA, StylesBaseLit.enableGeometricSpecularAAText);
+                bool displayThreshold = false;
+                bool displaySSVariance = false;
 
-                if (enableGeometricSpecularAA.floatValue > 0.0)
+                if (enableTextureFilteringSpecularAA != null)
+                {
+                    m_MaterialEditor.ShaderProperty(enableTextureFilteringSpecularAA, StylesBaseLit.enableTextureFilteringSpecularAAText);
+                    displayThreshold = displayThreshold || enableTextureFilteringSpecularAA.floatValue > 0.0;
+                }
+
+                if (enableGeometricSpecularAA != null)
+                {
+                    m_MaterialEditor.ShaderProperty(enableGeometricSpecularAA, StylesBaseLit.enableGeometricSpecularAAText);
+                    displayThreshold = displayThreshold || enableGeometricSpecularAA.floatValue > 0.0;
+                    displaySSVariance = enableGeometricSpecularAA.floatValue > 0.0;
+                }
+                
+                if (displayThreshold)
                 {
                     EditorGUI.indentLevel++;
-                    m_MaterialEditor.ShaderProperty(specularAAScreenSpaceVariance, StylesBaseLit.specularAAScreenSpaceVarianceText);
                     m_MaterialEditor.ShaderProperty(specularAAThreshold, StylesBaseLit.specularAAThresholdText);
                     EditorGUI.indentLevel--;
                 }
+
+                if (displaySSVariance)
+                {
+                    EditorGUI.indentLevel++;
+                    m_MaterialEditor.ShaderProperty(specularAAScreenSpaceVariance, StylesBaseLit.specularAAScreenSpaceVarianceText);
+                    EditorGUI.indentLevel--;
+                }                
             }
 
             if (enableMotionVectorForVertexAnimation != null)
@@ -451,6 +475,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             CoreUtils.SetKeyword(material, "_DISABLE_DECALS", material.GetFloat(kSupportDecals) == 0.0);
 
             CoreUtils.SetKeyword(material, "_ENABLE_GEOMETRIC_SPECULAR_AA", material.HasProperty(kEnableGeometricSpecularAA) && material.GetFloat(kEnableGeometricSpecularAA) == 1.0);
+            CoreUtils.SetKeyword(material, "_ENABLE_TEXTURE_FILTERING_SPECULAR_AA", material.HasProperty(kEnableTextureFilteringSpecularAA) && material.GetFloat(kEnableTextureFilteringSpecularAA) == 1.0);
         }
 
         static public void SetupBaseLitMaterialPass(Material material)

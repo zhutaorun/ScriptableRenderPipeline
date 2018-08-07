@@ -162,8 +162,9 @@ Shader "HDRenderPipeline/Lit"
         [ToggleUI] _DepthOffsetEnable("Depth Offset View space", Float) = 0.0
 
         [ToggleUI] _EnableGeometricSpecularAA("EnableGeometricSpecularAA", Float) = 0.0
+        [ToggleUI] _EnableTextureFilteringSpecularAA("EnableTextureFilteringSpecularAA", Float) = 0.0
         _SpecularAAScreenSpaceVariance("SpecularAAScreenSpaceVariance", Range(0.0, 1.0)) = 0.1
-        _SpecularAAThreshold("SpecularAAThreshold", Range(0.0, 1.0)) = 0.2
+        _SpecularAAThreshold("SpecularAAThreshold", Range(0.0, 0.25)) = 0.2
 
         [ToggleUI] _EnableMotionVectorForVertexAnimation("EnableMotionVectorForVertexAnimation", Float) = 0.0
 
@@ -247,6 +248,7 @@ Shader "HDRenderPipeline/Lit"
 
     #pragma shader_feature _DISABLE_DECALS
     #pragma shader_feature _ENABLE_GEOMETRIC_SPECULAR_AA
+    #pragma shader_feature _ENABLE_TEXTURE_FILTERING_SPECULAR_AA
 
     // Keyword for transparent
     #pragma shader_feature _SURFACE_TYPE_TRANSPARENT

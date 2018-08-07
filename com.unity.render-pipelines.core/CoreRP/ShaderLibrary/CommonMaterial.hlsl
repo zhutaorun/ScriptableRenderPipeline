@@ -77,9 +77,20 @@ real VarianceToRoughness(real variance)
 // Normal Map Filtering - This must match HDRP\Editor\AssetProcessors\NormalMapFilteringTexturePostprocessor.cs - highestVarianceAllowed (TODO: Move in core)
 #define NORMALMAP_HIGHEST_VARIANCE 0.03125
 
-float DecodeVariance(float gradientW)
+float DecodeNormalMapVariance(float variance)
 {
-    return gradientW * NORMALMAP_HIGHEST_VARIANCE;
+    return variance * NORMALMAP_HIGHEST_VARIANCE;
+}
+
+float AddDetailNormalMapVariance(float variance, float detailVariance, float detailMask)
+{
+    // Note: we haven't decoded the range of the encoded variance yet, but their real
+    // range is the same, so these values between [0,1] can still be added together.
+    // We saturate because even though variance is not bounded, we thresholded it
+    // to do the range encoding in the importer so saturate here to be consistent.
+    // (see C# code NormalMapAverageLengthTexturePostprocessor.cs).
+    // Multiplying a random variable by a constant increases the variance by the square of the constant ( "detailMask").
+    return saturate(variance + detailVariance * detailMask * detailMask);
 }
 
 // Return modified perceptualSmoothness based on provided variance (get from GeometricNormalVariance + TextureNormalVariance)

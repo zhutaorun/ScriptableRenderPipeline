@@ -250,6 +250,21 @@
 #undef _MASKMAP_IDX
 #undef _BENTNORMALMAP_IDX
 
+float4 BlendLayeredVector4(float4 x0, float4 x1, float4 x2, float4 x3, float weight[4])
+{
+    float4 result = float4(0.0, 0.0, 0.0, 0.0);
+
+    result = x0 * weight[0] + x1 * weight[1];
+#if _LAYER_COUNT >= 3
+    result += (x2 * weight[2]);
+#endif
+#if _LAYER_COUNT >= 4
+    result += x3 * weight[3];
+#endif
+
+    return result;
+}
+
 float3 BlendLayeredVector3(float3 x0, float3 x1, float3 x2, float3 x3, float weight[4])
 {
     float3 result = float3(0.0, 0.0, 0.0);
@@ -588,7 +603,33 @@ void ComputeLayerWeights(FragInputs input, LayerTexCoord layerTexCoord, float4 i
     ComputeMaskWeights(blendMasks, outWeights);
 }
 
-float3 ComputeMainNormalInfluence(float influenceMask, FragInputs input, float3 normalTS0, float3 normalTS1, float3 normalTS2, float3 normalTS3, LayerTexCoord layerTexCoord, float inputMainLayerMask, float weights[_MAX_LAYER])
+float4 ComputeMainNormalInfluence(float influenceMask, FragInputs input, float4 normalTS0, float4 normalTS1, float4 normalTS2, float4 normalTS3, LayerTexCoord layerTexCoord, float inputMainLayerMask, float weights[_MAX_LAYER])
+{
+    // Get our regular normal from regular layering
+    float4 normalTS = BlendLayeredVector4(normalTS0, normalTS1, normalTS2, normalTS3, weights);
+
+    // THen get Main Layer Normal influence factor. Main layer is 0 because it can't be influence. In this case the final lerp return normalTS.
+    float influenceFactor = BlendLayeredScalar(0.0, _InheritBaseNormal1, _InheritBaseNormal2, _InheritBaseNormal3, weights) * influenceMask;
+    // We will add smoothly the contribution of the normal map by lerping between vertex normal ( (0,0,1) in tangent space) and the actual normal from the main layer depending on the influence factor.
+    // Note: that we don't take details map into account here.
+    #ifdef SURFACE_GRADIENT
+    float4 neutralNormalTS = float4(0.0, 0.0, 0.0, 0.0);
+    #else
+    float4 neutralNormalTS = float4(0.0, 0.0, 1.0, 0.0);
+    #endif
+    float4 mainNormalTS = lerp(neutralNormalTS, normalTS0, influenceFactor);
+
+    // Add on our regular normal a bit of Main Layer normal base on influence factor. Note that this affect only the "visible" normal.
+    normalTS.w = AddDetailNormalMapVariance(normalTS.w, mainNormalTS.w, influenceFactor * inputMainLayerMask);
+    #ifdef SURFACE_GRADIENT
+    normalTS.xyz += mainNormalTS.xyz * influenceFactor * inputMainLayerMask;
+    #else
+    normalTS.xyz = lerp(normalTS.xyz, BlendNormalRNM(normalTS.xyz, mainNormalTS.xyz), influenceFactor * inputMainLayerMask); // Multiply by inputMainLayerMask in order to avoid influence where main layer should never be present
+    #endif
+    return normalTS;
+}
+
+float3 ComputeMainBentNormalInfluence(float influenceMask, FragInputs input, float3 normalTS0, float3 normalTS1, float3 normalTS2, float3 normalTS3, LayerTexCoord layerTexCoord, float inputMainLayerMask, float weights[_MAX_LAYER])
 {
     // Get our regular normal from regular layering
     float3 normalTS = BlendLayeredVector3(normalTS0, normalTS1, normalTS2, normalTS3, weights);
@@ -659,7 +700,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 #endif
 
     SurfaceData surfaceData0, surfaceData1, surfaceData2, surfaceData3;
-    float3 normalTS0, normalTS1, normalTS2, normalTS3;
+    float4 normalTS0, normalTS1, normalTS2, normalTS3;
     float3 bentNormalTS0, bentNormalTS1, bentNormalTS2, bentNormalTS3;
     float alpha0 = GetSurfaceData0(input, layerTexCoord, surfaceData0, normalTS0, bentNormalTS0);
     float alpha1 = GetSurfaceData1(input, layerTexCoord, surfaceData1, normalTS1, bentNormalTS1);
@@ -677,7 +718,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     DoAlphaTest(alpha, _AlphaCutoff);
 #endif
 
-    float3 normalTS;
+    float4 normalTS;
     float3 bentNormalTS;
     float3 bentNormalWS;
 #if defined(_MAIN_LAYER_INFLUENCE_MODE)
@@ -692,13 +733,13 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     {
         surfaceData.baseColor = ComputeMainBaseColorInfluence(influenceMask, surfaceData0.baseColor, surfaceData1.baseColor, surfaceData2.baseColor, surfaceData3.baseColor, layerTexCoord, blendMasks.a, weights);
         normalTS = ComputeMainNormalInfluence(influenceMask, input, normalTS0, normalTS1, normalTS2, normalTS3, layerTexCoord, blendMasks.a, weights);
-        bentNormalTS = ComputeMainNormalInfluence(influenceMask, input, bentNormalTS0, bentNormalTS1, bentNormalTS2, bentNormalTS3, layerTexCoord, blendMasks.a, weights);
+        bentNormalTS = ComputeMainBentNormalInfluence(influenceMask, input, bentNormalTS0, bentNormalTS1, bentNormalTS2, bentNormalTS3, layerTexCoord, blendMasks.a, weights);
     }
     else
 #endif
     {
         surfaceData.baseColor = SURFACEDATA_BLEND_VECTOR3(surfaceData, baseColor, weights);
-        normalTS = BlendLayeredVector3(normalTS0, normalTS1, normalTS2, normalTS3, weights);
+        normalTS = BlendLayeredVector4(normalTS0, normalTS1, normalTS2, normalTS3, weights);
         bentNormalTS = BlendLayeredVector3(bentNormalTS0, bentNormalTS1, bentNormalTS2, bentNormalTS3, weights);
     }
 
@@ -734,7 +775,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.atDistance = 1000000.0;
     surfaceData.transmittanceMask = 0.0;
 
-    GetNormalWS(input, normalTS, surfaceData.normalWS);
+    GetNormalWS(input, normalTS.xyz, surfaceData.normalWS);
     // Use bent normal to sample GI if available
     // If any layer use a bent normal map, then bentNormalTS contain the interpolated result of bentnormal and normalmap (in case no bent normal are available)
     // Note: the code in LitDataInternal ensure that we fallback on normal map for layer that have no bentnormal
@@ -771,9 +812,21 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     }
 #endif
 
-#ifdef _ENABLE_GEOMETRIC_SPECULAR_AA
     // Specular AA
-    surfaceData.perceptualSmoothness = GeometricNormalFiltering(surfaceData.perceptualSmoothness, input.worldToTangent[2], _SpecularAAScreenSpaceVariance, _SpecularAAThreshold);
+#ifdef _ENABLE_GEOMETRIC_SPECULAR_AA
+    float geometricVariance = GeometricNormalVariance(input.worldToTangent[2], _SpecularAAScreenSpaceVariance);
+#else
+    float geometricVariance = 0.0;
+#endif
+
+#ifdef _ENABLE_TEXTURE_FILTERING_SPECULAR_AA
+    float textureFilteringVariance = normalTS.w;
+#else
+    float textureFilteringVariance = 0.0;
+#endif
+
+#if defined(_ENABLE_GEOMETRIC_SPECULAR_AA) || defined(_ENABLE_TEXTURE_FILTERING_SPECULAR_AA)
+    surfaceData.perceptualSmoothness = NormalFiltering(surfaceData.perceptualSmoothness, geometricVariance + textureFilteringVariance, _SpecularAAThreshold);
 #endif
 
     GetBuiltinData(input, V, posInput, surfaceData, alpha, bentNormalWS, depthOffset, builtinData);

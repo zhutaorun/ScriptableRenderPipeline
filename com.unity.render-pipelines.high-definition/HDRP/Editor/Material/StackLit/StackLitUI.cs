@@ -158,7 +158,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             EnableIridescence = new Property(this, k_EnableIridescence, "Enable Iridescence", "Enable physically based iridescence layer", true);
 
             EnableGeometricNormalFiltering = new Property(this, k_GeometricNormalFilteringEnabled, "Enable Geometric filtering", "Enable specular antialiasing", true);
-            EnableTextureNormalFiltering = new Property(this, k_TextureNormalFilteringEnabled, "Enable Texture filtering", "Require normal map to use _NA or _OSNA suffix for normal map name", true);
+            EnableTextureNormalFiltering = new Property(this, k_TextureNormalFilteringEnabled, "Enable Texture filtering", "Require normal map to use _NF or _OSNF suffix for normal map name", true);
 
             // All material properties
             // All GroupPropery below need to define a
@@ -246,8 +246,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 {
                     EnableTextureNormalFiltering,
                     EnableGeometricNormalFiltering,
-                    new Property(this, "_SpecularAntiAliasingThreshold", "Threshold", "Threshold", false, _ => (EnableGeometricNormalFiltering.BoolValue || EnableTextureNormalFiltering.BoolValue) == true),
-                    new Property(this, "_SpecularAntiAliasingScreenSpaceVariance", "Screen Space Variance", "Screen Space Variance (should be less than 0.25)", false, _ => EnableGeometricNormalFiltering.BoolValue == true),
+                    new Property(this, "_SpecularAntiAliasingThreshold", "Threshold", "Allow to limit the effect of specular AA reduction. The number represent the maximum added roughness (non perceptual). Should be less or equal to 0.25", false, _ => (EnableGeometricNormalFiltering.BoolValue || EnableTextureNormalFiltering.BoolValue) == true),
+                    new Property(this, "_SpecularAntiAliasingScreenSpaceVariance", "Screen Space Variance", "Screen Space Variance", false, _ => EnableGeometricNormalFiltering.BoolValue == true),
                 }),
 
                 new GroupProperty(this, "_Debug", "Debug", new BaseProperty[]

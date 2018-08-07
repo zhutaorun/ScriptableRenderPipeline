@@ -181,11 +181,11 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 
     // We perform the conversion to world of the normalTS outside of the GetSurfaceData
     // so it allow us to correctly deal with detail normal map and optimize the code for the layered shaders
-    float3 normalTS;
+    float4 normalTS;
     float3 bentNormalTS;
     float3 bentNormalWS;
     float alpha = GetSurfaceData(input, layerTexCoord, surfaceData, normalTS, bentNormalTS);
-    GetNormalWS(input, normalTS, surfaceData.normalWS);
+    GetNormalWS(input, normalTS.xyz, surfaceData.normalWS);
 
     // Use bent normal to sample GI if available
 #ifdef _BENTNORMALMAP
@@ -224,9 +224,21 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     }
 #endif
 
-#ifdef _ENABLE_GEOMETRIC_SPECULAR_AA
     // Specular AA
-    surfaceData.perceptualSmoothness = GeometricNormalFiltering(surfaceData.perceptualSmoothness, input.worldToTangent[2], _SpecularAAScreenSpaceVariance, _SpecularAAThreshold);
+#ifdef _ENABLE_GEOMETRIC_SPECULAR_AA
+    float geometricVariance = GeometricNormalVariance(input.worldToTangent[2], _SpecularAAScreenSpaceVariance);
+#else
+    float geometricVariance = 0.0;
+#endif
+
+#ifdef _ENABLE_TEXTURE_FILTERING_SPECULAR_AA
+    float textureFilteringVariance = normalTS.w;
+#else
+    float textureFilteringVariance = 0.0;
+#endif
+
+#if defined(_ENABLE_GEOMETRIC_SPECULAR_AA) || defined(_ENABLE_TEXTURE_FILTERING_SPECULAR_AA)
+    surfaceData.perceptualSmoothness = NormalFiltering(surfaceData.perceptualSmoothness, geometricVariance + textureFilteringVariance, _SpecularAAThreshold);
 #endif
 
     // Caution: surfaceData must be fully initialize before calling GetBuiltinData
