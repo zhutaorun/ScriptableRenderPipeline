@@ -103,7 +103,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RTHandleSystem.RTHandle m_CameraStencilBufferCopy;
 
         RTHandleSystem.RTHandle m_VelocityBuffer;
-        RTHandleSystem.RTHandle m_DeferredShadowBuffer;
+        RTHandleSystem.RTHandle m_ScreenSpaceShadowsBuffer;
         RTHandleSystem.RTHandle m_AmbientOcclusionBuffer;
         RTHandleSystem.RTHandle m_DistortionBuffer;
 
@@ -323,8 +323,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_DistortionBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetDistortionBufferFormat(), sRGB: Builtin.GetDistortionBufferSRGBFlag(), name: "Distortion");
 
-            // TODO: For MSAA, we'll need to add a Draw path in order to support MSAA properly
-            m_DeferredShadowBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, sRGB: false, enableRandomWrite: true, name: "DeferredShadow");
+            // TODO: For MSAA, we'll need to add a Draw path in order to support MSAA properlye
+            // Use RG16 as we only have one deferred directional and one screen space shadow light currently
+            m_ScreenSpaceShadowsBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RG16, sRGB: false, enableRandomWrite: true, name: "ScreenSpaceShadowsBuffer");
 
             if (Debug.isDebugBuild)
             {
@@ -349,7 +350,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RTHandles.Release(m_AmbientOcclusionBuffer);
             RTHandles.Release(m_VelocityBuffer);
             RTHandles.Release(m_DistortionBuffer);
-            RTHandles.Release(m_DeferredShadowBuffer);
+            RTHandles.Release(m_ScreenSpaceShadowsBuffer);
 
             RTHandles.Release(m_DebugColorPickerBuffer);
             RTHandles.Release(m_DebugFullScreenTempBuffer);
@@ -832,6 +833,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {
                         currentFrameSettings.enablePostprocess = false;
                     }
+                    
+                    // Disable SSS if luxmeter is enabled
+                    if (debugDisplaySettings.lightingDebugSettings.debugLightingMode == DebugLightingMode.LuxMeter)
+                    {
+                        currentFrameSettings.enableSubsurfaceScattering = false;
+                    }
 
                     var hdCamera = HDCamera.Get(camera);
 
@@ -1020,16 +1027,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 hdCamera.SetupGlobalStereoParams(cmd);
                         }
 
-                        using (new ProfilingSample(cmd, "Deferred directional shadows", CustomSamplerId.RenderDeferredDirectionalShadow.GetSampler()))
+                        using (new ProfilingSample(cmd, "Screen space shadows", CustomSamplerId.ScreenSpaceShadows.GetSampler()))
                         {
                             // When debug is enabled we need to clear otherwise we may see non-shadows areas with stale values.
-                            if (m_CurrentDebugDisplaySettings.fullScreenDebugMode == FullScreenDebugMode.DeferredShadows)
+                            if (m_CurrentDebugDisplaySettings.fullScreenDebugMode == FullScreenDebugMode.ScreenSpaceShadows)
                             {
-                                HDUtils.SetRenderTarget(cmd, hdCamera, m_DeferredShadowBuffer, ClearFlag.Color, CoreUtils.clearColorAllBlack);
+                                HDUtils.SetRenderTarget(cmd, hdCamera, m_ScreenSpaceShadowsBuffer, ClearFlag.Color, CoreUtils.clearColorAllBlack);
                             }
 
-                            m_LightLoop.RenderDeferredDirectionalShadow(hdCamera, m_DeferredShadowBuffer, GetDepthTexture(), cmd);
-                            PushFullScreenDebugTexture(hdCamera, cmd, m_DeferredShadowBuffer, FullScreenDebugMode.DeferredShadows);
+                            m_LightLoop.RenderScreenSpaceShadows(hdCamera, m_ScreenSpaceShadowsBuffer, GetDepthTexture(), cmd);
+                            PushFullScreenDebugTexture(hdCamera, cmd, m_ScreenSpaceShadowsBuffer, FullScreenDebugMode.ScreenSpaceShadows);
                         }
 
                         if (hdCamera.frameSettings.enableAsyncCompute)
@@ -1816,12 +1823,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void ApplyDebugDisplaySettings(HDCamera hdCamera, CommandBuffer cmd)
         {
+            // See ShaderPassForward.hlsl: for forward shaders, if DEBUG_DISPLAY is enabled and no DebugLightingMode or DebugMipMapMod 
+            // modes have been set, lighting is automatically skipped (To avoid some crashed due to lighting RT not set on console).
+            // However debug mode like colorPickerModes and false color don't need DEBUG_DISPLAY and must work with the lighting.
+            // So we will enabled DEBUG_DISPLAY independently
+
+            // Enable globally the keyword DEBUG_DISPLAY on shader that support it with multicompile
+            CoreUtils.SetKeyword(cmd, "DEBUG_DISPLAY", m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled());
+
             if (m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled() ||
                 m_CurrentDebugDisplaySettings.colorPickerDebugSettings.colorPickerMode != ColorPickerDebugMode.None)
             {
-                // enable globally the keyword DEBUG_DISPLAY on shader that support it with multicompile
-                cmd.EnableShaderKeyword("DEBUG_DISPLAY");
-
                 // This is for texture streaming
                 m_CurrentDebugDisplaySettings.UpdateMaterials();
 
@@ -1852,11 +1864,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 // The DebugNeedsExposure test allows us to set a neutral value if exposure is not needed. This way we don't need to make various tests inside shaders but only in this function.
                 cmd.SetGlobalFloat(HDShaderIDs._DebugExposure, m_CurrentDebugDisplaySettings.DebugNeedsExposure() ? lightingDebugSettings.debugExposure : 0.0f);
-            }
-            else
-            {
-                // TODO: Be sure that if there is no change in the state of this keyword, it doesn't imply any work on CPU side! else we will need to save the sate somewher
-                cmd.DisableShaderKeyword("DEBUG_DISPLAY");
             }
         }
 
