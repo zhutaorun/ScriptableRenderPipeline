@@ -9,18 +9,6 @@
 // Texture Mapping
 //-----------------------------------------------------------------------------
 
-// Normal Map Filtering:
-// Config set according to settings in the importer (see C# code NormalMapAverageLengthTexturePostprocessor.cs).
-#define NORMALMAP_USES_VARIANCE // define if the importer is set to generate variance directly.
-#define NORMALMAP_LOWEST_AVERAGE_NORMAL_LENGTH 0.8695
-#define NORMALMAP_HIGHEST_VARIANCE 0.03125
-
-#ifdef NORMALMAP_USES_VARIANCE
-#define NORMALMAP_NEUTRAL_DISPERSION_VALUE 0.0
-#else
-#define NORMALMAP_NEUTRAL_DISPERSION_VALUE 1.0
-#endif
-
 #define TEXCOORD_INDEX_UV0          (0)
 #define TEXCOORD_INDEX_UV1          (1)
 #define TEXCOORD_INDEX_UV2          (2)
@@ -141,9 +129,9 @@ float4 SampleTexture2DTriplanarNormalScaleBias(TEXTURE2D_ARGS(textureName, sampl
         // Decompress normal ourselve
         float4 packedNormal = SampleTexture2DTriplanarScaleBias(TEXTURE2D_PARAM(textureName, samplerName), textureNameUV, textureNameUVLocal, textureNameST, uvMapping);
         float3 normalOS = packedNormal.xyz * 2.0 - 1.0;
-        float normalDispersionMeasure = packedNormal.w; // If we used a object space normal map that store average normal, the formap is RGB (normal xyz) and A (a measure of normal dispersion: ie variance or the average normal's length)
+        float normalVariance = packedNormal.w; // If we used a object space normal map that store average normal, the formap is RGB (normal xyz) and A (a measure of normal dispersion: ie variance or the average normal's length)
         // no need to renormalize normalOS for SurfaceGradientFromPerturbedNormal
-        return float4(SurfaceGradientFromPerturbedNormal(uvMapping.vertexNormalWS, TransformObjectToWorldDir(normalOS)), normalDispersionMeasure);
+        return float4(SurfaceGradientFromPerturbedNormal(uvMapping.vertexNormalWS, TransformObjectToWorldDir(normalOS)), normalVariance);
     }
     else
     {
@@ -154,41 +142,41 @@ float4 SampleTexture2DTriplanarNormalScaleBias(TEXTURE2D_ARGS(textureName, sampl
             float2 derivYPlane;
             float2 derivZPlane;
             derivXplane = derivYPlane = derivZPlane = float2(0.0, 0.0);
-            float normalDispersionMeasure = 0.0;
+            float normalVariance = 0.0;
 
             if (uvMapping.triplanarWeights[textureNameUVLocal].x > 0.0)
             {
                 float4 packedNormal = SampleTexture2DScaleBias(TEXTURE2D_PARAM(textureName, samplerName), TEXCOORD_INDEX_PLANAR_YZ, textureNameUVLocal, textureNameST, uvMapping);
-                normalDispersionMeasure += uvMapping.triplanarWeights[textureNameUVLocal].x * packedNormal.z;
+                normalVariance += uvMapping.triplanarWeights[textureNameUVLocal].x * packedNormal.z;
                 derivXplane = uvMapping.triplanarWeights[textureNameUVLocal].x * UnpackDerivativeNormalRGorAG(packedNormal, scale);
             }
             if (uvMapping.triplanarWeights[textureNameUVLocal].y > 0.0)
             {
                 float4 packedNormal = SampleTexture2DScaleBias(TEXTURE2D_PARAM(textureName, samplerName), TEXCOORD_INDEX_PLANAR_ZX, textureNameUVLocal, textureNameST, uvMapping);
-                normalDispersionMeasure += uvMapping.triplanarWeights[textureNameUVLocal].y * packedNormal.z;
+                normalVariance += uvMapping.triplanarWeights[textureNameUVLocal].y * packedNormal.z;
                 derivYPlane = uvMapping.triplanarWeights[textureNameUVLocal].y * UnpackDerivativeNormalRGorAG(packedNormal, scale);
             }
             if (uvMapping.triplanarWeights[textureNameUVLocal].z > 0.0)
             {
                 float4 packedNormal = SampleTexture2DScaleBias(TEXTURE2D_PARAM(textureName, samplerName), TEXCOORD_INDEX_PLANAR_XY, textureNameUVLocal, textureNameST, uvMapping);
-                normalDispersionMeasure += uvMapping.triplanarWeights[textureNameUVLocal].z * packedNormal.z;
+                normalVariance += uvMapping.triplanarWeights[textureNameUVLocal].z * packedNormal.z;
                 derivZPlane = uvMapping.triplanarWeights[textureNameUVLocal].z * UnpackDerivativeNormalRGorAG(packedNormal, scale);
             }
 
             // Assume derivXplane, derivYPlane and derivZPlane sampled using (z,y), (z,x) and (x,y) respectively.
             float3 volumeGrad = float3(derivZPlane.x + derivYPlane.y, derivZPlane.y + derivXplane.y, derivXplane.x + derivYPlane.x);
-            return float4(SurfaceGradientFromVolumeGradient(uvMapping.vertexNormalWS, volumeGrad), normalDispersionMeasure);
+            return float4(SurfaceGradientFromVolumeGradient(uvMapping.vertexNormalWS, volumeGrad), normalVariance);
         }
 #endif
 
         float4 packedNormal = SampleTexture2DScaleBias(TEXTURE2D_PARAM(textureName, samplerName), textureNameUV, textureNameUVLocal, textureNameST, uvMapping);
         //float4 packedNormal = SampleTexture2DScaleBiasLod(TEXTURE2D_PARAM(textureName, samplerName), textureNameUV, textureNameUVLocal, textureNameST, 1.0, uvMapping);
-        float normalDispersionMeasure = packedNormal.z; // If we used a tangent space normal map that store a measure of normal dispersion, the formap is RG (normal xy) and B (normal dispersion: ie variance or the average normal's length)
+        float normalVariance = packedNormal.z; // If we used a tangent space normal map that store a measure of normal dispersion, the formap is RG (normal xy) and B (normal dispersion: ie variance or the average normal's length)
         float2 deriv = UnpackDerivativeNormalRGorAG(packedNormal, scale);
 
         if (textureNameUV <= TEXCOORD_INDEX_UV3)
         {
-            return float4(SurfaceGradientFromTBN(deriv, uvMapping.vertexTangentWS[textureNameUV], uvMapping.vertexBitangentWS[textureNameUV]), normalDispersionMeasure);
+            return float4(SurfaceGradientFromTBN(deriv, uvMapping.vertexTangentWS[textureNameUV], uvMapping.vertexBitangentWS[textureNameUV]), normalVariance);
         }
         else
         {
@@ -200,7 +188,7 @@ float4 SampleTexture2DTriplanarNormalScaleBias(TEXTURE2D_ARGS(textureName, sampl
             else if (textureNameUV == TEXCOORD_INDEX_PLANAR_XY)
                 volumeGrad = float3(deriv.x, deriv.y, 0.0);
 
-            return float4(SurfaceGradientFromVolumeGradient(uvMapping.vertexNormalWS, volumeGrad), normalDispersionMeasure);
+            return float4(SurfaceGradientFromVolumeGradient(uvMapping.vertexNormalWS, volumeGrad), normalVariance);
         }
     }
 }
@@ -212,68 +200,22 @@ float4 SampleTexture2DTriplanarNormalScaleBias(TEXTURE2D_ARGS(textureName, sampl
 
 #define SAMPLE_TEXTURE2D_SCALE_BIAS_LOD(name, lod) SampleTexture2DScaleBiasLod(name, sampler##name, name##UV, name##UVLocal, name##_ST, lod, uvMapping) // for testing
 
-
-float DecodeNormalDispersionMeasureToVariance(float gradientW)
-{
-    // These depend on the importer settings, keep in synch.
-#ifdef NORMALMAP_USES_VARIANCE
-    bool normalMapHasVarianceEncoded = true; // normalMap has variance encoded or averageNormalLength ?
-#else
-    bool normalMapHasVarianceEncoded = false;
-#endif
-    float lowestAverageNormalLengthAllowed = NORMALMAP_LOWEST_AVERAGE_NORMAL_LENGTH;
-    float highestVarianceAllowed = NORMALMAP_HIGHEST_VARIANCE;
-
-    float variance = 0.0;
-
-    if (normalMapHasVarianceEncoded)
-    {
-        variance = gradientW * highestVarianceAllowed;
-    }
-    else
-    {
-        variance = TextureNormalVariance( gradientW * (1.0 - lowestAverageNormalLengthAllowed) + lowestAverageNormalLengthAllowed );
-    }
-    return variance;
-}
-
 float4 AddDetailGradient(float4 gradient, float4 detailGradient, float detailMask)
 {
-#ifdef NORMALMAP_USES_VARIANCE
-    bool normalMapHasVarianceEncoded = true; // normalMap has variance encoded or averageNormalLength ?
-#else
-    bool normalMapHasVarianceEncoded = false;
-#endif
-
     gradient.xyz += detailGradient.xyz * detailMask;
 
     if (_TextureNormalFilteringEnabled > 0.0)
     {
-        if (normalMapHasVarianceEncoded)
-        {
-            // Note: we haven't decoded the range of the encoded variance yet, but their real
-            // range is the same, so these values between [0,1] can still be added together.
-            // We saturate because even though variance is not bounded, we thresholded it
-            // to do the range encoding in the importer so saturate here to be consistent.
-            // (see C# code NormalMapAverageLengthTexturePostprocessor.cs).
-            // Add variances together, but the modulating scalar "detailMask" is squared.
-            gradient.w = saturate(gradient.w + detailGradient.w * detailMask * detailMask);
-        }
-        else
-        {
-            // Here, we will assume the averageNormalLength is > 0.6 and thus in a
-            // region approximately linear in relation to variance (in lower ranges, the
-            // relationship become quite nonlinear. Obviously even without looking at the
-            // the vMF fit function, variance is unbounded but the length can only go to zero)
-            // Note that a gradient.w = 0 means an averageNormalLength = lowestAverageNormalLengthAllowed
-            // here since the value is still range encoded at this point.
-            // (see C# importer code comments for details).
-            gradient.w = saturate(gradient.w - (1.0 - detailGradient.w) * detailMask * detailMask);
-        }
+        // Note: we haven't decoded the range of the encoded variance yet, but their real
+        // range is the same, so these values between [0,1] can still be added together.
+        // We saturate because even though variance is not bounded, we thresholded it
+        // to do the range encoding in the importer so saturate here to be consistent.
+        // (see C# code NormalMapAverageLengthTexturePostprocessor.cs).
+        // Multiplying a random variable by a constant increases the variance by the square of the constant ( "detailMask").
+        gradient.w = saturate(gradient.w + detailGradient.w * detailMask * detailMask);
     }
     return gradient;
 }
-
 
 //-----------------------------------------------------------------------------
 // GetSurfaceAndBuiltinData
@@ -311,13 +253,13 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     // Standard
     surfaceData.baseColor = SAMPLE_TEXTURE2D_SCALE_BIAS(_BaseColorMap).rgb * _BaseColor.rgb;
 
-    float4 gradient = float4(0.0, 0.0, 0.0, NORMALMAP_NEUTRAL_DISPERSION_VALUE);
+    float4 gradient = float4(0.0, 0.0, 0.0, 0.0);
     if (_NormalUseMap)
     {
         gradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_NormalMap, _NormalScale, _NormalMapObjSpace);
     }
 
-    float4 bentGradient = float4(0.0, 0.0, 0.0, NORMALMAP_NEUTRAL_DISPERSION_VALUE);
+    float4 bentGradient = float4(0.0, 0.0, 0.0, 0.0);
     // ...last value is for normal map filtering (average normal length). Unused for bent normal for now, but
     // could be used to tilt back the bent normal to the normal and/or enlarge the visibility cone as bent visibility
     // can alias like everything else.
@@ -332,8 +274,6 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 
     // Metallic / specular color
     surfaceData.dielectricIor = _DielectricIor; // shouldn't be needed if _MATERIAL_FEATURE_SPECULAR_COLOR
-    // debug test, to visualize the dispersion measure of the normal map:
-    //surfaceData.dielectricIor = gradient.w;
     surfaceData.specularColor = float3(1.0, 1.0, 1.0);
     surfaceData.metallic = 0.0;
 #ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
@@ -409,7 +349,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 #endif // _MATERIAL_FEATURE_ANISOTROPY
     surfaceData.tangentWS = normalize(input.worldToTangent[0].xyz); // The tangent is not normalize in worldToTangent for mikkt. TODO: Check if it expected that we normalize with Morten. Tag: SURFACE_GRADIENT
 
-    float4 coatGradient = float4(0.0, 0.0, 0.0, NORMALMAP_NEUTRAL_DISPERSION_VALUE);
+    float4 coatGradient = float4(0.0, 0.0, 0.0, 0.0);
 #ifdef _MATERIAL_FEATURE_COAT
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_COAT;
     surfaceData.coatPerceptualSmoothness = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_CoatSmoothnessMap), _CoatSmoothnessMapChannelMask);
@@ -477,7 +417,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 #ifdef _DETAILMAP
     float detailMask = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_DetailMaskMap), _DetailMaskMapChannelMask);
 
-    float4 detailGradient = float4(0.0, 0.0, 0.0, NORMALMAP_NEUTRAL_DISPERSION_VALUE);
+    float4 detailGradient = float4(0.0, 0.0, 0.0, 0.0);
     if (_DetailNormalUseMap)
     {
         detailGradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_DetailNormalMap, _DetailNormalScale, 0.0);
@@ -545,8 +485,8 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
         // (enlarge the visibility cone). This goes in hand with the softer BSDF specular lobe.
 
         float geometricVariance = _GeometricNormalFilteringEnabled ? GeometricNormalVariance(input.worldToTangent[2], _SpecularAntiAliasingScreenSpaceVariance) : 0.0;
-        float textureFilteringVariance = _TextureNormalFilteringEnabled ? DecodeNormalDispersionMeasureToVariance(gradient.w) : 0.0;
-        float coatTextureFilteringVariance = _TextureNormalFilteringEnabled ? DecodeNormalDispersionMeasureToVariance(coatGradient.w) : 0.0;
+        float textureFilteringVariance = _TextureNormalFilteringEnabled ? DecodeVariance(gradient.w) : 0.0;
+        float coatTextureFilteringVariance = _TextureNormalFilteringEnabled ? DecodeVariance(coatGradient.w) : 0.0;
 
         surfaceData.perceptualSmoothnessA = NormalFiltering(surfaceData.perceptualSmoothnessA, geometricVariance + textureFilteringVariance, _SpecularAntiAliasingThreshold);
         surfaceData.perceptualSmoothnessB = NormalFiltering(surfaceData.perceptualSmoothnessB, geometricVariance + textureFilteringVariance, _SpecularAntiAliasingThreshold);
