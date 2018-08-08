@@ -1204,6 +1204,8 @@ namespace UnityEngine.Experimental.Rendering
                 ShadowVariant vari;
                 ShadowPrecision prec;
                 ShadowUtils.Unpack(m_EntryCache[i].current.shadowAlgo, out algo, out vari, out prec);
+
+                CheckDataIntegrity(algo, vari, prec, shadowData);
                 switch (algo)
                 {
                     case ShadowAlgorithm.VSM:

@@ -41,9 +41,9 @@
 #define SHADOW_DISPATCH_SPOT_SMP 0
 #define SHADOW_DISPATCH_SPOT_ALG GPUSHADOWALGORITHM_PCF_TENT_3X3
 //punctual
-#define SHADOW_DISPATCH_PUNC_TEX 0
+#define SHADOW_DISPATCH_PUNC_TEX 1
 #define SHADOW_DISPATCH_PUNC_SMP 0
-#define SHADOW_DISPATCH_PUNC_ALG GPUSHADOWALGORITHM_PCF_TENT_3X3
+#define SHADOW_DISPATCH_PUNC_ALG GPUSHADOWALGORITHM_VSM
 
 // example of overriding directional lights
 #ifdef  SHADOW_DISPATCH_USE_CUSTOM_DIRECTIONAL
@@ -101,7 +101,8 @@ float GetPunctualShadowAttenuation( ShadowContext shadowContext, float3 position
 #else
     // example for choosing the same algo
     Texture2DArray          tex      = shadowContext.tex2DArray[SHADOW_DISPATCH_PUNC_TEX];
-    SamplerComparisonState  compSamp = shadowContext.compSamplers[SHADOW_DISPATCH_PUNC_SMP];
+//  SamplerComparisonState  compSamp = shadowContext.compSamplers[SHADOW_DISPATCH_PUNC_SMP];
+    SamplerState  compSamp = shadowContext.Samplers[SHADOW_DISPATCH_PUNC_SMP];
     uint                    algo     = SHADOW_DISPATCH_PUNC_ALG;
     return EvalShadow_PunctualDepth( shadowContext, algo, tex, compSamp, positionWS, normalWS, shadowDataIndex, L, L_dist );
 #endif
