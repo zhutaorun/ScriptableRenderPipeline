@@ -6,7 +6,9 @@ using UnityEditor.Graphing;
 using UnityEngine.Experimental.UIElements;
 using UnityEditor.Experimental.UIElements;
 
-#if !UNITY_2019_1_OR_NEWER
+#if UNITY_2019_1_OR_NEWER
+using PopupInput = UnityEditor.Experimental.UIElements.PopupInput<string>;
+#else
 using PopupInput = UnityEditor.Experimental.UIElements.PopupField<string>;
 #endif
 
