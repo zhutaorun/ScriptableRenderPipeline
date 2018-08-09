@@ -3,10 +3,8 @@ using System.Reflection;
 using UnityEditor.Experimental.UIElements;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
-#if UNITY_2019_1_OR_NEWER
-using EnumInputField = UnityEditor.Experimental.UIElements.EnumInput;
-#else
-using EnumInputField = UnityEditor.Experimental.UIElements.EnumField;
+#if !UNITY_2019_1_OR_NEWER
+using EnumInput = UnityEditor.Experimental.UIElements.EnumField;
 #endif
 
 namespace UnityEditor.ShaderGraph.Drawing.Controls
@@ -52,7 +50,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
 
             var enumPanel = new VisualElement { name = "enumPanel" };
             enumPanel.Add(new Label("Material"));
-            var enumField = new EnumInputField(m_DielectricMaterial.type);
+            var enumField = new EnumInput(m_DielectricMaterial.type);
             enumField.OnValueChanged(OnEnumChanged);
             enumPanel.Add(enumField);
             Add(enumPanel);

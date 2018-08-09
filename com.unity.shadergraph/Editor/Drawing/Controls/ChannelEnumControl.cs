@@ -6,10 +6,8 @@ using UnityEditor.Graphing;
 using UnityEngine.Experimental.UIElements;
 using UnityEditor.Experimental.UIElements;
 
-#if UNITY_2019_1_OR_NEWER
-using PopupInputField = UnityEditor.Experimental.UIElements.PopupInput<string>;
-#else
-using PopupInputField = UnityEditor.Experimental.UIElements.PopupField<string>;
+#if !UNITY_2019_1_OR_NEWER
+using PopupInput = UnityEditor.Experimental.UIElements.PopupField<string>;
 #endif
 
 namespace UnityEditor.ShaderGraph.Drawing.Controls
@@ -38,7 +36,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         PropertyInfo m_PropertyInfo;
         int m_SlotId;
 
-        PopupInputField m_PopupField;
+        PopupInput m_PopupField;
         string[] m_ValueNames;
 
         int m_PreviousChannelCount = -1;
@@ -102,7 +100,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             if (value >= channelCount)
                 value = 0;
 
-            m_PopupField = new PopupInputField(popupEntries, value);
+            m_PopupField = new PopupInput(popupEntries, value);
             m_PopupField.OnValueChanged(OnValueChanged);
             Add(m_PopupField);
         }

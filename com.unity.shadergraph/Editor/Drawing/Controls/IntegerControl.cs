@@ -3,10 +3,8 @@ using System.Reflection;
 using UnityEditor.Experimental.UIElements;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
-#if UNITY_2019_1_OR_NEWER
-using IntegerInputField = UnityEditor.Experimental.UIElements.IntegerInput;
-#else
-using IntegerInputField = UnityEditor.Experimental.UIElements.IntegerField;
+#if !UNITY_2019_1_OR_NEWER
+using IntegerInput = UnityEditor.Experimental.UIElements.IntegerField;
 #endif
 
 namespace UnityEditor.ShaderGraph.Drawing.Controls
@@ -44,7 +42,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             if (!string.IsNullOrEmpty(label))
                 Add(new Label(label));
 
-            var intField = new IntegerInputField { value = (int)m_PropertyInfo.GetValue(m_Node, null) };
+            var intField = new IntegerInput { value = (int)m_PropertyInfo.GetValue(m_Node, null) };
             intField.OnValueChanged(OnChange);
 
             Add(intField);

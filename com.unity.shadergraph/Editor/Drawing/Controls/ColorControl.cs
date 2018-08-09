@@ -4,12 +4,9 @@ using UnityEditor.Experimental.UIElements;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
 using Color = UnityEditor.ShaderGraph.ColorNode.Color;
-#if UNITY_2019_1_OR_NEWER
-using EnumInputField = UnityEditor.Experimental.UIElements.EnumInput;
-using ColorInputField = UnityEditor.Experimental.UIElements.ColorInput;
-#else
-using EnumInputField = UnityEditor.Experimental.UIElements.EnumField;
-using ColorInputField = UnityEditor.Experimental.UIElements.ColorField;
+#if !UNITY_2019_1_OR_NEWER
+using EnumInput = UnityEditor.Experimental.UIElements.EnumField;
+using ColorInput = UnityEditor.Experimental.UIElements.ColorField;
 #endif
 
 namespace UnityEditor.ShaderGraph.Drawing.Controls
@@ -38,7 +35,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         PropertyInfo m_PropertyInfo;
 
         Color m_Color;
-        ColorInputField m_ColorField;
+        ColorInput m_ColorField;
 
         public ColorControlView(string label, ColorMode colorMode, AbstractMaterialNode node, PropertyInfo propertyInfo)
         {
@@ -54,13 +51,13 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             if (!string.IsNullOrEmpty(label))
                 Add(new Label(label));
 
-            m_ColorField = new ColorInputField { value = m_Color.color, hdr = m_Color.mode == ColorMode.HDR, showEyeDropper = false };
+            m_ColorField = new ColorInput { value = m_Color.color, hdr = m_Color.mode == ColorMode.HDR, showEyeDropper = false };
             m_ColorField.OnValueChanged(OnChange);
             Add(m_ColorField);
 
             VisualElement enumPanel = new VisualElement { name = "enumPanel" };
             enumPanel.Add(new Label("Mode"));
-            var enumField = new EnumInputField(m_Color.mode);
+            var enumField = new EnumInput(m_Color.mode);
             enumField.OnValueChanged(OnModeChanged);
             enumPanel.Add(enumField);
             Add(enumPanel);

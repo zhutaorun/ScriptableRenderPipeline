@@ -4,10 +4,8 @@ using UnityEditor.Graphing;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
 using Object = UnityEngine.Object;
-#if UNITY_2019_1_OR_NEWER
-using ObjectInputField = UnityEditor.Experimental.UIElements.ObjectInput;
-#else
-using ObjectInputField = UnityEditor.Experimental.UIElements.ObjectField;
+#if !UNITY_2019_1_OR_NEWER
+using ObjectInput = UnityEditor.Experimental.UIElements.ObjectField;
 #endif
 
 namespace UnityEditor.ShaderGraph.Drawing.Slots
@@ -20,7 +18,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
         {
             AddStyleSheetPath("Styles/Controls/CubemapSlotControlView");
             m_Slot = slot;
-            var objectField = new ObjectInputField { objectType = typeof(Cubemap), value = m_Slot.cubemap };
+            var objectField = new ObjectInput { objectType = typeof(Cubemap), value = m_Slot.cubemap };
             objectField.OnValueChanged(OnValueChanged);
             Add(objectField);
         }

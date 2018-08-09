@@ -2,10 +2,8 @@ using UnityEditor.Experimental.UIElements;
 using UnityEditor.Graphing;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
-#if UNITY_2019_1_OR_NEWER
-using ColorInputField = UnityEditor.Experimental.UIElements.ColorInput;
-#else
-using ColorInputField = UnityEditor.Experimental.UIElements.ColorField;
+#if !UNITY_2019_1_OR_NEWER
+using ColorInput = UnityEditor.Experimental.UIElements.ColorField;
 #endif
 
 namespace UnityEditor.ShaderGraph.Drawing.Slots
@@ -18,7 +16,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
         {
             AddStyleSheetPath("Styles/Controls/ColorRGBASlotControlView");
             m_Slot = slot;
-            var colorField = new ColorInputField { value = slot.value, showEyeDropper = false };
+            var colorField = new ColorInput { value = slot.value, showEyeDropper = false };
             colorField.OnValueChanged(OnValueChanged);
             Add(colorField);
         }

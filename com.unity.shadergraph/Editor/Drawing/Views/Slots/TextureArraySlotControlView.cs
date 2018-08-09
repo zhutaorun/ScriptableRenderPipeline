@@ -4,10 +4,8 @@ using UnityEditor.Graphing;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
 using Object = UnityEngine.Object;
-#if UNITY_2019_1_OR_NEWER
-using ObjectInputField = UnityEditor.Experimental.UIElements.ObjectInput;
-#else
-using ObjectInputField = UnityEditor.Experimental.UIElements.ObjectField;
+#if !UNITY_2019_1_OR_NEWER
+using ObjectInput = UnityEditor.Experimental.UIElements.ObjectField;
 #endif
 namespace UnityEditor.ShaderGraph.Drawing.Slots
 {
@@ -19,7 +17,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
         {
             m_Slot = slot;
             AddStyleSheetPath("Styles/Controls/TextureArraySlotControlView");
-            var objectField = new ObjectInputField { objectType = typeof(Texture2DArray), value = m_Slot.textureArray };
+            var objectField = new ObjectInput { objectType = typeof(Texture2DArray), value = m_Slot.textureArray };
             objectField.OnValueChanged(OnValueChanged);
             Add(objectField);
         }

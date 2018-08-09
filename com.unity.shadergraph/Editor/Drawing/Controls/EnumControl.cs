@@ -3,10 +3,8 @@ using System.Reflection;
 using UnityEditor.Experimental.UIElements;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
-#if UNITY_2019_1_OR_NEWER
-using EnumInputField = UnityEditor.Experimental.UIElements.EnumInput;
-#else
-using EnumInputField = UnityEditor.Experimental.UIElements.EnumField;
+#if !UNITY_2019_1_OR_NEWER
+using EnumInput = UnityEditor.Experimental.UIElements.EnumField;
 #endif
 
 namespace UnityEditor.ShaderGraph.Drawing.Controls
@@ -40,7 +38,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             if (!propertyInfo.PropertyType.IsEnum)
                 throw new ArgumentException("Property must be an enum.", "propertyInfo");
             Add(new Label(label ?? ObjectNames.NicifyVariableName(propertyInfo.Name)));
-            var enumField = new EnumInputField((Enum)m_PropertyInfo.GetValue(m_Node, null));
+            var enumField = new EnumInput((Enum)m_PropertyInfo.GetValue(m_Node, null));
             enumField.OnValueChanged(OnValueChanged);
             Add(enumField);
         }
