@@ -101,8 +101,8 @@ float GetPunctualShadowAttenuation( ShadowContext shadowContext, float3 position
 #else
     // example for choosing the same algo
     Texture2DArray          tex      = shadowContext.tex2DArray[SHADOW_DISPATCH_PUNC_TEX];
-//  SamplerComparisonState  compSamp = shadowContext.compSamplers[SHADOW_DISPATCH_PUNC_SMP];
-    SamplerState  compSamp = shadowContext.Samplers[SHADOW_DISPATCH_PUNC_SMP];
+    //SamplerComparisonState  compSamp = shadowContext.compSamplers[SHADOW_DISPATCH_PUNC_SMP];
+    SamplerState  compSamp = shadowContext.samplers[SHADOW_DISPATCH_PUNC_SMP];
     uint                    algo     = SHADOW_DISPATCH_PUNC_ALG;
     return EvalShadow_PunctualDepth( shadowContext, algo, tex, compSamp, positionWS, normalWS, shadowDataIndex, L, L_dist );
 #endif
