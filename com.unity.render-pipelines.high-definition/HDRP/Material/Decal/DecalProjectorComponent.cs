@@ -73,8 +73,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 Vector4 uvScaleBias = new Vector4(m_UVScale.x, m_UVScale.y, m_UVBias.x, m_UVBias.y);
                 if (m_OldMaterial != m_Material)
-                {	                	
-                	m_Handle = DecalSystem.instance.AddDecal(transform, m_DrawDistance, m_FadeScale, uvScaleBias, m_AffectsTransparency, m_Material);
+                {
+                    DecalSystem.instance.RemoveDecal(m_Handle);
+                    m_Handle = DecalSystem.instance.AddDecal(transform, m_DrawDistance, m_FadeScale, uvScaleBias, m_AffectsTransparency, m_Material);
                 	m_OldMaterial = m_Material;
 
                     // notify the editor that material has changed so it can update the shader foldout
