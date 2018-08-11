@@ -483,6 +483,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public class TextureProperty : Property
         {
+            public class RangeMinMax
+            {
+                public float MinLimit;
+                public float MaxLimit;
+            }
+
             public enum Tiling
             {
                 Wrap,
@@ -548,14 +554,22 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             public TextureOneLineProperty m_SlaveTexOneLineProp;
 
+            public RangeMinMax RangeUIMinMax
+            {
+                get; set;
+            }
+
             public TextureProperty(BaseMaterialGUI parent, string propertyName, string constantPropertyName, string guiText, bool pairConstantWithTexture, bool isMandatory = true, bool isNormalMap = false, bool showScaleOffset = true, TextureOneLineProperty slaveTexOneLineProp = null, Func<object, bool> isVisible = null)
-                : this(parent, propertyName, constantPropertyName, guiText, string.Empty, pairConstantWithTexture, isMandatory, isNormalMap, showScaleOffset, slaveTexOneLineProp, isVisible)
+                : this(parent, propertyName, constantPropertyName, guiText, string.Empty, pairConstantWithTexture, isMandatory, isNormalMap, showScaleOffset, slaveTexOneLineProp, null, isVisible)
             {
             }
 
-            public TextureProperty(BaseMaterialGUI parent, string propertyName, string constantPropertyName, string guiText, string toolTip, bool pairConstantWithTexture, bool isMandatory = true, bool isNormalMap = false, bool showScaleOffset = true, TextureOneLineProperty slaveTexOneLineProp = null, Func < object, bool> isVisible = null)
+            public TextureProperty(BaseMaterialGUI parent, string propertyName, string constantPropertyName, string guiText, string toolTip,
+                bool pairConstantWithTexture, bool isMandatory = true, bool isNormalMap = false, bool showScaleOffset = true,
+                TextureOneLineProperty slaveTexOneLineProp = null, RangeMinMax rangeUILimits = null, Func < object, bool> isVisible = null)
                 : base(parent, propertyName, guiText, toolTip, isMandatory, isVisible)
             {
+                RangeUIMinMax = rangeUILimits ?? new RangeMinMax() { MinLimit = 0.0f, MaxLimit = 1.0f };
                 m_IsNormalMap = isNormalMap;
                 m_ShowScaleOffset = showScaleOffset;
                 m_SlaveTexOneLineProp = slaveTexOneLineProp;
@@ -654,7 +668,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                                 // Display the remap of texture values.
                                 Vector2 remap = m_RemapProperty.VectorValue;
                                 EditorGUI.BeginChangeCheck();
-                                EditorGUILayout.MinMaxSlider(m_RemapProperty.PropertyText, ref remap.x, ref remap.y, 0.0f, 1.0f);
+                                EditorGUILayout.MinMaxSlider(m_RemapProperty.PropertyText, ref remap.x, ref remap.y, RangeUIMinMax.MinLimit, RangeUIMinMax.MaxLimit);
                                 if (EditorGUI.EndChangeCheck())
                                 {
                                     m_RemapProperty.VectorValue = remap;

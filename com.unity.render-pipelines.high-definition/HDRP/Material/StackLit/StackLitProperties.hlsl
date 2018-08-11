@@ -41,6 +41,9 @@ SAMPLER(sampler_HazinessMap);
 TEXTURE2D(_HazeExtentMap);
 SAMPLER(sampler_HazeExtentMap);
 
+TEXTURE2D(_TangentMap);
+SAMPLER(sampler_TangentMap);
+
 TEXTURE2D(_AnisotropyAMap);
 SAMPLER(sampler_AnisotropyAMap);
 
@@ -196,6 +199,14 @@ float4 _HazeExtentMap_MipInfo;
 float4 _HazeExtentMapChannelMask;
 float4 _HazeExtentMapRange;
 float _HazeExtentMapRangeScale;
+
+float _TangentUseMap;
+float _TangentMapUV;
+float _TangentMapUVLocal;
+float _TangentMapObjSpace;
+float4 _TangentMap_ST;
+float4 _TangentMap_TexelSize;
+float4 _TangentMap_MipInfo;
 
 float _AnisotropyA;
 float _AnisotropyAUseMap;

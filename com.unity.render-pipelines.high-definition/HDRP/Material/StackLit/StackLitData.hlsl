@@ -494,15 +494,74 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.anisotropyB = 0.0;
 #ifdef _MATERIAL_FEATURE_ANISOTROPY
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_ANISOTROPY;
-    // TODO: manage anistropy map and tangent vectors
-    //surfaceData.anisotropy = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_AnistropyMap), _AnistropyMapChannelMask);
-    //surfaceData.anisotropy = lerp(_AnistropyMapRange.x, _AnistropyMapRange.y, surfaceData.anisotropy);
-    surfaceData.anisotropyA = _AnisotropyA; // In all cases we must multiply anisotropy with the map
+    // cf. with the Lit shader: 
+    // We don't multiply the _Anisotropy property with the map, as our UI has a range remapping slider
+    // that has limits of -1 to 1. By default, the remap range (that maps the texture [0,1] range to
+    // another interval) is set from 0 to 1 with the UI looking like this:
+    //
+    // -1[.....======]+1
+    // [ ] invert remapping
+    //
+    // so as coded below, the [0,1] range of the map is mapped to the same.
+    // If anisotropy along the other axis is wanted, the interval segment of the UI can be dragged to
+    // cover -1 to 0 and the invert toggle checked, so that [0,1] is mapped to values from 0 to -1,
+    // with the UI looking as such:
+    //
+    // -1[======.....]+1
+    // [x] invert remapping
+    //
+    // Finally, any dampening of the effect of the map that can be obtained by multiplication by the
+    // scalar _Anisotropy propery as done in Lit can be obtained here by dragging the extreme end of the
+    // segment of the range slider (the end closer to +1 or -1 in the above configurations) so that the
+    // UI would look like this
+    //
+    // -1[.....====..]+1
+    // [ ] invert remapping
+    //
+    // or this:
+    //
+    // -1[..====.....]+1
+    // [x] invert remapping
+    //
+    surfaceData.anisotropyA = _AnisotropyA;
+    if (_AnisotropyAUseMap)
+    {
+        float4 tmp = (float4)0;
+        SHARED_SAMPLING(tmp, rgba, _AnisotropyAUseMap, _AnisotropyAMap);
+        surfaceData.anisotropyA = dot(tmp, _AnisotropyAMapChannelMask);
+        surfaceData.anisotropyA = lerp(_AnisotropyAMapRange.x, _AnisotropyAMapRange.y, surfaceData.anisotropyA);
+    }
 #ifdef _MATERIAL_FEATURE_DUAL_SPECULAR_LOBE
     surfaceData.anisotropyB = _AnisotropyB;
+    if (_AnisotropyBUseMap)
+    {
+        float4 tmp = (float4)0;
+        SHARED_SAMPLING(tmp, rgba, _AnisotropyBUseMap, _AnisotropyBMap);
+        surfaceData.anisotropyB = dot(tmp, _AnisotropyBMapChannelMask);
+        surfaceData.anisotropyB = lerp(_AnisotropyBMapRange.x, _AnisotropyBMapRange.y, surfaceData.anisotropyB);
+    }
 #endif
 #endif // _MATERIAL_FEATURE_ANISOTROPY
-    surfaceData.tangentWS = normalize(input.worldToTangent[0].xyz); // The tangent is not normalize in worldToTangent for mikkt. TODO: Check if it expected that we normalize with Morten. Tag: SURFACE_GRADIENT
+
+    // Note we don't normalize tangentWS either with a tangentmap or using the interpolated tangent from the TBN frame
+    // as it will be normalized later with a call to Orthonormalize().
+    surfaceData.tangentWS = input.worldToTangent[0].xyz; // The tangent is not normalize in worldToTangent for mikkt. TODO: Check if it expected that we normalize with Morten. Tag: SURFACE_GRADIENT
+#ifdef _TANGENTMAP
+    if (_TangentUseMap)
+    {
+        float4 tmp = (float4)0;
+        SHARED_SAMPLING_NORMAL(tmp, _TangentUseMap, _TangentMap, /*scale*/ 1.0, _TangentMapObjSpace);
+
+        if (_TangentMapObjSpace)
+        {
+            surfaceData.tangentWS = TransformObjectToWorldDir(tmp.xyz);
+        }
+        else
+        {
+            surfaceData.tangentWS = TransformTangentToWorld(tmp.xyz, input.worldToTangent);
+        }
+    }
+#endif
 
     float4 coatGradient = float4(0.0, 0.0, 0.0, NORMALMAP_NEUTRAL_DISPERSION_VALUE);
 #ifdef _MATERIAL_FEATURE_COAT
@@ -674,6 +733,8 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.bentNormalWS = SurfaceGradientResolveNormal(input.worldToTangent[2], bentGradient.xyz);
     surfaceData.coatNormalWS = SurfaceGradientResolveNormal(input.worldToTangent[2], coatGradient.xyz);
 
+    // tangentWS will not be normalized at this point (whether coming from input.worldToTangent[0] or a tangent map),
+    // but this is ok as the Orthonormalize() call here will:
     surfaceData.tangentWS = Orthonormalize(surfaceData.tangentWS, surfaceData.normalWS);
 
     if ((_GeometricNormalFilteringEnabled + _TextureNormalFilteringEnabled) > 0.0)

@@ -121,19 +121,64 @@ Shader "HDRenderPipeline/StackLit"
         //        1.0, 2.0, 3.0 show SO for COAT LOBE, BASE LOBEA and BASE LOBEB, 
         //        4.0 show the source screen space occlusion instead of specular occlusion.}
 
-        // TODO: TangentMap, AnisotropyMap and CoatIorMap (SmoothnessMap ?)
+        // TODO: CoatIorMap, ...
 
         [ToggleUI] _EnableAnisotropy("Enable Anisotropy", Float) = 0.0 // UI only
 
-        [HideInInspector] _AnisotropyAMapShow("AnisotropyA Map Show", Float) = 0
-        _AnisotropyA("AnisotropyA", Range(-1.0, 1.0)) = 0.0
+        [HideInInspector] _TangentMapShow("Tangent Map Show", Float) = 0.0
+        _TangentMap("Tangent Map", 2D) = "bump" {}
+        _TangentUseMap("Tangent UseMap", Float) = 0
+        _TangentMapUV("Tangent Map UV", Float) = 0.0
+        _TangentMapUVLocal("Tangent Map UV Local", Float) = 0.0
+        _TangentMapObjSpace("Tangent Map ObjSpace", Float) = 0.0 // Tangent or object reference frame for normal maps
+
+        // A note on how to use the same anisotropy map as one used with the Lit shader: 
+        //
+        // In StackLit, we don't multiply the _Anisotropy property with the map (the base property disappears
+        // from the UI once a texture map is assigned), as our UI has a range remapping slider that has limits
+        // of -1 to 1. By default, the remap range (that maps the texture [0,1] range to another interval) is
+        // set from 0 to 1 with the UI looking like this:
+        //
+        // -1[.....======]+1
+        // [ ] invert remapping
+        //
+        // so the [0,1] range of the map is mapped to the same.
+        // That would be equivalent to Lit with _Anisotropy == 1.0 with a texture map assigned.
+        //
+        // If anisotropy along the other axis is wanted, eg in Lit with _Anisotropy == -1.0 and
+        // again, with a texture map assigned, the interval segment of the UI can be dragged to cover -1 to 0
+        // and the invert toggle checked, so that [0,1] is mapped to values from 0 to -1, with the UI looking
+        // as such:
+        //
+        // -1[======.....]+1
+        // [x] invert remapping
+        //
+        // Finally, any dampening of the effect of the map that can be obtained in Lit by multiplication by
+        // the _Anisotropy propery set to a value < 1 or > -1 can be obtained here by dragging the extreme end
+        // of the segment of the range slider (the end closer to +1 or -1 in the above configurations) closer
+        // to the other endpoint standing at the middle (0) of the [-1,1] limits, so that the UI would look
+        // like this:
+        //
+        // -1[.....====..]+1
+        // [ ] invert remapping
+        //
+        // or this:
+        //
+        // -1[..====.....]+1
+        // [x] invert remapping
+        //
+
+        [HideInInspector] _AnisotropyAMapShow("AnisotropyA Map Show", Float) = 0 // UI only
+        _AnisotropyA("AnisotropyA", Range(-1.0, 1.0)) = 0.0 // Value when no texture map is assigned
         _AnisotropyAMap("AnisotropyA Map", 2D) = "white" {}
-        _AnisotropyAUseMap("AnisotropyA Use Map", Float) = 0
-        _AnisotropyAMapUV("AnisotropyA Map UV", Float) = 0.0
-        _AnisotropyAMapUVLocal("AnisotropyA Map UV Local", Float) = 0.0
-        _AnisotropyAMapChannel("AnisotropyA Map Channel", Float) = 0.0
+        _AnisotropyAUseMap("AnisotropyA Use Map", Float) = 0 // Internally set by the UI, also used when sampler sharing is on
+        _AnisotropyAMapUV("AnisotropyA Map UV", Float) = 0.0 // UV set used (when using UVs)
+        _AnisotropyAMapUVLocal("AnisotropyA Map UV Local", Float) = 0.0 // World or local (object) mapping when planar (or triplanar) mapping is used
+        _AnisotropyAMapChannel("AnisotropyA Map Channel", Float) = 0.0 // UI only, transformed into this shader-used mask property:
         [HideInInspector] _AnisotropyAMapChannelMask("AnisotropyA Map Channel Mask", Vector) = (1, 0, 0, 0)
-        _AnisotropyAMapRemap("AnisotropyA Remap", Vector) = (0, 1, 0, 0)
+        _AnisotropyAMapRemap("AnisotropyA Remap", Vector) = (0, 1, 0, 0) // UI only
+        [ToggleUI] _AnisotropyAMapRemapInverted("Invert AnisotropyA Remap", Float) = 0.0 // UI only
+        // the two previous properties MapRemap and MapRemapInverted are combined in this shader-used range vector:
         [HideInInspector] _AnisotropyAMapRange("AnisotropyA Range", Vector) = (0, 1, 0, 0)
 
         [HideInInspector] _AnisotropyBMapShow("AnisotropyB Map Show", Float) = 0
@@ -145,6 +190,7 @@ Shader "HDRenderPipeline/StackLit"
         _AnisotropyBMapChannel("AnisotropyB Map Channel", Float) = 0.0
         [HideInInspector] _AnisotropyBMapChannelMask("AnisotropyB Map Channel Mask", Vector) = (1, 0, 0, 0)
         _AnisotropyBMapRemap("AnisotropyB Remap", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _AnisotropyBMapRemapInverted("Invert AnisotropyB Remap", Float) = 0.0
         [HideInInspector] _AnisotropyBMapRange("AnisotropyB Range", Vector) = (0, 1, 0, 0)
 
         [ToggleUI] _EnableCoat("Enable Coat", Float) = 0.0 // UI only
@@ -399,6 +445,7 @@ Shader "HDRenderPipeline/StackLit"
 
     #pragma shader_feature _DETAILMAP
     #pragma shader_feature _BENTNORMALMAP
+    #pragma shader_feature _TANGENTMAP
     #pragma shader_feature _ENABLESPECULAROCCLUSION // This will control SO whether bent normals are there or not (cf Lit where only bent normals have effect with this keyword)
 
     #pragma shader_feature _USE_SAMPLER_SHARING
