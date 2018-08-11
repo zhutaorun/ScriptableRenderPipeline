@@ -363,7 +363,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
         SHARED_SAMPLING_NORMAL(gradient, _NormalUseMap, _NormalMap, _NormalScale, _NormalMapObjSpace);
     }
 
-    float4 bentGradient = float4(0.0, 0.0, 0.0, NORMALMAP_NEUTRAL_DISPERSION_VALUE);
+    float4 bentGradient = float4(gradient.x, gradient.y, gradient.z, NORMALMAP_NEUTRAL_DISPERSION_VALUE);
     // ...last value is for normal map filtering (average normal length). Unused for bent normal for now, but
     // could be used to tilt back the bent normal to the normal and/or enlarge the visibility cone as bent visibility
     // can alias like everything else.

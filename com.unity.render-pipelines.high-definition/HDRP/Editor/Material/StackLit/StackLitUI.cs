@@ -45,6 +45,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string k_NormalMapUV = "_NormalMapUV";
         protected const string k_NormalScale = "_NormalScale";
 
+        protected const string k_BentNormal = "_BentNormal";
         protected const string k_BentNormalMap = "_BentNormalMap";
 
         protected const string k_EnableSpecularOcclusion = "_EnableSpecularOcclusion";
@@ -341,12 +342,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 DualSpecularLobeDirectGroup,
                 DualSpecularLobeHazyGlossGroup,
 
-                //new GroupProperty(this, "_Anisotropy", "Anisotropy", new BaseProperty[]
-                //{
-                //    new Property(this, k_AnisotropyA, "AnisotropyA", "Anisotropy of base layer", false),
-                //    // TODO: Tangent map and rotation
-                //}, _ => EnableAnisotropy.BoolValue == true),
-
                 new GroupProperty(this, "_Coat", "Coat", new BaseProperty[]
                 {
                     new TextureProperty(this, k_CoatSmoothnessMap, k_CoatSmoothness, "Coat smoothness", "Coat smoothness", false),
@@ -458,6 +453,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         // All Setup Keyword functions must be static. It allow to create script to automatically update the shaders with a script if code change
         public static void SetupMaterialKeywordsAndPass(Material material)
         {
+            // Base UI:
             SetupBaseUnlitKeywords(material);
             SetupBaseUnlitMaterialPass(material);
 
@@ -487,6 +483,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             //TODO: disable DBUFFER
 
+            //
+            // First, we determine what features are enabled and setup keywords accordingly.
+            // The enabled bools will be reused for texture map properties configuration.
+            //
             bool detailsEnabled = material.HasProperty(k_EnableDetails) && material.GetFloat(k_EnableDetails) > 0.0f;
             CoreUtils.SetKeyword(material, "_DETAILMAP", detailsEnabled); // todo: should be reserved for actual map present
 
@@ -509,10 +509,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             // This is not a keyword but we validate an input here that act as one:
             // HazyGlossMaxDielectricF0
-            bool hazyGloosMaxDielectricF0Required = hazyGlossEnabled && (specularColorEnabled == false);
-            bool hazyGlossUseMaxDielectricF0 = hazyGloosMaxDielectricF0Required
+            bool hazyGlossMaxDielectricF0Required = hazyGlossEnabled && (specularColorEnabled == false);
+            bool hazyGlossUseMaxDielectricF0 = hazyGlossMaxDielectricF0Required
                                                && material.HasProperty(k_CapHazinessWrtMetallic) && material.GetFloat(k_CapHazinessWrtMetallic) > 0.0f;
-            if (hazyGloosMaxDielectricF0Required)
+            if (hazyGlossMaxDielectricF0Required)
             {
                 if  (hazyGlossUseMaxDielectricF0 == false)
                 {
@@ -565,12 +565,19 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 new TextureSamplerSharing(material, (a, b, c) => TextureProperty.SetupUseMapOfTextureMaterialProperty(material, a, b, c)) : null;
             if (samplerSharingEnabled)
             {
-                // We want to enable all our samples to try to use even the engine parsed-by-named ones that
+                // We want to enable all our samplers to try to use even the engine parsed-by-name ones that
                 // are used in the shader:
                 samplerSharing.AddExternalExistingSamplerStates();
             }
+            // Note: we disallow default value (unassigned map) normal map sampling when textureNormalFilteringEnabled because if we encoded variance, 0 is the neutral value
+            // (that doesn't add roughness).
+            bool textureNormalFilteringEnabled = material.HasProperty(k_TextureNormalFilteringEnabled) && material.GetFloat(k_TextureNormalFilteringEnabled) > 0.0f;
+            bool allowUnassignedNormalSampling = (textureNormalFilteringEnabled == false);
+
             TextureProperty.SetupTextureMaterialProperty(material, k_BaseColor,            enableMap: true, allowUnassignedSampling: true, samplerSharing: samplerSharing);
-            TextureProperty.SetupTextureMaterialProperty(material, k_Normal,               enableMap: true, allowUnassignedSampling: false, samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_Normal,               enableMap: true, allowUnassignedSampling: allowUnassignedNormalSampling, samplerSharing: samplerSharing);
+            // For the bentnormal map, UseMap will be set to 0 or 1, no samplerSharing is used for the actual sampler as the sampler for the normal map is used:
+            TextureProperty.SetupTextureMaterialProperty(material, k_BentNormal,           enableMap: bentNormalMapPresent, samplerSharing: null);
             TextureProperty.SetupTextureMaterialProperty(material, k_Metallic,             enableMap: (!specularColorEnabled), samplerSharing: samplerSharing);
             TextureProperty.SetupTextureMaterialProperty(material, k_SpecularColor,        enableMap: specularColorEnabled, allowUnassignedSampling: true, samplerSharing: samplerSharing);
             TextureProperty.SetupTextureMaterialProperty(material, k_SmoothnessA,          enableMap: true, samplerSharing: samplerSharing);
@@ -586,15 +593,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             TextureProperty.SetupTextureMaterialProperty(material, k_IridescenceThickness, enableMap: iridescenceEnabled, samplerSharing: samplerSharing);
             TextureProperty.SetupTextureMaterialProperty(material, k_IridescenceMask,      enableMap: iridescenceEnabled, samplerSharing: samplerSharing);
             TextureProperty.SetupTextureMaterialProperty(material, k_CoatSmoothness,       enableMap: coatEnabled, samplerSharing: samplerSharing);
-            TextureProperty.SetupTextureMaterialProperty(material, k_CoatNormal,           enableMap: coatEnabled, samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_CoatNormal,           enableMap: coatEnabled, allowUnassignedSampling: allowUnassignedNormalSampling, samplerSharing: samplerSharing);
 
             // details
             TextureProperty.SetupTextureMaterialProperty(material, k_DetailMask, enableMap: detailsEnabled, allowUnassignedSampling: true, samplerSharing: samplerSharing);
             TextureProperty.SetupTextureMaterialProperty(material, k_DetailSmoothness, enableMap: detailsEnabled, allowUnassignedSampling: true, samplerSharing: samplerSharing);
-            TextureProperty.SetupTextureMaterialProperty(material, k_DetailNormal, enableMap: detailsEnabled, allowUnassignedSampling: false, samplerSharing: samplerSharing);
+            TextureProperty.SetupTextureMaterialProperty(material, k_DetailNormal, enableMap: detailsEnabled, allowUnassignedSampling: allowUnassignedNormalSampling, samplerSharing: samplerSharing);
 
             TextureProperty.SetupTextureMaterialProperty(material, k_EmissiveColor, enableMap: true, allowUnassignedSampling: true, samplerSharing: samplerSharing);
-
 
             if (samplerSharingEnabled)
             {
@@ -604,7 +610,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             CoreUtils.SetKeyword(material, "_USE_SAMPLER_SHARING", samplerSharingEnabled);
 
             //
-            // Check if we are using specific UVs (but only for potentially used maps):
+            // Check if we are using specific UVs (but only do it for potentially used maps):
             //
             TextureProperty.UVMapping baseColorMapUV            = (TextureProperty.UVMapping)material.GetFloat(k_BaseColorMapUV);
             TextureProperty.UVMapping normalMapUV               = (TextureProperty.UVMapping)material.GetFloat(k_NormalMapUV);
@@ -656,7 +662,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 emissiveColorMapUV,
             };
 
-            // Set keyword for mapping
+            //
+            // Set keyword for required coordinate mappings:
+            //
 
             //bool requireUv2 = false;
             //bool requireUv3 = false;
@@ -669,7 +677,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
             CoreUtils.SetKeyword(material, "_MAPPING_TRIPLANAR", requireTriplanar);
 
+            //
             // Set the reference value for the stencil test - required for SSS
+            //
             int stencilRef = (int)StencilLightingUsage.RegularLighting;
             if (sssEnabled)
             {
