@@ -2,6 +2,12 @@
 #define UNITY_COMMON_MATERIAL_INCLUDED
 
 //-----------------------------------------------------------------------------
+// Define constants
+//-----------------------------------------------------------------------------
+
+#define DEFAULT_SPECULAR_VALUE 0.04
+
+//-----------------------------------------------------------------------------
 // Helper functions for roughness
 //-----------------------------------------------------------------------------
 
@@ -87,6 +93,14 @@ real VarianceToRoughness(real variance)
     return sqrt(2.0 / (variance + 2.0));
 }
 
+// Normal Map Filtering - This must match HDRP\Editor\AssetProcessors\NormalMapFilteringTexturePostprocessor.cs - highestVarianceAllowed (TODO: Move in core)
+#define NORMALMAP_HIGHEST_VARIANCE 0.03125
+
+float DecodeVariance(float gradientW)
+{
+    return gradientW * NORMALMAP_HIGHEST_VARIANCE;
+}
+
 // Return modified perceptualSmoothness based on provided variance (get from GeometricNormalVariance + TextureNormalVariance)
 float NormalFiltering(float perceptualSmoothness, float variance, float threshold)
 {
@@ -131,6 +145,7 @@ float GeometricNormalFiltering(float perceptualSmoothness, float3 geometricNorma
 float TextureNormalVariance(float avgNormalLength)
 {
     float variance = 0.0;
+
     if (avgNormalLength < 1.0)
     {
         float avgNormLen2 = avgNormalLength * avgNormalLength;

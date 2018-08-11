@@ -5,9 +5,8 @@
 #include "HDRP/Material/MaterialUtilities.hlsl"
 #include "HDRP/Material/Decal/DecalUtilities.hlsl"
 
-#include "HDRP/Material/SphericalCapPivot/SPTDistribution.hlsl"
-#define SPECULAR_OCCLUSION_USE_SPTD
-
+//#include "HDRP/Material/SphericalCapPivot/SPTDistribution.hlsl"
+//#define SPECULAR_OCCLUSION_USE_SPTD
 
 // Struct that gather UVMapping info of all layers + common calculation
 // This is use to abstract the mapping that can differ on layers
@@ -198,15 +197,12 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     // By default we use the ambient occlusion with Tri-ace trick (apply outside) for specular occlusion.
     // If user provide bent normal then we process a better term
 #if defined(_BENTNORMALMAP) && defined(_ENABLESPECULAROCCLUSION)
-
-    // If we have bent normal and ambient occlusion, process a specular occlusion with either SPTD or cone-cone method
-#ifdef SPECULAR_OCCLUSION_USE_SPTD
+    // If we have bent normal and ambient occlusion, process a specular occlusion
+    #ifdef SPECULAR_OCCLUSION_USE_SPTD
     surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAOPivot(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
-#else
+    #else
     surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
-
-#endif
-
+    #endif
 #elif defined(_MASKMAP)
     surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
 #else
