@@ -16,7 +16,7 @@ public class SpotAngleDistance : MonoBehaviour
 	public float distance = 3f;
 	public float angle = 60f;
 
-	[SerializeField, HideInInspector] private Light light;
+	[SerializeField, HideInInspector] new private Light light;
 	[SerializeField, HideInInspector] private HDAdditionalLightData hdLightData;
 
 	void OnValidate()
