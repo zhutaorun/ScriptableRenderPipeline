@@ -332,20 +332,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var additionalCameraData = camera.GetComponent<HDAdditionalCameraData>();
             return camera.cameraType == CameraType.Preview && ((additionalCameraData == null) || (additionalCameraData && !additionalCameraData.isEditorCameraPreview));
         }
-
-        // Post-processing misc
-        public static bool IsPostProcessingActive(PostProcessLayer layer)
-        {
-            return layer != null
-                && layer.enabled;
-        }
-
-        public static bool IsTemporalAntialiasingActive(PostProcessLayer layer)
-        {
-            return IsPostProcessingActive(layer)
-                && layer.antialiasingMode == PostProcessLayer.Antialiasing.TemporalAntialiasing
-                && layer.temporalAntialiasing.IsSupported();
-        }
         
         // We need these at runtime for RenderPipelineResources upgrade
         public static string GetHDRenderPipelinePath()

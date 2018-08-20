@@ -12,7 +12,7 @@
 #define CLIP_AABB       1
 #define FEEDBACK_MIN    0.96
 #define FEEDBACK_MAX    0.91
-#define SHARPEN         lerp(0.35, 0.1, HDR_MAPUNMAP)
+#define SHARPEN         lerp(0.25, 0.1, HDR_MAPUNMAP)
 
 #define CLAMP_MAX       65472.0 // HALF_MAX minus one (2 - 2^-9) * 2^15
 

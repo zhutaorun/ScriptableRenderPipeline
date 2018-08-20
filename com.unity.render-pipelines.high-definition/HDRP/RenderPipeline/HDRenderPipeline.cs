@@ -3,7 +3,6 @@ using UnityEngine.Rendering;
 using System;
 using System.Diagnostics;
 using System.Linq;
-using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.Experimental.GlobalIllumination;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
@@ -837,10 +836,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         m_CurrentDebugDisplaySettings = m_DebugDisplaySettings;
                     }
 
-                    var postProcessLayer = camera.GetComponent<PostProcessLayer>();
-
                     // Disable post process if we enable debug mode or if the post process layer is disabled
-                    if (m_CurrentDebugDisplaySettings.IsDebugDisplayRemovePostprocess() || !HDUtils.IsPostProcessingActive(postProcessLayer))
+                    if (m_CurrentDebugDisplaySettings.IsDebugDisplayRemovePostprocess())
                     {
                         currentFrameSettings.enablePostprocess = false;
                     }
@@ -1120,28 +1117,25 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         StartStereoRendering(renderContext, hdCamera);
 
                         //>>> -- TEMP
-                        m_PostProcessSystem.Render(
-                            cmd: cmd,
-                            camera: hdCamera,
-                            colorBuffer: m_CameraColorBuffer,
-                            lightingBuffer: null,
-                            depthBuffer: GetDepthTexture(),
-                            velocityBuffer: m_VelocityBuffer
-                        );
+                        if (currentFrameSettings.enablePostprocess)
+                        {
+                            m_PostProcessSystem.Render(
+                                cmd: cmd,
+                                camera: hdCamera,
+                                colorBuffer: m_CameraColorBuffer,
+                                lightingBuffer: null,
+                                depthBuffer: GetDepthTexture(),
+                                velocityBuffer: m_VelocityBuffer
+                            );
+                        }
                         //<<<
 
                         // Final blit
-                        //if (hdCamera.frameSettings.enablePostprocess)
-                        //{
-                        //    RenderPostProcess(hdCamera, cmd, postProcessLayer);
-                        //}
-                        //else
+                        // TODO: Should be handled by PostProcessSystem
+                        using (new ProfilingSample(cmd, "Blit to final RT", CustomSamplerId.BlitToFinalRT.GetSampler()))
                         {
-                            using (new ProfilingSample(cmd, "Blit to final RT", CustomSamplerId.BlitToFinalRT.GetSampler()))
-                            {
-                                // This Blit will flip the screen on anything other than openGL
-                                HDUtils.BlitCameraTexture(cmd, hdCamera, m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget);
-                            }
+                            // This Blit will flip the screen on anything other than openGL
+                            HDUtils.BlitCameraTexture(cmd, hdCamera, m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget);
                         }
 
                         StopStereoRendering(renderContext, hdCamera);
@@ -1762,59 +1756,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             Vector2 pyramidScale = m_BufferPyramid.GetPyramidToScreenScale(hdCamera, cameraRT);
             PushFullScreenDebugTextureMip(hdCamera, cmd, cameraRT, m_BufferPyramid.GetPyramidLodCount(new Vector2Int(hdCamera.actualWidth, hdCamera.actualHeight)), new Vector4(pyramidScale.x, pyramidScale.y, 0.0f, 0.0f), debugMode);
-        }
-
-        void RenderPostProcess(HDCamera hdcamera, CommandBuffer cmd, PostProcessLayer layer)
-        {
-            using (new ProfilingSample(cmd, "Post-processing", CustomSamplerId.PostProcessing.GetSampler()))
-            {
-                RenderTargetIdentifier source = m_CameraColorBuffer;
-
-                // For console we are not allowed to resize the windows, so don't use our hack.
-                // We also don't do the copy if viewport size and render texture size match.
-                bool viewportAndRTSameSize = (hdcamera.actualWidth == m_CameraColorBuffer.rt.width && hdcamera.actualHeight == m_CameraColorBuffer.rt.height);
-                bool tempHACK = !IsConsolePlatform() && !viewportAndRTSameSize;
-
-                if (tempHACK)
-                {
-                    // TEMPORARY:
-                    // Since we don't render to the full render textures, we need to feed the post processing stack with the right scale/bias.
-                    // This feature not being implemented yet, we'll just copy the relevant buffers into an appropriately sized RT.
-                    cmd.ReleaseTemporaryRT(HDShaderIDs._CameraDepthTexture);
-                    cmd.ReleaseTemporaryRT(HDShaderIDs._CameraMotionVectorsTexture);
-                    cmd.ReleaseTemporaryRT(HDShaderIDs._CameraColorTexture);
-
-                    cmd.GetTemporaryRT(HDShaderIDs._CameraDepthTexture, hdcamera.actualWidth, hdcamera.actualHeight, m_CameraDepthStencilBuffer.rt.depth, FilterMode.Point, m_CameraDepthStencilBuffer.rt.format);
-                    m_CopyDepth.SetTexture(HDShaderIDs._InputDepth, m_CameraDepthStencilBuffer);
-                    cmd.Blit(null, HDShaderIDs._CameraDepthTexture, m_CopyDepth);
-                    if (m_VelocityBuffer != null)
-                    {
-                        cmd.GetTemporaryRT(HDShaderIDs._CameraMotionVectorsTexture, hdcamera.actualWidth, hdcamera.actualHeight, 0, FilterMode.Point, m_VelocityBuffer.rt.format);
-                        HDUtils.BlitCameraTexture(cmd, hdcamera, m_VelocityBuffer, HDShaderIDs._CameraMotionVectorsTexture);
-                    }
-                    cmd.GetTemporaryRT(HDShaderIDs._CameraColorTexture, hdcamera.actualWidth, hdcamera.actualHeight, 0, FilterMode.Point, m_CameraColorBuffer.rt.format);
-                    HDUtils.BlitCameraTexture(cmd, hdcamera, m_CameraColorBuffer, HDShaderIDs._CameraColorTexture);
-                    source = HDShaderIDs._CameraColorTexture;
-                }
-                else
-                {
-                    // Note: Here we don't use GetDepthTexture() to get the depth texture but m_CameraDepthStencilBuffer as the Forward transparent pass can
-                    // write extra data to deal with DOF/MB
-                    cmd.SetGlobalTexture(HDShaderIDs._CameraDepthTexture, m_CameraDepthStencilBuffer);
-                    cmd.SetGlobalTexture(HDShaderIDs._CameraMotionVectorsTexture, m_VelocityBuffer);
-                }
-
-                var context = new PostProcessRenderContext();
-                context.Reset();
-                context.source = source;
-                context.destination = BuiltinRenderTextureType.CameraTarget;
-                context.command = cmd;
-                context.camera = hdcamera.camera;
-                context.sourceFormat = RenderTextureFormat.ARGBHalf;
-                context.flip = hdcamera.camera.targetTexture == null;
-
-                layer.Render(context);
-            }
         }
 
         public void ApplyDebugDisplaySettings(HDCamera hdCamera, CommandBuffer cmd)
