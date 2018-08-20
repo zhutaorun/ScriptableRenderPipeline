@@ -129,8 +129,8 @@ void MAIN(uint2 dispatchThreadId : SV_DispatchThreadID)
     float3 corners = 4.0 * (topLeft + bottomRight) - 2.0 * color;
 
     // Sharpen output
-    color += (color - (corners * 0.166667)) * 2.718282 * SHARPEN;
-    color = clamp(color, 0.0, CLAMP_MAX);
+    //color += (color - (corners * 0.166667)) * 2.718282 * SHARPEN;
+    //color = clamp(color, 0.0, CLAMP_MAX);
 
     float3 average = Map((corners + color) * 0.142857);
 

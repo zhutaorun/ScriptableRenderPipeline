@@ -24,6 +24,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Disk,
     };
 
+    public static class GPULightTypeExtension
+    {
+        public static bool IsAreaLight(this GPULightType lightType)
+        {
+            return lightType == GPULightType.Rectangle || lightType == GPULightType.Line;
+        }
+        
+        public static bool IsSpot(this GPULightType lightType)
+        {
+            return lightType == GPULightType.Spot || lightType == GPULightType.ProjectorBox || lightType == GPULightType.ProjectorPyramid;
+        }
+    }
+
     // This is use to distinguish between reflection and refraction probe in LightLoop
     [GenerateHLSL]
     public enum GPUImageBasedLightingType
@@ -117,6 +130,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public struct EnvLightData
     {
         // Packing order depends on chronological access to avoid cache misses
+        public uint lightLayers;
 
         // Proxy properties
         public Vector3 capturePositionRWS;
