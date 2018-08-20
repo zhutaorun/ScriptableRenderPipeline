@@ -1,12 +1,18 @@
 {
   "dependencies": {
-	"com.unity.package-manager-ui": "2.0.0-preview",
-    "com.unity.postprocessing": "2.0.9-preview",
+    "com.unity.package-manager-ui": "2.0.0-preview.7",
+    "com.unity.postprocessing": "2.0.11-preview",
     "com.unity.render-pipelines.core": "file:../../../com.unity.render-pipelines.core",
     "com.unity.render-pipelines.high-definition": "file:../../../com.unity.render-pipelines.high-definition",
     "com.unity.shadergraph": "file:../../../com.unity.shadergraph",
     "com.unity.testframework.graphics": "file:../../../com.unity.testframework.graphics",
-	"com.unity.textmeshpro": "1.2.4"
+    "com.unity.textmeshpro": "1.2.4",
+    "com.unity.modules.assetbundle": "1.0.0",
+    "com.unity.modules.imageconversion": "1.0.0",
+    "com.unity.modules.imgui": "1.0.0",
+    "com.unity.modules.physics": "1.0.0",
+    "com.unity.modules.ui": "1.0.0",
+    "com.unity.modules.vr": "1.0.0"
   },
   "testables": [
     "com.unity.render-pipelines.high-definition",
