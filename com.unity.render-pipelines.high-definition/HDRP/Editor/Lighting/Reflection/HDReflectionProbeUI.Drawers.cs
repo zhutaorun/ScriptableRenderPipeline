@@ -325,6 +325,8 @@ namespace UnityEditor.Experimental.Rendering
 
         static void Drawer_InfluenceShape(HDReflectionProbeUI s, SerializedHDReflectionProbe p, Editor owner)
         {
+            var oldEditMode = EditMode.editMode;
+
             EditorGUI.BeginChangeCheck();
             EditorGUI.showMixedValue = p.influenceShape.hasMultipleDifferentValues;
             EditorGUILayout.PropertyField(p.influenceShape, CoreEditorUtils.GetContent("Shape"));
@@ -340,6 +342,16 @@ namespace UnityEditor.Experimental.Rendering
                 case ShapeType.Sphere:
                     Drawer_InfluenceShapeSphereSettings(s, p, owner);
                     break;
+            }
+
+            if (oldEditMode != EditMode.editMode)
+            {
+                switch (EditMode.editMode)
+                {
+                    case EditMode.SceneViewEditMode.ReflectionProbeOrigin:
+                        s.UpdateOldLocalSpace(p.target);
+                        break;
+                }
             }
 
         }
