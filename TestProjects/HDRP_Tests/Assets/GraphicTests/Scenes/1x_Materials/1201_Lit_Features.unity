@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.366155, g: 0.3847441, b: 0.42534673, a: 1}
+  m_IndirectSpecularColor: {r: 0.36615336, g: 0.38474482, b: 0.42534754, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -158,7 +158,7 @@ TextMesh:
 
     0             1'
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -187,7 +187,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -223,6 +223,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 19054077}
+  pixelPerfect: 0
 --- !u!21 &28640184
 Material:
   serializedVersion: 6
@@ -1358,7 +1359,7 @@ TextMesh:
   m_GameObject: {fileID: 95007744}
   m_Text: TriPlanar
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -1387,7 +1388,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1423,6 +1424,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 95007746}
+  pixelPerfect: 0
 --- !u!1 &103750788
 GameObject:
   m_ObjectHideFlags: 0
@@ -2295,7 +2297,7 @@ TextMesh:
   m_GameObject: {fileID: 190231742}
   m_Text: Triplanar
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -2324,7 +2326,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2360,6 +2362,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 190231744}
+  pixelPerfect: 0
 --- !u!21 &194725585
 Material:
   serializedVersion: 6
@@ -3016,7 +3019,7 @@ TextMesh:
   m_GameObject: {fileID: 296841542}
   m_Text: 2
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -3045,7 +3048,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3081,6 +3084,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 296841544}
+  pixelPerfect: 0
 --- !u!1001 &318904945
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3246,7 +3250,7 @@ TextMesh:
   m_GameObject: {fileID: 332057365}
   m_Text: Smotthness range from 0 to 1
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -3275,7 +3279,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3311,6 +3315,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 332057367}
+  pixelPerfect: 0
 --- !u!21 &342392933
 Material:
   serializedVersion: 6
@@ -6090,7 +6095,7 @@ TextMesh:
   m_GameObject: {fileID: 570473797}
   m_Text: Normal
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -6119,7 +6124,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -6155,6 +6160,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 570473799}
+  pixelPerfect: 0
 --- !u!21 &609564168
 Material:
   serializedVersion: 6
@@ -7437,7 +7443,7 @@ TextMesh:
   m_GameObject: {fileID: 828497856}
   m_Text: 1
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -7466,7 +7472,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -7502,6 +7508,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 828497858}
+  pixelPerfect: 0
 --- !u!21 &868287954
 Material:
   serializedVersion: 6
@@ -9645,7 +9652,7 @@ TextMesh:
   m_GameObject: {fileID: 1045622033}
   m_Text: UV Mapping Mode
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -9674,7 +9681,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -9710,6 +9717,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 1045622035}
+  pixelPerfect: 0
 --- !u!21 &1052133170
 Material:
   serializedVersion: 6
@@ -10055,7 +10063,7 @@ TextMesh:
   m_GameObject: {fileID: 1072629385}
   m_Text: Complex Material
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -10084,7 +10092,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -10120,6 +10128,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 1072629387}
+  pixelPerfect: 0
 --- !u!1 &1102623420
 GameObject:
   m_ObjectHideFlags: 0
@@ -11672,7 +11681,7 @@ TextMesh:
   m_GameObject: {fileID: 1272801579}
   m_Text: Albedo
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -11701,7 +11710,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -11737,6 +11746,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 1272801581}
+  pixelPerfect: 0
 --- !u!21 &1325162105
 Material:
   serializedVersion: 6
@@ -12024,7 +12034,7 @@ TextMesh:
   m_GameObject: {fileID: 1340867970}
   m_Text: Planar
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -12053,7 +12063,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -12089,6 +12099,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 1340867972}
+  pixelPerfect: 0
 --- !u!21 &1351735827
 Material:
   serializedVersion: 6
@@ -12379,7 +12390,7 @@ TextMesh:
 
     UV1           UV2          UV3           UV4'
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -12408,7 +12419,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -12444,6 +12455,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 1355181191}
+  pixelPerfect: 0
 --- !u!1 &1377379217
 GameObject:
   m_ObjectHideFlags: 0
@@ -12866,7 +12878,7 @@ TextMesh:
   m_GameObject: {fileID: 1410111507}
   m_Text: "DoubleSide\n On          Off"
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -12895,7 +12907,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -12931,6 +12943,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 1410111509}
+  pixelPerfect: 0
 --- !u!1 &1423387243
 GameObject:
   m_ObjectHideFlags: 0
@@ -12974,7 +12987,7 @@ TextMesh:
   m_GameObject: {fileID: 1423387243}
   m_Text: World Scale
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -13003,7 +13016,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -13039,6 +13052,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 1423387245}
+  pixelPerfect: 0
 --- !u!1 &1431999787
 GameObject:
   m_ObjectHideFlags: 0
@@ -13836,7 +13850,7 @@ TextMesh:
   m_GameObject: {fileID: 1527357169}
   m_Text: Detail Parameters Scale
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -13865,7 +13879,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -13901,6 +13915,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 1527357171}
+  pixelPerfect: 0
 --- !u!21 &1550720265
 Material:
   serializedVersion: 6
@@ -14613,7 +14628,7 @@ TextMesh:
   m_GameObject: {fileID: 1704104651}
   m_Text: Smoothness
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -14642,7 +14657,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -14678,6 +14693,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 1704104653}
+  pixelPerfect: 0
 --- !u!1 &1707169000
 GameObject:
   m_ObjectHideFlags: 0
@@ -14798,7 +14814,7 @@ TextMesh:
   m_GameObject: {fileID: 1722907620}
   m_Text: 3
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -14827,7 +14843,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -14863,6 +14879,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 1722907622}
+  pixelPerfect: 0
 --- !u!1 &1729785280
 GameObject:
   m_ObjectHideFlags: 0
@@ -15552,7 +15569,7 @@ TextMesh:
   m_GameObject: {fileID: 1756004618}
   m_Text: Planar
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -15581,7 +15598,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -15617,6 +15634,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 1756004620}
+  pixelPerfect: 0
 --- !u!1 &1757932842
 GameObject:
   m_ObjectHideFlags: 0
@@ -16516,7 +16534,7 @@ TextMesh:
 
     .25          .50          .75'
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -16545,7 +16563,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -16581,6 +16599,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 1840672468}
+  pixelPerfect: 0
 --- !u!1 &1845911175
 GameObject:
   m_ObjectHideFlags: 0
@@ -17123,7 +17142,7 @@ TextMesh:
 
     Mask'
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -17152,7 +17171,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -17188,6 +17207,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 1963044544}
+  pixelPerfect: 0
 --- !u!1 &1977613098
 GameObject:
   m_ObjectHideFlags: 0
@@ -17961,7 +17981,7 @@ TextMesh:
 
     Tangent      Object '
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -17990,7 +18010,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -18026,6 +18046,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 2079930010}
+  pixelPerfect: 0
 --- !u!21 &2105057377
 Material:
   serializedVersion: 6
@@ -18371,7 +18392,7 @@ TextMesh:
   m_GameObject: {fileID: 2133916186}
   m_Text: UV0
   m_OffsetZ: 0
-  m_CharacterSize: 0.101522975
+  m_CharacterSize: 0.10152297
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -18400,7 +18421,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -18436,6 +18457,7 @@ MonoBehaviour:
   testSettings: {fileID: 749245064}
   camera: {fileID: 749245063}
   textMesh: {fileID: 2133916188}
+  pixelPerfect: 0
 --- !u!1 &2137719994
 GameObject:
   m_ObjectHideFlags: 0
