@@ -428,7 +428,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_ExposureVariants[3] = 2;
             }
 
-            cmd.SetComputeVectorParam(cs, HDShaderIDs._AdaptationParams, new Vector4(settings.adaptationSpeedDown, settings.adaptationSpeedUp, 0f, 0f));
+            cmd.SetComputeVectorParam(cs, HDShaderIDs._AdaptationParams, new Vector4(settings.adaptationSpeedLightToDark, settings.adaptationSpeedDarkToLight, 0f, 0f));
             cmd.SetComputeIntParams(cs, HDShaderIDs._Variants, m_ExposureVariants);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._PreviousExposureTexture, prevExposure);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, m_TempTexture32);
