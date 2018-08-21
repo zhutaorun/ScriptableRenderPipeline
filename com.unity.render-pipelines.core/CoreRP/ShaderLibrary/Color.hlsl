@@ -191,9 +191,26 @@ real AcesLuminance(real3 linearRgb)
     return dot(linearRgb, AP1_RGB2Y);
 }
 
-real AcesLuminance(real4 linearRgb)
+real AcesLuminance(real4 linearRgba)
 {
-    return AcesLuminance(linearRgb.rgb);
+    return AcesLuminance(linearRgba.rgb);
+}
+
+// Scotopic luminance approximation - input is in XYZ space
+// Note: the range of values returned is approximately [0;4]
+// "A spatial postprocessing algorithm for images of night scenes"
+// William B. Thompson, Peter Shirley, and James A. Ferwerda
+real ScotopicLuminance(real3 xyzRgb)
+{
+    float X = xyzRgb.x;
+    float Y = xyzRgb.y;
+    float Z = xyzRgb.z;
+    return Y * (1.33 * (1.0 + (Y + Z) / X) - 1.68);
+}
+
+real ScotopicLuminance(real4 xyzRgba)
+{
+    return ScotopicLuminance(xyzRgba.rgb);
 }
 
 // This function take a rgb color (best is to provide color in sRGB space)
