@@ -4,7 +4,6 @@ using UnityEngine.Rendering;
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     // TODO: Fix RTHandle resizing support
-    // TODO: User HDShaderIDs instead of strings to lower CPU usage
 
     using RTHandle = RTHandleSystem.RTHandle;
 
@@ -256,17 +255,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             );
         }
 
-        // Calculate values in _ZBuferParams (built-in shader variable)
-        // We can't use _ZBufferParams in compute shaders, so this function is
-        // used to give the values in it to compute shaders.
-        Vector4 CalculateZBufferParams(Camera camera)
-        {
-            float fpn = camera.farClipPlane / camera.nearClipPlane;
-            return SystemInfo.usesReversedZBuffer
-                ? new Vector4(fpn - 1f, 1f, 0f, 0f)
-                : new Vector4(1f - fpn, fpn, 0f, 0f);
-        }
-
         float CalculateTanHalfFovHeight(HDCamera camera)
         {
             return 1f / camera.projMatrix[0, 0];
@@ -286,27 +274,26 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             // 1st downsampling pass.
             var cs = m_Resources.aoDownsample1;
-            int kernel = cs.FindKernel("main");
+            int kernel = cs.FindKernel("KMain");
 
-            cmd.SetComputeTextureParam(cs, kernel, "LinearZ", m_LinearDepthTex);
-            cmd.SetComputeTextureParam(cs, kernel, "DS2x", m_LowDepth1Tex);
-            cmd.SetComputeTextureParam(cs, kernel, "DS4x", m_LowDepth2Tex);
-            cmd.SetComputeTextureParam(cs, kernel, "DS2xAtlas", m_TiledDepth1Tex);
-            cmd.SetComputeTextureParam(cs, kernel, "DS4xAtlas", m_TiledDepth2Tex);
-            cmd.SetComputeVectorParam(cs, "ZBufferParams", CalculateZBufferParams(camera.camera));
-            cmd.SetComputeTextureParam(cs, kernel, "Depth", depthMap);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._LinearZ, m_LinearDepthTex);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS2x, m_LowDepth1Tex);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS4x, m_LowDepth2Tex);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS2xAtlas, m_TiledDepth1Tex);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS4xAtlas, m_TiledDepth2Tex);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._Depth, depthMap);
 
             cmd.DispatchCompute(cs, kernel, m_Widths[(int)MipLevel.L4], m_Heights[(int)MipLevel.L4], 1);
 
             // 2nd downsampling pass.
             cs = m_Resources.aoDownsample2;
-            kernel = cs.FindKernel("main");
+            kernel = cs.FindKernel("KMain");
 
-            cmd.SetComputeTextureParam(cs, kernel, "DS4x", m_LowDepth2Tex);
-            cmd.SetComputeTextureParam(cs, kernel, "DS8x", m_LowDepth3Tex);
-            cmd.SetComputeTextureParam(cs, kernel, "DS16x", m_LowDepth4Tex);
-            cmd.SetComputeTextureParam(cs, kernel, "DS8xAtlas", m_TiledDepth3Tex);
-            cmd.SetComputeTextureParam(cs, kernel, "DS16xAtlas", m_TiledDepth4Tex);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS4x, m_LowDepth2Tex);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS8x, m_LowDepth3Tex);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS16x, m_LowDepth4Tex);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS8xAtlas, m_TiledDepth3Tex);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS16xAtlas, m_TiledDepth4Tex);
 
             cmd.DispatchCompute(cs, kernel, m_Widths[(int)MipLevel.L6], m_Heights[(int)MipLevel.L6], 1);
         }
@@ -377,14 +364,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Set the arguments for the render kernel.
             var cs = m_Resources.aoRender;
-            int kernel = cs.FindKernel("main_interleaved");
+            int kernel = cs.FindKernel("KMainInterleaved");
 
-            cmd.SetComputeFloatParams(cs, "gInvThicknessTable", m_InvThicknessTable);
-            cmd.SetComputeFloatParams(cs, "gSampleWeightTable", m_SampleWeightTable);
-            cmd.SetComputeVectorParam(cs, "gInvSliceDimension", new Vector2(1f / sourceSize.x * viewport.x, 1f / sourceSize.y * viewport.y));
-            cmd.SetComputeVectorParam(cs, "AdditionalParams", new Vector2(-1f / settings.thicknessModifier.value, settings.intensity.value));
-            cmd.SetComputeTextureParam(cs, kernel, "DepthTex", source);
-            cmd.SetComputeTextureParam(cs, kernel, "Occlusion", destination);
+            cmd.SetComputeFloatParams(cs, HDShaderIDs._InvThicknessTable, m_InvThicknessTable);
+            cmd.SetComputeFloatParams(cs, HDShaderIDs._SampleWeightTable, m_SampleWeightTable);
+            cmd.SetComputeVectorParam(cs, HDShaderIDs._InvSliceDimension, new Vector2(1f / sourceSize.x * viewport.x, 1f / sourceSize.y * viewport.y));
+            cmd.SetComputeVectorParam(cs, HDShaderIDs._AdditionalParams, new Vector2(-1f / settings.thicknessModifier.value, settings.intensity.value));
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._Depth, source);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._Occlusion, destination);
 
             // Calculate the thread group count and add a dispatch command with them.
             uint xsize, ysize, zsize;
@@ -401,7 +388,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         void PushUpsampleCommands(CommandBuffer cmd, Vector4 viewport, RTHandle lowResDepth, RTHandle interleavedAO, RTHandle highResDepth, RTHandle highResAO, RTHandle dest, AmbientOcclusion settings, Vector3 lowResDepthSize, Vector2 highResDepthSize)
         {
             var cs = m_Resources.aoUpsample;
-            int kernel = cs.FindKernel(highResAO == null ? "main_invert" : "main_blendout");
+            int kernel = cs.FindKernel(highResAO == null ? "KMainInvert" : "KMainBlendout");
 
             float stepSize = 1920f / lowResDepthSize.x;
             float bTolerance = 1f - Mathf.Pow(10f, settings.blurTolerance.value) * stepSize;
@@ -409,18 +396,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             float uTolerance = Mathf.Pow(10f, settings.upsampleTolerance.value);
             float noiseFilterWeight = 1f / (Mathf.Pow(10f, settings.noiseFilterTolerance.value) + uTolerance);
 
-            cmd.SetComputeVectorParam(cs, "InvLowResolution", new Vector2(1f / lowResDepthSize.x * viewport.x, 1f / lowResDepthSize.y * viewport.y));
-            cmd.SetComputeVectorParam(cs, "InvHighResolution", new Vector2(1f / highResDepthSize.x * viewport.x, 1f / highResDepthSize.y * viewport.y));
-            cmd.SetComputeVectorParam(cs, "AdditionalParams", new Vector4(noiseFilterWeight, stepSize, bTolerance, uTolerance));
+            cmd.SetComputeVectorParam(cs, HDShaderIDs._InvLowResolution, new Vector2(1f / lowResDepthSize.x * viewport.x, 1f / lowResDepthSize.y * viewport.y));
+            cmd.SetComputeVectorParam(cs, HDShaderIDs._InvHighResolution, new Vector2(1f / highResDepthSize.x * viewport.x, 1f / highResDepthSize.y * viewport.y));
+            cmd.SetComputeVectorParam(cs, HDShaderIDs._AdditionalParams, new Vector4(noiseFilterWeight, stepSize, bTolerance, uTolerance));
 
-            cmd.SetComputeTextureParam(cs, kernel, "LoResDB", lowResDepth);
-            cmd.SetComputeTextureParam(cs, kernel, "HiResDB", highResDepth);
-            cmd.SetComputeTextureParam(cs, kernel, "LoResAO1", interleavedAO);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._LoResDB, lowResDepth);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._HiResDB, highResDepth);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._LoResAO1, interleavedAO);
 
             if (highResAO != null)
-                cmd.SetComputeTextureParam(cs, kernel, "HiResAO", highResAO);
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._HiResAO, highResAO);
 
-            cmd.SetComputeTextureParam(cs, kernel, "AoResult", dest);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._AoResult, dest);
 
             int xcount = ((int)highResDepthSize.x + 17) / 16;
             int ycount = ((int)highResDepthSize.y + 17) / 16;

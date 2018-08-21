@@ -22,36 +22,33 @@
 #pragma warning(disable : 3568)
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
-//#pragma kernel main MAIN=main
-#pragma kernel main_invert MAIN=main_invert INVERT
-//#pragma kernel main_premin MAIN=main_premin COMBINE_LOWER_RESOLUTIONS
-#pragma kernel main_blendout MAIN=main_blendout BLEND_WITH_HIGHER_RESOLUTION
-//#pragma kernel main_premin_blendout MAIN=main_premin_blendout COMBINE_LOWER_RESOLUTIONS BLEND_WITH_HIGHER_RESOLUTION
+#pragma kernel KMainInvert MAIN=KMainInvert INVERT
+#pragma kernel KMainBlendout MAIN=KMainBlendout BLEND_WITH_HIGHER_RESOLUTION
 
 #include "CoreRP/ShaderLibrary/Common.hlsl"
 
-Texture2D<float> LoResDB; SamplerState samplerLoResDB;
-Texture2D<float> HiResDB; SamplerState samplerHiResDB;
-Texture2D<float> LoResAO1; SamplerState samplerLoResAO1;
+Texture2D<float> _LoResDB; SamplerState sampler_LoResDB;
+Texture2D<float> _HiResDB; SamplerState sampler_HiResDB;
+Texture2D<float> _LoResAO1; SamplerState sampler_LoResAO1;
 #ifdef COMBINE_LOWER_RESOLUTIONS
-Texture2D<float> LoResAO2; SamplerState samplerLoResAO2;
+Texture2D<float> _LoResAO2; SamplerState sampler_LoResAO2;
 #endif
 #ifdef BLEND_WITH_HIGHER_RESOLUTION
-Texture2D<float> HiResAO; SamplerState samplerHiResAO;
+Texture2D<float> _HiResAO; SamplerState sampler_HiResAO;
 #endif
 
-RWTexture2D<float> AoResult;
+RWTexture2D<float> _AoResult;
 
-CBUFFER_START(CB1)
-    float4 InvLowResolution;
-    float4 InvHighResolution;
-    float4 AdditionalParams;
+CBUFFER_START(cb0)
+    float4 _InvLowResolution;
+    float4 _InvHighResolution;
+    float4 _AdditionalParams;
 CBUFFER_END
 
-#define NoiseFilterStrength AdditionalParams.x
-#define StepSize AdditionalParams.y
-#define kBlurTolerance AdditionalParams.z
-#define kUpsampleTolerance AdditionalParams.w
+#define _NoiseFilterStrength _AdditionalParams.x
+#define _StepSize _AdditionalParams.y
+#define _BlurTolerance _AdditionalParams.z
+#define _UpsampleTolerance _AdditionalParams.w
 
 groupshared float DepthCache[256];
 groupshared float AOCache1[256];
@@ -59,10 +56,10 @@ groupshared float AOCache2[256];
 
 void PrefetchData(uint index, float2 uv)
 {
-    float4 AO1 = LoResAO1.Gather(samplerLoResAO1, uv);
+    float4 AO1 = _LoResAO1.Gather(sampler_LoResAO1, uv);
 
 #ifdef COMBINE_LOWER_RESOLUTIONS
-    AO1 = min(AO1, LoResAO2.Gather(samplerLoResAO2, uv));
+    AO1 = min(AO1, _LoResAO2.Gather(sampler_LoResAO2, uv));
 #endif
 
     AOCache1[index] = AO1.w;
@@ -70,7 +67,7 @@ void PrefetchData(uint index, float2 uv)
     AOCache1[index + 16] = AO1.x;
     AOCache1[index + 17] = AO1.y;
 
-    float4 ID = 1.0 / LoResDB.Gather(samplerLoResDB, uv);
+    float4 ID = 1.0 / _LoResDB.Gather(sampler_LoResDB, uv);
     DepthCache[index] = ID.w;
     DepthCache[index + 1] = ID.z;
     DepthCache[index + 16] = ID.x;
@@ -88,8 +85,8 @@ float SmartBlur(float a, float b, float c, float d, float e, bool Left, bool Mid
 
 bool CompareDeltas(float d1, float d2, float l1, float l2)
 {
-    float temp = d1 * d2 + StepSize;
-    return temp * temp > l1 * l2 * kBlurTolerance;
+    float temp = d1 * d2 + _StepSize;
+    return temp * temp > l1 * l2 * _BlurTolerance;
 }
 
 void BlurHorizontally(uint leftMostIndex)
@@ -117,12 +114,12 @@ void BlurHorizontally(uint leftMostIndex)
     float d45 = d5 - d4;
     float d56 = d6 - d5;
 
-    float l01 = d01 * d01 + StepSize;
-    float l12 = d12 * d12 + StepSize;
-    float l23 = d23 * d23 + StepSize;
-    float l34 = d34 * d34 + StepSize;
-    float l45 = d45 * d45 + StepSize;
-    float l56 = d56 * d56 + StepSize;
+    float l01 = d01 * d01 + _StepSize;
+    float l12 = d12 * d12 + _StepSize;
+    float l23 = d23 * d23 + _StepSize;
+    float l34 = d34 * d34 + _StepSize;
+    float l45 = d45 * d45 + _StepSize;
+    float l56 = d56 * d56 + _StepSize;
 
     bool c02 = CompareDeltas(d01, d12, l01, l12);
     bool c13 = CompareDeltas(d12, d23, l12, l23);
@@ -157,11 +154,11 @@ void BlurVertically(uint topMostIndex)
     float d34 = d4 - d3;
     float d45 = d5 - d4;
 
-    float l01 = d01 * d01 + StepSize;
-    float l12 = d12 * d12 + StepSize;
-    float l23 = d23 * d23 + StepSize;
-    float l34 = d34 * d34 + StepSize;
-    float l45 = d45 * d45 + StepSize;
+    float l01 = d01 * d01 + _StepSize;
+    float l12 = d12 * d12 + _StepSize;
+    float l23 = d23 * d23 + _StepSize;
+    float l34 = d34 * d34 + _StepSize;
+    float l45 = d45 * d45 + _StepSize;
 
     bool c02 = CompareDeltas(d01, d12, l01, l12);
     bool c13 = CompareDeltas(d12, d23, l12, l23);
@@ -182,25 +179,19 @@ void BlurVertically(uint topMostIndex)
 // buffer has a lot of small holes in it causing the low-res depth buffer to inaccurately represent it.
 float BilateralUpsample(float HiDepth, float HiAO, float4 LowDepths, float4 LowAO)
 {
-    float4 weights = float4(9, 3, 1, 3) / (abs(HiDepth - LowDepths) + kUpsampleTolerance);
-    float TotalWeight = dot(weights, 1) + NoiseFilterStrength;
-    float WeightedSum = dot(LowAO, weights) + NoiseFilterStrength;// * HiAO;
+    float4 weights = float4(9, 3, 1, 3) / (abs(HiDepth - LowDepths) + _UpsampleTolerance);
+    float TotalWeight = dot(weights, 1) + _NoiseFilterStrength;
+    float WeightedSum = dot(LowAO, weights) + _NoiseFilterStrength;// * HiAO;
     return HiAO * WeightedSum / TotalWeight;
 }
 
-#ifdef DISABLE_COMPUTE_SHADERS
-
-TRIVIAL_COMPUTE_KERNEL(MAIN)
-
-#else
-
 [numthreads(8, 8, 1)]
-void MAIN(uint3 Gid : SV_GroupID, uint GI : SV_GroupIndex, uint3 GTid : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID)
+void MAIN(uint GI : SV_GroupIndex, uint2 GTid : SV_GroupThreadID, uint2 DTid : SV_DispatchThreadID)
 {
     //
     // Load 4 pixels per thread into LDS to fill the 16x16 LDS cache with depth and AO
     //
-    PrefetchData(GTid.x << 1 | GTid.y << 5, int2(DTid.xy + GTid.xy - 2) * InvLowResolution.xy);
+    PrefetchData(GTid.x << 1 | GTid.y << 5, int2(DTid + GTid - 2) * _InvLowResolution.xy);
     GroupMemoryBarrierWithGroupSync();
 
     // Goal:  End up with a 9x9 patch that is blurred so we can upsample.  Blur radius is 2 pixels, so start with 13x13 area.
@@ -226,30 +217,28 @@ void MAIN(uint3 Gid : SV_GroupID, uint GI : SV_GroupIndex, uint3 GTid : SV_Group
     float4 LoSSAOs = float4(AOCache1[Idx0 + 16], AOCache1[Idx0 + 17], AOCache1[Idx0 + 1], AOCache1[Idx0]);
 
     // We work on a quad of pixels at once because then we can gather 4 each of high and low-res depth values
-    float2 UV0 = DTid.xy * InvLowResolution.xy;
-    float2 UV1 = DTid.xy * 2 * InvHighResolution.xy;
+    float2 UV0 = DTid * _InvLowResolution.xy;
+    float2 UV1 = DTid * 2 * _InvHighResolution.xy;
 
 #ifdef BLEND_WITH_HIGHER_RESOLUTION
-    float4 HiSSAOs = HiResAO.Gather(samplerHiResAO, UV1);
+    float4 HiSSAOs = _HiResAO.Gather(sampler_HiResAO, UV1);
 #else
     float4 HiSSAOs = 1.0;
 #endif
-    float4 LoDepths = LoResDB.Gather(samplerLoResDB, UV0);
-    float4 HiDepths = HiResDB.Gather(samplerHiResDB, UV1);
+    float4 LoDepths = _LoResDB.Gather(sampler_LoResDB, UV0);
+    float4 HiDepths = _HiResDB.Gather(sampler_HiResDB, UV1);
 
-    int2 OutST = DTid.xy << 1;
+    int2 OutST = DTid << 1;
 
 #ifdef INVERT
-    AoResult[OutST + int2(-1,  0)] = 1.0 - BilateralUpsample(HiDepths.x, HiSSAOs.x, LoDepths.xyzw, LoSSAOs.xyzw);
-    AoResult[OutST + int2( 0,  0)] = 1.0 - BilateralUpsample(HiDepths.y, HiSSAOs.y, LoDepths.yzwx, LoSSAOs.yzwx);
-    AoResult[OutST + int2( 0, -1)] = 1.0 - BilateralUpsample(HiDepths.z, HiSSAOs.z, LoDepths.zwxy, LoSSAOs.zwxy);
-    AoResult[OutST + int2(-1, -1)] = 1.0 - BilateralUpsample(HiDepths.w, HiSSAOs.w, LoDepths.wxyz, LoSSAOs.wxyz);
+    _AoResult[OutST + int2(-1,  0)] = 1.0 - BilateralUpsample(HiDepths.x, HiSSAOs.x, LoDepths.xyzw, LoSSAOs.xyzw);
+    _AoResult[OutST + int2( 0,  0)] = 1.0 - BilateralUpsample(HiDepths.y, HiSSAOs.y, LoDepths.yzwx, LoSSAOs.yzwx);
+    _AoResult[OutST + int2( 0, -1)] = 1.0 - BilateralUpsample(HiDepths.z, HiSSAOs.z, LoDepths.zwxy, LoSSAOs.zwxy);
+    _AoResult[OutST + int2(-1, -1)] = 1.0 - BilateralUpsample(HiDepths.w, HiSSAOs.w, LoDepths.wxyz, LoSSAOs.wxyz);
 #else
-    AoResult[OutST + int2(-1,  0)] = BilateralUpsample(HiDepths.x, HiSSAOs.x, LoDepths.xyzw, LoSSAOs.xyzw);
-    AoResult[OutST + int2( 0,  0)] = BilateralUpsample(HiDepths.y, HiSSAOs.y, LoDepths.yzwx, LoSSAOs.yzwx);
-    AoResult[OutST + int2( 0, -1)] = BilateralUpsample(HiDepths.z, HiSSAOs.z, LoDepths.zwxy, LoSSAOs.zwxy);
-    AoResult[OutST + int2(-1, -1)] = BilateralUpsample(HiDepths.w, HiSSAOs.w, LoDepths.wxyz, LoSSAOs.wxyz);
+    _AoResult[OutST + int2(-1,  0)] = BilateralUpsample(HiDepths.x, HiSSAOs.x, LoDepths.xyzw, LoSSAOs.xyzw);
+    _AoResult[OutST + int2( 0,  0)] = BilateralUpsample(HiDepths.y, HiSSAOs.y, LoDepths.yzwx, LoSSAOs.yzwx);
+    _AoResult[OutST + int2( 0, -1)] = BilateralUpsample(HiDepths.z, HiSSAOs.z, LoDepths.zwxy, LoSSAOs.zwxy);
+    _AoResult[OutST + int2(-1, -1)] = BilateralUpsample(HiDepths.w, HiSSAOs.w, LoDepths.wxyz, LoSSAOs.wxyz);
 #endif
 }
-
-#endif // DISABLE_COMPUTE_SHADERS

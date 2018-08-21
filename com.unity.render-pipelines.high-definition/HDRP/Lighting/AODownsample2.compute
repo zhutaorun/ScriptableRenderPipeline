@@ -22,41 +22,33 @@
 #pragma warning(disable : 3568)
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
-#pragma kernel main
+#pragma kernel KMain
 
 #include "CoreRP/ShaderLibrary/Common.hlsl"
 
-Texture2D<float> DS4x;
-RWTexture2D<float> DS8x;
-RWTexture2DArray<float> DS8xAtlas;
-RWTexture2D<float> DS16x;
-RWTexture2DArray<float> DS16xAtlas;
-
-#ifdef DISABLE_COMPUTE_SHADERS
-
-TRIVIAL_COMPUTE_KERNEL(main)
-
-#else
+Texture2D<float> _DS4x;
+RWTexture2D<float> _DS8x;
+RWTexture2DArray<float> _DS8xAtlas;
+RWTexture2D<float> _DS16x;
+RWTexture2DArray<float> _DS16xAtlas;
 
 [numthreads(8, 8, 1)]
-void main(uint3 Gid : SV_GroupID, uint GI : SV_GroupIndex, uint3 GTid : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID)
+void KMain(uint GI : SV_GroupIndex, uint2 DTid : SV_DispatchThreadID)
 {
-    float m1 = DS4x[DTid.xy << 1];
+    float m1 = _DS4x[DTid.xy << 1];
 
-    uint2 st = DTid.xy;
+    uint2 st = DTid;
     uint2 stAtlas = st >> 2;
     uint stSlice = ((st.x & 3) | (st.y << 2)) & 15;
-    DS8x[st] = m1;
-    DS8xAtlas[uint3(stAtlas, stSlice)] = m1;
+    _DS8x[st] = m1;
+    _DS8xAtlas[uint3(stAtlas, stSlice)] = m1;
 
     if ((GI & 011) == 0)
     {
-        uint2 st = DTid.xy >> 1;
+        uint2 st = DTid >> 1;
         uint2 stAtlas = st >> 2;
         uint stSlice = ((st.x & 3) | (st.y << 2)) & 15;
-        DS16x[st] = m1;
-        DS16xAtlas[uint3(stAtlas, stSlice)] = m1;
+        _DS16x[st] = m1;
+        _DS16xAtlas[uint3(stAtlas, stSlice)] = m1;
     }
 }
-
-#endif // DISABLE_COMPUTE_SHADERS

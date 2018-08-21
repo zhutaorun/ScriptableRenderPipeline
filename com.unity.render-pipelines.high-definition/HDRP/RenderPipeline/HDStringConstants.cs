@@ -426,10 +426,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _VignetteParams2                = Shader.PropertyToID("_VignetteParams2");
         public static readonly int _VignetteColor                  = Shader.PropertyToID("_VignetteColor");
         public static readonly int _VignetteMask                   = Shader.PropertyToID("_VignetteMask");
-        
+
         public static readonly int _DistortionParams1              = Shader.PropertyToID("_DistortionParams1");
         public static readonly int _DistortionParams2              = Shader.PropertyToID("_DistortionParams2");
-        
+
         public static readonly int _LogLut3D                       = Shader.PropertyToID("_LogLut3D");
         public static readonly int _LogLut3D_Params                = Shader.PropertyToID("_LogLut3D_Params");
         public static readonly int _ColorBalance                   = Shader.PropertyToID("_ColorBalance");
@@ -456,6 +456,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _ShoSegmentA                    = Shader.PropertyToID("_ShoSegmentA");
         public static readonly int _ShoSegmentB                    = Shader.PropertyToID("_ShoSegmentB");
 
-        public static readonly int _Params                         = Shader.PropertyToID("_Params");
+        public static readonly int _Depth                          = Shader.PropertyToID("_Depth");
+        public static readonly int _LinearZ                        = Shader.PropertyToID("_LinearZ");
+        public static readonly int _DS2x                           = Shader.PropertyToID("_DS2x");
+        public static readonly int _DS4x                           = Shader.PropertyToID("_DS4x");
+        public static readonly int _DS8x                           = Shader.PropertyToID("_DS8x");
+        public static readonly int _DS16x                          = Shader.PropertyToID("_DS16x");
+        public static readonly int _DS2xAtlas                      = Shader.PropertyToID("_DS2xAtlas");
+        public static readonly int _DS4xAtlas                      = Shader.PropertyToID("_DS4xAtlas");
+        public static readonly int _DS8xAtlas                      = Shader.PropertyToID("_DS8xAtlas");
+        public static readonly int _DS16xAtlas                     = Shader.PropertyToID("_DS16xAtlas");
+        public static readonly int _InvThicknessTable              = Shader.PropertyToID("_InvThicknessTable");
+        public static readonly int _SampleWeightTable              = Shader.PropertyToID("_SampleWeightTable");
+        public static readonly int _InvSliceDimension              = Shader.PropertyToID("_InvSliceDimension");
+        public static readonly int _AdditionalParams               = Shader.PropertyToID("_AdditionalParams");
+        public static readonly int _Occlusion                      = Shader.PropertyToID("_Occlusion");
+        public static readonly int _InvLowResolution               = Shader.PropertyToID("_InvLowResolution");
+        public static readonly int _InvHighResolution              = Shader.PropertyToID("_InvHighResolution");
+        public static readonly int _LoResDB                        = Shader.PropertyToID("_LoResDB");
+        public static readonly int _HiResDB                        = Shader.PropertyToID("_HiResDB");
+        public static readonly int _LoResAO1                       = Shader.PropertyToID("_LoResAO1");
+        public static readonly int _HiResAO                        = Shader.PropertyToID("_HiResAO");
+        public static readonly int _AoResult                       = Shader.PropertyToID("_AoResult");
     }
 }
