@@ -246,6 +246,10 @@ CBUFFER_START(UnityGlobal)
 
     // TAA Frame Index ranges from 0 to 7. This gives you two rotations per cycle.
     float4 _TaaFrameRotation;           // { sin(taaFrame * PI/2), cos(taaFrame * PI/2), 0, 0 }
+
+    // Current jitter strength (0 if TAA is disabled)
+    float4 _TaaJitterStrength;          // { x, y, x/width, y/height }
+
     // t = animateMaterials ? Time.realtimeSinceStartup : 0.
     float4 _Time;                       // { t/20, t, t*2, t*3 }
     float4 _LastTime;                   // { t/20, t, t*2, t*3 }

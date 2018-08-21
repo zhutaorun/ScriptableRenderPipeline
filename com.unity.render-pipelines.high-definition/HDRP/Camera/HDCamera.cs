@@ -18,7 +18,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Frustum   frustum;
         public Vector4[] frustumPlaneEquations;
         public Camera    camera;
-        public Vector2   taaJitter;
+        public Vector4   taaJitter;
         public int       taaFrameIndex;
         public Vector2   taaFrameRotation;
         public Vector4   zBufferParams;
@@ -197,7 +197,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 && antialiasing == HDAdditionalCameraData.AntialiasingMode.TemporalAntialiasing;
 
             if (!taaEnabled)
+            {
                 taaFrameIndex = 0;
+                taaJitter = Vector4.zero;
+            }
 
             var nonJitteredCameraProj = camera.projectionMatrix;
             var cameraProj = taaEnabled
@@ -425,16 +428,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             // The variance between 0 and the actual halton sequence values reveals noticeable
             // instability in Unity's shadow maps, so we avoid index 0.
-            taaJitter = new Vector2(
-                HaltonSequence.Get((taaFrameIndex & 1023) + 1, 2) - 0.5f,
-                HaltonSequence.Get((taaFrameIndex & 1023) + 1, 3) - 0.5f
-            );
+            float jitterX = HaltonSequence.Get((taaFrameIndex & 1023) + 1, 2) - 0.5f;
+            float jitterY = HaltonSequence.Get((taaFrameIndex & 1023) + 1, 3) - 0.5f;
+            taaJitter = new Vector4(jitterX, jitterY, jitterX / camera.pixelWidth, jitterY / camera.pixelHeight);
 
             const int kMaxSampleCount = 256;
             if (++taaFrameIndex >= kMaxSampleCount)
                 taaFrameIndex = 0;
 
-            taaJitter *= 1f;
             Matrix4x4 proj;
 
             if (camera.orthographic)
@@ -625,6 +626,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalVector(HDShaderIDs.unity_OrthoParams,          unity_OrthoParams);
             cmd.SetGlobalVector(HDShaderIDs._ScreenParams,              screenParams);
             cmd.SetGlobalVector(HDShaderIDs._TaaFrameRotation,          taaFrameRotation);
+            cmd.SetGlobalVector(HDShaderIDs._TaaJitterStrength,         taaJitter);
             cmd.SetGlobalVectorArray(HDShaderIDs._FrustumPlanes,        frustumPlaneEquations);
 
             // Time is also a part of the UnityPerView CBuffer.

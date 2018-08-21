@@ -454,7 +454,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 CopyTemporalAntialiasingHistory(cmd, camera, source, nextHistory);
             }
 
-            cmd.SetComputeVectorParam(cs, HDShaderIDs._Params, new Vector4(camera.taaJitter.x / camera.actualWidth, camera.taaJitter.y / camera.actualHeight, 0f, 0f));
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputHistoryTexture, prevHistory);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DepthTexture, depthBuffer);

@@ -7,12 +7,12 @@
 #pragma kernel KTAA_Ortho     MAIN=KTAA_Ortho       ORTHOGRAPHIC
 #pragma kernel KCopyHistory
 
-#define DEJITTER        1
-#define HDR_MAPUNMAP    0
-#define CLIP_AABB       1
-#define FEEDBACK_MIN    0.96
-#define FEEDBACK_MAX    0.91
-#define SHARPEN         lerp(0.25, 0.1, HDR_MAPUNMAP)
+#define HDR_MAPUNMAP        0
+#define CLIP_AABB           1
+#define FEEDBACK_MIN        0.96
+#define FEEDBACK_MAX        0.91
+#define SHARPEN             0
+#define SHARPEN_STRENGTH    1.0
 
 #define CLAMP_MAX       65472.0 // HALF_MAX minus one (2 - 2^-9) * 2^15
 
@@ -31,10 +31,6 @@ RW_TEXTURE2D(float4, _OutputHistoryTexture);
 RW_TEXTURE2D(float4, _OutputTexture);
 
 SAMPLER(sampler_LinearClamp);
-
-CBUFFER_START(cb0)
-    float4 _Params;         // xy: jitter (NDC), zw: unused
-CBUFFER_END
 
 float3 Fetch(TEXTURE2D(tex), float2 coords, float2 offset)
 {
@@ -101,7 +97,7 @@ void MAIN(uint2 dispatchThreadId : SV_DispatchThreadID)
     
     PositionInputs posInputs = GetPositionInput(float2(dispatchThreadId), _ScreenSize.zw, uint2(8u, 8u));
     
-    float2 jitter = _Params.xy;
+    float2 jitter = _TaaJitterStrength.zw;
 
     #if defined(ORTHOGRAPHIC)
     // Don't dilate in ortho
@@ -114,11 +110,7 @@ void MAIN(uint2 dispatchThreadId : SV_DispatchThreadID)
     DecodeVelocity(LOAD_TEXTURE2D(_VelocityTexture, closest), velocity);
     float velocityLength = length(velocity);
 
-    #if DEJITTER
     float2 uv = posInputs.positionNDC - jitter;
-    #else
-    float2 uv = posInputs.positionNDC;
-    #endif
 
     float3 color = Fetch(_InputTexture, uv, 0.0);
     float3 history = Fetch(_InputHistoryTexture, posInputs.positionNDC - velocity, 0.0);
@@ -129,10 +121,16 @@ void MAIN(uint2 dispatchThreadId : SV_DispatchThreadID)
     float3 corners = 4.0 * (topLeft + bottomRight) - 2.0 * color;
 
     // Sharpen output
-    //color += (color - (corners * 0.166667)) * 2.718282 * SHARPEN;
-    //color = clamp(color, 0.0, CLAMP_MAX);
+    #if SHARPEN
+    float3 topRight = Fetch(_InputTexture, uv, float2(0.5, -0.5));
+    float3 bottomLeft = Fetch(_InputTexture, uv, float2(-0.5, 0.5));
+    float3 blur = (topLeft + topRight + bottomLeft + bottomRight) * 0.25;
+    color += (color - blur) * SHARPEN_STRENGTH;
+    #endif
+    
+    color = clamp(color, 0.0, CLAMP_MAX);
 
-    float3 average = Map((corners + color) * 0.142857);
+    float3 average = Map((corners + color) / 7.0);
 
     topLeft = Map(topLeft);
     bottomRight = Map(bottomRight);

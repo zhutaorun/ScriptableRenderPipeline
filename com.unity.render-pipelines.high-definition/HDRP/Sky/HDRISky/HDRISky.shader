@@ -39,7 +39,7 @@ Shader "Hidden/HDRenderPipeline/Sky/HDRISky"
     float4 RenderSky(Varyings input)
     {
         // Points towards the camera
-        float3 viewDirWS = normalize(mul(float3(input.positionCS.xy, 1.0), (float3x3)_PixelCoordToViewDirWS));
+        float3 viewDirWS = normalize(mul(float3(input.positionCS.xy + _TaaJitterStrength.xy, 1.0), (float3x3)_PixelCoordToViewDirWS));
         // Reverse it to point into the scene
         float3 dir = -viewDirWS;
 

@@ -239,6 +239,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _PrevViewProjMatrix = Shader.PropertyToID("_PrevViewProjMatrix");
         public static readonly int _FrustumPlanes = Shader.PropertyToID("_FrustumPlanes");
         public static readonly int _TaaFrameRotation = Shader.PropertyToID("_TaaFrameRotation");
+        public static readonly int _TaaJitterStrength = Shader.PropertyToID("_TaaJitterStrength");
 
         public static readonly int _ViewMatrixStereo = Shader.PropertyToID("_ViewMatrixStereo");
         public static readonly int _ViewProjMatrixStereo = Shader.PropertyToID("_ViewProjMatrixStereo");
