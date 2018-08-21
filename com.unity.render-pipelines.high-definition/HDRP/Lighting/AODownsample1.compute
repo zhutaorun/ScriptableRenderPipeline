@@ -28,9 +28,9 @@
 #pragma kernel KMain
 
 RWTexture2D<float> _LinearZ;
-RWTexture2D<float2> _DS2x;
+RWTexture2D<float> _DS2x;
 RWTexture2DArray<float> _DS2xAtlas;
-RWTexture2D<float2> _DS4x;
+RWTexture2D<float> _DS4x;
 RWTexture2DArray<float> _DS4xAtlas;
 
 Texture2D<float> _Depth;
