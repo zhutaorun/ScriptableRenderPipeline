@@ -84,6 +84,9 @@ struct LightData
     float3 forward;
     int shadowIndex;
     int contactShadowIndex;
+    float2 unused0;
+    int flagIndex;
+    int flagCount;
     float shadowDimmer;
     float4 shadowMaskSelector;
     int nonLightmappedOnly;

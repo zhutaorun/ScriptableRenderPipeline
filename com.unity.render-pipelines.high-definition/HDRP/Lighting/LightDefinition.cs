@@ -77,6 +77,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3 forward;
         public int shadowIndex; // -1 if unused
         public int contactShadowIndex; // -1 if unused
+
+        public Vector2 unused0;
+        public int flagIndex;
+        public int flagCount;
+
         public float shadowDimmer;
 
         public Vector4 shadowMaskSelector; // Use with ShadowMask feature
