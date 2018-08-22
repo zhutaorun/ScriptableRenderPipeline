@@ -86,7 +86,7 @@ Shader "LightweightPipeline/Standard (Simple Lighting)"
             // Lightweight Pipeline keywords
             #pragma multi_compile_vertex _ _VERTEX_LIGHTS
 
-            #pragma multi_compile_fragmnet _ _MIXED_LIGHTING_SUBTRACTIVE
+            #pragma multi_compile_fragment _ _MIXED_LIGHTING_SUBTRACTIVE
             #pragma multi_compile_fragment _ _LOCAL_SHADOWS_ENABLED
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
 
