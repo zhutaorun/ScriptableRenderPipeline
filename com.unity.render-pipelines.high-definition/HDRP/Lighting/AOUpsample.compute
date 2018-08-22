@@ -27,17 +27,25 @@
 
 #include "CoreRP/ShaderLibrary/Common.hlsl"
 
-Texture2D<float> _LoResDB; SamplerState sampler_LoResDB;
-Texture2D<float> _HiResDB; SamplerState sampler_HiResDB;
-Texture2D<float> _LoResAO1; SamplerState sampler_LoResAO1;
+TEXTURE2D(_LoResDB);
+TEXTURE2D(_HiResDB);
+TEXTURE2D(_LoResAO1);
+
+SAMPLER(sampler_LoResDB);
+SAMPLER(sampler_HiResDB);
+SAMPLER(sampler_LoResAO1);
+
 #ifdef COMBINE_LOWER_RESOLUTIONS
-Texture2D<float> _LoResAO2; SamplerState sampler_LoResAO2;
-#endif
-#ifdef BLEND_WITH_HIGHER_RESOLUTION
-Texture2D<float> _HiResAO; SamplerState sampler_HiResAO;
+TEXTURE2D(_LoResAO2);
+SAMPLER(sampler_LoResAO2);
 #endif
 
-RWTexture2D<float> _AoResult;
+#ifdef BLEND_WITH_HIGHER_RESOLUTION
+TEXTURE2D(_HiResAO);
+SAMPLER(sampler_HiResAO);
+#endif
+
+RW_TEXTURE2D(float, _AoResult);
 
 CBUFFER_START(cb0)
     float4 _InvLowResolution;
@@ -46,32 +54,32 @@ CBUFFER_START(cb0)
 CBUFFER_END
 
 #define _NoiseFilterStrength _AdditionalParams.x
-#define _StepSize _AdditionalParams.y
-#define _BlurTolerance _AdditionalParams.z
-#define _UpsampleTolerance _AdditionalParams.w
+#define _StepSize            _AdditionalParams.y
+#define _BlurTolerance       _AdditionalParams.z
+#define _UpsampleTolerance   _AdditionalParams.w
 
-groupshared float DepthCache[256];
-groupshared float AOCache1[256];
-groupshared float AOCache2[256];
+groupshared float gs_depthCache[256];
+groupshared float gs_aoCache1[256];
+groupshared float gs_aoCache2[256];
 
 void PrefetchData(uint index, float2 uv)
 {
-    float4 AO1 = _LoResAO1.Gather(sampler_LoResAO1, uv);
+    float4 AO1 = GATHER_TEXTURE2D(_LoResAO1, sampler_LoResAO1, uv);
 
 #ifdef COMBINE_LOWER_RESOLUTIONS
-    AO1 = min(AO1, _LoResAO2.Gather(sampler_LoResAO2, uv));
+    AO1 = min(AO1, GATHER_TEXTURE2D(_LoResAO2, sampler_LoResAO2, uv));
 #endif
 
-    AOCache1[index] = AO1.w;
-    AOCache1[index + 1] = AO1.z;
-    AOCache1[index + 16] = AO1.x;
-    AOCache1[index + 17] = AO1.y;
+    gs_aoCache1[index] = AO1.w;
+    gs_aoCache1[index + 1] = AO1.z;
+    gs_aoCache1[index + 16] = AO1.x;
+    gs_aoCache1[index + 17] = AO1.y;
 
-    float4 ID = 1.0 / _LoResDB.Gather(sampler_LoResDB, uv);
-    DepthCache[index] = ID.w;
-    DepthCache[index + 1] = ID.z;
-    DepthCache[index + 16] = ID.x;
-    DepthCache[index + 17] = ID.y;
+    float4 ID = 1.0 / GATHER_TEXTURE2D(_LoResDB, sampler_LoResDB, uv);
+    gs_depthCache[index] = ID.w;
+    gs_depthCache[index + 1] = ID.z;
+    gs_depthCache[index + 16] = ID.x;
+    gs_depthCache[index + 17] = ID.y;
 }
 
 float SmartBlur(float a, float b, float c, float d, float e, bool Left, bool Middle, bool Right)
@@ -91,21 +99,21 @@ bool CompareDeltas(float d1, float d2, float l1, float l2)
 
 void BlurHorizontally(uint leftMostIndex)
 {
-    float a0 = AOCache1[leftMostIndex];
-    float a1 = AOCache1[leftMostIndex + 1];
-    float a2 = AOCache1[leftMostIndex + 2];
-    float a3 = AOCache1[leftMostIndex + 3];
-    float a4 = AOCache1[leftMostIndex + 4];
-    float a5 = AOCache1[leftMostIndex + 5];
-    float a6 = AOCache1[leftMostIndex + 6];
+    float a0 = gs_aoCache1[leftMostIndex];
+    float a1 = gs_aoCache1[leftMostIndex + 1];
+    float a2 = gs_aoCache1[leftMostIndex + 2];
+    float a3 = gs_aoCache1[leftMostIndex + 3];
+    float a4 = gs_aoCache1[leftMostIndex + 4];
+    float a5 = gs_aoCache1[leftMostIndex + 5];
+    float a6 = gs_aoCache1[leftMostIndex + 6];
 
-    float d0 = DepthCache[leftMostIndex];
-    float d1 = DepthCache[leftMostIndex + 1];
-    float d2 = DepthCache[leftMostIndex + 2];
-    float d3 = DepthCache[leftMostIndex + 3];
-    float d4 = DepthCache[leftMostIndex + 4];
-    float d5 = DepthCache[leftMostIndex + 5];
-    float d6 = DepthCache[leftMostIndex + 6];
+    float d0 = gs_depthCache[leftMostIndex];
+    float d1 = gs_depthCache[leftMostIndex + 1];
+    float d2 = gs_depthCache[leftMostIndex + 2];
+    float d3 = gs_depthCache[leftMostIndex + 3];
+    float d4 = gs_depthCache[leftMostIndex + 4];
+    float d5 = gs_depthCache[leftMostIndex + 5];
+    float d6 = gs_depthCache[leftMostIndex + 6];
 
     float d01 = d1 - d0;
     float d12 = d2 - d1;
@@ -127,26 +135,26 @@ void BlurHorizontally(uint leftMostIndex)
     bool c35 = CompareDeltas(d34, d45, l34, l45);
     bool c46 = CompareDeltas(d45, d56, l45, l56);
 
-    AOCache2[leftMostIndex] = SmartBlur(a0, a1, a2, a3, a4, c02, c13, c24);
-    AOCache2[leftMostIndex + 1] = SmartBlur(a1, a2, a3, a4, a5, c13, c24, c35);
-    AOCache2[leftMostIndex + 2] = SmartBlur(a2, a3, a4, a5, a6, c24, c35, c46);
+    gs_aoCache2[leftMostIndex] = SmartBlur(a0, a1, a2, a3, a4, c02, c13, c24);
+    gs_aoCache2[leftMostIndex + 1] = SmartBlur(a1, a2, a3, a4, a5, c13, c24, c35);
+    gs_aoCache2[leftMostIndex + 2] = SmartBlur(a2, a3, a4, a5, a6, c24, c35, c46);
 }
 
 void BlurVertically(uint topMostIndex)
 {
-    float a0 = AOCache2[topMostIndex];
-    float a1 = AOCache2[topMostIndex + 16];
-    float a2 = AOCache2[topMostIndex + 32];
-    float a3 = AOCache2[topMostIndex + 48];
-    float a4 = AOCache2[topMostIndex + 64];
-    float a5 = AOCache2[topMostIndex + 80];
+    float a0 = gs_aoCache2[topMostIndex];
+    float a1 = gs_aoCache2[topMostIndex + 16];
+    float a2 = gs_aoCache2[topMostIndex + 32];
+    float a3 = gs_aoCache2[topMostIndex + 48];
+    float a4 = gs_aoCache2[topMostIndex + 64];
+    float a5 = gs_aoCache2[topMostIndex + 80];
 
-    float d0 = DepthCache[topMostIndex + 2];
-    float d1 = DepthCache[topMostIndex + 18];
-    float d2 = DepthCache[topMostIndex + 34];
-    float d3 = DepthCache[topMostIndex + 50];
-    float d4 = DepthCache[topMostIndex + 66];
-    float d5 = DepthCache[topMostIndex + 82];
+    float d0 = gs_depthCache[topMostIndex + 2];
+    float d1 = gs_depthCache[topMostIndex + 18];
+    float d2 = gs_depthCache[topMostIndex + 34];
+    float d3 = gs_depthCache[topMostIndex + 50];
+    float d4 = gs_depthCache[topMostIndex + 66];
+    float d5 = gs_depthCache[topMostIndex + 82];
 
     float d01 = d1 - d0;
     float d12 = d2 - d1;
@@ -168,8 +176,8 @@ void BlurVertically(uint topMostIndex)
     float aoResult1 = SmartBlur(a0, a1, a2, a3, a4, c02, c13, c24);
     float aoResult2 = SmartBlur(a1, a2, a3, a4, a5, c13, c24, c35);
 
-    AOCache1[topMostIndex] = aoResult1;
-    AOCache1[topMostIndex + 16] = aoResult2;
+    gs_aoCache1[topMostIndex] = aoResult1;
+    gs_aoCache1[topMostIndex + 16] = aoResult2;
 }
 
 // We essentially want 5 weights:  4 for each low-res pixel and 1 to blend in when none of the 4 really
@@ -214,19 +222,19 @@ void MAIN(uint GI : SV_GroupIndex, uint2 GTid : SV_GroupThreadID, uint2 DTid : S
     // Bilateral upsample
     //
     uint Idx0 = GTid.x + GTid.y * 16;
-    float4 LoSSAOs = float4(AOCache1[Idx0 + 16], AOCache1[Idx0 + 17], AOCache1[Idx0 + 1], AOCache1[Idx0]);
+    float4 LoSSAOs = float4(gs_aoCache1[Idx0 + 16], gs_aoCache1[Idx0 + 17], gs_aoCache1[Idx0 + 1], gs_aoCache1[Idx0]);
 
     // We work on a quad of pixels at once because then we can gather 4 each of high and low-res depth values
     float2 UV0 = DTid * _InvLowResolution.xy;
     float2 UV1 = DTid * 2 * _InvHighResolution.xy;
 
 #ifdef BLEND_WITH_HIGHER_RESOLUTION
-    float4 HiSSAOs = _HiResAO.Gather(sampler_HiResAO, UV1);
+    float4 HiSSAOs = GATHER_TEXTURE2D(_HiResAO, sampler_HiResAO, UV1);
 #else
     float4 HiSSAOs = 1.0;
 #endif
-    float4 LoDepths = _LoResDB.Gather(sampler_LoResDB, UV0);
-    float4 HiDepths = _HiResDB.Gather(sampler_HiResDB, UV1);
+    float4 LoDepths = GATHER_TEXTURE2D(_LoResDB, sampler_LoResDB, UV0);
+    float4 HiDepths = GATHER_TEXTURE2D(_HiResDB, sampler_HiResDB, UV1);
 
     int2 OutST = DTid << 1;
 

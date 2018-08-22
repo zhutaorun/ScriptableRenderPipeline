@@ -26,11 +26,12 @@
 
 #include "CoreRP/ShaderLibrary/Common.hlsl"
 
-Texture2D<float> _DS4x;
-RWTexture2D<float> _DS8x;
-RWTexture2DArray<float> _DS8xAtlas;
-RWTexture2D<float> _DS16x;
-RWTexture2DArray<float> _DS16xAtlas;
+TEXTURE2D(_DS4x);
+
+RW_TEXTURE2D(float, _DS8x);
+RW_TEXTURE2D_ARRAY(float, _DS8xAtlas);
+RW_TEXTURE2D(float, _DS16x);
+RW_TEXTURE2D_ARRAY(float, _DS16xAtlas);
 
 [numthreads(8, 8, 1)]
 void KMain(uint GI : SV_GroupIndex, uint2 DTid : SV_DispatchThreadID)

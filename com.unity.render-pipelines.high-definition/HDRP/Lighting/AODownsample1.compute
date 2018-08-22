@@ -27,13 +27,13 @@
 
 #pragma kernel KMain
 
-RWTexture2D<float> _LinearZ;
-RWTexture2D<float> _DS2x;
-RWTexture2DArray<float> _DS2xAtlas;
-RWTexture2D<float> _DS4x;
-RWTexture2DArray<float> _DS4xAtlas;
+RW_TEXTURE2D(float, _LinearZ);
+RW_TEXTURE2D(float, _DS2x);
+RW_TEXTURE2D_ARRAY(float, _DS2xAtlas);
+RW_TEXTURE2D(float, _DS4x);
+RW_TEXTURE2D_ARRAY(float, _DS4xAtlas);
 
-Texture2D<float> _Depth;
+TEXTURE2D(_Depth);
 
 float Linearize(uint2 st)
 {
@@ -48,23 +48,23 @@ float Linearize(uint2 st)
     return dist;
 }
 
-groupshared float g_CacheW[256];
+groupshared float gs_cacheW[256];
 
 [numthreads(8, 8, 1)]
 void KMain(uint2 Gid : SV_GroupID, uint GI : SV_GroupIndex, uint2 GTid : SV_GroupThreadID, uint2 DTid : SV_DispatchThreadID)
 {
     uint2 startST = Gid << 4 | GTid;
     uint destIdx = GTid.y << 4 | GTid.x;
-    g_CacheW[destIdx +  0 ] = Linearize(startST | uint2(0, 0));
-    g_CacheW[destIdx +  8 ] = Linearize(startST | uint2(8, 0));
-    g_CacheW[destIdx + 128] = Linearize(startST | uint2(0, 8));
-    g_CacheW[destIdx + 136] = Linearize(startST | uint2(8, 8));
+    gs_cacheW[destIdx +  0 ] = Linearize(startST | uint2(0, 0));
+    gs_cacheW[destIdx +  8 ] = Linearize(startST | uint2(8, 0));
+    gs_cacheW[destIdx + 128] = Linearize(startST | uint2(0, 8));
+    gs_cacheW[destIdx + 136] = Linearize(startST | uint2(8, 8));
 
     GroupMemoryBarrierWithGroupSync();
 
     uint ldsIndex = (GTid.x << 1) | (GTid.y << 5);
 
-    float w1 = g_CacheW[ldsIndex];
+    float w1 = gs_cacheW[ldsIndex];
 
     uint2 st = DTid;
     uint slice = ((st.x & 3) | (st.y << 2)) & 15;

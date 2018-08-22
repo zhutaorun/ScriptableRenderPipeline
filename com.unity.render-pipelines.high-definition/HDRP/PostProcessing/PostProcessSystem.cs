@@ -593,6 +593,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         void DoColorGrading(CommandBuffer cmd, ComputeShader cs, int kernel)
         {
             // TODO: User lut support
+            // TODO: Curves
             //var lut = VolumeManager.instance.stack.GetComponent<ColorLookup>();
             var tonemapping = VolumeManager.instance.stack.GetComponent<Tonemapping>();
             var whiteBalance = VolumeManager.instance.stack.GetComponent<WhiteBalance>();
