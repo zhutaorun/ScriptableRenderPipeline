@@ -282,34 +282,34 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return rt ?? m_EmptyExposureTexture;
         }
 
-        bool IsExposureFixed(CameraControls settings = null)
+        bool IsExposureFixed()
         {
-            if (settings == null)
-                settings = VolumeManager.instance.stack.GetComponent<CameraControls>();
+            var settings = VolumeManager.instance.stack.GetComponent<Exposure>();
 
-            return settings.exposureMode == ExposureMode.Fixed
-                || (settings.exposureMode == ExposureMode.UseCameraSettings && settings.cameraShootingMode == ShootingMode.Manual);
+            return settings.mode == ExposureMode.Fixed
+                || settings.mode == ExposureMode.UsePhysicalCamera;
         }
 
         void DoFixedExposure(CommandBuffer cmd, HDCamera camera)
         {
             var cs = m_Resources.exposureCS;
-            var settings = VolumeManager.instance.stack.GetComponent<CameraControls>();
+            var cameraSettings = VolumeManager.instance.stack.GetComponent<PhysicalCamera>();
+            var exposureSettings = VolumeManager.instance.stack.GetComponent<Exposure>();
             
             RTHandle prevExposure, nextExposure;
             GrabExposureHistoryTextures(camera, out prevExposure, out nextExposure);
 
             int kernel = 0;
 
-            if (settings.exposureMode == ExposureMode.Fixed)
+            if (exposureSettings.mode == ExposureMode.Fixed)
             {
                 kernel = cs.FindKernel("KFixedExposure");
-                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(settings.fixedExposure, 0f, 0f, 0f));
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(exposureSettings.fixedExposure, 0f, 0f, 0f));
             }
-            else if (settings.exposureMode == ExposureMode.UseCameraSettings && settings.cameraShootingMode == ShootingMode.Manual)
+            else if (exposureSettings.mode == ExposureMode.UsePhysicalCamera)
             {
                 kernel = cs.FindKernel("KManualCameraExposure");
-                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(settings.exposureCompensation, settings.lensAperture, settings.cameraShutterSpeed, settings.cameraIso));
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(exposureSettings.compensation, cameraSettings.aperture, cameraSettings.shutterSpeed, cameraSettings.iso));
             }
 
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._PreviousExposureTexture, prevExposure);
@@ -373,30 +373,31 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_ExposureCurveTexture.Apply();
         }
 
+        // TODO: Handle light buffer as a source for average luminance
         void DoDynamicExposure(CommandBuffer cmd, HDCamera camera, RTHandle colorBuffer, RTHandle lightingBuffer)
         {
             var cs = m_Resources.exposureCS;
-            var settings = VolumeManager.instance.stack.GetComponent<CameraControls>();
+            var exposureSettings = VolumeManager.instance.stack.GetComponent<Exposure>();
 
             RTHandle prevExposure, nextExposure;
             GrabExposureHistoryTextures(camera, out prevExposure, out nextExposure);
 
             // Setup variants
-            var adaptationMode = settings.adaptationMode.value;
+            var adaptationMode = exposureSettings.adaptationMode.value;
 
             if (!Application.isPlaying || m_ResetHistory)
                 adaptationMode = AdaptationMode.Fixed;
-            
-            m_ExposureVariants[0] = (int)settings.luminanceSource.value;
-            m_ExposureVariants[1] = (int)settings.exposureMeteringMode.value;
+
+            m_ExposureVariants[0] = 1; // (int)exposureSettings.luminanceSource.value;
+            m_ExposureVariants[1] = (int)exposureSettings.meteringMode.value;
             m_ExposureVariants[2] = (int)adaptationMode;
             m_ExposureVariants[3] = 0;
 
             // Pre-pass
-            // TODO: Handle light buffer as a source for average luminance
-            var sourceTex = settings.luminanceSource == LuminanceSource.LightingBuffer
-                ? lightingBuffer
-                : colorBuffer;
+            //var sourceTex = exposureSettings.luminanceSource == LuminanceSource.LightingBuffer
+            //    ? lightingBuffer
+            //    : colorBuffer;
+            var sourceTex = colorBuffer;
 
             int kernel = cs.FindKernel("KPrePass");
             cmd.SetComputeIntParams(cs, HDShaderIDs._Variants, m_ExposureVariants);
@@ -414,21 +415,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.DispatchCompute(cs, kernel, 32, 32, 1);
 
             // Reduction: 2nd pass (32 -> 1) + evaluate exposure
-            if (settings.exposureMode == ExposureMode.Automatic)
+            if (exposureSettings.mode == ExposureMode.Automatic)
             {
-                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(settings.exposureCompensation, settings.exposureLimitMin, settings.exposureLimitMax, 0f));
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(exposureSettings.compensation, exposureSettings.limitMin, exposureSettings.limitMax, 0f));
                 m_ExposureVariants[3] = 1;
             }
-            else if (settings.exposureMode == ExposureMode.CurveMapping)
+            else if (exposureSettings.mode == ExposureMode.CurveMapping)
             {
                 float min, max;
-                PrepareExposureCurveData(settings.exposureCurveMap.value, out min, out max);
+                PrepareExposureCurveData(exposureSettings.curveMap.value, out min, out max);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ExposureCurveTexture, m_ExposureCurveTexture);
-                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(settings.exposureCompensation, min, max, 0f));
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(exposureSettings.compensation, min, max, 0f));
                 m_ExposureVariants[3] = 2;
             }
 
-            cmd.SetComputeVectorParam(cs, HDShaderIDs._AdaptationParams, new Vector4(settings.adaptationSpeedLightToDark, settings.adaptationSpeedDarkToLight, 0f, 0f));
+            cmd.SetComputeVectorParam(cs, HDShaderIDs._AdaptationParams, new Vector4(exposureSettings.adaptationSpeedLightToDark, exposureSettings.adaptationSpeedDarkToLight, 0f, 0f));
             cmd.SetComputeIntParams(cs, HDShaderIDs._Variants, m_ExposureVariants);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._PreviousExposureTexture, prevExposure);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, m_TempTexture32);
