@@ -236,6 +236,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _ScreenSize = Shader.PropertyToID("_ScreenSize");
         public static readonly int _ScreenParams = Shader.PropertyToID("_ScreenParams");
         public static readonly int _ScreenToTargetScale = Shader.PropertyToID("_ScreenToTargetScale");
+        public static readonly int _ScreenToTargetScaleHistory = Shader.PropertyToID("_ScreenToTargetScaleHistory");
         public static readonly int _PrevViewProjMatrix = Shader.PropertyToID("_PrevViewProjMatrix");
         public static readonly int _FrustumPlanes = Shader.PropertyToID("_FrustumPlanes");
         public static readonly int _TaaFrameRotation = Shader.PropertyToID("_TaaFrameRotation");

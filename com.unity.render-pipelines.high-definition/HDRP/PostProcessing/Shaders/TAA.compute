@@ -32,9 +32,13 @@ RW_TEXTURE2D(float4, _OutputTexture);
 
 SAMPLER(sampler_LinearClamp);
 
-float3 Fetch(TEXTURE2D(tex), float2 coords, float2 offset)
+CBUFFER_START(cb0)
+    float4 _ScreenToTargetScaleHistory;
+CBUFFER_END
+
+float3 Fetch(TEXTURE2D(tex), float2 coords, float2 offset, float2 scale)
 {
-    float2 uv = (coords + offset * _ScreenSize.zw) * _ScreenToTargetScale.xy;
+    float2 uv = (coords + offset * _ScreenSize.zw) * scale;
     return SAMPLE_TEXTURE2D_LOD(tex, sampler_LinearClamp, uv, 0).xyz;
 }
 
@@ -112,18 +116,18 @@ void MAIN(uint2 dispatchThreadId : SV_DispatchThreadID)
 
     float2 uv = posInputs.positionNDC - jitter;
 
-    float3 color = Fetch(_InputTexture, uv, 0.0);
-    float3 history = Fetch(_InputHistoryTexture, posInputs.positionNDC - velocity, 0.0);
+    float3 color = Fetch(_InputTexture, uv, 0.0, _ScreenToTargetScale.xy);
+    float3 history = Fetch(_InputHistoryTexture, posInputs.positionNDC - velocity, 0.0, _ScreenToTargetScaleHistory.xy);
 
-    float3 topLeft = Fetch(_InputTexture, uv, -0.5);
-    float3 bottomRight = Fetch(_InputTexture, uv, 0.5);
+    float3 topLeft = Fetch(_InputTexture, uv, -0.5, _ScreenToTargetScale.xy);
+    float3 bottomRight = Fetch(_InputTexture, uv, 0.5, _ScreenToTargetScale.xy);
 
     float3 corners = 4.0 * (topLeft + bottomRight) - 2.0 * color;
 
     // Sharpen output
     #if SHARPEN
-    float3 topRight = Fetch(_InputTexture, uv, float2(0.5, -0.5));
-    float3 bottomLeft = Fetch(_InputTexture, uv, float2(-0.5, 0.5));
+    float3 topRight = Fetch(_InputTexture, uv, float2(0.5, -0.5), _ScreenToTargetScale.xy);
+    float3 bottomLeft = Fetch(_InputTexture, uv, float2(-0.5, 0.5), _ScreenToTargetScale.xy);
     float3 blur = (topLeft + topRight + bottomLeft + bottomRight) * 0.25;
     color += (color - blur) * SHARPEN_STRENGTH;
     #endif
