@@ -174,7 +174,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
 
                 // Temporal anti-aliasing goes first
-                if (camera.antialiasing == AntialiasingMode.TemporalAntialiasing)
+                if (camera.antialiasing == AntialiasingMode.TemporalAntialiasing && camera.camera.cameraType == CameraType.Game)
                 {
                     using (new ProfilingSample(cmd, "Temporal Anti-aliasing", CustomSamplerId.TemporalAntialiasing.GetSampler()))
                     {
