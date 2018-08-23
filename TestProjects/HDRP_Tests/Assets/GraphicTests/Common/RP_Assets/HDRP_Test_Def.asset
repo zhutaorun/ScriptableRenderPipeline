@@ -85,13 +85,14 @@ MonoBehaviour:
     shadowInitParams:
       shadowAtlasWidth: 4096
       shadowAtlasHeight: 4096
+      shadowMap16Bit: 0
       maxPointLightShadows: 6
       maxSpotLightShadows: 12
       maxDirectionalLightShadows: 1
     decalSettings:
       drawDistance: 1000
-      atlasWidth: 4096
-      atlasHeight: 4096
+      atlasWidth: 2048
+      atlasHeight: 1024
       perChannelMask: 1
   allowShaderVariantStripping: 1
   diffusionProfileSettings: {fileID: 11400000, guid: 802c802428a2d9640a87e821dfcdd9e8, type: 2}
