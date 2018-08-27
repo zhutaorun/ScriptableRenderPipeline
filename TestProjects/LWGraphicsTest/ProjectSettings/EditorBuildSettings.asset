@@ -140,4 +140,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Packages/com.unity.testing.srp.lightweight/Tests/Scenes/053_UnlitShader.unity
     guid: a28e1d48e6e3c0e42a4050ab4e770bf8
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight/Tests/Scenes/054_Fallback.unity
+    guid: bafab5353774ebd408262716a000096e
   m_configObjects: {}
