@@ -158,7 +158,7 @@ TextMesh:
 
     0             1'
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -1359,7 +1359,7 @@ TextMesh:
   m_GameObject: {fileID: 95007744}
   m_Text: TriPlanar
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -2297,7 +2297,7 @@ TextMesh:
   m_GameObject: {fileID: 190231742}
   m_Text: Triplanar
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -3019,7 +3019,7 @@ TextMesh:
   m_GameObject: {fileID: 296841542}
   m_Text: 2
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -3248,9 +3248,9 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 332057365}
-  m_Text: Smotthness range from 0 to 1
+  m_Text: Smoothness range from 0 to 1
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -6095,7 +6095,7 @@ TextMesh:
   m_GameObject: {fileID: 570473797}
   m_Text: Normal
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -7443,7 +7443,7 @@ TextMesh:
   m_GameObject: {fileID: 828497856}
   m_Text: 1
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -9652,7 +9652,7 @@ TextMesh:
   m_GameObject: {fileID: 1045622033}
   m_Text: UV Mapping Mode
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -10063,7 +10063,7 @@ TextMesh:
   m_GameObject: {fileID: 1072629385}
   m_Text: Complex Material
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -11681,7 +11681,7 @@ TextMesh:
   m_GameObject: {fileID: 1272801579}
   m_Text: Albedo
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -12034,7 +12034,7 @@ TextMesh:
   m_GameObject: {fileID: 1340867970}
   m_Text: Planar
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -12390,7 +12390,7 @@ TextMesh:
 
     UV1           UV2          UV3           UV4'
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -12878,7 +12878,7 @@ TextMesh:
   m_GameObject: {fileID: 1410111507}
   m_Text: "DoubleSide\n On          Off"
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -12987,7 +12987,7 @@ TextMesh:
   m_GameObject: {fileID: 1423387243}
   m_Text: World Scale
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -13850,7 +13850,7 @@ TextMesh:
   m_GameObject: {fileID: 1527357169}
   m_Text: Detail Parameters Scale
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -14628,7 +14628,7 @@ TextMesh:
   m_GameObject: {fileID: 1704104651}
   m_Text: Smoothness
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -14814,7 +14814,7 @@ TextMesh:
   m_GameObject: {fileID: 1722907620}
   m_Text: 3
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -15569,7 +15569,7 @@ TextMesh:
   m_GameObject: {fileID: 1756004618}
   m_Text: Planar
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -16534,7 +16534,7 @@ TextMesh:
 
     .25          .50          .75'
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -17142,7 +17142,7 @@ TextMesh:
 
     Mask'
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -17981,7 +17981,7 @@ TextMesh:
 
     Tangent      Object '
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -18392,7 +18392,7 @@ TextMesh:
   m_GameObject: {fileID: 2133916186}
   m_Text: UV0
   m_OffsetZ: 0
-  m_CharacterSize: 0.10152297
+  m_CharacterSize: 0.20304593
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1

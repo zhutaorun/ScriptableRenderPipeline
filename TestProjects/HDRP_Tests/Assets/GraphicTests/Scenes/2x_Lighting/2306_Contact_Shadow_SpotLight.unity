@@ -1035,6 +1035,10 @@ PrefabInstance:
       propertyPath: ImageComparisonSettings.TargetHeight
       value: 300
       objectReference: {fileID: 0}
+    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+      propertyPath: ImageComparisonSettings.TargetWidth
+      value: 1280
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
 --- !u!20 &1965177828 stripped
@@ -1175,7 +1179,7 @@ GameObject:
   - component: {fileID: 2109195974}
   - component: {fileID: 2109195973}
   m_Layer: 0
-  m_Name: Point Light
+  m_Name: Spot Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

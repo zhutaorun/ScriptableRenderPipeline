@@ -30,6 +30,17 @@ public class HDRP_TestSettings_Editor : Editor
 
             SetGameViewSize();
         }
+
+		if (GUILayout.Button("Fix Texts"))
+		{
+			TextMeshPixelSize[] texts = FindObjectsOfType<TextMeshPixelSize>();
+			foreach( TextMeshPixelSize text in texts )
+			{
+				text.CorrectPosition();
+			}
+
+			UnityEditor.SceneManagement.EditorSceneManager.MarkAllScenesDirty();
+		}
     }
     
     static string testGameViewSize = "Graphic Test";

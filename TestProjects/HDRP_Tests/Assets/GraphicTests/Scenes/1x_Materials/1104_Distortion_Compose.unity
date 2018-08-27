@@ -3874,7 +3874,9 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 452565339}
-  m_Text: "Scale\n 0    8    10"
+  m_Text: 'Scale
+
+    0 / 8 / 16'
   m_OffsetZ: 0
   m_CharacterSize: 0.1
   m_LineSpacing: 1
@@ -5374,7 +5376,7 @@ TextMesh:
   m_GameObject: {fileID: 694484593}
   m_Text: 'Blur Scale
 
-    0   .5    1'
+    1.0 / 0.5 / 0'
   m_OffsetZ: 0
   m_CharacterSize: 0.1
   m_LineSpacing: 1

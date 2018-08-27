@@ -50,17 +50,7 @@ public class TextMeshPixelSize : MonoBehaviour
 		{
 			pixelPerfect = false;
 
-			float signX = Mathf.Sign( pos.x );
-			float signY = Mathf.Sign( pos.y );
-
-			pos.x = Mathf.Abs(pos.x);
-			pos.y = Mathf.Abs(pos.y);
-
-			pos.x = signX * ( pos.x - pos.x % cameraPixelSize );
-			pos.y = signY * ( pos.y - pos.y % cameraPixelSize );
-
-			pos = camera.transform.TransformPoint(pos);
-			transform.position = pos;
+			CorrectPosition();
 		}
 		
 		size = ( pixelSize + 2f ) * cameraPixelSize;
@@ -71,4 +61,29 @@ public class TextMeshPixelSize : MonoBehaviour
 	}
 
 #endif
+
+	public void CorrectPosition()
+	{
+		Vector3 pos = camera.transform.InverseTransformPoint( transform.position );
+		
+		float zDistance = pos.z;
+		if (zDistance < 0f ) return;
+
+		float cameraPixelSize = ( camera.orthographic?
+			camera.orthographicSize * 2f :
+			Mathf.Tan( Mathf.Deg2Rad * camera.fieldOfView * .5f ) * 2f * zDistance
+		) / testSettings.ImageComparisonSettings.TargetHeight;
+
+		float signX = Mathf.Sign( pos.x );
+		float signY = Mathf.Sign( pos.y );
+
+		pos.x = Mathf.Abs(pos.x);
+		pos.y = Mathf.Abs(pos.y);
+
+		pos.x = signX * ( pos.x - pos.x % cameraPixelSize );
+		pos.y = signY * ( pos.y - pos.y % cameraPixelSize );
+
+		pos = camera.transform.TransformPoint(pos);
+		transform.position = pos;
+	}
 }

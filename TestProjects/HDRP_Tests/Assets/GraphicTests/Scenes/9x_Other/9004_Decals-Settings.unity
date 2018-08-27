@@ -534,7 +534,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 320338342}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.0025574565, y: 0.54938304, z: 0}
+  m_LocalPosition: {x: 0.0040661097, y: 0.5508917, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1146614436}
@@ -554,7 +554,7 @@ TextMesh:
 
     Transparency'
   m_OffsetZ: 0
-  m_CharacterSize: 0.090521604
+  m_CharacterSize: 0.07543467
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -888,7 +888,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 392623598}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.0025574565, y: 0.53436357, z: 0}
+  m_LocalPosition: {x: 0.0040661097, y: 0.53134614, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 76873612}
@@ -906,7 +906,7 @@ TextMesh:
 
     Mask'
   m_OffsetZ: 0
-  m_CharacterSize: 0.090521604
+  m_CharacterSize: 0.07543467
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -1050,7 +1050,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 670672355}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.0076721907, y: 0.5403309, z: 0}
+  m_LocalPosition: {x: 0.012198329, y: 0.54334825, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1857545152}
@@ -1068,7 +1068,7 @@ TextMesh:
 
     Transparency'
   m_OffsetZ: 0
-  m_CharacterSize: 0.090521604
+  m_CharacterSize: 0.07543467
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -1161,7 +1161,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 754650331}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.0076721907, y: 0.53436357, z: 0}
+  m_LocalPosition: {x: 0.012198329, y: 0.53134614, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1906464618}
@@ -1179,7 +1179,7 @@ TextMesh:
 
     Tint'
   m_OffsetZ: 0
-  m_CharacterSize: 0.090521604
+  m_CharacterSize: 0.07543467
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -1272,7 +1272,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 824481858}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.0025574565, y: 0.53436357, z: 0}
+  m_LocalPosition: {x: -0.0040661097, y: 0.53134614, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1579636113}
@@ -1290,7 +1290,7 @@ TextMesh:
 
     Albedo'
   m_OffsetZ: 0
-  m_CharacterSize: 0.090521604
+  m_CharacterSize: 0.07543467
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -1410,14 +1410,6 @@ PrefabInstance:
     - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
       propertyPath: field of view
       value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
-      propertyPath: ImageComparisonSettings.TargetHeight
-      value: 300
-      objectReference: {fileID: 0}
-    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
-      propertyPath: ImageComparisonSettings.TargetWidth
-      value: 528
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
@@ -1543,7 +1535,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1322756076}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.0076721907, y: 0.53436357, z: 0}
+  m_LocalPosition: {x: -0.012198329, y: 0.53134614, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 14498675}
@@ -1563,7 +1555,7 @@ TextMesh:
 
     Support'
   m_OffsetZ: 0
-  m_CharacterSize: 0.090521604
+  m_CharacterSize: 0.07543467
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -1943,7 +1935,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1693182599}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.0025574565, y: 0.54938304, z: 0}
+  m_LocalPosition: {x: -0.0040661097, y: 0.5508917, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 220307107}
@@ -1961,7 +1953,7 @@ TextMesh:
 
     Factor = 0.5'
   m_OffsetZ: 0
-  m_CharacterSize: 0.090521604
+  m_CharacterSize: 0.07543467
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1

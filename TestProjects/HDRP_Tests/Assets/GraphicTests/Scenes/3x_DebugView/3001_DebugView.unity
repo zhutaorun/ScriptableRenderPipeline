@@ -1196,7 +1196,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   settingType: 0
-  gBuffer: 1031
+  gBuffer: 1051
   fullScreenDebugMode: 0
 --- !u!4 &770380528
 Transform:
