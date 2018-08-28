@@ -23,9 +23,6 @@ CBUFFER_END
 [numthreads(8,8,1)]
 void KComputeCoC(uint2 dispatchThreadId : SV_DispatchThreadID)
 {
-    if (any(dispatchThreadId > uint2(_ScreenSize.xy)))
-        return;  // Out of bounds, discard
-
     //float depth = LOAD_TEXTURE2D(_DepthTexture, dispatchThreadId).r;
 
     _CoCTexture[dispatchThreadId] = 0.0;

@@ -96,9 +96,6 @@ float2 GetClosestFragment(PositionInputs posInputs)
 [numthreads(8,8,1)]
 void MAIN(uint2 dispatchThreadId : SV_DispatchThreadID)
 {
-    if (any(dispatchThreadId > uint2(_ScreenSize.xy)))
-        return;  // Out of bounds, discard
-    
     PositionInputs posInputs = GetPositionInput(float2(dispatchThreadId), _ScreenSize.zw, uint2(8u, 8u));
     
     float2 jitter = _TaaJitterStrength.zw;

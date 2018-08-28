@@ -49,7 +49,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RTHandle[] m_TempFullSizePingPong = new RTHandle[2]; // R11G11B10F
         int m_CurrentTemporaryPingPong;
 
-        RTHandle m_HalfResTexture;  // R11G11B10
+        RTHandle m_HalfResTexture;  // R11G11B10F
         RTHandle m_TempTexture1024; // RGHalf
         RTHandle m_TempTexture32;   // RGHalf
 
@@ -181,7 +181,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // TODO: Check for motion blur as well
             if (camera.antialiasing == AntialiasingMode.TemporalAntialiasing)
             {
-                camera.camera.depthTextureMode |= DepthTextureMode.MotionVectors;
+                camera.camera.depthTextureMode |= DepthTextureMode.MotionVectors | DepthTextureMode.Depth;
             }
 
             // Handle fixed exposure
@@ -247,6 +247,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     var cs = m_Resources.uberPostCS;
                     var featureFlags = GetUberFeatureFlags();
                     int kernel = GetUberKernel(cs, featureFlags);
+
+                    // TODO: Bloom goes here
 
                     // Build the color grading lut
                     using (new ProfilingSample(cmd, "Color Grading LUT Builder", CustomSamplerId.ColorGradingLUTBuilder.GetSampler()))
