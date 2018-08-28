@@ -65,6 +65,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Post-processing
         Exposure,
         TemporalAntialiasing,
+        DepthOfField,
         ColorGradingLUTBuilder,
         UberPost,
         FinalPost,

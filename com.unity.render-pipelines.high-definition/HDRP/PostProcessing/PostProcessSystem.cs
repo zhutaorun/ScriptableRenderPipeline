@@ -30,10 +30,26 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RTHandle m_InternalLogLut; // ARGBHalf
         readonly HableCurve m_HableCurve;
 
+        // Prefetched components (updated on every frame)
+        PhysicalCamera m_PhysicalCamera;
+        Exposure m_Exposure;
+        DepthOfField m_DepthOfField;
+        ChromaticAberration m_ChromaticAberration;
+        LensDistortion m_LensDistortion;
+        Vignette m_Vignette;
+        Tonemapping m_Tonemapping;
+        WhiteBalance m_WhiteBalance;
+        ColorAdjustments m_ColorAdjustments;
+        ChannelMixer m_ChannelMixer;
+        SplitToning m_SplitToning;
+        LiftGammaGain m_LiftGammaGain;
+        ShadowsMidtonesHighlights m_ShadowsMidtonesHighlights;
+
         // Misc (re-usable)
         RTHandle[] m_TempFullSizePingPong = new RTHandle[2]; // R11G11B10F
         int m_CurrentTemporaryPingPong;
 
+        RTHandle m_HalfResTexture;  // R11G11B10
         RTHandle m_TempTexture1024; // RGHalf
         RTHandle m_TempTexture32;   // RGHalf
 
@@ -90,11 +106,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_TempFullSizePingPong[i] = RTHandles.Alloc(
                     Vector2.one, depthBufferBits: DepthBits.None,
                     filterMode: FilterMode.Bilinear, colorFormat: RenderTextureFormat.RGB111110Float,
-                    enableRandomWrite: true, name: "PingPong Target " + i
+                    enableRandomWrite: true, name: "Post-processing PingPong Target " + i
                 );
             }
 
             // Misc targets
+            m_HalfResTexture = RTHandles.Alloc(
+                new Vector2(0.5f, 0.5f), colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false,
+                enableRandomWrite: true, name: "Post-processing Half-res Temp"
+            );
+
             m_TempTexture1024 = RTHandles.Alloc(
                 1024, 1024, colorFormat: RenderTextureFormat.RGHalf, sRGB: false,
                 enableRandomWrite: true, name: "Average Luminance Temp 1024"
@@ -113,20 +134,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RTHandles.Release(m_EmptyExposureTexture);
             RTHandles.Release(m_TempFullSizePingPong[0]);
             RTHandles.Release(m_TempFullSizePingPong[1]);
+            RTHandles.Release(m_HalfResTexture);
             RTHandles.Release(m_TempTexture1024);
             RTHandles.Release(m_TempTexture32);
             CoreUtils.Destroy(m_ExposureCurveTexture);
             CoreUtils.Destroy(m_InternalSpectralLut);
             RTHandles.Release(m_InternalLogLut);
 
-            m_EmptyExposureTexture = null;
+            m_EmptyExposureTexture    = null;
             m_TempFullSizePingPong[0] = null;
             m_TempFullSizePingPong[1] = null;
-            m_TempTexture1024 = null;
-            m_TempTexture32 = null;
-            m_ExposureCurveTexture = null;
-            m_InternalSpectralLut = null;
-            m_InternalLogLut = null;
+            m_HalfResTexture          = null;
+            m_TempTexture1024         = null;
+            m_TempTexture32           = null;
+            m_ExposureCurveTexture    = null;
+            m_InternalSpectralLut     = null;
+            m_InternalLogLut          = null;
         }
 
         public void ResetHistory()
@@ -136,6 +159,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void BeginFrame(CommandBuffer cmd, HDCamera camera)
         {
+            // Prefetch all the volume components we need to save some cycles as most of these will
+            // be needed in multiple places
+            var stack = VolumeManager.instance.stack;
+            m_PhysicalCamera            = stack.GetComponent<PhysicalCamera>();
+            m_Exposure                  = stack.GetComponent<Exposure>();
+            m_DepthOfField              = stack.GetComponent<DepthOfField>();
+            m_ChromaticAberration       = stack.GetComponent<ChromaticAberration>();
+            m_LensDistortion            = stack.GetComponent<LensDistortion>();
+            m_Vignette                  = stack.GetComponent<Vignette>();
+            m_Tonemapping               = stack.GetComponent<Tonemapping>();
+            m_WhiteBalance              = stack.GetComponent<WhiteBalance>();
+            m_ColorAdjustments          = stack.GetComponent<ColorAdjustments>();
+            m_ChannelMixer              = stack.GetComponent<ChannelMixer>();
+            m_SplitToning               = stack.GetComponent<SplitToning>();
+            m_LiftGammaGain             = stack.GetComponent<LiftGammaGain>();
+            m_ShadowsMidtonesHighlights = stack.GetComponent<ShadowsMidtonesHighlights>();
+
             // Check if motion vectors are needed, if so we need to enable a flag on the camera so
             // that Unity properly generate motion vectors (internal engine dependency)
             // TODO: Check for motion blur as well
@@ -174,7 +214,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
 
                 // Temporal anti-aliasing goes first
-                if (camera.antialiasing == AntialiasingMode.TemporalAntialiasing && camera.camera.cameraType == CameraType.Game)
+                bool taaEnabled = camera.antialiasing == AntialiasingMode.TemporalAntialiasing
+                    && camera.camera.cameraType == CameraType.Game;
+
+                if (taaEnabled)
                 {
                     using (new ProfilingSample(cmd, "Temporal Anti-aliasing", CustomSamplerId.TemporalAntialiasing.GetSampler()))
                     {
@@ -183,7 +226,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     }
                 }
 
-                // TODO: Depth of field goes here
+                // Depth of Field is done right after TAA as it's easier to just reproject the CoC
+                // map rather than having to deal with all the implications of doing it before TAA
+                if (m_DepthOfField.mode.value != DepthOfFieldMode.Off)
+                {
+                    using (new ProfilingSample(cmd, "Depth of Field", CustomSamplerId.DepthOfField.GetSampler()))
+                    {
+                        DoDepthOfField(cmd, camera, source, PingPongTarget(), depthBuffer, taaEnabled ? velocityBuffer : null);
+                        source = GetLastPingPongTarget();
+                    }
+                }
+
                 // TODO: Motion blur goes here
 
                 // Combined post-processing stack - always runs if postfx is enabled
@@ -209,7 +262,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Run
                     cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
                     cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, PingPongTarget());
-                    cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 9) / 8, (camera.actualHeight + 9) / 8, 1);
+                    cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 7) / 8, (camera.actualHeight + 7) / 8, 1);
 
                     source = GetLastPingPongTarget();
                 }
@@ -259,13 +312,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             var flags = UberPostFeatureFlags.None;
 
-            if (VolumeManager.instance.stack.GetComponent<ChromaticAberration>().IsActive())
+            if (m_ChromaticAberration.IsActive())
                 flags |= UberPostFeatureFlags.ChromaticAberration;
 
-            if (VolumeManager.instance.stack.GetComponent<Vignette>().IsActive())
+            if (m_Vignette.IsActive())
                 flags |= UberPostFeatureFlags.Vignette;
 
-            if (VolumeManager.instance.stack.GetComponent<LensDistortion>().IsActive())
+            if (m_LensDistortion.IsActive())
                 flags |= UberPostFeatureFlags.LensDistortion;
 
             return flags;
@@ -284,32 +337,28 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         bool IsExposureFixed()
         {
-            var settings = VolumeManager.instance.stack.GetComponent<Exposure>();
-
-            return settings.mode == ExposureMode.Fixed
-                || settings.mode == ExposureMode.UsePhysicalCamera;
+            return m_Exposure.mode == ExposureMode.Fixed
+                || m_Exposure.mode == ExposureMode.UsePhysicalCamera;
         }
 
         void DoFixedExposure(CommandBuffer cmd, HDCamera camera)
         {
             var cs = m_Resources.exposureCS;
-            var cameraSettings = VolumeManager.instance.stack.GetComponent<PhysicalCamera>();
-            var exposureSettings = VolumeManager.instance.stack.GetComponent<Exposure>();
             
             RTHandle prevExposure, nextExposure;
             GrabExposureHistoryTextures(camera, out prevExposure, out nextExposure);
 
             int kernel = 0;
 
-            if (exposureSettings.mode == ExposureMode.Fixed)
+            if (m_Exposure.mode == ExposureMode.Fixed)
             {
                 kernel = cs.FindKernel("KFixedExposure");
-                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(exposureSettings.fixedExposure, 0f, 0f, 0f));
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(m_Exposure.fixedExposure, 0f, 0f, 0f));
             }
-            else if (exposureSettings.mode == ExposureMode.UsePhysicalCamera)
+            else if (m_Exposure.mode == ExposureMode.UsePhysicalCamera)
             {
                 kernel = cs.FindKernel("KManualCameraExposure");
-                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(exposureSettings.compensation, cameraSettings.aperture, cameraSettings.shutterSpeed, cameraSettings.iso));
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(m_Exposure.compensation, m_PhysicalCamera.aperture, m_PhysicalCamera.shutterSpeed, m_PhysicalCamera.iso));
             }
 
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._PreviousExposureTexture, prevExposure);
@@ -377,19 +426,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         void DoDynamicExposure(CommandBuffer cmd, HDCamera camera, RTHandle colorBuffer, RTHandle lightingBuffer)
         {
             var cs = m_Resources.exposureCS;
-            var exposureSettings = VolumeManager.instance.stack.GetComponent<Exposure>();
 
             RTHandle prevExposure, nextExposure;
             GrabExposureHistoryTextures(camera, out prevExposure, out nextExposure);
 
             // Setup variants
-            var adaptationMode = exposureSettings.adaptationMode.value;
+            var adaptationMode = m_Exposure.adaptationMode.value;
 
             if (!Application.isPlaying || m_ResetHistory)
                 adaptationMode = AdaptationMode.Fixed;
 
             m_ExposureVariants[0] = 1; // (int)exposureSettings.luminanceSource.value;
-            m_ExposureVariants[1] = (int)exposureSettings.meteringMode.value;
+            m_ExposureVariants[1] = (int)m_Exposure.meteringMode.value;
             m_ExposureVariants[2] = (int)adaptationMode;
             m_ExposureVariants[3] = 0;
 
@@ -415,21 +463,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.DispatchCompute(cs, kernel, 32, 32, 1);
 
             // Reduction: 2nd pass (32 -> 1) + evaluate exposure
-            if (exposureSettings.mode == ExposureMode.Automatic)
+            if (m_Exposure.mode == ExposureMode.Automatic)
             {
-                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(exposureSettings.compensation, exposureSettings.limitMin, exposureSettings.limitMax, 0f));
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(m_Exposure.compensation, m_Exposure.limitMin, m_Exposure.limitMax, 0f));
                 m_ExposureVariants[3] = 1;
             }
-            else if (exposureSettings.mode == ExposureMode.CurveMapping)
+            else if (m_Exposure.mode == ExposureMode.CurveMapping)
             {
                 float min, max;
-                PrepareExposureCurveData(exposureSettings.curveMap.value, out min, out max);
+                PrepareExposureCurveData(m_Exposure.curveMap.value, out min, out max);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ExposureCurveTexture, m_ExposureCurveTexture);
-                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(exposureSettings.compensation, min, max, 0f));
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._ExposureParams, new Vector4(m_Exposure.compensation, min, max, 0f));
                 m_ExposureVariants[3] = 2;
             }
 
-            cmd.SetComputeVectorParam(cs, HDShaderIDs._AdaptationParams, new Vector4(exposureSettings.adaptationSpeedLightToDark, exposureSettings.adaptationSpeedDarkToLight, 0f, 0f));
+            cmd.SetComputeVectorParam(cs, HDShaderIDs._AdaptationParams, new Vector4(m_Exposure.adaptationSpeedLightToDark, m_Exposure.adaptationSpeedDarkToLight, 0f, 0f));
             cmd.SetComputeIntParams(cs, HDShaderIDs._Variants, m_ExposureVariants);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._PreviousExposureTexture, prevExposure);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, m_TempTexture32);
@@ -463,7 +511,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._VelocityTexture, velocityBuffer);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputHistoryTexture, nextHistory);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, destination);
-            cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 9) / 8, (camera.actualHeight + 9) / 8, 1);
+            cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 7) / 8, (camera.actualHeight + 7) / 8, 1);
         }
 
         void GrabTemporalAntialiasingHistoryTextures(HDCamera camera, out RTHandle previous, out RTHandle next)
@@ -489,7 +537,42 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, history);
-            cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 9) / 8, (camera.actualHeight + 9) / 8, 1);
+            cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 7) / 8, (camera.actualHeight + 7) / 8, 1);
+        }
+
+        #endregion
+
+        #region Depth Of Field
+
+        void DoDepthOfField(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, RTHandle depthBuffer, RTHandle velocityBuffer)
+        {
+            bool taaEnabled = velocityBuffer == null;
+            RTHandle prevCoCHistory, nextCoCHistory;
+            GrabDepthOfFieldCoCHistoryTextures(camera, out prevCoCHistory, out nextCoCHistory);
+
+            if (m_ResetHistory)
+            {
+                // TODO: Handle DoF history reset
+            }
+
+            // Pass 1: downsample color & generate CoC
+
+        }
+
+        void GrabDepthOfFieldCoCHistoryTextures(HDCamera camera, out RTHandle previous, out RTHandle next)
+        {
+            next = camera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.DepthOfFieldCoC)
+                ?? camera.AllocHistoryFrameRT((int)HDCameraFrameHistoryType.DepthOfFieldCoC, DepthOfFieldCoCHistoryAllocator);
+            previous = camera.GetPreviousFrameRT((int)HDCameraFrameHistoryType.DepthOfFieldCoC);
+        }
+
+        RTHandle DepthOfFieldCoCHistoryAllocator(string id, int frameIndex, RTHandleSystem rtHandleSystem)
+        {
+            return rtHandleSystem.Alloc(
+                Vector3.one, depthBufferBits: DepthBits.None,
+                filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RHalf,
+                enableRandomWrite: true, name: "CoC History"
+            );
         }
 
         #endregion
@@ -500,15 +583,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             if ((flags & UberPostFeatureFlags.LensDistortion) != UberPostFeatureFlags.LensDistortion)
                 return;
-            
-            var settings = VolumeManager.instance.stack.GetComponent<LensDistortion>();
 
-            float amount = 1.6f * Mathf.Max(Mathf.Abs(settings.intensity.value * 100f), 1f);
+            float amount = 1.6f * Mathf.Max(Mathf.Abs(m_LensDistortion.intensity.value * 100f), 1f);
             float theta = Mathf.Deg2Rad * Mathf.Min(160f, amount);
             float sigma = 2f * Mathf.Tan(theta * 0.5f);
-            var center = settings.center.value * 2f - Vector2.one;
-            var p1 = new Vector4(center.x, center.y, Mathf.Max(settings.xMultiplier.value, 1e-4f), Mathf.Max(settings.yMultiplier.value, 1e-4f));
-            var p2 = new Vector4(settings.intensity.value >= 0f ? theta : 1f / theta, sigma, 1f / settings.scale.value, settings.intensity.value * 100f);
+            var center = m_LensDistortion.center.value * 2f - Vector2.one;
+            var p1 = new Vector4(
+                center.x,
+                center.y,
+                Mathf.Max(m_LensDistortion.xMultiplier.value, 1e-4f),
+                Mathf.Max(m_LensDistortion.yMultiplier.value, 1e-4f)
+            );
+            var p2 = new Vector4(
+                m_LensDistortion.intensity.value >= 0f ? theta : 1f / theta,
+                sigma,
+                1f / m_LensDistortion.scale.value,
+                m_LensDistortion.intensity.value * 100f
+            );
             
             cmd.SetComputeVectorParam(cs, HDShaderIDs._DistortionParams1, p1);
             cmd.SetComputeVectorParam(cs, HDShaderIDs._DistortionParams2, p2);
@@ -522,9 +613,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             if ((flags & UberPostFeatureFlags.ChromaticAberration) != UberPostFeatureFlags.ChromaticAberration)
                 return;
-            
-            var settings = VolumeManager.instance.stack.GetComponent<ChromaticAberration>();
-            var spectralLut = settings.spectralLut.value;
+
+            var spectralLut = m_ChromaticAberration.spectralLut.value;
 
             // If no spectral lut is set, use a pre-generated one
             if (spectralLut == null)
@@ -553,8 +643,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 spectralLut = m_InternalSpectralLut;
             }
 
+            var settings = new Vector4(m_ChromaticAberration.intensity * 0.05f, m_ChromaticAberration.maxSamples, 0f, 0f);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ChromaSpectralLut, spectralLut);
-            cmd.SetComputeVectorParam(cs, HDShaderIDs._ChromaParams, new Vector4(settings.intensity * 0.05f, settings.maxSamples, 0f, 0f));
+            cmd.SetComputeVectorParam(cs, HDShaderIDs._ChromaParams, settings);
         }
 
         #endregion
@@ -566,24 +657,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if ((flags & UberPostFeatureFlags.Vignette) != UberPostFeatureFlags.Vignette)
                 return;
 
-            var settings = VolumeManager.instance.stack.GetComponent<Vignette>();
-
-            if (settings.mode.value == VignetteMode.Procedural)
+            if (m_Vignette.mode.value == VignetteMode.Procedural)
             {
-                float roundness = (1f - settings.roundness.value) * 6f + settings.roundness.value;
-                cmd.SetComputeVectorParam(cs, HDShaderIDs._VignetteParams1, new Vector4(settings.center.value.x, settings.center.value.y, 0f, 0f));
-                cmd.SetComputeVectorParam(cs, HDShaderIDs._VignetteParams2, new Vector4(settings.intensity.value * 3f, settings.smoothness.value * 5f, roundness, settings.rounded.value ? 1f : 0f));
-                cmd.SetComputeVectorParam(cs, HDShaderIDs._VignetteColor, settings.color.value);
+                float roundness = (1f - m_Vignette.roundness.value) * 6f + m_Vignette.roundness.value;
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._VignetteParams1, new Vector4(m_Vignette.center.value.x, m_Vignette.center.value.y, 0f, 0f));
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._VignetteParams2, new Vector4(m_Vignette.intensity.value * 3f, m_Vignette.smoothness.value * 5f, roundness, m_Vignette.rounded.value ? 1f : 0f));
+                cmd.SetComputeVectorParam(cs, HDShaderIDs._VignetteColor, m_Vignette.color.value);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._VignetteMask, Texture2D.blackTexture);
             }
             else // Masked
             {
-                var color = settings.color.value;
-                color.a = Mathf.Clamp01(settings.opacity.value);
+                var color = m_Vignette.color.value;
+                color.a = Mathf.Clamp01(m_Vignette.opacity.value);
 
                 cmd.SetComputeVectorParam(cs, HDShaderIDs._VignetteParams1, new Vector4(0f, 0f, 1f, 0f));
                 cmd.SetComputeVectorParam(cs, HDShaderIDs._VignetteColor, color);
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._VignetteMask, settings.mask.value);
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._VignetteMask, m_Vignette.mask.value);
             }
         }
 
@@ -595,18 +684,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             // TODO: User lut support
             // TODO: Curves
-            //var lut = VolumeManager.instance.stack.GetComponent<ColorLookup>();
-            var tonemapping = VolumeManager.instance.stack.GetComponent<Tonemapping>();
-            var whiteBalance = VolumeManager.instance.stack.GetComponent<WhiteBalance>();
-            var adjustments = VolumeManager.instance.stack.GetComponent<ColorAdjustments>();
-            var channelMixer = VolumeManager.instance.stack.GetComponent<ChannelMixer>();
 
             // Prepare data
-            var lmsColorBalance = GetColorBalanceCoeffs(whiteBalance.temperature.value, whiteBalance.tint.value);
-            var hueSatCon = new Vector4(adjustments.hueShift / 360f, adjustments.saturation / 100f + 1f, adjustments.contrast / 100f + 1f, 0f);
-            var channelMixerR = new Vector4(channelMixer.redOutRedIn   / 100f, channelMixer.redOutGreenIn   / 100f, channelMixer.redOutBlueIn   / 100f, 0f);
-            var channelMixerG = new Vector4(channelMixer.greenOutRedIn / 100f, channelMixer.greenOutGreenIn / 100f, channelMixer.greenOutBlueIn / 100f, 0f);
-            var channelMixerB = new Vector4(channelMixer.blueOutRedIn  / 100f, channelMixer.blueOutGreenIn  / 100f, channelMixer.blueOutBlueIn  / 100f, 0f);
+            var lmsColorBalance = GetColorBalanceCoeffs(m_WhiteBalance.temperature.value, m_WhiteBalance.tint.value);
+            var hueSatCon = new Vector4(m_ColorAdjustments.hueShift / 360f, m_ColorAdjustments.saturation / 100f + 1f, m_ColorAdjustments.contrast / 100f + 1f, 0f);
+            var channelMixerR = new Vector4(m_ChannelMixer.redOutRedIn   / 100f, m_ChannelMixer.redOutGreenIn   / 100f, m_ChannelMixer.redOutBlueIn   / 100f, 0f);
+            var channelMixerG = new Vector4(m_ChannelMixer.greenOutRedIn / 100f, m_ChannelMixer.greenOutGreenIn / 100f, m_ChannelMixer.greenOutBlueIn / 100f, 0f);
+            var channelMixerB = new Vector4(m_ChannelMixer.blueOutRedIn  / 100f, m_ChannelMixer.blueOutGreenIn  / 100f, m_ChannelMixer.blueOutBlueIn  / 100f, 0f);
 
             Vector4 shadows, midtones, highlights, shadowsHighlightsLimits;
             ComputeShadowsMidtonesHighlights(out shadows, out midtones, out highlights, out shadowsHighlightsLimits);
@@ -621,7 +705,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var builderCS = m_Resources.lutBuilder3DCS;
             string kernelName;
 
-            switch (tonemapping.mode.value)
+            switch (m_Tonemapping.mode.value)
             {
                 case TonemappingMode.Neutral: kernelName = "KBuild_NeutralTonemap"; break;
                 case TonemappingMode.ACES:    kernelName = "KBuild_AcesTonemap"; break;
@@ -635,7 +719,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetComputeTextureParam(builderCS, builderKernel, HDShaderIDs._OutputTexture, m_InternalLogLut);
             cmd.SetComputeVectorParam(builderCS, HDShaderIDs._Size, new Vector4(k_LogLutSize, 1f / (k_LogLutSize - 1f), 0f, 0f));
             cmd.SetComputeVectorParam(builderCS, HDShaderIDs._ColorBalance, lmsColorBalance);
-            cmd.SetComputeVectorParam(builderCS, HDShaderIDs._ColorFilter, adjustments.colorFilter.value.linear);
+            cmd.SetComputeVectorParam(builderCS, HDShaderIDs._ColorFilter, m_ColorAdjustments.colorFilter.value.linear);
             cmd.SetComputeVectorParam(builderCS, HDShaderIDs._ChannelMixerRed, channelMixerR);
             cmd.SetComputeVectorParam(builderCS, HDShaderIDs._ChannelMixerGreen, channelMixerG);
             cmd.SetComputeVectorParam(builderCS, HDShaderIDs._ChannelMixerBlue, channelMixerB);
@@ -650,15 +734,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetComputeVectorParam(builderCS, HDShaderIDs._SplitShadows, splitShadows);
             cmd.SetComputeVectorParam(builderCS, HDShaderIDs._SplitHighlights, splitHighlights);
 
-            if (tonemapping.mode.value == TonemappingMode.Custom)
+            if (m_Tonemapping.mode.value == TonemappingMode.Custom)
             {
                 m_HableCurve.Init(
-                    tonemapping.toeStrength.value,
-                    tonemapping.toeLength.value,
-                    tonemapping.shoulderStrength.value,
-                    tonemapping.shoulderLength.value,
-                    tonemapping.shoulderAngle.value,
-                    tonemapping.gamma.value
+                    m_Tonemapping.toeStrength.value,
+                    m_Tonemapping.toeLength.value,
+                    m_Tonemapping.shoulderStrength.value,
+                    m_Tonemapping.shoulderLength.value,
+                    m_Tonemapping.shoulderAngle.value,
+                    m_Tonemapping.gamma.value
                 );
 
                 cmd.SetComputeVectorParam(builderCS, HDShaderIDs._CustomToneCurve, m_HableCurve.uniforms.curve);
@@ -681,8 +765,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             );
 
             // Setup the uber shader
+            var logLutSettings = new Vector4(1f / k_LogLutSize, k_LogLutSize - 1f, Mathf.Pow(2f, m_ColorAdjustments.postExposure), 0f);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._LogLut3D, m_InternalLogLut);
-            cmd.SetComputeVectorParam(cs, HDShaderIDs._LogLut3D_Params, new Vector4(1f / k_LogLutSize, k_LogLutSize - 1f, Mathf.Pow(2f, adjustments.postExposure), 0f));
+            cmd.SetComputeVectorParam(cs, HDShaderIDs._LogLut3D_Params, logLutSettings);
         }
 
         // Returns color balance coefficients in the LMS space
@@ -705,10 +790,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void ComputeShadowsMidtonesHighlights(out Vector4 shadows, out Vector4 midtones, out Vector4 highlights, out Vector4 limits)
         {
-            var settings = VolumeManager.instance.stack.GetComponent<ShadowsMidtonesHighlights>();
             float weight;
 
-            shadows = settings.shadows.value;
+            shadows = m_ShadowsMidtonesHighlights.shadows.value;
             shadows.x = Mathf.GammaToLinearSpace(shadows.x);
             shadows.y = Mathf.GammaToLinearSpace(shadows.y);
             shadows.z = Mathf.GammaToLinearSpace(shadows.z);
@@ -718,7 +802,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             shadows.z = Mathf.Max(shadows.z + weight, 0f);
             shadows.w = 0f;
 
-            midtones = settings.midtones.value;
+            midtones = m_ShadowsMidtonesHighlights.midtones.value;
             midtones.x = Mathf.GammaToLinearSpace(midtones.x);
             midtones.y = Mathf.GammaToLinearSpace(midtones.y);
             midtones.z = Mathf.GammaToLinearSpace(midtones.z);
@@ -728,7 +812,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             midtones.z = Mathf.Max(midtones.z + weight, 0f);
             midtones.w = 0f;
 
-            highlights = settings.highlights.value;
+            highlights = m_ShadowsMidtonesHighlights.highlights.value;
             highlights.x = Mathf.GammaToLinearSpace(highlights.x);
             highlights.y = Mathf.GammaToLinearSpace(highlights.y);
             highlights.z = Mathf.GammaToLinearSpace(highlights.z);
@@ -738,27 +822,32 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             highlights.z = Mathf.Max(highlights.z + weight, 0f);
             highlights.w = 0f;
 
-            limits = new Vector4(settings.shadowsStart.value, settings.shadowsEnd.value, settings.highlightsStart.value, settings.highlightsEnd.value);
+            limits = new Vector4(
+                m_ShadowsMidtonesHighlights.shadowsStart.value,
+                m_ShadowsMidtonesHighlights.shadowsEnd.value,
+                m_ShadowsMidtonesHighlights.highlightsStart.value,
+                m_ShadowsMidtonesHighlights.highlightsEnd.value
+            );
         }
 
         void ComputeLiftGammaGain(out Vector4 lift, out Vector4 gamma, out Vector4 gain)
         {
-            var settings = VolumeManager.instance.stack.GetComponent<LiftGammaGain>();
-
-            lift = settings.lift.value;
+            lift = m_LiftGammaGain.lift.value;
             lift.x = Mathf.GammaToLinearSpace(lift.x) * 0.15f;
             lift.y = Mathf.GammaToLinearSpace(lift.y) * 0.15f;
             lift.z = Mathf.GammaToLinearSpace(lift.z) * 0.15f;
+
             float lumLift = lift.x * 0.2126f + lift.y * 0.7152f + lift.z * 0.0722f;
             lift.x = lift.x - lumLift + lift.w;
             lift.y = lift.y - lumLift + lift.w;
             lift.z = lift.z - lumLift + lift.w;
             lift.w = 0f;
 
-            gamma = settings.gamma.value;
+            gamma = m_LiftGammaGain.gamma.value;
             gamma.x = Mathf.GammaToLinearSpace(gamma.x) * 0.8f;
             gamma.y = Mathf.GammaToLinearSpace(gamma.y) * 0.8f;
             gamma.z = Mathf.GammaToLinearSpace(gamma.z) * 0.8f;
+
             float lumGamma = gamma.x * 0.2126f + gamma.y * 0.7152f + gamma.z * 0.0722f;
             gamma.w += 1f;
             gamma.x = 1f / Mathf.Max(gamma.x - lumGamma + gamma.w, 1e-03f);
@@ -766,10 +855,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             gamma.z = 1f / Mathf.Max(gamma.z - lumGamma + gamma.w, 1e-03f);
             gamma.w = 0f;
 
-            gain = settings.gain.value;
+            gain = m_LiftGammaGain.gain.value;
             gain.x = Mathf.GammaToLinearSpace(gain.x) * 0.8f;
             gain.y = Mathf.GammaToLinearSpace(gain.y) * 0.8f;
             gain.z = Mathf.GammaToLinearSpace(gain.z) * 0.8f;
+
             float lumGain = gain.x * 0.2126f + gain.y * 0.7152f + gain.z * 0.0722f;
             gain.w += 1f;
             gain.x = gain.x - lumGain + gain.w;
@@ -780,16 +870,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void ComputeSplitToning(out Vector4 shadows, out Vector4 highlights)
         {
-            var settings = VolumeManager.instance.stack.GetComponent<SplitToning>();
-
             // As counter-intuitive as it is, to make split-toning work the same way it does in
             // Adobe products we have to do all the maths in sRGB... So do not convert these to
             // linear before sending them to the shader, this isn't a bug!
-            shadows = settings.shadows.value;
-            highlights = settings.highlights.value;
+            shadows = m_SplitToning.shadows.value;
+            highlights = m_SplitToning.highlights.value;
 
             // Balance is stored in `shadows.w`
-            shadows.w = settings.balance.value / 100f;
+            shadows.w = m_SplitToning.balance.value / 100f;
             highlights.w = 0f;
         }
 
@@ -809,7 +897,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 int kernel = cs.FindKernel("KFXAA");
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, destination);
-                cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 9) / 8, (camera.actualHeight + 9) / 8, 1);
+                cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 7) / 8, (camera.actualHeight + 7) / 8, 1);
             }
             else
             {

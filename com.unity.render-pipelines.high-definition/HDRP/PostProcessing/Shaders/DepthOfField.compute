@@ -1,0 +1,32 @@
+#include "CoreRP/ShaderLibrary/Common.hlsl"
+#include "CoreRP/ShaderLibrary/Color.hlsl"
+#include "../../ShaderVariables.hlsl"
+
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+#pragma kernel KComputeCoC
+
+TEXTURE2D(_InputTexture);
+TEXTURE2D(_DepthTexture);
+
+RW_TEXTURE2D(float, _CoCTexture);
+
+SAMPLER(sampler_LinearClamp);
+
+CBUFFER_START(cb0)
+    float4 _Params;
+CBUFFER_END
+
+#define NearDist _Params.x
+#define FarDist  _Params.y
+
+[numthreads(8,8,1)]
+void KComputeCoC(uint2 dispatchThreadId : SV_DispatchThreadID)
+{
+    if (any(dispatchThreadId > uint2(_ScreenSize.xy)))
+        return;  // Out of bounds, discard
+
+    //float depth = LOAD_TEXTURE2D(_DepthTexture, dispatchThreadId).r;
+
+    _CoCTexture[dispatchThreadId] = 0.0;
+}
