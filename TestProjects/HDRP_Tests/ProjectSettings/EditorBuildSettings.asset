@@ -54,15 +54,6 @@ EditorBuildSettings:
     path: Assets/GraphicTests/Scenes/1x_Materials/1212_Lit_Emission.unity
     guid: f465136a9ac4cb1429a4a1761d07c3c3
   - enabled: 1
-    path: Assets/GraphicTests/Scenes/1x_Materials/1301_SubSurfaceScattering.unity
-    guid: 201c29a239df4c74ea9e1ab47082abea
-  - enabled: 1
-    path: Assets/GraphicTests/Scenes/1x_Materials/1302_SSS_MaxRadius.unity
-    guid: 0277520b19264c24eac3041bd22ae564
-  - enabled: 1
-    path: Assets/GraphicTests/Scenes/1x_Materials/1303_SSS_Pre-Post.unity
-    guid: 6f2bc3028f3daba46ab0447a3e25ebc6
-  - enabled: 1
     path: Assets/GraphicTests/Scenes/1x_Materials/1401_StackLit.unity
     guid: 695dac9017b946a49a338d466a6d50ff
   - enabled: 1
