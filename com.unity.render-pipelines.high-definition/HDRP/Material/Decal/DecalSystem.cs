@@ -186,7 +186,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public void UpdateCachedData(Matrix4x4 localToWorld, Quaternion rotation,  float drawDistance, float fadeScale, Vector4 uvScaleBias, bool affectsTransparency, DecalHandle handle)
             {
                 int index = handle.m_Index;
-                m_CachedDecalToWorld[index] = localToWorld * sizeOffset;
+                m_CachedDecalToWorld[index] = localToWorld;
                 Matrix4x4 decalRotation = Matrix4x4.Rotate(rotation);
 
                 // z/y axis swap for normal to decal space, Unity is column major
@@ -215,10 +215,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 if (m_Material == null)
                     return;
-                UpdateCachedData(transform.localToWorldMatrix, transform.rotation, float drawDistance, fadeScale, uvScaleBias, affectsTransparency, handle);                
+                UpdateCachedData(transform.localToWorldMatrix, transform.rotation, drawDistance, fadeScale, uvScaleBias, affectsTransparency, handle);                
             }
 
-            public DecalHandle AddDecal(Matrix4x4 localToWorld, Quaternion rotation, Matrix4x4 sizeOffset, float drawDistance, float fadeScale, Vector4 uvScaleBias, bool affectsTransparency, int materialID)
+            public DecalHandle AddDecal(Matrix4x4 localToWorld, Quaternion rotation, float drawDistance, float fadeScale, Vector4 uvScaleBias, bool affectsTransparency, int materialID)
             {
                 // increase array size if no space left
                 if (m_DecalsCount == m_Handles.Length)
@@ -526,7 +526,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 decalSet = new DecalSet(material);
                 m_DecalSets.Add(key, decalSet);
             }
-            return decalSet.AddDecal(localToWorld, rotation,drawDistance, fadeScale, uvScaleBias, affectsTransparency, key);
+            return decalSet.AddDecal(localToWorld, rotation, drawDistance, fadeScale, uvScaleBias, affectsTransparency, key);
         }
 
 
@@ -535,7 +535,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return AddDecal(Matrix4x4.TRS(position, rotation, scale), rotation, drawDistance, fadeScale, uvScaleBias, affectsTransparency, material);
         }
 
-        public DecalHandle AddDecal(Transform transform, Matrix4x4 sizeOffset, float drawDistance, float fadeScale, Vector4 uvScaleBias, bool affectsTransparency, Material material)
+        public DecalHandle AddDecal(Transform transform, float drawDistance, float fadeScale, Vector4 uvScaleBias, bool affectsTransparency, Material material)
         {
             return AddDecal(transform.localToWorldMatrix, transform.rotation, drawDistance, fadeScale, uvScaleBias, affectsTransparency, material);
         }
@@ -572,12 +572,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void UpdateCachedData(Vector3 position, Quaternion rotation, Vector3 scale, Matrix4x4 sizeOffset, float drawDistance, float fadeScale, Vector4 uvScaleBias, bool affectsTransparency, DecalHandle handle)
         {
-             UpdateCachedData(Matrix4x4.TRS(position,  rotation, scale), rotation, sizeOffset, drawDistance, fadeScale, uvScaleBias, affectsTransparency, handle);
+             UpdateCachedData(Matrix4x4.TRS(position,  rotation, scale), rotation, drawDistance, fadeScale, uvScaleBias, affectsTransparency, handle);
         }
 
-        public void UpdateCachedData(Transform transform, Matrix4x4 sizeOffset, float drawDistance, float fadeScale, Vector4 uvScaleBias, bool affectsTransparency, DecalHandle handle)
+        public void UpdateCachedData(Transform transform,  float drawDistance, float fadeScale, Vector4 uvScaleBias, bool affectsTransparency, DecalHandle handle)
         {
-            UpdateCachedData(transform.localToWorldMatrix, transform.rotation, sizeOffset, drawDistance, fadeScale, uvScaleBias, affectsTransparency, handle);
+            UpdateCachedData(transform.localToWorldMatrix, transform.rotation, drawDistance, fadeScale, uvScaleBias, affectsTransparency, handle);
         }
 
         public void BeginCull()
