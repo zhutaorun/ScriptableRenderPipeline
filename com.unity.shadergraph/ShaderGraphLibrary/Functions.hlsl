@@ -60,6 +60,18 @@ struct Gradient
     #define SHADERGRAPH_REFLECTION_PROBE(viewDir, normalOS, lod) shadergraph_ReflectionProbe(viewDir, normalOS, lod)
 #endif
 
+#ifndef SHADERGRAPH_AMBIENT_SKY
+    #define SHADERGRAPH_AMBIENT_SKY float3(0,0,0);
+#endif
+
+#ifndef SHADERGRAPH_AMBIENT_EQUATOR
+    #define SHADERGRAPH_AMBIENT_EQUATOR float3(0,0,0);
+#endif
+
+#ifndef SHADERGRAPH_AMBIENT_GROUND
+    #define SHADERGRAPH_AMBIENT_GROUND float3(0,0,0);
+#endif
+
 float shadergraph_SampleSceneDepth(float2 uv)
 {
     return 1;

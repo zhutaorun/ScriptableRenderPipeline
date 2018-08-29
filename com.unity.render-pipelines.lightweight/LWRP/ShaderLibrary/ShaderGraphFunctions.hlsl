@@ -6,7 +6,10 @@
 #define SHADERGRAPH_MAIN_LIGHT(attenuation, direction, color) shadergraph_LWMainLight(attenuation, direction, color);
 #define SHADERGRAPH_ADDITIONAL_LIGHT(index, positionWS, attenuation, direction, color) shadergraph_LWAdditionalLight(index, positionWS, attenuation, direction, color);
 #define SHADERGRAPH_SAMPLE_BAKED_GI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap) shadergraph_LWSampleBakedGI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap);
-#define SHADERGRAPH_REFLECTION_PROBE(viewDir, normalOS, lod) shadergraph_LWReflectionProbe(viewDir, normalOS, lod)
+#define SHADERGRAPH_REFLECTION_PROBE(viewDir, normalOS, lod) shadergraph_LWReflectionProbe(viewDir, normalOS, lod);
+#define SHADERGRAPH_AMBIENT_SKY unity_AmbientSky;
+#define SHADERGRAPH_AMBIENT_EQUATOR unity_AmbientEquator;
+#define SHADERGRAPH_AMBIENT_GROUND unity_AmbientGround;
 
 #if defined(REQUIRE_DEPTH_TEXTURE)
 #if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
