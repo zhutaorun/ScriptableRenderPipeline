@@ -281,7 +281,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS4x, m_LowDepth2Tex);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS2xAtlas, m_TiledDepth1Tex);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS4xAtlas, m_TiledDepth2Tex);
-            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._Depth, depthMap);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._Depth, depthMap, 0);
 
             cmd.DispatchCompute(cs, kernel, m_Widths[(int)MipLevel.L4], m_Heights[(int)MipLevel.L4], 1);
 

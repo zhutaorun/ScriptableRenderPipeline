@@ -33,11 +33,11 @@ RW_TEXTURE2D_ARRAY(float, _DS2xAtlas);
 RW_TEXTURE2D(float, _DS4x);
 RW_TEXTURE2D_ARRAY(float, _DS4xAtlas);
 
-TEXTURE2D(_Depth);
+RW_TEXTURE2D(float, _Depth);
 
 float Linearize(uint2 st)
 {
-    float depth = _Depth[st];
+    float depth = _Depth[st].x;
     float dist = 1.0 / (_ZBufferParams.x * depth + _ZBufferParams.y);
 #ifdef UNITY_REVERSED_Z
     if (depth == 0) dist = 1e5;
