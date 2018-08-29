@@ -56,6 +56,7 @@ struct Gradient
     #define SHADERGRAPH_SAMPLE_SHADOWMASK(positionWS, uvStaticLightmap) shadergraph_SampleShadowmask(positionWS, uvStaticLightmap)
 #endif
 
+
 float shadergraph_SampleSceneDepth(float2 uv)
 {
     return 1;
