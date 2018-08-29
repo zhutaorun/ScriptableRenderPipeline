@@ -20,7 +20,7 @@ float3 shadergraph_HDSampleBakedGI(float3 positionWS, float3 normalWS, float2 uv
     return SampleBakedGI(positionRWS, normalWS, uvStaticLightmap, uvDynamicLightmap);
 }
 
-float4 shadergraph_HDSampleShadowmask(float3 positionWS float2 uvStaticLightmap)
+float4 shadergraph_HDSampleShadowmask(float3 positionWS, float2 uvStaticLightmap)
 {
     float3 positionRWS = GetCameraRelativePositionWS(positionWS);
     return SampleShadowMask(positionRWS, uvStaticLightmap);

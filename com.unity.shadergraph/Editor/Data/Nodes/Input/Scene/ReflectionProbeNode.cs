@@ -39,8 +39,7 @@ namespace UnityEditor.ShaderGraph
             return
                 @"
 {
-    {precision}3 reflectVec = reflect(-ViewDir, Normal);
-    Out = DecodeHDREnvironment(SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectVec, LOD), unity_SpecCube0_HDR);
+    Out = SHADERGRAPH_REFLECTION_PROBE(ViewDir, Normal, LOD);
 }
 ";
         }

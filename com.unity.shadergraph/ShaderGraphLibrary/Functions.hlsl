@@ -56,6 +56,9 @@ struct Gradient
     #define SHADERGRAPH_SAMPLE_SHADOWMASK(positionWS, uvStaticLightmap) shadergraph_SampleShadowmask(positionWS, uvStaticLightmap)
 #endif
 
+#ifndef SHADERGRAPH_REFLECTION_PROBE
+    #define SHADERGRAPH_REFLECTION_PROBE(viewDir, normalOS, lod) shadergraph_ReflectionProbe(viewDir, normalOS, lod)
+#endif
 
 float shadergraph_SampleSceneDepth(float2 uv)
 {
@@ -89,6 +92,11 @@ float3 shadergraph_SampleBakedGI(float3 positionWS, float3 normalWS, float2 uvSt
 float4 shadergraph_SampleShadowmask(float3 positionWS, float2 uvStaticLightmap)
 {
     return 1;
+}
+
+float3 shadergraph_ReflectionProbe(float3 viewDir, float3 normalOS, float lod)
+{
+    return 0;
 }
 
 #endif // UNITY_GRAPHFUNCTIONS_INCLUDED

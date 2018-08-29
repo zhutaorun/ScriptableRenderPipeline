@@ -5,7 +5,8 @@
 #define SHADERGRAPH_SAMPLE_SCENE_COLOR(uv) shadergraph_LWSampleSceneColor(uv);
 #define SHADERGRAPH_MAIN_LIGHT(attenuation, direction, color) shadergraph_LWMainLight(attenuation, direction, color);
 #define SHADERGRAPH_ADDITIONAL_LIGHT(index, positionWS, attenuation, direction, color) shadergraph_LWAdditionalLight(index, positionWS, attenuation, direction, color);
-#define SHADERGRAPH_SAMPLE_BAKED_GI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap) shadergraph_LWSampleBakedGI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap)
+#define SHADERGRAPH_SAMPLE_BAKED_GI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap) shadergraph_LWSampleBakedGI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap);
+#define SHADERGRAPH_REFLECTION_PROBE(viewDir, normalOS, lod) shadergraph_LWReflectionProbe(viewDir, normalOS, lod)
 
 #if defined(REQUIRE_DEPTH_TEXTURE)
 #if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
@@ -65,6 +66,12 @@ float3 shadergraph_LWSampleBakedGI(float3 positionWS, float3 normalWS, float2 uv
 #else
     return SampleSH(normalWS);
 #endif
+}
+
+float3 shadergraph_LWReflectionProbe(float3 viewDir, float3 normalOS, float lod)
+{
+    float3 reflectVec = reflect(-viewDir, normalOS);
+    return DecodeHDREnvironment(SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectVec, lod), unity_SpecCube0_HDR);
 }
 
 // Always include Shader Graph version
