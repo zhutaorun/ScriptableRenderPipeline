@@ -1,7 +1,11 @@
 // Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel DeferredDirectionalShadow                    DEFERRED_DIRECTIONAL=DeferredDirectionalShadow
-#pragma kernel DeferredDirectionalShadow_Contact            DEFERRED_DIRECTIONAL=DeferredDirectionalShadow_Contact          ENABLE_CONTACT_SHADOWS
-#pragma kernel DeferredContactShadow
+#pragma kernel DeferredDirectionalShadow_NOMSAA             DEFERRED_DIRECTIONAL=DeferredDirectionalShadow_NOMSAA
+#pragma kernel DeferredDirectionalShadow_Contact_NOMSAA     DEFERRED_DIRECTIONAL=DeferredDirectionalShadow_Contact_NOMSAA          ENABLE_CONTACT_SHADOWS
+#pragma kernel DeferredContactShadow_NOMSAA                 DeferredContactShadow=DeferredContactShadow_NOMSAA
+
+#pragma kernel DeferredDirectionalShadow_MSAA               DEFERRED_DIRECTIONAL=DeferredDirectionalShadow_MSAA                    ENABLE_MSAA
+#pragma kernel DeferredDirectionalShadow_Contact_MSAA       DEFERRED_DIRECTIONAL=DeferredDirectionalShadow_Contact_MSAA            ENABLE_CONTACT_SHADOWS ENABLE_MSAA
+#pragma kernel DeferredContactShadow_MSAA                   DeferredContactShadow=DeferredContactShadow_MSAA                       ENABLE_MSAA
 
 #ifdef SHADER_API_PSSL
 #   pragma argument( scheduler=minpressure ) // instruct the shader compiler to prefer minimizing vgpr usage
@@ -15,6 +19,10 @@
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
 //#pragma enable_d3d11_debug_symbols
+
+#ifdef ENABLE_MSAA
+    Texture2D<float4> _CameraDepthValues;
+#endif
 
 RWTexture2D<float4> _DeferredShadowTextureUAV;
 
@@ -88,8 +96,14 @@ float4 ScreenSpaceShadowRayCast(float3 positionWS, float3 rayDirection, float ra
         // Ray depth for this sample
         float raySampleDepth = startDepth + rayDepth * sampleStep;
 
+    #ifdef ENABLE_MSAA
+        // Depth buffer depth for this sample
+        float sampleDepth = SAMPLE_TEXTURE2D_LOD(_CameraDepthValues, s_point_clamp_sampler, sampleUV, 0.0).y;
+    #else
         // Depth buffer depth for this sample
         float sampleDepth = SAMPLE_TEXTURE2D_LOD(_CameraDepthTexture, s_point_clamp_sampler, sampleUV, 0.0).x;
+    #endif
+
 
         bool Hit = false;
         float depthDiff = sampleDepth - raySampleDepth;
@@ -128,7 +142,11 @@ void DEFERRED_DIRECTIONAL(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId 
     uint2 tileCoord = groupId;
     float contactShadow = 1.0;
 
+#ifdef ENABLE_MSAA
+    float depth = LOAD_TEXTURE2D(_CameraDepthValues, pixelCoord.xy).z;
+#else
     float depth = LOAD_TEXTURE2D(_CameraDepthTexture, pixelCoord.xy).x;
+#endif
 
     if (depth == UNITY_RAW_FAR_CLIP_VALUE)
         return;

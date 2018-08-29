@@ -84,7 +84,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Shader shadowClearShader;
         public ComputeShader shadowBlurMoments;
         public Shader debugShadowMapShader;
-        
+
+        // MSAA Shaders
+        public Shader depthResolve;
+        public Shader depthValues;
+        public Shader aoResolve;
+        public Shader colorResolve;
+
 #if UNITY_EDITOR
         public void UpgradeIfNeeded()
         {
@@ -178,6 +184,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             shadowClearShader = Load<Shader>(CorePath + "Shadow/ShadowClear.shader");
             shadowBlurMoments = Load<ComputeShader>(CorePath + "Shadow/ShadowBlurMoments.compute");
             debugShadowMapShader = Load<Shader>(CorePath + "Shadow/DebugDisplayShadowMap.shader");
+
+            // MSAA
+            depthResolve = Load<Shader>(HDRenderPipelinePath + "AA/DepthResolve.shader");
+            depthValues = Load<Shader>(HDRenderPipelinePath + "AA/DepthValues.shader");
+            aoResolve = Load<Shader>(HDRenderPipelinePath + "AA/AOResolve.shader");
+            colorResolve = Load<Shader>(HDRenderPipelinePath + "AA/ColorResolve.shader");
         }
 #endif
     }

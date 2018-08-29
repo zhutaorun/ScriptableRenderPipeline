@@ -422,6 +422,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         static int s_deferredDirectionalShadow_Contact_Kernel;
         static int s_deferredContactShadowKernel;
 
+        static int s_deferredDirectionalShadowKernelMSAA;
+        static int s_deferredDirectionalShadow_Contact_KernelMSAA;
+        static int s_deferredContactShadowKernelMSAA;
+
         static ComputeBuffer s_LightVolumeDataBuffer = null;
         static ComputeBuffer s_ConvexBoundsBuffer = null;
         static ComputeBuffer s_AABBBoundsBuffer = null;
@@ -620,9 +624,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             s_shadeOpaqueDirectShadowMaskFptlKernel = deferredComputeShader.FindKernel("Deferred_Direct_ShadowMask_Fptl");
             s_shadeOpaqueDirectShadowMaskFptlDebugDisplayKernel = deferredComputeShader.FindKernel("Deferred_Direct_ShadowMask_Fptl_DebugDisplay");
 
-            s_deferredDirectionalShadowKernel = screenSpaceShadowComputeShader.FindKernel("DeferredDirectionalShadow");
-            s_deferredDirectionalShadow_Contact_Kernel = screenSpaceShadowComputeShader.FindKernel("DeferredDirectionalShadow_Contact");
-            s_deferredContactShadowKernel = screenSpaceShadowComputeShader.FindKernel("DeferredContactShadow");
+            s_deferredDirectionalShadowKernel = screenSpaceShadowComputeShader.FindKernel("DeferredDirectionalShadow_NOMSAA");
+            s_deferredDirectionalShadow_Contact_Kernel = screenSpaceShadowComputeShader.FindKernel("DeferredDirectionalShadow_Contact_NOMSAA");
+            s_deferredContactShadowKernel = screenSpaceShadowComputeShader.FindKernel("DeferredContactShadow_NOMSAA");
+
+            s_deferredDirectionalShadowKernelMSAA = screenSpaceShadowComputeShader.FindKernel("DeferredDirectionalShadow_MSAA");
+            s_deferredDirectionalShadow_Contact_KernelMSAA = screenSpaceShadowComputeShader.FindKernel("DeferredDirectionalShadow_Contact_MSAA");
+            s_deferredContactShadowKernelMSAA = screenSpaceShadowComputeShader.FindKernel("DeferredContactShadow_MSAA");
 
             for (int variant = 0; variant < LightDefinitions.s_NumFeatureVariants; variant++)
             {
@@ -2462,7 +2470,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public bool outputSplitLighting;
         }
 
-        public void RenderScreenSpaceShadows(HDCamera hdCamera, RTHandleSystem.RTHandle deferredShadowRT, RenderTargetIdentifier depthTexture, CommandBuffer cmd)
+        public void RenderScreenSpaceShadows(HDCamera hdCamera, RTHandleSystem.RTHandle deferredShadowRT, RenderTargetIdentifier depthTexture, CommandBuffer cmd, RTHandleSystem.RTHandle depthValues)
         {
             bool sunLightShadow = m_CurrentSunLight != null && m_CurrentSunLight.GetComponent<AdditionalShadowData>() != null && m_CurrentSunLightShadowIndex >= 0;
 
@@ -2485,15 +2493,31 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 //  - if there is no sun or it's not casting shadows, we don't need to compute it's costy directional
                 //    shadows so we only compute contact shadows for the dominant light
                 //  - if there is no contact shadows then we only compute the directional light shadows
-                if (m_EnableContactShadow)
+
+                if(depthValues != null)
                 {
-                    if (sunLightShadow)
-                        kernel = s_deferredDirectionalShadow_Contact_Kernel;
+                    if (m_EnableContactShadow)
+                    {
+                        if (sunLightShadow)
+                            kernel = s_deferredDirectionalShadow_Contact_KernelMSAA;
+                        else
+                            kernel = s_deferredContactShadowKernelMSAA;
+                    }
                     else
-                        kernel = s_deferredContactShadowKernel;
+                        kernel = s_deferredDirectionalShadowKernelMSAA;
                 }
                 else
-                    kernel = s_deferredDirectionalShadowKernel;
+                {
+                    if (m_EnableContactShadow)
+                    {
+                        if (sunLightShadow)
+                            kernel = s_deferredDirectionalShadow_Contact_Kernel;
+                        else
+                            kernel = s_deferredContactShadowKernel;
+                    }
+                    else
+                        kernel = s_deferredDirectionalShadowKernel;
+                }
 
                 // We use the .w component of the direction/position vectors to choose in the shader the
                 // light direction of the contact shadows (direction light direction or (pixel position - light position))
@@ -2528,6 +2552,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cmd.SetComputeVectorParam(screenSpaceShadowComputeShader, HDShaderIDs._PunctualLightPosition, lightPosition);
                 cmd.SetComputeTextureParam(screenSpaceShadowComputeShader, kernel, HDShaderIDs._DeferredShadowTextureUAV, deferredShadowRT);
                 cmd.SetComputeTextureParam(screenSpaceShadowComputeShader, kernel, HDShaderIDs._CameraDepthTexture, depthTexture);
+
+                if (depthValues != null)
+                {
+                    cmd.SetComputeTextureParam(screenSpaceShadowComputeShader, kernel, "_CameraDepthValues", depthValues);
+                }
 
                 int deferredShadowTileSize = 16; // Must match DeferreDirectionalShadow.compute
                 int numTilesX = (hdCamera.actualWidth + (deferredShadowTileSize - 1)) / deferredShadowTileSize;

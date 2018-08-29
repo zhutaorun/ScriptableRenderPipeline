@@ -154,6 +154,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             aggregate.enableTransparentObjects = srcFrameSettings.enableTransparentObjects;
 
             aggregate.enableMSAA = srcFrameSettings.enableMSAA && renderPipelineSettings.supportMSAA;
+            aggregate.msaaSampleCount = renderPipelineSettings.msaaSampleCount;
 
             aggregate.ConfigureMSAADependentSettings();
             aggregate.ConfigureStereoDependentSettings();
@@ -197,14 +198,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 enableMotionVectors = false;
 
                 // TODO: The work will be implemented piecemeal to support all passes
-                enableDecals = false; // no decals
+                //enableDecals = false; // no decals
                 enableDistortion = false; // no gaussian final color
-                enablePostprocess = false;
                 enableRoughRefraction = false; // no gaussian pre-refraction
-                enableSSAO = false;
                 enableSSR = false;
-                enableSubsurfaceScattering = false;
-                enableTransparentObjects = false; // waiting on depth pyramid generation
             }
         }
 
