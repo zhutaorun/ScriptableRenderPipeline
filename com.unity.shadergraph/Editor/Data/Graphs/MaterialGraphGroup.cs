@@ -7,17 +7,20 @@ using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEditor.Graphing;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
+#if UNITY_2018_3_OR_NEWER
+using ContextualMenu = UnityEngine.Experimental.UIElements.DropdownMenu;
+#endif
 
 namespace UnityEditor.ShaderGraph
 {
-    public class MaterialGraphGroup : Group
+    sealed class MaterialGraphGroup : Group
     {
         public MaterialGraphGroup()
         {
             this.AddManipulator(new ContextualMenuManipulator(BuildContextualMenu));
         }
 
-        public virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+        public void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
             if (evt.target is MaterialGraphGroup)
             {
