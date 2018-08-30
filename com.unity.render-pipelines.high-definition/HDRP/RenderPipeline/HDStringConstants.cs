@@ -132,6 +132,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _NumTileFtplY = Shader.PropertyToID("_NumTileFtplY");
         public static readonly int _NumTileClusteredX = Shader.PropertyToID("_NumTileClusteredX");
         public static readonly int _NumTileClusteredY = Shader.PropertyToID("_NumTileClusteredY");
+        
+        public static readonly int _IndirectLightingMultiplier = Shader.PropertyToID("_IndirectLightingMultiplier");
 
         public static readonly int g_isLogBaseBufferEnabled = Shader.PropertyToID("g_isLogBaseBufferEnabled");
         public static readonly int g_vLayeredOffsetsBuffer = Shader.PropertyToID("g_vLayeredOffsetsBuffer");
@@ -156,6 +158,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _DebugLightingSpecularColor = Shader.PropertyToID("_DebugLightingSpecularColor");
         public static readonly int _AmbientOcclusionTexture = Shader.PropertyToID("_AmbientOcclusionTexture");
         public static readonly int _DebugMipMapMode = Shader.PropertyToID("_DebugMipMapMode");
+        public static readonly int _DebugMipMapModeTerrainTexture = Shader.PropertyToID("_DebugMipMapModeTerrainTexture");
 
         public static readonly int _UseTileLightList = Shader.PropertyToID("_UseTileLightList");
 
@@ -192,7 +195,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _DeferredShadowTexture = Shader.PropertyToID("_DeferredShadowTexture");
         public static readonly int _DeferredShadowTextureUAV = Shader.PropertyToID("_DeferredShadowTextureUAV");
         public static readonly int _DirectionalShadowIndex = Shader.PropertyToID("_DirectionalShadowIndex");
-        public static readonly int _DirectionalContactShadowParams = Shader.PropertyToID("_ScreenSpaceShadowsParameters");
+        public static readonly int _ContactShadowParamsParameters = Shader.PropertyToID("_ContactShadowParamsParameters");
+        public static readonly int _ContactShadowParamsParameters2 = Shader.PropertyToID("_ContactShadowParamsParameters2");
         public static readonly int _DirectionalContactShadowSampleCount = Shader.PropertyToID("_SampleCount");
         public static readonly int _DirectionalLightDirection = Shader.PropertyToID("_DirectionalLightDirection");
         public static readonly int _PunctualLightPosition = Shader.PropertyToID("_PunctualLightPosition");
@@ -226,7 +230,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _NonJitteredViewProjMatrix = Shader.PropertyToID("_NonJitteredViewProjMatrix");
         public static readonly int _ViewProjMatrix = Shader.PropertyToID("_ViewProjMatrix");
         public static readonly int _InvViewProjMatrix = Shader.PropertyToID("_InvViewProjMatrix");
-        public static readonly int _DetViewMatrix = Shader.PropertyToID("_DetViewMatrix");
         public static readonly int _ZBufferParams = Shader.PropertyToID("_ZBufferParams");
         public static readonly int _ProjectionParams = Shader.PropertyToID("_ProjectionParams");
         public static readonly int unity_OrthoParams = Shader.PropertyToID("unity_OrthoParams");
@@ -250,7 +253,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _CameraFilteringBuffer          = Shader.PropertyToID("_CameraFilteringTexture");
         public static readonly int _IrradianceSource               = Shader.PropertyToID("_IrradianceSource");
 
-        public static readonly int _EnableDBuffer = Shader.PropertyToID("_EnableDBuffer");
+        public static readonly int _EnableDecals = Shader.PropertyToID("_EnableDecals");
         public static readonly int _DecalAtlasResolution = Shader.PropertyToID("_DecalAtlasResolution");
 
         public static readonly int[] _GBufferTexture =
@@ -313,6 +316,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public static readonly int _VelocityTexture = Shader.PropertyToID("_VelocityTexture");
         public static readonly int _ShadowMaskTexture = Shader.PropertyToID("_ShadowMaskTexture");
+        public static readonly int _LightLayersTexture = Shader.PropertyToID("_LightLayersTexture");
         public static readonly int _DistortionTexture = Shader.PropertyToID("_DistortionTexture");
         public static readonly int _ColorPyramidTexture = Shader.PropertyToID("_ColorPyramidTexture");
         public static readonly int _DepthPyramidTexture = Shader.PropertyToID("_DepthPyramidTexture");
@@ -361,12 +365,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _ThicknessRemap = Shader.PropertyToID("_ThicknessRemap");
 
         public static readonly int _Cubemap = Shader.PropertyToID("_Cubemap");
+        public static readonly int _InvOmegaP = Shader.PropertyToID("_InvOmegaP");
         public static readonly int _SkyParam = Shader.PropertyToID("_SkyParam");
         public static readonly int _PixelCoordToViewDirWS = Shader.PropertyToID("_PixelCoordToViewDirWS");
 
         public static readonly int _Size = Shader.PropertyToID("_Size");
-        public static readonly int _Source4 = Shader.PropertyToID("_Source4");
-        public static readonly int _Result1 = Shader.PropertyToID("_Result1");
+        public static readonly int _Source = Shader.PropertyToID("_Source");
+        public static readonly int _Destination = Shader.PropertyToID("_Destination");
+        public static readonly int _Mip0 = Shader.PropertyToID("_Mip0");
 
         public static readonly int _AtmosphericScatteringType      = Shader.PropertyToID("_AtmosphericScatteringType");
         public static readonly int _AmbientProbeCoeffs             = Shader.PropertyToID("_AmbientProbeCoeffs");
@@ -396,9 +402,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _NumVisibleDensityVolumes       = Shader.PropertyToID("_NumVisibleDensityVolumes");
         public static readonly int _VolumeMaskAtlas                = Shader.PropertyToID("_VolumeMaskAtlas");
         public static readonly int _VolumeMaskDimensions           = Shader.PropertyToID("_VolumeMaskDimensions");
+        
+        public static readonly int _EnableLightLayers                = Shader.PropertyToID("_EnableLightLayers");
 
         // Preintegrated texture name
         public static readonly int _PreIntegratedFGD_GGXDisneyDiffuse = Shader.PropertyToID("_PreIntegratedFGD_GGXDisneyDiffuse");
-        public static readonly int _PreIntegratedFGD_CharlieAndCloth = Shader.PropertyToID("_PreIntegratedFGD_CharlieAndCloth");
+        public static readonly int _PreIntegratedFGD_CharlieAndFabric = Shader.PropertyToID("_PreIntegratedFGD_CharlieAndFabric");
     }
 }
