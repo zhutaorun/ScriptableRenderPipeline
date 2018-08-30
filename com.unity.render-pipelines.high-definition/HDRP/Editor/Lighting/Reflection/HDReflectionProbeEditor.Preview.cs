@@ -13,12 +13,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 return false;  // We only handle one preview for reflection probes
 
             // Ensure valid cube map editor (if possible)
-            ReflectionProbe reflectionProbe;
-            HDProbe probe;
-            if (TryGetPreviewSetup(out reflectionProbe, out probe) && m_CubemapEditor == null)
+            Texture texture = GetTexture();
+            if (m_CubemapEditor != null && m_CubemapEditor.target as Texture != texture)
+            {
+                DestroyImmediate(m_CubemapEditor);
+                m_CubemapEditor = null;
+            }
+            if (ValidPreviewSetup() && m_CubemapEditor == null)
             {
                 Editor editor = m_CubemapEditor;
-                CreateCachedEditor(probe.texture, typeof(HDCubemapInspector), ref editor);
+                CreateCachedEditor(GetTexture(), typeof(HDCubemapInspector), ref editor);
                 m_CubemapEditor = editor as HDCubemapInspector;
             }
 
@@ -55,9 +59,30 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 return;
             }
 
-            var p = target as ReflectionProbe;
-            if (p != null && p.texture != null && targets.Length == 1)
+            Texture tex = GetTexture();
+            if (tex != null && targets.Length == 1)
                 m_CubemapEditor.DrawPreview(position);
+        }
+
+        bool ValidPreviewSetup()
+        {
+            return GetTexture() != null;
+        }
+
+        Texture GetTexture()
+        {
+            HDProbe additional = GetTarget(target);
+            if (additional != null && additional.mode == UnityEngine.Rendering.ReflectionProbeMode.Realtime)
+            {
+                return additional.realtimeTexture;
+            }
+            else
+            {
+                var p = target as ReflectionProbe;
+                if (p != null)
+                    return p.texture;
+            }
+            return null;
         }
 
         bool TryGetPreviewSetup(out ReflectionProbe reflectionProbe, out HDProbe probe)

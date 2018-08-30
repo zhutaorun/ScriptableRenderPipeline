@@ -1,6 +1,7 @@
 using UnityEngine.Serialization;
 using UnityEngine.Rendering;
 using System;
+using UnityEngine.Assertions;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -68,8 +69,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [SerializeField]
         Texture m_BakedTexture;
         [SerializeField]
-        FrameSettings m_FrameSettings = null;
-        [SerializeField]
         float m_CaptureNearPlane = 1;
         [SerializeField]
         float m_CaptureFarPlane = 1000;
@@ -84,8 +83,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [SerializeField]
         [Range(0, 180)]
         float m_FieldOfViewOverride = 90;
-
-        RenderTexture m_RealtimeTexture;
 
         public bool overrideFieldOfView { get { return m_OverrideFieldOfView; } }
         public float fieldOfViewOverride { get { return m_FieldOfViewOverride; } }
@@ -124,8 +121,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
         public Texture customTexture { get { return m_CustomTexture; } set { m_CustomTexture = value; } }
-        public RenderTexture realtimeTexture { get { return m_RealtimeTexture; } internal set { m_RealtimeTexture = value; } }
-        public FrameSettings frameSettings { get { return m_FrameSettings; } }
         public float captureNearPlane { get { return m_CaptureNearPlane; } }
         public float captureFarPlane { get { return m_CaptureFarPlane; } }
         public CapturePositionMode capturePositionMode { get { return m_CapturePositionMode; } }
@@ -148,7 +143,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             get
             {
                 return proxyVolume != null
-                    ? proxyVolume.transform.localToWorldMatrix
+                    ? Matrix4x4.TRS(proxyVolume.transform.position, proxyVolume.transform.rotation, Vector3.one)
                     : influenceToWorld;
             }
         }
@@ -168,14 +163,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return proxyVolume != null
                     ? proxyVolume.proxyVolume.extents
                     : influenceVolume.boxSize;
-            }
-        }
-        public bool infiniteProjection
-        {
-            get
-            {
-                return proxyVolume != null
-                    && proxyVolume.proxyVolume.shape == ProxyShape.Infinite;
             }
         }
 
@@ -223,6 +210,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void OnAfterDeserialize()
         {
+            Assert.IsNotNull(influenceVolume, "influenceVolume must have an instance at this point. See HDProbe.Awake()");
             if (m_Version != currentVersion)
             {
                 // Add here data migration code
@@ -232,6 +220,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
                 m_Version = currentVersion;
             }
+
+            influenceVolume.boxBlendNormalDistanceNegative = Vector3.zero;
+            influenceVolume.boxBlendNormalDistancePositive = Vector3.zero;
         }
     }
 }
