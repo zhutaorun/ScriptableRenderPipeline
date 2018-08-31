@@ -9,7 +9,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         /// <summary>Defines how the view matrix is provided to the camera.</summary>
         public struct Position
         {
-            public static readonly Position Default = new Position
+            public static readonly Position @default = new Position
             {
                 mode = Mode.ComputeWorldToCameraMatrix,
                 position = Vector3.zero,
@@ -52,10 +52,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        public static readonly CameraRenderSettings Default = new CameraRenderSettings
+        public static readonly CameraRenderSettings @default = new CameraRenderSettings
         {
-            camera = CameraSettings.Default,
-            position = Position.Default
+            camera = CameraSettings.@default,
+            position = Position.@default
         };
 
         public CameraSettings camera;
