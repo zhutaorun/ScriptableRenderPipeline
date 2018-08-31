@@ -27,7 +27,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     /// }
     /// </code>
     ///
-    /// How to perform a cubemap render:
+    /// How to perform a cubemap rendering:
     /// <code>
     /// class CubemapRenderExample
     /// {
