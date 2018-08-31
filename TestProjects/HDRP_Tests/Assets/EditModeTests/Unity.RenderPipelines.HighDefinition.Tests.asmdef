@@ -1,8 +1,9 @@
 {
-    "name": "EditModeTests",
+    "name": "Unity.RenderPipelines.HighDefinition.Tests",
     "references": [
         "Unity.RenderPipelines.HighDefinition.Runtime",
-        "Unity.RenderPipelines.Core.Runtime"
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Core.Tests"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

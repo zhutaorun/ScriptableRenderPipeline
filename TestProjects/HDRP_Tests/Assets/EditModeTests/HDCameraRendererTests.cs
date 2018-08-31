@@ -1,8 +1,6 @@
 using NUnit.Framework;
 using System;
 
-using static UnityEngine.Experimental.Rendering.HDPipeline.Tests.Utilities;
-
 namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
 {
     public class HDCameraRendererTests
@@ -10,15 +8,29 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
         HDCameraRenderer renderer;
 
         [Test]
-        public void HDCameraRendererThrowNullForTarget()
+        public void RenderThrowWhenTargetIsNull()
         {
             Assert.Throws<ArgumentNullException>(() => renderer.Render(default(CameraRenderSettings), null));
         }
 
         [Test]
-        public void HDCameraRendererThrowNullForFrameSettings()
+        public void RenderThrowWhenFrameSettingsIsNull()
         {
-            Assert.Throws<ArgumentNullException>(() => renderer.Render(default(CameraRenderSettings), Texture2D.white));
+            Assert.Throws<ArgumentNullException>(()
+                => renderer.Render(default(CameraRenderSettings), Texture2D.whiteTexture));
+        }
+
+        [Test]
+        public void RenderThrowWhenTargetIsNotARenderTextureForTex2DRendering()
+        {
+            Assert.Throws<ArgumentException>(()
+                => renderer.Render(
+                    new CameraRenderSettings
+                    {
+                        camera = new CameraSettings { frameSettings = new FrameSettings() }
+                    },
+                    Texture2D.whiteTexture)
+                );
         }
     }
 }
