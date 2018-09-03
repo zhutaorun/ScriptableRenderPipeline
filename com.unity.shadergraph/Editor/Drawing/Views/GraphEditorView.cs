@@ -395,7 +395,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             foreach (GroupData groupData in m_Graph.addedGroups)
             {
                 AddNewGroupNode(groupData);
-                //AddNodesToGroupNode(groupData);
             }
 
             foreach (var node in m_Graph.pastedNodes)
@@ -470,22 +469,14 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void AddNewGroupNode(GroupData groupData)
         {
-
-            //MaterialGraphGroup graphGroup = CreateGroupNode(groupData) as MaterialGraphGroup;
             MaterialGraphGroup graphGroupNode = new MaterialGraphGroup();
 
             graphGroupNode.userData = groupData;
             graphGroupNode.SetPosition(new Rect(groupData.position.x, groupData.position.y, 100, 100));
             graphGroupNode.title = groupData.title;
 
-
-            //if (!m_GraphGroups.Contains(graphGroup))
-            //{
-                m_GraphView.AddElement(graphGroupNode);
-                m_GraphGroups.Add(graphGroupNode);
-            //}
-
-
+            m_GraphView.AddElement(graphGroupNode);
+            m_GraphGroups.Add(graphGroupNode);
 
             // Need to figure out why I used this one before
             List<MaterialNodeView> allNodesInThisGroup = m_GraphView.nodes.ToList().OfType<MaterialNodeView>().Where(x => x.node.groupGuid == groupData.guid).ToList();
@@ -498,35 +489,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     graphGroup.AddElement(materialNodeView);
                 }
             }
-
-
-
         }
-
-//        public void AddNodesToGroupNode(GroupData groupData)
-//        {
-//            List<MaterialNodeView> allNodesInThisGroup = m_GraphView.nodes.ToList().OfType<MaterialNodeView>().Where(x => x.node.groupGuid == groupData.guid).ToList();
-//            MaterialGraphGroup graphGroup = m_GraphView.graphElements.ToList().OfType<MaterialGraphGroup>().ToList().First(g => g.userData == groupData);
-//
-//            foreach (MaterialNodeView materialNodeView in allNodesInThisGroup)
-//            {
-//                if (materialNodeView.node != null)
-//                {
-//                    graphGroup.AddElement(materialNodeView);
-//                }
-//            }
-//        }
-
-//        GraphElement CreateGroupNode(GroupData groupData)
-//        {
-//            MaterialGraphGroup graphGroupNode = new MaterialGraphGroup();
-//
-//            graphGroupNode.userData = groupData;
-//            graphGroupNode.SetPosition(new Rect(groupData.position.x, groupData.position.y, 100, 100));
-//            graphGroupNode.title = groupData.title;
-//
-//            return graphGroupNode;
-//        }
 
         static void RepositionNode(GeometryChangedEvent evt)
         {

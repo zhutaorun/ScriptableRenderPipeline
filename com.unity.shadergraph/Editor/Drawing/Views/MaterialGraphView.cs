@@ -166,15 +166,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             graph.owner.RegisterCompleteObjectUndo("Creating Group Node");
             graph.AddGroupData(groupData);
 
-            //MaterialGraphGroup graphGroup = CreateGroupNode(groupData) as MaterialGraphGroup;
-//            MaterialGraphGroup graphGroupNode = new MaterialGraphGroup();
-//
-//            graphGroupNode.userData = groupData;
-//            graphGroupNode.SetPosition(new Rect(groupData.position.x, groupData.position.y, 100, 100));
-//            graphGroupNode.title = groupData.title;
-//
-//            AddElement(graphGroupNode);
-
             foreach (ISelectable selectable in selection)
             {
                 if (selectable is MaterialNodeView)
@@ -182,23 +173,10 @@ namespace UnityEditor.ShaderGraph.Drawing
                     MaterialNodeView materialNodeView = selectable as MaterialNodeView;
                     AbstractMaterialNode abstractMaterialNode = materialNodeView.node;
                     abstractMaterialNode.groupGuid = groupData.guid;
-//                    graphGroupNode.AddElement(materialNodeView);
                 }
             }
 
         }
-
-//        GraphElement CreateGroupNode(GroupData groupData)
-//        {
-//            graph.owner.RegisterCompleteObjectUndo("Creating Group Node");
-//            MaterialGraphGroup graphGroupNode = new MaterialGraphGroup();
-//
-//            graphGroupNode.userData = groupData;
-//            graphGroupNode.SetPosition(new Rect(groupData.position.x, groupData.position.y, 100, 100));
-//            graphGroupNode.title = groupData.title;
-//
-//            return graphGroupNode;
-//        }
 
         void RemoveFromGroupNode(ContextualMenu.MenuAction a)
         {

@@ -118,11 +118,6 @@ namespace UnityEditor.ShaderGraph
             get { return m_Groups; }
         }
 
-//        public IEnumerable<GroupData> GetGroups()
-//        {
-//            return
-//        }
-
         [NonSerialized]
         List<GroupData> m_AddedGroups = new List<GroupData>();
 
@@ -756,7 +751,6 @@ namespace UnityEditor.ShaderGraph
 
         public virtual void OnAfterDeserialize()
         {
-            //m_AddedGroups.Clear();
             // have to deserialize 'globals' before nodes
             m_Properties = SerializationHelper.Deserialize<IShaderProperty>(m_SerializedProperties, GraphUtil.GetLegacyTypeRemapping());
 
@@ -778,11 +772,6 @@ namespace UnityEditor.ShaderGraph
             m_SerializableEdges = null;
             foreach (var edge in m_Edges)
                 AddEdgeToNodeEdges(edge);
-
-//            foreach (GroupData groupData in m_Groups)
-//            {
-//                m_AddedGroups.Add(groupData);
-//            }
         }
 
         public void OnEnable()
