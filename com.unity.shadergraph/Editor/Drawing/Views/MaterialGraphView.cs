@@ -180,6 +180,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void RemoveFromGroupNode(ContextualMenu.MenuAction a)
         {
+            graph.owner.RegisterCompleteObjectUndo("Remove from group node");
             foreach (ISelectable selectable in selection)
             {
                 var node = selectable as Node;

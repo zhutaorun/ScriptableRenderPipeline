@@ -288,6 +288,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void OnElementsRemovedFromGroup(Group graphGroup, IEnumerable<GraphElement> element)
         {
+            bool actuallyRemovedANode = false;
             var groupData = graphGroup.userData as GroupData;
             if (groupData != null)
             {
@@ -296,13 +297,15 @@ namespace UnityEditor.ShaderGraph.Drawing
                     if (materialNodeView.node != null)
                     {
                         materialNodeView.node.groupGuid = Guid.Empty;
+                        actuallyRemovedANode = true;
                     }
                 }
             }
 
             // Check if there are actually any empty groups before calling the Undo method
-            m_Graph.owner.RegisterCompleteObjectUndo("Deleting Empty Group Node");
-            RemoveEmptyGroups();
+            //m_Graph.owner.RegisterCompleteObjectUndo("Deleting Empty Group Node");
+            //if(actuallyRemovedANode)
+            //    RemoveEmptyGroups();
         }
 
         void OnNodeChanged(INode inNode, ModificationScope scope)
@@ -330,7 +333,6 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 if (group != null && !group.containedElements.Any())
                 {
-
                     graphView.RemoveElement(group);
                 }
             }
