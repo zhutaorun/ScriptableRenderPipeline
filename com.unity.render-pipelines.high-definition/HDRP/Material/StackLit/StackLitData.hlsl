@@ -4,6 +4,7 @@
 #include "CoreRP/ShaderLibrary/Sampling/SampleUVMapping.hlsl"
 #include "HDRP/Material/BuiltinUtilities.hlsl"
 #include "HDRP/Material/MaterialUtilities.hlsl"
+#include "HDRP/Material/Decal/DecalUtilities.hlsl"
 
 //-----------------------------------------------------------------------------
 // Normal Map Filtering: Definitions, Config (see NormalMapAverageLengthTexturePostprocessor.cs)
@@ -736,6 +737,10 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     // tangentWS will not be normalized at this point (whether coming from input.worldToTangent[0] or a tangent map),
     // but this is ok as the Orthonormalize() call here will:
     surfaceData.tangentWS = Orthonormalize(surfaceData.tangentWS, surfaceData.normalWS);
+
+#if HAVE_DECALS
+    AddDecalContribution(posInput, surfaceData, alpha);
+#endif
 
     if ((_GeometricNormalFilteringEnabled + _TextureNormalFilteringEnabled) > 0.0)
     {
