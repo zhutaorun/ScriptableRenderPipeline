@@ -5,6 +5,7 @@ namespace UnityEngine.Experimental.Rendering
     [CustomPropertyDrawer(typeof(XRGraphicsConfig))]
     public class XRGraphicsConfigDrawer : PropertyDrawer
     {
+        bool xrSettingsFoldout = false;
         internal class Styles
         {
             public static GUIContent XRSettingsLabel = new GUIContent("XR Config", "Enable XR in Player Settings. Then SetConfig can be used to set this configuration to XRSettings.");
@@ -23,16 +24,19 @@ namespace UnityEngine.Experimental.Rendering
             var drawUseOcclusionMesh = property.FindPropertyRelative("useOcclusionMesh");
             var drawOcclusionMaskScale = property.FindPropertyRelative("occlusionMaskScale");
 
-            EditorGUI.BeginDisabledGroup(!XRGraphicsConfig.tryEnable);
-            EditorGUILayout.LabelField(Styles.XRSettingsLabel, EditorStyles.boldLabel);
-            EditorGUI.indentLevel++;            
-            EditorGUILayout.PropertyField(drawUseOcclusionMesh, Styles.useOcclusionMeshLabel);
-            EditorGUILayout.PropertyField(drawOcclusionMaskScale, Styles.occlusionScaleLabel);
-            EditorGUILayout.PropertyField(drawShowDeviceView, Styles.showDeviceViewLabel);
-            EditorGUILayout.PropertyField(drawGameViewRenderMode, Styles.gameViewRenderModeLabel);
-            EditorGUI.indentLevel--;
-            EditorGUILayout.Space();
-            EditorGUI.EndDisabledGroup();
+            xrSettingsFoldout = EditorGUILayout.Foldout(xrSettingsFoldout, Styles.XRSettingsLabel, true);
+            if (xrSettingsFoldout)
+            {
+                EditorGUI.BeginDisabledGroup(!XRGraphicsConfig.tryEnable);
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(drawUseOcclusionMesh, Styles.useOcclusionMeshLabel);
+                EditorGUILayout.PropertyField(drawOcclusionMaskScale, Styles.occlusionScaleLabel);
+                EditorGUILayout.PropertyField(drawShowDeviceView, Styles.showDeviceViewLabel);
+                EditorGUILayout.PropertyField(drawGameViewRenderMode, Styles.gameViewRenderModeLabel);
+                EditorGUI.indentLevel--;
+                EditorGUILayout.Space();
+                EditorGUI.EndDisabledGroup();
+            }
         }
     }
 }

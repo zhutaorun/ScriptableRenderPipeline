@@ -2,6 +2,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.AnimatedValues;
 using UnityEditor.Experimental.Rendering;
+using UnityEditor.Rendering.PostProcessing;
 
 namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 {
@@ -118,7 +119,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             DrawGeneralSettings();
             DrawQualitySettings();
             DrawShadowSettings();
-            EditorGUILayout.PropertyField(m_XRConfig);
+            DrawXRSettings();
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -255,7 +256,14 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 EditorGUI.indentLevel--;
                 EditorGUI.indentLevel--;
                 EditorGUI.EndDisabledGroup();
+                EditorGUILayout.Space();
+                EditorGUILayout.Space();
             }
+        }
+
+        void DrawXRSettings()
+        {
+            EditorGUILayout.PropertyField(m_XRConfig);
         }
     }
 }
