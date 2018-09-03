@@ -118,6 +118,11 @@ namespace UnityEditor.ShaderGraph
             get { return m_Groups; }
         }
 
+//        public IEnumerable<GroupData> GetGroups()
+//        {
+//            return
+//        }
+
         [NonSerialized]
         List<GroupData> m_AddedGroups = new List<GroupData>();
 
@@ -232,12 +237,12 @@ namespace UnityEditor.ShaderGraph
             m_AddedGroups.Add(groupData);
         }
 
-        public void AddGroup(GroupData groupData)
-        {
-            if (m_Groups.Contains(groupData))
-                return;
-            m_Groups.Add(groupData);
-        }
+        //public void AddGroup(GroupData groupData)
+        //{
+        //    if (m_Groups.Contains(groupData))
+        //        return;
+        //    m_Groups.Add(groupData);
+        //}
 
         public void RemoveGroupData(GroupData groupData)
         {
@@ -636,16 +641,16 @@ namespace UnityEditor.ShaderGraph
             // Current tactic is to remove all nodes and edges and then re-add them, such that depending systems
             // will re-initialize with new references.
 
-            using (var removedGroupsPooledObject = ListPool<GroupData>.GetDisposable())
-            {
-                var removedGroupDatas = removedGroupsPooledObject.value;
-                removedGroupDatas.AddRange(m_Groups);
-                foreach (var groupData in removedGroupDatas)
-                {
-                    Debug.Log("REplaceWith GroupData:: " + groupData.title);
-                    RemoveGroupData(groupData);
-                }
-            }
+//            using (var removedGroupsPooledObject = ListPool<GroupData>.GetDisposable())
+//            {
+//                var removedGroupDatas = removedGroupsPooledObject.value;
+//                //removedGroupDatas.AddRange(m_Groups);
+//                foreach (var groupData in removedGroupDatas)
+//                {
+//                    Debug.Log("REplaceWith GroupData:: " + groupData.title);
+//                    RemoveGroupData(groupData);
+//                }
+//            }
 
             using (var pooledList = ListPool<IEdge>.GetDisposable())
             {
@@ -672,9 +677,7 @@ namespace UnityEditor.ShaderGraph
                 ConnectNoValidate(edge.outputSlot, edge.inputSlot);
 
             foreach (GroupData groupData in other.groups)
-            {
                 AddGroupData(groupData);
-            }
 
             ValidateGraph();
         }
@@ -753,7 +756,7 @@ namespace UnityEditor.ShaderGraph
 
         public virtual void OnAfterDeserialize()
         {
-            m_AddedGroups.Clear();
+            //m_AddedGroups.Clear();
             // have to deserialize 'globals' before nodes
             m_Properties = SerializationHelper.Deserialize<IShaderProperty>(m_SerializedProperties, GraphUtil.GetLegacyTypeRemapping());
 
@@ -776,10 +779,10 @@ namespace UnityEditor.ShaderGraph
             foreach (var edge in m_Edges)
                 AddEdgeToNodeEdges(edge);
 
-            foreach (GroupData groupData in m_Groups)
-            {
-                m_AddedGroups.Add(groupData);
-            }
+//            foreach (GroupData groupData in m_Groups)
+//            {
+//                m_AddedGroups.Add(groupData);
+//            }
         }
 
         public void OnEnable()

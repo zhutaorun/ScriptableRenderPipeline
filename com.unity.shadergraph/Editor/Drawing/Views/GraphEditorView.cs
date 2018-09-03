@@ -157,6 +157,10 @@ namespace UnityEditor.ShaderGraph.Drawing
             foreach (var node in graph.GetNodes<INode>())
                 AddNode(node);
 
+            foreach (var graphGroup in graph.groups)
+            {
+                AddNewGroupNode(graphGroup);
+            }
             // TODO Adding the groups here as well.
 
             foreach (var edge in graph.edges)
@@ -296,6 +300,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                 }
             }
 
+            // Check if there are actually any empty groups before calling the Undo method
+            m_Graph.owner.RegisterCompleteObjectUndo("Deleting Empty Group Node");
             RemoveEmptyGroups();
         }
 
@@ -318,19 +324,16 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public void RemoveEmptyGroups()
         {
-            graphView.schedule.Execute(a =>
+            foreach (GraphElement element in graphView.graphElements.ToList())
             {
-                foreach (GraphElement element in graphView.graphElements.ToList())
-                {
-                    Group group = element as Group;
+                Group group = element as Group;
 
-                    if (group != null && !group.containedElements.Any())
-                    {
-                        m_Graph.owner.RegisterCompleteObjectUndo("Deleting Empty Group Node");
-                        graphView.RemoveElement(group);
-                    }
+                if (group != null && !group.containedElements.Any())
+                {
+
+                    graphView.RemoveElement(group);
                 }
-            });
+            }
         }
 
         HashSet<MaterialNodeView> m_NodeViewHashSet = new HashSet<MaterialNodeView>();
@@ -362,32 +365,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                             removeNodes.Add(node);
                             // TODO: this doesnt work, when undoing due to temp id and previewmanager
                             Debug.Log("Removing::" + node.name);
-
-
-                            //group.RemoveElement(element as AbstractMaterialNode);
-
-                            //m_Graph.elementsToRemove. (node);
-                            //m_Graph.RemoveNodeNoValidate(node);
-
-                            //m_Graph.RemoveNode(node);
-                            // m_GraphView.RemoveElement();
                         }
 
-//                        if (removeNodes.Any())
-//                        {
-//                            foreach (INode removeNode in removeNodes)
-//                            {
-//                                //m_Graph.removedNodes.Append(removeNode);
-//                                m_Graph.RemoveNode(removeNode);
-//                            }
-//                        }
-
-//                        if(removeNodes.Any())
-//                            m_Graph.RemoveElements( removeNodes ,
-//                                Enumerable.Empty<IEdge>(),
-//                                Enumerable.Empty<GroupData>() );
-
-                        //group.userData = null;
                         m_GraphView.RemoveElement(group);
                     }
                 }
@@ -416,7 +395,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             foreach (GroupData groupData in m_Graph.addedGroups)
             {
                 AddNewGroupNode(groupData);
-                AddNodesToGroupNode(groupData);
+                //AddNodesToGroupNode(groupData);
             }
 
             foreach (var node in m_Graph.pastedNodes)
@@ -492,16 +471,23 @@ namespace UnityEditor.ShaderGraph.Drawing
         void AddNewGroupNode(GroupData groupData)
         {
 
-            MaterialGraphGroup graphGroup = CreateGroupNode(groupData) as MaterialGraphGroup;
-            if (!m_GraphGroups.Contains(graphGroup))
-            {
-                m_GraphView.AddElement(graphGroup);
-                m_GraphGroups.Add(graphGroup);
-            }
-        }
+            //MaterialGraphGroup graphGroup = CreateGroupNode(groupData) as MaterialGraphGroup;
+            MaterialGraphGroup graphGroupNode = new MaterialGraphGroup();
 
-        public void AddNodesToGroupNode(GroupData groupData)
-        {
+            graphGroupNode.userData = groupData;
+            graphGroupNode.SetPosition(new Rect(groupData.position.x, groupData.position.y, 100, 100));
+            graphGroupNode.title = groupData.title;
+
+
+            //if (!m_GraphGroups.Contains(graphGroup))
+            //{
+                m_GraphView.AddElement(graphGroupNode);
+                m_GraphGroups.Add(graphGroupNode);
+            //}
+
+
+
+            // Need to figure out why I used this one before
             List<MaterialNodeView> allNodesInThisGroup = m_GraphView.nodes.ToList().OfType<MaterialNodeView>().Where(x => x.node.groupGuid == groupData.guid).ToList();
             MaterialGraphGroup graphGroup = m_GraphView.graphElements.ToList().OfType<MaterialGraphGroup>().ToList().First(g => g.userData == groupData);
 
@@ -512,18 +498,35 @@ namespace UnityEditor.ShaderGraph.Drawing
                     graphGroup.AddElement(materialNodeView);
                 }
             }
+
+
+
         }
 
-        GraphElement CreateGroupNode(GroupData groupData)
-        {
-            MaterialGraphGroup graphGroupNode = new MaterialGraphGroup();
+//        public void AddNodesToGroupNode(GroupData groupData)
+//        {
+//            List<MaterialNodeView> allNodesInThisGroup = m_GraphView.nodes.ToList().OfType<MaterialNodeView>().Where(x => x.node.groupGuid == groupData.guid).ToList();
+//            MaterialGraphGroup graphGroup = m_GraphView.graphElements.ToList().OfType<MaterialGraphGroup>().ToList().First(g => g.userData == groupData);
+//
+//            foreach (MaterialNodeView materialNodeView in allNodesInThisGroup)
+//            {
+//                if (materialNodeView.node != null)
+//                {
+//                    graphGroup.AddElement(materialNodeView);
+//                }
+//            }
+//        }
 
-            graphGroupNode.userData = groupData;
-            graphGroupNode.SetPosition(new Rect(groupData.position.x, groupData.position.y, 100, 100));
-            graphGroupNode.title = groupData.title;
-
-            return graphGroupNode;
-        }
+//        GraphElement CreateGroupNode(GroupData groupData)
+//        {
+//            MaterialGraphGroup graphGroupNode = new MaterialGraphGroup();
+//
+//            graphGroupNode.userData = groupData;
+//            graphGroupNode.SetPosition(new Rect(groupData.position.x, groupData.position.y, 100, 100));
+//            graphGroupNode.title = groupData.title;
+//
+//            return graphGroupNode;
+//        }
 
         static void RepositionNode(GeometryChangedEvent evt)
         {
