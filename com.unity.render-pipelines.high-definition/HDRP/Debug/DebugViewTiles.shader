@@ -139,6 +139,12 @@ Shader "Hidden/HDRenderPipeline/DebugViewTiles"
 
             float4 Frag(Varyings input) : SV_Target
             {
+#if UNITY_UV_STARTS_AT_TOP
+                // Flip Y coodinate if not flipped in projection
+                if (_ProjectionParams.x > 0)
+                    input.positionCS.y = _ScreenSize.y - input.positionCS.y;
+#endif
+
                 // positionCS is SV_Position
                 float depth = LOAD_TEXTURE2D(_CameraDepthTexture, input.positionCS.xy).x;
                 PositionInputs posInput = GetPositionInput(input.positionCS.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V, uint2(input.positionCS.xy) / GetTileSize());
