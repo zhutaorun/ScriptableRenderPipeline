@@ -117,13 +117,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public static readonly Culling @default = new Culling
             {
                 cullingMask = -1,
-                useOcclusionCulling = true
+                useOcclusionCulling = true,
+                invertCulling = false
             };
 
             /// <summary>True when occlusion culling will be performed during rendering, false otherwise.</summary>
             public bool useOcclusionCulling;
             /// <summary>The mask for visible objects.</summary>
             public int cullingMask;
+            /// <summary>True to invert face culling, false otherwise.</summary>
+            public bool invertCulling;
         }
 
         public static readonly CameraSettings @default = new CameraSettings

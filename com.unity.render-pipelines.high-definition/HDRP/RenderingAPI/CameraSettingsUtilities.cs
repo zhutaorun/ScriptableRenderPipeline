@@ -47,21 +47,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             add.OnAfterDeserialize();
         }
 
-        public static void ApplySettings(this Camera cam, CameraRenderSettings settings)
+        public static void ApplySettings(this Camera cam, CameraPositionSettings settings)
         {
             // Position
-            switch (settings.position.mode)
+            switch (settings.mode)
             {
-                case CameraRenderSettings.Position.Mode.UseWorldToCameraMatrixField:
-                    cam.worldToCameraMatrix = settings.position.worldToCameraMatrix;
+                case CameraPositionSettings.Mode.UseWorldToCameraMatrixField:
+                    cam.worldToCameraMatrix = settings.worldToCameraMatrix;
                     break;
-                case CameraRenderSettings.Position.Mode.ComputeWorldToCameraMatrix:
-                    cam.transform.position = settings.position.position;
-                    cam.transform.rotation = settings.position.rotation;
-                    cam.worldToCameraMatrix = settings.position.ComputeWorldToCameraMatrix();
+                case CameraPositionSettings.Mode.ComputeWorldToCameraMatrix:
+                    cam.transform.position = settings.position;
+                    cam.transform.rotation = settings.rotation;
+                    cam.worldToCameraMatrix = settings.ComputeWorldToCameraMatrix();
                     break;
             }
-            cam.ApplySettings(settings.camera);
         }
     }
 }

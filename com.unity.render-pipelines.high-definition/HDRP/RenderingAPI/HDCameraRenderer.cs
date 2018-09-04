@@ -55,13 +55,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     /// </example>
     public struct HDCameraRenderer
     {
-        public void Render(CameraRenderSettings settings, Texture target)
+        public void Render(CameraSettings settings, CameraPositionSettings position, Texture target)
         {
             // Argument checking
             if (target == null)
                 throw new ArgumentNullException("target");
             // Assert for frame settings
-            if (settings.camera.frameSettings == null)
+            if (settings.frameSettings == null)
                 throw new ArgumentNullException("settings");
 
             var rtTarget = target as RenderTexture;
@@ -83,7 +83,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             try
             {
                 camera.ApplySettings(settings);
+                camera.ApplySettings(position);
 
+                GL.invertCulling = settings.culling.invertCulling;
                 switch (target.dimension)
                 {
                     case TextureDimension.Tex2D:
@@ -106,6 +108,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             break;
                         }
                 }
+                GL.invertCulling = false;
             }
             finally
             {
