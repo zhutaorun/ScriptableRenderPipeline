@@ -17,7 +17,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             { "HDRenderPipeline/Lit", LitGUI.SetupMaterialKeywordsAndPass },
             { "HDRenderPipeline/Tessellated Lit", LitGUI.SetupMaterialKeywordsAndPass },
             { "HDRenderPipeline/Unlit", UnlitGUI.SetupMaterialKeywordsAndPass },
-            { "HDRenderPipeline/Decal", DecalUI.SetupMaterialKeywordsAndPass }
+            { "HDRenderPipeline/Fabric",  FabricGUI.SetupMaterialKeywordsAndPass },
+            { "HDRenderPipeline/Decal", DecalUI.SetupMaterialKeywordsAndPass },
+            { "HDRenderPipeline/TerrainLit", TerrainLitGUI.SetupMaterialKeywordsAndPass }
         };
 
         public static T LoadAsset<T>(string relativePath) where T : UnityEngine.Object

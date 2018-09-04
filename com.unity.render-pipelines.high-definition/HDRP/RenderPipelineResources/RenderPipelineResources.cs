@@ -8,7 +8,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     public class RenderPipelineResources : ScriptableObject
     {
-        const int currentVersion = 2;
+        const int currentVersion = 3;
         [SerializeField]
         [FormerlySerializedAs("version")]
         int m_Version = 1;
@@ -17,6 +17,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Material defaultDiffuseMaterial;
         public Material defaultMirrorMaterial;
         public Material defaultDecalMaterial;
+        public Material defaultTerrainMaterial;
         public Shader defaultShader;
 
         // Debug
@@ -26,6 +27,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Shader debugViewTilesShader;
         public Shader debugFullScreenShader;
         public Shader debugColorPickerShader;
+        public Shader debugLightVolumeShader;
 
         // Lighting resources
         public Shader deferredShader;
@@ -72,7 +74,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         // Material
         public Shader preIntegratedFGD_GGXDisneyDiffuse;
-        public Shader preIntegratedFGD_CharlieClothLambert;
+        public Shader preIntegratedFGD_CharlieFabricLambert;
 
         // Utilities / Core
         public ComputeShader encodeBC6HCS;
@@ -83,6 +85,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Shader shadowClearShader;
         public ComputeShader shadowBlurMoments;
         public Shader debugShadowMapShader;
+
+        // Decal
+        public Shader decalNormalBuffer;
         
 #if UNITY_EDITOR
         public void UpgradeIfNeeded()
@@ -119,6 +124,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             debugViewTilesShader = Load<Shader>(HDRenderPipelinePath + "Debug/DebugViewTiles.Shader");
             debugFullScreenShader = Load<Shader>(HDRenderPipelinePath + "Debug/DebugFullScreen.Shader");
             debugColorPickerShader = Load<Shader>(HDRenderPipelinePath + "Debug/DebugColorPicker.Shader");
+            debugLightVolumeShader  = Load<Shader>(HDRenderPipelinePath + "Debug/DebugLightVolume.Shader");
 
             deferredShader = Load<Shader>(HDRenderPipelinePath + "Lighting/Deferred.Shader");
             colorPyramidCS = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipelineResources/ColorPyramid.compute");
@@ -165,7 +171,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Material
             preIntegratedFGD_GGXDisneyDiffuse = Load<Shader>(HDRenderPipelinePath + "Material/PreIntegratedFGD/PreIntegratedFGD_GGXDisneyDiffuse.shader");
-            preIntegratedFGD_CharlieClothLambert = Load<Shader>(HDRenderPipelinePath + "Material/PreIntegratedFGD/PreIntegratedFGD_CharlieClothLambert.shader");
+            preIntegratedFGD_CharlieFabricLambert = Load<Shader>(HDRenderPipelinePath + "Material/PreIntegratedFGD/PreIntegratedFGD_CharlieFabricLambert.shader");
 
             // Utilities / Core
             encodeBC6HCS = Load<ComputeShader>(CorePath + "CoreResources/EncodeBC6H.compute");
@@ -176,6 +182,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             shadowClearShader = Load<Shader>(CorePath + "Shadow/ShadowClear.shader");
             shadowBlurMoments = Load<ComputeShader>(CorePath + "Shadow/ShadowBlurMoments.compute");
             debugShadowMapShader = Load<Shader>(CorePath + "Shadow/DebugDisplayShadowMap.shader");
+
+            // decal
+            decalNormalBuffer = Load<Shader>(HDRenderPipelinePath + "Material/Decal/DecalNormalBuffer.shader");
         }
 #endif
     }
