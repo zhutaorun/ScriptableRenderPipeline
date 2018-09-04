@@ -530,14 +530,14 @@ void EncodeIntoGBuffer( SurfaceData surfaceData
 
         outGBuffer2.rgb = float3(surfaceData.anisotropy * 0.5 + 0.5,
                                  sinOrCos,
-                                 PackFloatInt8bit(surfaceData.metallic, storeSin | quadrant, 8));
+                                 PackFloatInt8bit(surfaceData.metallic, storeSin | quadrant, 3));
     }
     else if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_LIT_IRIDESCENCE))
     {
         materialFeatureId = GBUFFER_LIT_IRIDESCENCE;
 
         outGBuffer2.rgb = float3(surfaceData.iridescenceMask, surfaceData.iridescenceThickness,
-                                 PackFloatInt8bit(surfaceData.metallic, 0, 8));
+                                 PackFloatInt8bit(surfaceData.metallic, 0, 3));
     }
     else // Standard
     {
@@ -564,7 +564,7 @@ void EncodeIntoGBuffer( SurfaceData surfaceData
     // Ensure that surfaceData.coatMask is 0 if the feature is not enabled
     float coatMask = HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_LIT_CLEAR_COAT) ? surfaceData.coatMask : 0.0;
     // Note: no need to store MATERIALFEATUREFLAGS_LIT_STANDARD, always present
-    outGBuffer2.a  = PackFloatInt8bit(coatMask, materialFeatureId, 8);
+    outGBuffer2.a  = PackFloatInt8bit(coatMask, materialFeatureId, 3);
 
     // RT3 - 11f:11f:10f
     // In deferred we encode emissive color with bakeDiffuseLighting. We don't have the room to store emissiveColor.
@@ -641,7 +641,7 @@ uint DecodeFromGBuffer(uint2 positionSS, uint tileFeatureFlags, out BSDFData bsd
     // Material classification only uses the G-Buffer 2.
     float coatMask;
     uint materialFeatureId;
-    UnpackFloatInt8bit(inGBuffer2.a, 8, coatMask, materialFeatureId);
+    UnpackFloatInt8bit(inGBuffer2.a, 3, coatMask, materialFeatureId);
 
     uint pixelFeatureFlags    = MATERIALFEATUREFLAGS_LIT_STANDARD; // Only sky/background do not have the Standard flag.
     bool pixelHasSubsurface   = materialFeatureId == GBUFFER_LIT_TRANSMISSION_SSS || materialFeatureId == GBUFFER_LIT_SSS;
@@ -698,7 +698,7 @@ uint DecodeFromGBuffer(uint2 positionSS, uint tileFeatureFlags, out BSDFData bsd
     {
         float metallic;
         uint unused;
-        UnpackFloatInt8bit(inGBuffer2.b, 8, metallic, unused);
+        UnpackFloatInt8bit(inGBuffer2.b, 3, metallic, unused);
 
         bsdfData.diffuseColor = ComputeDiffuseColor(baseColor, metallic);
         bsdfData.fresnel0     = ComputeFresnel0(baseColor, metallic, DEFAULT_SPECULAR_VALUE);
@@ -720,7 +720,7 @@ uint DecodeFromGBuffer(uint2 positionSS, uint tileFeatureFlags, out BSDFData bsd
         // We must do this so the compiler can optimize away the read from the G-Buffer 0 to the very end (in PostEvaluateBSDF)
         // Note that we don't use sssData.subsurfaceMask here. But it is still assign so we can have the information in the
         // material debug view + If we require it in the future.
-        UnpackFloatInt8bit(inGBuffer2.b, 16, sssData.subsurfaceMask, sssData.diffusionProfile);
+        UnpackFloatInt8bit(inGBuffer2.b, 4, sssData.subsurfaceMask, sssData.diffusionProfile);
 
         // Reminder: when using SSS we exchange specular occlusion and subsurfaceMask/profileID
         bsdfData.specularOcclusion = inGBuffer2.r;
@@ -758,7 +758,7 @@ uint DecodeFromGBuffer(uint2 positionSS, uint tileFeatureFlags, out BSDFData bsd
 
             float unused;
             uint tangentFlags;
-            UnpackFloatInt8bit(inGBuffer2.b, 8, unused, tangentFlags);
+            UnpackFloatInt8bit(inGBuffer2.b, 3, unused, tangentFlags);
 
             // Get the rotation angle of the actual tangent frame with respect to the default one.
             uint  quadrant = tangentFlags;

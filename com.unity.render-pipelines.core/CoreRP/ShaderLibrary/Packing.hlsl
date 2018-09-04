@@ -389,9 +389,11 @@ real2 Unpack2Byte(real inputs)
 // ...
 // Example: precision is 1024.0, maxi is 8, i is [0..7] encode on 3 bit. f is [0..1] encode on 7 bit.
 //...
-real PackFloatInt(real f, uint i, real maxi, real precision)
+real PackFloatInt(real f, uint i, uint numBitI, uint numBitTarget)
 {
     // Constant
+    float precision = float(1 << numBitTarget + 3);
+    float maxi = float(1 << numBitI);
     real precisionMinusOne = precision - 1.0;
     real t1 = ((precision / maxi) - 1.0) / precisionMinusOne;
     real t2 = (precision / maxi) / precisionMinusOne;
@@ -399,9 +401,11 @@ real PackFloatInt(real f, uint i, real maxi, real precision)
     return t1 * f + t2 * real(i);
 }
 
-void UnpackFloatInt(real val, real maxi, real precision, out real f, out uint i)
+void UnpackFloatInt(real val, uint numBitI, uint numBitTarget, out real f, out uint i)
 {
     // Constant
+    float precision = float(1 << numBitTarget);
+    float maxi = float(1 << numBitI);
     real precisionMinusOne = precision - 1.0;
     real t1 = ((precision / maxi) - 1.0) / precisionMinusOne;
     real t2 = (precision / maxi) / precisionMinusOne;
@@ -414,34 +418,34 @@ void UnpackFloatInt(real val, real maxi, real precision, out real f, out uint i)
 }
 
 // Define various variante for ease of read
-real PackFloatInt8bit(real f, uint i, real maxi)
+real PackFloatInt8bit(real f, uint i, uint numBitI)
 {
-    return PackFloatInt(f, i, maxi, 256.0);
+    return PackFloatInt(f, i, numBitI, 8);
 }
 
-void UnpackFloatInt8bit(real val, real maxi, out real f, out uint i)
+void UnpackFloatInt8bit(real val, uint numBitI, out real f, out uint i)
 {
-    UnpackFloatInt(val, maxi, 256.0, f, i);
+    UnpackFloatInt(val, numBitI, 8, f, i);
 }
 
-real PackFloatInt10bit(real f, uint i, real maxi)
+real PackFloatInt10bit(real f, uint i, uint numBitI)
 {
-    return PackFloatInt(f, i, maxi, 1024.0);
+    return PackFloatInt(f, i, numBitI, 10);
 }
 
-void UnpackFloatInt10bit(real val, real maxi, out real f, out uint i)
+void UnpackFloatInt10bit(real val, uint numBitI, out real f, out uint i)
 {
-    UnpackFloatInt(val, maxi, 1024.0, f, i);
+    UnpackFloatInt(val, numBitI, 10, f, i);
 }
 
-real PackFloatInt16bit(real f, uint i, real maxi)
+real PackFloatInt16bit(real f, uint i, uint numBitI)
 {
-    return PackFloatInt(f, i, maxi, 65536.0);
+    return PackFloatInt(f, i, numBitI, 16);
 }
 
-void UnpackFloatInt16bit(real val, real maxi, out real f, out uint i)
+void UnpackFloatInt16bit(real val, uint numBitI, out real f, out uint i)
 {
-    UnpackFloatInt(val, maxi, 65536.0, f, i);
+    UnpackFloatInt(val, numBitI, 16, f, i);
 }
 
 //-----------------------------------------------------------------------------
