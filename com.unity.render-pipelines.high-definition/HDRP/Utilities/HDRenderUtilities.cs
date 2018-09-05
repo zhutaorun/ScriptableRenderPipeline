@@ -53,7 +53,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     /// }
     /// </code>
     /// </example>
-    public struct HDCameraRenderer
+    public struct HDRenderUtilities
     {
         public void Render(CameraRenderSettings settings, Texture target)
         {
