@@ -281,7 +281,7 @@ SphereCap GetBentVisibility(float3 bentNormalWS, float ambientOcclusion, int alg
 float GetSpecularOcclusionFromBentAOPivot(float3 V, float3 bentNormalWS, float3 normalWS, float ambientOcclusion, float perceptualRoughness, int bentconeAlgorithm = BENT_VISIBILITY_FROM_AO_COS,
                                           bool useGivenBasis = false, float3x3 orthoBasisViewNormal = (float3x3)(0), bool useExtraCap = false, SphereCap extraCap = (SphereCap)(0))
 {
-    SphereCap bentVisibility = GetBentVisibility(bentNormalWS, ambientOcclusion, bentconeAlgorithm);
+    SphereCap bentVisibility = GetBentVisibility(bentNormalWS, ambientOcclusion, bentconeAlgorithm, normalWS);
 
     //bentNormalWS = lerp(bentNormalWS, normalWS, pow((1.0-ambientOcclusion),5)); // TEST TODO, the bent direction becomes meaningless with AO = 0.
     //bentVisibility.dir = normalize(bentNormalWS);
@@ -309,7 +309,7 @@ float GetSpecularOcclusionFromBentAOConeCone(float3 V, float3 bentNormalWS, floa
     // Retrieve cone angle
     // Ambient occlusion is cosine weighted, thus use following equation. See slide 129
     //SphereCap bentVisibility = GetBentVisibility(bentNormalWS, ambientOcclusion, BENT_VISIBILITY_FROM_AO_COS);
-    SphereCap bentVisibility = GetBentVisibility(bentNormalWS, ambientOcclusion, bentconeAlgorithm);
+    SphereCap bentVisibility = GetBentVisibility(bentNormalWS, ambientOcclusion, bentconeAlgorithm, normalWS);
 
     float cosAv = bentVisibility.cosA;
     float roughness = max(PerceptualRoughnessToRoughness(perceptualRoughness), 0.01); // Clamp to 0.01 to avoid edge cases
