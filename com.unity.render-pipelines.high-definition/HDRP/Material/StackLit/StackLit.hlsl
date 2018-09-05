@@ -139,17 +139,13 @@ TEXTURE2D(_GBufferTexture0);
 #define TOP_DIR_IDX 0
 #define BOTTOM_DIR_IDX (NB_LV_DIR-1)
 
-// TODO: if dual lobe base
-//#define BASE_NB_LOBES 1
+// BASE_NB_LOBES will never be 1, we let the compiler optimize 
+// everything out from bsdfData.lobeMix = 0;
 #define BASE_NB_LOBES 2 // use numeric indices for these arrays
 #define TOTAL_NB_LOBES (BASE_NB_LOBES+COAT_NB_LOBES) // use *_LOBE?_IDX for these arrays.
 
-
-// TODO CLEANUP and put in proper define above
-// Also, note that we have lobe-indexed arrays,
-// and vlayer indexed for the generic vlayer
-// ComputeAdding loop
-
+// We have lobe-indexed arrays, and vlayer indexed for the generic vlayer
+// ComputeAdding loop:
 #define NB_VLAYERS 3
 // Use these to index vLayerEnergyCoeff[] !
 // vLayer 1 is useless...
@@ -631,7 +627,7 @@ struct PreLightData
     // (also, those don't need to be anisotropic for all lobes but the non-separated
     // original roughnesses are still useful for all lobes because of the IBL hack)
     //
-    // We don't reuse the BSDFData roughnessAT/AB/BT/BB because we might need the original
+    // We don't reuse the BSDFData roughnessAT/AB/BT/BB because we might need these original
     // values per light (ie not only once at GetPreLightData time) to recompute new roughnesses
     // if we use VLAYERED_RECOMPUTE_PERLIGHT.
     float  layeredRoughnessT[BASE_NB_LOBES];
@@ -646,8 +642,7 @@ struct PreLightData
 
     // GGX
     float partLambdaV[TOTAL_NB_LOBES];        // Depends on N, V, roughness
-
-    // TODO: If we use VLAYERED_RECOMPUTE_PERLIGHT, we need to recalculate those also.
+    // If we use VLAYERED_RECOMPUTE_PERLIGHT, we will recalculate those also.
     // (ComputeAdding changing roughness per light is what will make them change).
     //
     // This used to be strictly done in GetPreLightData, but since this is NOT useful
@@ -696,7 +691,7 @@ struct PreLightData
 
     // Occlusion data:
     float screenSpaceAmbientOcclusion;              // Keep a copy of the screen space occlusion texture fetch between
-                                                    // PreLightData and GetBakedDiffuseLighting.
+                                                    // PreLightData and PostEvaluateBSDF.
     float3 hemiSpecularOcclusion[TOTAL_NB_LOBES];   // Specular occlusion calculated from roughness and for an unknown
                                                     // (the less sparse / more uniform the better) light structure 
                                                     // potentially covering the whole hemisphere.
@@ -2116,16 +2111,17 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData b
 // bake lighting function
 //-----------------------------------------------------------------------------
 
-// This define allow to say that we implement a ModifyBakedDiffuseLighting function to be call in PostInitBuiltinData
+// This define allow to say that we implement a ModifyBakedDiffuseLighting function to be called in PostInitBuiltinData
 #define MODIFY_BAKED_DIFFUSE_LIGHTING
 
 void ModifyBakedDiffuseLighting(float3 V, PositionInputs posInput, SurfaceData surfaceData, inout BuiltinData builtinData)
 {
-    // To get the data we need to do the whole process - compiler should optimize everything
+    // Since this is called early at PostInitBuiltinData and we need some fields from bsdfData and preLightData,
+    // we get the whole structures redundantly earlier here - compiler should optimize out everything.
     BSDFData bsdfData = ConvertSurfaceDataToBSDFData(posInput.positionSS, surfaceData);
     PreLightData preLightData = GetPreLightData(V, posInput, bsdfData);
 
-    // Add GI transmission contribution to bakeDiffuseLighting, we then drop backBakeDiffuseLighting (i.e it is not used anymore, this save VGPR)
+    // Add GI transmission contribution to bakeDiffuseLighting, we then drop backBakeDiffuseLighting (i.e it is not used anymore, this saves VGPR)
     if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_TRANSMISSION))
     {
         builtinData.bakeDiffuseLighting += builtinData.backBakeDiffuseLighting * bsdfData.transmittance;
@@ -2282,7 +2278,6 @@ void BSDF_SetupNormalsAndAngles(BSDFData bsdfData, inout PreLightData preLightDa
 #endif
 
 #ifdef VLAYERED_RECOMPUTE_PERLIGHT
-        // TODOWIP
         // Must call ComputeAdding and update partLambdaV
         ComputeAdding(savedLdotH, V[TOP_DIR_IDX], bsdfData, preLightData, true);
         // Notice the top LdotH as interface angle, symmetric model parametrization (see paper sec. 6 and comments
@@ -2304,8 +2299,6 @@ void BSDF_SetupNormalsAndAngles(BSDFData bsdfData, inout PreLightData preLightDa
 
         // Also, we will use the base normal map automatically if we have dual normal maps (coat normals)
         // since we use generically N[BASE_NORMAL_IDX]
-
-        // TODOWIP
 
         // Use the refracted angle at the bottom interface for BSDF calculations:
         // Seems like the more correct ones to use, but not obvious as we have the energy
@@ -3222,8 +3215,8 @@ void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
                         PreLightData preLightData, BSDFData bsdfData, BuiltinData builtinData, AggregateLighting lighting,
                         out float3 diffuseLighting, out float3 specularLighting)
 {
-    // Indirect diffuse occlusion has already been applied in GetBakedDiffuseLighting() and specular occlusion
-    // has been pre-computed in GetPreLightData() and applied on indirect specular light.
+    // Specular occlusion has been pre-computed in GetPreLightData() and applied on indirect specular light
+    // while screenSpaceAmbientOcclusion has also been cached in preLightData.
     // We apply the artistic diffuse occlusion on direct lighting here:
     float3 directAmbientOcclusion; // for debug below
 
@@ -3241,7 +3234,7 @@ void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
     // Compute diffuseOcclusion combining both the effects of the occlusion from data and from screen space, the
     // later which has already been sampled in GetPreLightData (also see comments about GTAOMultiBounceTintBase
     // above).
-    float3 diffuseOcclusion = GetDiffuseOcclusion(GTAOMultiBounceTintBase, bsdfData.ambientOcclusion, preLightData.screenSpaceAmbientOcclusion);
+    float3 diffuseOcclusion = GetDiffuseOcclusionGTAOMultiBounce(bsdfData.ambientOcclusion, preLightData.screenSpaceAmbientOcclusion, GTAOMultiBounceTintBase);
 
     // Apply the albedo to the direct diffuse lighting (only once). The indirect (baked) diffuse lighting has
     // already had the albedo applied in ModifyBakedDiffuseLighting() but we now also apply the diffuse occlusion

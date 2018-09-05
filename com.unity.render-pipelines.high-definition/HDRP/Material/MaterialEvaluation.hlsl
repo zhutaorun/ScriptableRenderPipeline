@@ -90,8 +90,8 @@ void GetScreenSpaceAmbientOcclusionMultibounce(float2 positionSS, float NdotV, f
     aoFactor.directAmbientOcclusion = GTAOMultiBounce(directAmbientOcclusion, diffuseColor);
 }
 
-// Get ambient occlusion (indirect) from given data and screenspace one (using high quality GTAOMultiBounce version):
-float3 GetDiffuseOcclusion(float3 diffuseColor, float diffuseOcclusionFromData, float screenSpaceDiffuseOcclusion)
+// Get ambient occlusion (indirect) from given data and screenspace one using the high quality GTAOMultiBounce version
+float3 GetDiffuseOcclusionGTAOMultiBounce(float diffuseOcclusionFromData, float screenSpaceDiffuseOcclusion, float3 diffuseColor)
 {
     return GTAOMultiBounce(min(diffuseOcclusionFromData, screenSpaceDiffuseOcclusion), diffuseColor);
 }
