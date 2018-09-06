@@ -65,7 +65,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (useReferenceTransformAsNearClipPlane)
             {
                 ApplyObliqueNearClipPlane(
-                    ref probePosition,
+                    ref settings, ref probePosition,
                     ref cameraSettings, ref cameraPosition
                 );
             }
