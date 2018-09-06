@@ -2,8 +2,12 @@ using System;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
+    /// <summary>Utilities for <see cref="CameraSettings"/>.</summary>
     public static class CameraSettingsUtilities
     {
+        /// <summary>Applies <paramref name="settings"/> to <paramref name="cam"/>.</summary>
+        /// <param name="cam">Camera to update.</param>
+        /// <param name="settings">Settings to apply.</param>
         public static void ApplySettings(this Camera cam, CameraSettings settings)
         {
             if (settings.frameSettings == null)
@@ -47,6 +51,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             add.OnAfterDeserialize();
         }
 
+        /// <summary>Applies <paramref name="settings"/> to <paramref name="cam"/>.</summary>
+        /// <param name="cam">Camera to update.</param>
+        /// <param name="settings">Settings to apply.</param>
         public static void ApplySettings(this Camera cam, CameraPositionSettings settings)
         {
             // Position

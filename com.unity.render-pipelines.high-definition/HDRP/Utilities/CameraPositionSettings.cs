@@ -6,6 +6,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     [Serializable]
     public struct CameraPositionSettings
     {
+        /// <summary>Default value.</summary>
         public static readonly CameraPositionSettings @default = new CameraPositionSettings
         {
             mode = Mode.ComputeWorldToCameraMatrix,

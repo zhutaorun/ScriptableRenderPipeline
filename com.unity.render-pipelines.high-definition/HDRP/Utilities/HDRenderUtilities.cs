@@ -4,56 +4,62 @@ using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
-    /// <summary>API to perform a rendering with HDRP.</summary>
-    /// <example>
-    /// How to perform standard rendering:
-    /// <code>
-    /// class StandardRenderingExample
-    /// {
-    ///     public void Render()
-    ///     {
-    ///         // Copy default settings
-    ///         var settings = CameraRenderSettings.Default;
-    ///         // Adapt default settings to our custom usage
-    ///         settings.position.position = new Vector3(0, 1, 0);
-    ///         settings.camera.frustum.fieldOfView = 60.0f;
-    ///         // Get our render target
-    ///         var rt = new RenderTexture(128, 128, 1, GraphicsFormat.B8G8R8A8_SNorm);
-    ///         HDRenderUtilities.Render(settings, rt);
-    ///         // Do something with rt
-    ///         rt.Release();
-    ///     }
-    /// }
-    /// </code>
-    ///
-    /// How to perform a cubemap rendering:
-    /// <code>
-    /// class CubemapRenderExample
-    /// {
-    ///     public void Render()
-    ///     {
-    ///         // Copy default settings
-    ///         var settings = CameraRenderSettings.Default;
-    ///         // Adapt default settings to our custom usage
-    ///         settings.position.position = new Vector3(0, 1, 0);
-    ///         settings.camera.physical.iso = 800.0f;
-    ///         // Frustum settings are ignored and driven by the cubemap rendering
-    ///         // Get our render target
-    ///         var rt = new RenderTexture(128, 128, 1, GraphicsFormat.B8G8R8A8_SNorm)
-    ///         {
-    ///             dimension = TextureDimension.Cube
-    ///         };
-    ///         // The TextureDimension is detected and the renderer will perform a cubemap rendering.
-    ///         HDRenderUtilities.Render(settings, rt);
-    ///         // Do something with rt
-    ///         rt.Release();
-    ///     }
-    /// }
-    /// </code>
-    /// </example>
-    public static class HDRenderUtilities
+    /// <summary>
+    /// Various utilities to perform rendering with HDRP
+    /// </summary>
+    public static partial class HDRenderUtilities
     {
-        public void Render(CameraSettings settings, CameraPositionSettings position, Texture target)
+        /// <summary>Perform a rendering into <paramref name="target"/>.</summary>
+        /// <example>
+        /// How to perform standard rendering:
+        /// <code>
+        /// class StandardRenderingExample
+        /// {
+        ///     public void Render()
+        ///     {
+        ///         // Copy default settings
+        ///         var settings = CameraRenderSettings.Default;
+        ///         // Adapt default settings to our custom usage
+        ///         settings.position.position = new Vector3(0, 1, 0);
+        ///         settings.camera.frustum.fieldOfView = 60.0f;
+        ///         // Get our render target
+        ///         var rt = new RenderTexture(128, 128, 1, GraphicsFormat.B8G8R8A8_SNorm);
+        ///         HDRenderUtilities.Render(settings, rt);
+        ///         // Do something with rt
+        ///         rt.Release();
+        ///     }
+        /// }
+        /// </code>
+        ///
+        /// How to perform a cubemap rendering:
+        /// <code>
+        /// class CubemapRenderExample
+        /// {
+        ///     public void Render()
+        ///     {
+        ///         // Copy default settings
+        ///         var settings = CameraRenderSettings.Default;
+        ///         // Adapt default settings to our custom usage
+        ///         settings.position.position = new Vector3(0, 1, 0);
+        ///         settings.camera.physical.iso = 800.0f;
+        ///         // Frustum settings are ignored and driven by the cubemap rendering
+        ///         // Get our render target
+        ///         var rt = new RenderTexture(128, 128, 1, GraphicsFormat.B8G8R8A8_SNorm)
+        ///         {
+        ///             dimension = TextureDimension.Cube
+        ///         };
+        ///         // The TextureDimension is detected and the renderer will perform a cubemap rendering.
+        ///         HDRenderUtilities.Render(settings, rt);
+        ///         // Do something with rt
+        ///         rt.Release();
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
+        /// <param name="settings">Settings for the camera.</param>
+        /// <param name="position">Position for the camera.</param>
+        /// <param name="target">Target to render to.</param>
+        public static void Render(CameraSettings settings, CameraPositionSettings position, Texture target)
         {
             // Argument checking
             if (target == null)
@@ -112,6 +118,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 CoreUtils.Destroy(camera.gameObject);
             }
+        }
+
+        public static void Render(ProbeSettings settings, ProbeCapturePositionSettings position, Texture target)
+        {
+            // Copy settings
+            var cameraSettings = settings.camera;
+            var cameraPositionSettings = CameraPositionSettings.@default;
+
+            // Update settings
+            ProbeSettingsUtilities.ApplySettings(
+                ref settings, ref position,
+                ref cameraSettings, ref cameraPositionSettings
+            );
+
+            // Perform rendering
+            Render(cameraSettings, cameraPositionSettings, target);
         }
 
         static Camera NewRenderingCamera()

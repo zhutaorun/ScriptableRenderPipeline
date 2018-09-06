@@ -8,8 +8,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public struct CameraSettings
     {
         /// <summary>Physical camera settings, this will impact exposure of the rendered image.</summary>
+        [Serializable]
         public struct Physical
         {
+            /// <summary>Default value.</summary>
             public static readonly Physical @default = new Physical
             {
                 aperture = 8,
@@ -26,8 +28,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         /// <summary>Defines how color and depth buffers are cleared.</summary>
+        [Serializable]
         public struct BufferClearing
         {
+            /// <summary>Default value.</summary>
             public static readonly BufferClearing @default = new BufferClearing
             {
                 clearColorMode = HDAdditionalCameraData.ClearColorMode.Sky,
@@ -47,8 +51,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         /// <summary>Defines how the volume framework is queried.</summary>
+        [Serializable]
         public struct Volumes
         {
+            /// <summary>Default value.</summary>
             public static readonly Volumes @default = new Volumes
             {
                 volumeLayerMask = -1,
@@ -63,8 +69,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
 
         /// <summary>Defines the projection matrix of the camera.</summary>
+        [Serializable]
         public struct Frustum
         {
+            /// <summary>Default value.</summary>
             public static readonly Frustum @default = new Frustum
             {
                 mode = Mode.ComputeProjectionMatrix,
@@ -112,8 +120,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         /// <summary>Defines the culling settings of the camera.</summary>
+        [Serializable]
         public struct Culling
         {
+            /// <summary>Default value.</summary>
             public static readonly Culling @default = new Culling
             {
                 cullingMask = -1,
@@ -129,6 +139,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public bool invertCulling;
         }
 
+        /// <summary>Default value.</summary>
         public static readonly CameraSettings @default = new CameraSettings
         {
             bufferClearing = BufferClearing.@default,
@@ -141,13 +152,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             volumes = Volumes.@default
         };
 
+        /// <summary>Rendering path to use.</summary>
         public HDAdditionalCameraData.RenderingPath renderingPath;
+        /// <summary>Frame settings to use.</summary>
         public FrameSettings frameSettings;
+        /// <summary>Post process layer to use.</summary>
         public PostProcessLayer postProcessLayer;
+        /// <summary>Physical settings to use.</summary>
         public Physical physical;
+        /// <summary>Buffer clearing settings to use.</summary>
         public BufferClearing bufferClearing;
+        /// <summary>Volumes settings to use.</summary>
         public Volumes volumes;
+        /// <summary>Frustum settings to use.</summary>
         public Frustum frustum;
+        /// <summary>Culling settings to use.</summary>
         public Culling culling;
     }
 }
