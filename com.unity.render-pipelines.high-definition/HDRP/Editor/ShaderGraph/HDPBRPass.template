@@ -106,6 +106,7 @@ ${Defines}
         #include "HDRP/Material/Material.hlsl"
     #endif
     #include "HDRP/Material/MaterialUtilities.hlsl"
+    #include "HDRP/Material/Decal/DecalUtilities.hlsl"
 
     // this function assumes the bitangent flip is encoded in tangentWS.w
     // TODO: move this function to HDRP shared file, once we merge with HDRP repo
@@ -364,6 +365,7 @@ ${Graph}
         $AlphaTest:     DoAlphaTest(surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold);
 
         BuildSurfaceData(fragInputs, surfaceDescription, V, surfaceData);
+        $Decals: AddDecalContribution(posInput, surfaceData, surfaceDescription.Alpha);
 
         // Builtin Data -- we don't call GetBuiltinData(fragInputs, surfaceData, ...)
         // that function assumes there are specific global properties defined

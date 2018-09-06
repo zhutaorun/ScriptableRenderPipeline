@@ -459,6 +459,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 }
             }
 
+            if (masterNode.receiveDecals.isOn) 
+            {                
+                activeFields.Add("Decals");
+            }
+
             switch (masterNode.model)
             {
                 case PBRMasterNode.Model.Metallic:

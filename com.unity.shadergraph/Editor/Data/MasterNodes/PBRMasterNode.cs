@@ -105,6 +105,23 @@ namespace UnityEditor.ShaderGraph
             }
         }
 
+        [SerializeField]
+        bool m_ReceiveDecals;
+
+        public ToggleData receiveDecals
+        {
+            get { return new ToggleData(m_ReceiveDecals); }
+            set
+            {
+                if (m_ReceiveDecals == value.isOn)
+                    return;
+                m_ReceiveDecals = value.isOn;
+                Dirty(ModificationScope.Graph);
+            }
+        }
+
+
+
         public PBRMasterNode()
         {
             UpdateNodeAfterDeserialization();

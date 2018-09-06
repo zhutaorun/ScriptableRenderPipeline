@@ -54,6 +54,16 @@ namespace UnityEditor.ShaderGraph.Drawing
                     });
                 });
 
+            ps.Add(new PropertyRow(new Label("Receive Decals")), (row) =>
+                {
+                    row.Add(new Toggle(), (toggle) =>
+                    {
+                        toggle.value = m_Node.receiveDecals.isOn;
+                        toggle.OnToggleChanged(ChangeReceiveDecals);
+                    });
+                });
+
+
             Add(ps);
         }
 
@@ -90,6 +100,13 @@ namespace UnityEditor.ShaderGraph.Drawing
             ToggleData td = m_Node.twoSided;
             td.isOn = evt.newValue;
             m_Node.twoSided = td;
+        }
+        void ChangeReceiveDecals(ChangeEvent<bool> evt)
+        {
+            m_Node.owner.owner.RegisterCompleteObjectUndo("Receive Decals Change");
+            ToggleData td = m_Node.receiveDecals;
+            td.isOn = evt.newValue;
+            m_Node.receiveDecals = td;
         }
     }
 }

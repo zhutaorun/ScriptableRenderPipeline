@@ -47,6 +47,7 @@ void ApplyBlendMask(inout float4 dst, inout int matMask, float2 texCoords, int m
     matMask |= mapMask;
 }
 
+
 void AddDecalContribution(PositionInputs posInput, inout SurfaceData surfaceData, inout float alpha)
 {
     if(_EnableDBuffer)
