@@ -387,7 +387,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             RequiredFields = new List<string>()
             {
                 "FragInputs.worldToTangent",
-//                "FragInputs.positionRWS",
+                "FragInputs.positionRWS",
             },
             PixelShaderSlots = new List<int>()
             {
