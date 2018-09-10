@@ -31,6 +31,7 @@ MonoBehaviour:
   copyChannelCS: {fileID: 7200000, guid: a4d45eda75e8e474dbe24a31f741f3b4, type: 3}
   texturePaddingCS: {fileID: 7200000, guid: 6736f53014c69f84aa2130aeae99730b, type: 3}
   applyDistortionCS: {fileID: 7200000, guid: 2fa6c0e3fe6dc3145a4156f21913fe5c, type: 3}
+  screenSpaceReflectionsCS: {fileID: 7200000, guid: d1de9ac7d9016204da289affe9677942, type: 3}
   clearDispatchIndirectShader: {fileID: 7200000, guid: fc1f553acb80a6446a32d33e403d0656, type: 3}
   buildDispatchIndirectShader: {fileID: 7200000, guid: 4eb1b418be7044c40bb5200496c50f14, type: 3}
   buildScreenAABBShader: {fileID: 7200000, guid: 728dce960f8a9c44bbc3abb3b851d8f6, type: 3}
@@ -67,6 +68,7 @@ MonoBehaviour:
   shadowClearShader: {fileID: 4800000, guid: e3cab24f27741f44d8af1e94d006267c, type: 3}
   shadowBlurMoments: {fileID: 7200000, guid: fb36979473602464fa32deacb9630c08, type: 3}
   debugShadowMapShader: {fileID: 4800000, guid: ee25e539f5594f44085e0a9000c15d9b, type: 3}
+  decalNormalBuffer: {fileID: 4800000, guid: fd532bf1795188c4daaa66ea798b8b0a, type: 3}
   aoDownsample1: {fileID: 7200000, guid: f2242c3977ff794419fa0a2a3a08a1d5, type: 3}
   aoDownsample2: {fileID: 7200000, guid: 6a156e43d9869584ea70507ef5bb054a, type: 3}
   aoRender: {fileID: 7200000, guid: bdc1a70dcf8706247be8c321b8f9cdac, type: 3}
