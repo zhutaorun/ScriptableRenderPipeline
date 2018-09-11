@@ -27,7 +27,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         ReflectionProbeMode m_Mode = ReflectionProbeMode.Baked;
         [SerializeField]
         ReflectionProbeRefreshMode m_RefreshMode = ReflectionProbeRefreshMode.OnAwake;
-        
+
+        internal ProbeSettings settings { get; private set; }
+
+
         RenderTexture m_RealtimeTexture = null;
 
         /// <summary>Light layer to use by this probe.</summary>
@@ -90,6 +93,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (influenceVolume == null)
                 influenceVolume = new InfluenceVolume();
             influenceVolume.Init(this);
+        }
+
+        internal virtual void OnEnable()
+        {
+            HDProbeSystem.RegisterProbe(this);
+        }
+
+        internal virtual void OnDisable()
+        {
+            HDProbeSystem.UnregisterProbe(this);
         }
 
         void ISerializationCallbackReceiver.OnBeforeSerialize()

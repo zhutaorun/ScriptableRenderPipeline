@@ -60,5 +60,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             this.referencePosition = referencePosition;
             this.referenceRotation = referenceRotation;
         }
+
+        public static ProbeCapturePositionSettings ComputeFrom(HDProbe probe, Transform reference)
+        {
+            var result = new ProbeCapturePositionSettings();
+            var proxyTransform = probe.proxyVolume != null
+                ? probe.proxyVolume.transform
+                : probe.transform;
+            result.proxyPosition = proxyTransform.position;
+            result.proxyRotation = proxyTransform.rotation;
+
+            if (reference != null)
+            {
+                result.referencePosition = reference.position;
+                result.referenceRotation = reference.rotation;
+            }
+            return result;
+        }
     }
 }
