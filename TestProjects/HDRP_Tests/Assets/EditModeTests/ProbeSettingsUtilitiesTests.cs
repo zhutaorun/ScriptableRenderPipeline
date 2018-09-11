@@ -1,6 +1,4 @@
-using UnityEditor.Experimental.Rendering.TestFramework;
 using NUnit.Framework;
-using System;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
 {
@@ -28,6 +26,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
             );
 
             Assert.AreEqual(CameraSettings.Frustum.Mode.UseProjectionMatrixField, cameraSettings.frustum.mode);
+        }
+
+        [Test]
+        public void ApplyMirroredReferenceTransform()
+        {
+            var probeSettings = ProbeSettings.@default;
+            var probePosition = ProbeCapturePositionSettings.@default;
+            var cameraSettings = CameraSettings.@default;
+            var cameraPosition = CameraPositionSettings.@default;
+
+            ProbeSettingsUtilities.ApplyMirroredReferenceTransform(
+                ref probeSettings, ref probePosition,
+                ref cameraSettings, ref cameraPosition
+            );
+
+            Assert.AreEqual(true, cameraSettings.culling.invertCulling);
         }
     }
 }
