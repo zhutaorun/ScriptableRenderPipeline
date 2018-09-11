@@ -402,11 +402,12 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.metallic = 0.0;
 #ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_SPECULAR_COLOR;
+    surfaceData.specularColor = _SpecularColor.rgb;
     if (_SpecularColorUseMap)
     {
-        SHARED_SAMPLING(surfaceData.specularColor, rgb, _SpecularColorUseMap, _SpecularColorMap);
-        //surfaceData.specularColor = SAMPLE_TEXTURE2D_SCALE_BIAS(_SpecularColorMap).rgb;
-        surfaceData.specularColor *= _SpecularColor.rgb;
+        float3 tmp = (float3)0;
+        SHARED_SAMPLING(tmp, rgb, _SpecularColorUseMap, _SpecularColorMap);
+        surfaceData.specularColor *= tmp;
     }
     // Reproduce the energy conservation done in legacy Unity. Not ideal but better for compatibility and users can unchek it
     surfaceData.baseColor *= _EnergyConservingSpecularColor > 0.0 ? (1.0 - Max3(surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b)) : 1.0;
@@ -578,10 +579,32 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
         surfaceData.coatPerceptualSmoothness = dot(tmp, _CoatSmoothnessMapChannelMask);
         surfaceData.coatPerceptualSmoothness = lerp(_CoatSmoothnessMapRange.x, _CoatSmoothnessMapRange.y, surfaceData.coatPerceptualSmoothness);
     }
-    // TODOTODO maps
+
     surfaceData.coatIor = _CoatIor;
+    if (_CoatIorUseMap)
+    {
+        float4 tmp = (float4)0;
+        SHARED_SAMPLING(tmp, rgba, _CoatIorUseMap, _CoatIorMap);
+        surfaceData.coatIor = dot(tmp, _CoatIorMapChannelMask);
+        surfaceData.coatIor = lerp(_CoatIorMapRange.x, _CoatIorMapRange.y, surfaceData.coatIor);
+    }
+
     surfaceData.coatThickness = _CoatThickness;
+    if (_CoatThicknessUseMap)
+    {
+        float4 tmp = (float4)0;
+        SHARED_SAMPLING(tmp, rgba, _CoatThicknessUseMap, _CoatThicknessMap);
+        surfaceData.coatThickness = dot(tmp, _CoatThicknessMapChannelMask);
+        surfaceData.coatThickness = lerp(_CoatThicknessMapRange.x, _CoatThicknessMapRange.y, surfaceData.coatThickness);
+    }
+
     surfaceData.coatExtinction = _CoatExtinction; // in thickness^-1 units
+    if (_CoatExtinctionUseMap)
+    {
+        float3 tmp = (float3)0;
+        SHARED_SAMPLING(tmp, rgb, _CoatExtinctionUseMap, _CoatExtinctionMap);
+        surfaceData.coatExtinction *= tmp;
+    }
 
 #ifdef _MATERIAL_FEATURE_COAT_NORMALMAP
     surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_STACK_LIT_COAT_NORMAL_MAP;
@@ -785,9 +808,13 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     // For back lighting we use the oposite vertex normal 
     InitBuiltinData(alpha, surfaceData.normalWS, -input.worldToTangent[2], input.positionRWS, input.texCoord1, input.texCoord2, builtinData);
 
-    // TODOTODO
     builtinData.emissiveColor = _EmissiveColor * lerp(float3(1.0, 1.0, 1.0), surfaceData.baseColor.rgb, _AlbedoAffectEmissive);
-    builtinData.emissiveColor *= SAMPLE_TEXTURE2D_SCALE_BIAS(_EmissiveColorMap).rgb;
+    if (_EmissiveColorUseMap)
+    {
+        float3 tmp = (float3)0;
+        SHARED_SAMPLING(tmp, rgb, _EmissiveColorUseMap, _EmissiveColorMap);
+        builtinData.emissiveColor *= tmp;
+    }
 
 #if (SHADERPASS == SHADERPASS_DISTORTION) || defined(DEBUG_DISPLAY)
     float3 distortion = SAMPLE_TEXTURE2D(_DistortionVectorMap, sampler_DistortionVectorMap, input.texCoord0).rgb;

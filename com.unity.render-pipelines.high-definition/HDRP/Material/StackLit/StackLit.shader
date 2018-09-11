@@ -116,18 +116,6 @@ Shader "HDRenderPipeline/StackLit"
         [HideInInspector] _HazeExtentMapRange("HazeExtent Range", Vector) = (0, 1, 0, 0)
         [ToggleUI] _HazeExtentMapSamplerSharingOptout("HazeExtentMap Sampler Sharing Opt-out", Float) = 0
 
-        [ToggleUI] _VlayerRecomputePerLight("Vlayer Recompute Per Light", Float) = 0.0 // UI only
-        [ToggleUI] _VlayerUseRefractedAnglesForBase("Vlayer Use Refracted Angles For Base", Float) = 0.0 // UI only
-        [ToggleUI] _DebugEnable("Debug Enable", Float) = 0.0 // UI only
-        _DebugEnvLobeMask("DebugEnvLobeMask", Vector) = (1, 1, 1, 1)
-        _DebugLobeMask("DebugLobeMask", Vector) = (1, 1, 1, 1)
-        _DebugAniso("DebugAniso", Vector) = (1, 0, 0, 1000.0)
-        _DebugSpecularOcclusion("DebugSpecularOcclusion", Vector) = (2, 2, 1, 2)
-        // .x = {0 = fromAO, 1 = conecone, 2 = SPTD} .y = bentao algo {0 = uniform, cos, bent cos}, .z = use hemisphere clipping, 
-        // .w = {-1.0 => show SO algo used with tint, 
-        //        1.0 to 4.0 => used with DEBUGLIGHTINGMODE_INDIRECT_SPECULAR_OCCLUSION
-        //        1.0, 2.0, 3.0 show SO for COAT LOBE, BASE LOBEA and BASE LOBEB, 
-        //        4.0 show the source screen space occlusion instead of specular occlusion.}
 
         // TODO: CoatIorMap, ...
 
@@ -220,9 +208,42 @@ Shader "HDRenderPipeline/StackLit"
         [ToggleUI] _CoatSmoothnessMapSamplerSharingOptout("CoatSmoothnessMap Sampler Sharing Opt-out", Float) = 0
 
         // TODOTODO
+        [HideInInspector] _CoatIorMapShow("CoatIor Show", Float) = 0
         _CoatIor("Coat IOR", Range(1.0001, 2.0)) = 1.5
+        _CoatIorMap("CoatIor Map", 2D) = "white" {}
+        _CoatIorUseMap("CoatIor Use Map", Float) = 0
+        _CoatIorMapUV("CoatIor Map UV", Float) = 0.0
+        _CoatIorMapUVLocal("CoatIor Map UV Local", Float) = 0.0
+        _CoatIorMapChannel("CoatIor Map Channel", Float) = 0.0
+        [HideInInspector] _CoatIorMapChannelMask("CoatIor Map Channel Mask", Vector) = (1, 0, 0, 0)
+        _CoatIorMapRemap("CoatIor Remap", Vector) = (1.0001, 2.0, 0, 0)
+        _CoatIorMapM("CoatIor Remap", Vector) = (1.0001, 2.0, 0, 0)
+        [ToggleUI] _CoatIorMapRemapInverted("Invert CoatIor Remap", Float) = 0.0
+        [HideInInspector] _CoatIorMapUIRangeLimits("CoatIorMap UIRangeLimits", Vector) = (1.0001, 2.0, 0, 0)
+        [HideInInspector] _CoatIorMapRange("CoatIor Range", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _CoatIorMapSamplerSharingOptout("CoatIorMap Sampler Sharing Opt-out", Float) = 0
+
+        [HideInInspector] _CoatThicknessMapShow("CoatThickness Show", Float) = 0
         _CoatThickness("Coat Thickness", Range(0.0, 0.99)) = 0.0
-        _CoatExtinction("Coat Extinction Coefficient", Color) = (1,1,1) // in thickness^-1 units
+        _CoatThicknessMap("CoatThickness Map", 2D) = "white" {}
+        _CoatThicknessUseMap("CoatThickness Use Map", Float) = 0
+        _CoatThicknessMapUV("CoatThickness Map UV", Float) = 0.0
+        _CoatThicknessMapUVLocal("CoatThickness Map UV Local", Float) = 0.0
+        _CoatThicknessMapChannel("CoatThickness Map Channel", Float) = 0.0
+        [HideInInspector] _CoatThicknessMapChannelMask("CoatThickness Map Channel Mask", Vector) = (1, 0, 0, 0)
+        _CoatThicknessMapRemap("CoatThickness Remap", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _CoatThicknessMapRemapInverted("Invert CoatThickness Remap", Float) = 0.0
+        [HideInInspector] _CoatThicknessMapRange("CoatThickness Range", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _CoatThicknessMapSamplerSharingOptout("CoatThicknessMap Sampler Sharing Opt-out", Float) = 0
+
+        [HideInInspector] _CoatExtinctionMapShow("Coat Extinction Coefficient Map Show", Float) = 0.0
+        [HDR] _CoatExtinction("Coat Extinction Coefficient", Color) = (1,1,1) // in thickness^-1 units
+        _CoatExtinctionMap("Coat Extinction Coefficient Map", 2D) = "white" {}
+        _CoatExtinctionUseMap("Coat Extinction Coefficient Use Map", Float) = 0
+        _CoatExtinctionMapUV("Coat Extinction Coefficient Map UV", Range(0.0, 1.0)) = 0
+        _CoatExtinctionMapUVLocal("Coat Extinction Coefficient Map UV Local", Float) = 0.0
+        [ToggleUI] _CoatExtinctionMapSamplerSharingOptout("CoatExtinctionCoefficientMap Sampler Sharing Opt-out", Float) = 0
+        // TODO properties, stacklitdata
 
         [ToggleUI] _EnableCoatNormalMap("Enable Coat Normal Map", Float) = 0.0 // UI only
         [HideInInspector] _CoatNormalMapShow("Coat NormalMap Show", Float) = 0.0
@@ -426,6 +447,22 @@ Shader "HDRenderPipeline/StackLit"
         [Enum(Flip, 0, Mirror, 1, None, 2)] _DoubleSidedNormalMode("Double sided normal mode", Float) = 1 // This is for the editor only, see BaseLitUI.cs: _DoubleSidedConstants will be set based on the mode.
         [HideInInspector] _DoubleSidedConstants("_DoubleSidedConstants", Vector) = (1, 1, -1, 0)
 
+        // Advanced options / feature toggles
+        [ToggleUI] _EnableAnisotropyForAreaLights("Enable Anisotropy For Area Lights", Float) = 0.0 // UI only, toggles a shader_feature
+        [ToggleUI] _VlayerRecomputePerLight("Vlayer Recompute Per Light", Float) = 0.0 // UI only, toggles a shader_feature
+        [ToggleUI] _VlayerUseRefractedAnglesForBase("Vlayer Use Refracted Angles For Base", Float) = 0.0 // UI only, toggles a shader_feature
+        [ToggleUI] _DebugEnable("Debug Enable", Float) = 0.0 // UI only, toggles a shader_feature
+        // These are shader branches and/or values considered when _DebugEnable is on:
+        _DebugEnvLobeMask("DebugEnvLobeMask", Vector) = (1, 1, 1, 1)
+        _DebugLobeMask("DebugLobeMask", Vector) = (1, 1, 1, 1)
+        _DebugAniso("DebugAniso", Vector) = (1, 0, 0, 1000.0)
+        _DebugSpecularOcclusion("DebugSpecularOcclusion", Vector) = (2, 2, 1, 2)
+        // .x = {0 = fromAO, 1 = conecone, 2 = SPTD} .y = bentao algo {0 = uniform, cos, bent cos}, .z = use hemisphere clipping, 
+        // .w = {-1.0 => show SO algo used with tint, 
+        //        1.0 to 4.0 => used with DEBUGLIGHTINGMODE_INDIRECT_SPECULAR_OCCLUSION
+        //        1.0, 2.0, 3.0 show SO for COAT LOBE, BASE LOBEA and BASE LOBEB, 
+        //        4.0 show the source screen space occlusion instead of specular occlusion.}
+
         // Shared samplers
         [ToggleUI] _EnableSamplerSharing("Enable Sampler Sharing", Float) = 0.0
         [ToggleUI] _EnableSamplerSharingAutoGeneration("Enable Sampler Sharing Auto Generation", Float) = 0.0
@@ -456,6 +493,7 @@ Shader "HDRenderPipeline/StackLit"
         _SharedSamplerMap12("SharedSamplerMap12", 2D) = "black" {}
 
         // Sections show values.
+        [HideInInspector] _BaseUnlitDistortionShow("_BaseUnlitDistortionShow", Float) = 0.0
         [HideInInspector] _MaterialFeaturesShow("_MaterialFeaturesShow", Float) = 1.0
         [HideInInspector] _StandardShow("_StandardShow", Float) = 0.0
         [HideInInspector] _DetailsShow("_DetailsShow", Float) = 0.0
@@ -522,10 +560,14 @@ Shader "HDRenderPipeline/StackLit"
     #pragma shader_feature _MATERIAL_FEATURE_SPECULAR_COLOR
     #pragma shader_feature _MATERIAL_FEATURE_HAZY_GLOSS
 
+    // Performance vs appearance options
+    // Handling of anisotropy for area lights:
+    #pragma shader_feature _ANISOTROPY_FOR_AREA_LIGHTS
+    // Vertically layered BSDF test/tweak
     #pragma shader_feature _VLAYERED_RECOMPUTE_PERLIGHT
     #pragma shader_feature _VLAYERED_USE_REFRACTED_ANGLES_FOR_BASE
 
-
+    // Enables all UI driven branch on uniform options:
     #pragma shader_feature _STACKLIT_DEBUG
 
     //enable GPU instancing support

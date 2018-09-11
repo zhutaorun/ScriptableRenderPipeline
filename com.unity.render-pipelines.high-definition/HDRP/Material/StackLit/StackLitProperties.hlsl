@@ -53,6 +53,15 @@ SAMPLER(sampler_AnisotropyBMap);
 TEXTURE2D(_CoatSmoothnessMap);
 SAMPLER(sampler_CoatSmoothnessMap);
 
+TEXTURE2D(_CoatIorMap);
+SAMPLER(sampler_CoatIorMap);
+
+TEXTURE2D(_CoatThicknessMap);
+SAMPLER(sampler_CoatThicknessMap);
+
+TEXTURE2D(_CoatExtinctionMap);
+SAMPLER(sampler_CoatExtinctionMap);
+
 TEXTURE2D(_IridescenceThicknessMap);
 SAMPLER(sampler_IridescenceThicknessMap);
 
@@ -258,8 +267,32 @@ float4 _CoatSmoothnessMapChannelMask;
 float4 _CoatSmoothnessMapRange;
 
 float _CoatIor;
+float _CoatIorUseMap;
+#define _CoatIorMap_USES_OWN_SAMPLER 0
+float _CoatIorMapUV;
+float _CoatIorMapUVLocal;
+float4 _CoatIorMap_ST;
+float4 _CoatIorMap_TexelSize;
+float4 _CoatIorMapChannelMask;
+float4 _CoatIorMapRange;
+
 float _CoatThickness;
+float _CoatThicknessUseMap;
+#define _CoatThicknessMap_USES_OWN_SAMPLER 0
+float _CoatThicknessMapUV;
+float _CoatThicknessMapUVLocal;
+float4 _CoatThicknessMap_ST;
+float4 _CoatThicknessMap_TexelSize;
+float4 _CoatThicknessMapChannelMask;
+float4 _CoatThicknessMapRange;
+
 float3 _CoatExtinction;
+float _CoatExtinctionUseMap;
+#define _CoatExtinctionMap_USES_OWN_SAMPLER 0
+float4 _CoatExtinctionMap_ST;
+float4 _CoatExtinctionMap_TexelSize;
+float _CoatExtinctionMapUV;
+float _CoatExtinctionMapUVLocal;
 
 float _CoatNormalScale;
 float _CoatNormalUseMap;

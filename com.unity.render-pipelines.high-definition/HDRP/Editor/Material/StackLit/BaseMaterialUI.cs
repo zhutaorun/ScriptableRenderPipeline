@@ -27,6 +27,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public const string k_Remap = "Remap";
         public const string k_RemapInverted = "RemapInverted";
         public const string k_Range = "Range";
+        public const string k_UIRangeLimits = "UIRangeLimits";
         public const string k_Channel = "Channel";
         public const string k_ChannelMask = "ChannelMask";
         #endregion
@@ -62,19 +63,21 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             private readonly BaseProperty[] m_ChildProperties;
             private readonly Property m_Show;
+            private readonly Action<Material> m_ExtraOnGUI;
 
             public GroupProperty(BaseMaterialGUI parent, string groupName, BaseProperty[] childProperties, Func<object, bool> isVisible = null)
-                : this(parent, groupName, string.Empty, childProperties, isVisible)
+                : this(parent, groupName, string.Empty, childProperties, null, isVisible)
             {
             }
 
-            public GroupProperty(BaseMaterialGUI parent, string groupName, string groupTitle, BaseProperty[] childProperties, Func<object, bool> isVisible = null)
+            public GroupProperty(BaseMaterialGUI parent, string groupName, string groupTitle, BaseProperty[] childProperties, Action<Material> extraOnGUI = null, Func<object, bool> isVisible = null)
                 : base(parent, isVisible)
             {
                 m_Show = new Property(parent, groupName + k_Show, "", false);
 
                 m_Title = groupTitle;
                 m_ChildProperties = childProperties;
+                m_ExtraOnGUI = extraOnGUI;
             }
 
             public override void OnFindProperty(MaterialProperty[] props)
@@ -110,6 +113,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         }
 
                         EditorGUI.indentLevel--;
+
+                        if (m_ExtraOnGUI != null)
+                        {
+                            m_ExtraOnGUI(material);
+                        }
                     }
                 }
             }
@@ -559,12 +567,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public class TextureProperty : Property
         {
-            public class RangeMinMax
-            {
-                public float MinLimit;
-                public float MaxLimit;
-            }
-
             public enum Channel
             {
                 R,
@@ -615,6 +617,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             public Property m_RemapProperty;
 
+            public Property m_UIRangeLimitsProperty;
+
             public Property m_InvertRemapProperty;
 
             public Property m_SamplerSharingOptoutProperty;
@@ -631,34 +635,27 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             Func<object, Material, bool> m_IsSamplerSharingEnabled;
 
-            public RangeMinMax RangeUIMinMax
-            {
-                get; set;
-            }
+            public Vector2? m_UIRangeLimits;
+
+            public static Vector2 m_UIRangeLimitsDefault = new Vector2(0.0f, 1.0f);
 
             public TextureProperty(BaseMaterialGUI parent, string propertyName, string constantPropertyName, string guiText,
                 bool pairConstantWithTexture, bool isMandatory = true, bool isNormalMap = false, bool showScaleOffset = true,
                 Func<object, bool> isVisible = null, Func<object, Material, bool> samplerSharingEnabled = null)
                 : this(parent, propertyName, constantPropertyName, guiText, string.Empty, pairConstantWithTexture, isMandatory, isNormalMap, showScaleOffset, 
-                      slaveTexOneLineProp:null, rangeUILimits: null, isVisible: isVisible, samplerSharingEnabled: samplerSharingEnabled)
+                      slaveTexOneLineProp:null, UIRangeLimits: null, isVisible: isVisible, samplerSharingEnabled: samplerSharingEnabled)
             {
             }
 
+            // UIRangeLimits overrides m_UIRangeLimitsProperty even if the later is found in the shader
             public TextureProperty(BaseMaterialGUI parent, string propertyName, string constantPropertyName, string guiText, string toolTip,
                 bool pairConstantWithTexture, bool isMandatory = true, bool isNormalMap = false, bool showScaleOffset = true,
-                TextureOneLineProperty slaveTexOneLineProp = null, RangeMinMax rangeUILimits = null, Func < object, bool> isVisible = null,
+                TextureOneLineProperty slaveTexOneLineProp = null, Vector2? UIRangeLimits = null, Func < object, bool> isVisible = null,
                 Func<object, Material, bool> samplerSharingEnabled = null)
                 : base(parent, propertyName, guiText, toolTip, isMandatory, isVisible)
             {
                 m_IsSamplerSharingEnabled = samplerSharingEnabled;
-                if (m_IsSamplerSharingEnabled == null)
-                {
-                    //m_IsSamplerSharingEnabled = (_, material) =>
-                    //{
-                    //    return (material.HasProperty("_EnableSamplerSharing") && material.GetFloat("_EnableSamplerSharing") > 0.0f);
-                    //};
-                }
-                RangeUIMinMax = rangeUILimits ?? new RangeMinMax() { MinLimit = 0.0f, MaxLimit = 1.0f };
+                m_UIRangeLimits = UIRangeLimits;
                 m_IsNormalMap = isNormalMap;
                 m_ShowScaleOffset = showScaleOffset;
                 m_SlaveTexOneLineProp = slaveTexOneLineProp;
@@ -685,8 +682,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                 m_RemapProperty = new Property(parent, propertyName + k_Remap, "Remapping", "Defines the range to remap/scale the values in texture", false);
                 m_InvertRemapProperty = new Property(parent, propertyName + k_RemapInverted, "Invert Remapping", "Whether the mapping values are inverted.", false);
-                m_SamplerSharingOptoutProperty = new Property(parent, propertyName + k_SamplerSharingOptout, "Exclude From Sampler Sharing", "Opt-out of Sampler Sharing", false);
 
+                m_UIRangeLimitsProperty = new Property(parent, propertyName + k_UIRangeLimits, "UI range limits", "Defines the range that the UI widget will allow", false);
+
+                m_SamplerSharingOptoutProperty = new Property(parent, propertyName + k_SamplerSharingOptout, "Exclude From Sampler Sharing", "Opt-out of Sampler Sharing", false);
                 m_SamplerSharingAllowNullOptoutProperty = new Property(parent, propertyName + k_SamplerSharingAllowNullOptout, "Allow Opt-out When Unassigned (When Generating Shader)",
                     "Allow Opt-out When Unassigned (When Generating Shader)", false);
             }
@@ -708,6 +707,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 m_ChannelProperty.OnFindProperty(props);
                 m_RemapProperty.OnFindProperty(props);
                 m_InvertRemapProperty.OnFindProperty(props);
+                m_UIRangeLimitsProperty.OnFindProperty(props);
                 m_SamplerSharingOptoutProperty.OnFindProperty(props);
                 m_SamplerSharingAllowNullOptoutProperty.OnFindProperty(props);
             }
@@ -762,8 +762,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                             {
                                 // Display the remap of texture values.
                                 Vector2 remap = m_RemapProperty.VectorValue;
+                                Vector2 uiLimits = (m_UIRangeLimits != null) ? (Vector2) m_UIRangeLimits : ((m_UIRangeLimitsProperty.IsValid) ? (Vector2) m_UIRangeLimitsProperty.VectorValue : m_UIRangeLimitsDefault);
+
                                 EditorGUI.BeginChangeCheck();
-                                EditorGUILayout.MinMaxSlider(m_RemapProperty.PropertyText, ref remap.x, ref remap.y, RangeUIMinMax.MinLimit, RangeUIMinMax.MaxLimit);
+                                EditorGUILayout.MinMaxSlider(m_RemapProperty.PropertyText, ref remap.x, ref remap.y, uiLimits.x, uiLimits.y);
                                 if (EditorGUI.EndChangeCheck())
                                 {
                                     m_RemapProperty.VectorValue = remap;
