@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [3.4.0-preview]
+
+### Added
+ - Added controls for linear fade at the boundary of density volumes
+ - Added new API to control decals without monobehaviour object
+
+### Fixed
+- Stencil test during decals normal buffer update is now properly applied
+- Fixed an issue where sometimes the deferred shadow texture would not be valid, causing wrong rendering.
+
 ## [3.3.0-preview]
 
 ### Added
@@ -16,6 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fix display correct target platform when showing message to inform user that a platform is not supported
 - Remove workaround for metal and vulkan in normal buffer encoding/decoding
 - Fixed an issue with color picker not working in forward
+- Decals corectly update normal buffer in forward 
 - Fixed an issue where reseting HDLight do not reset all of its parameters
 
 ### Changed
