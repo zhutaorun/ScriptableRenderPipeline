@@ -153,6 +153,9 @@ void AddDecalContribution(PositionInputs posInput, inout SurfaceData surfaceData
 #endif
         DECODE_FROM_DBUFFER(DBuffer, decalSurfaceData);
         // using alpha compositing https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch23.html
+#ifdef UNITY_MATERIAL_UNLIT
+        surfaceData.color.xyz = surfaceData.color.xyz * decalSurfaceData.baseColor.w + decalSurfaceData.baseColor.xyz;
+#else
         if(mask & DBUFFERHTILEBIT_DIFFUSE)
         {
             surfaceData.baseColor.xyz = surfaceData.baseColor.xyz * decalSurfaceData.baseColor.w + decalSurfaceData.baseColor.xyz;
@@ -168,5 +171,6 @@ void AddDecalContribution(PositionInputs posInput, inout SurfaceData surfaceData
             surfaceData.ambientOcclusion = surfaceData.ambientOcclusion * decalSurfaceData.mask.w + decalSurfaceData.mask.y;
             surfaceData.perceptualSmoothness = surfaceData.perceptualSmoothness * decalSurfaceData.mask.w + decalSurfaceData.mask.z;
         }
+#endif
     }
 }
