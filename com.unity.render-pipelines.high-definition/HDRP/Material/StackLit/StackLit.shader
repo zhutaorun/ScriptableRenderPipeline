@@ -388,7 +388,7 @@ Shader "HDRenderPipeline/StackLit"
         [ToggleUI] _GeometricNormalFilteringEnabled("GeometricNormalFilteringEnabled", Float) = 0.0
         [ToggleUI] _TextureNormalFilteringEnabled("TextureNormalFilteringEnabled", Float) = 0.0
         _SpecularAntiAliasingScreenSpaceVariance("SpecularAntiAliasingScreenSpaceVariance", Range(0.0, 1.0)) = 0.1
-        _SpecularAntiAliasingThreshold("SpecularAntiAliasingThreshold", Range(0.0, 1.0)) = 0.2
+        _SpecularAntiAliasingThreshold("SpecularAntiAliasingThreshold", Range(0.0, 0.25)) = 0.2
 
         [ToggleUI] _EnableFogOnTransparent("Enable Fog", Float) = 1.0
         [ToggleUI] _EnableBlendModePreserveSpecularLighting("Enable Blend Mode Preserve Specular Lighting", Float) = 1.0
