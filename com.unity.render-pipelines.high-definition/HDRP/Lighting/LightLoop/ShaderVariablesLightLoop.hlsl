@@ -8,6 +8,7 @@
     uint _EnvLightCount;
     uint _EnvProxyCount;
     int  _EnvLightSkyEnabled;         // TODO: make it a bool
+    int _DirectionalShadowIndex;
 
     uint _NumTileFtplX;
     uint _NumTileFtplY;
@@ -35,7 +36,7 @@
 #else
 
     #include "HDRP/Lighting/LightDefinition.cs.hlsl"
-    #include "CoreRP/Shadow/ShadowBase.cs.hlsl"
+    #include "HDRP/CoreRP/Shadow/ShadowBase.cs.hlsl"
 
     StructuredBuffer<uint>  g_vLightListGlobal;      // don't support Buffer yet in unity
 

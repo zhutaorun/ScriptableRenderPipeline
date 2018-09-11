@@ -9,6 +9,7 @@ struct LightLoopContext
     int sampleReflection;
     ShadowContext shadowContext;
     float contactShadow; // Currently we support only one contact shadow per view
+    float shadowValue; // Stores the value of the cascade shadow map
 };
 
 //-----------------------------------------------------------------------------
@@ -50,6 +51,7 @@ EnvLightData InitSkyEnvLightData(int envIndex)
 {
     EnvLightData output;
     ZERO_INITIALIZE(EnvLightData, output);
+    output.lightLayers = 0xFFFFFFFF; // Enable sky for all layers
     output.influenceShapeType = ENVSHAPETYPE_SKY;
     // 31 bit index, 1 bit cache type
     output.envIndex = ENVCACHETYPE_CUBEMAP | (envIndex << 1);

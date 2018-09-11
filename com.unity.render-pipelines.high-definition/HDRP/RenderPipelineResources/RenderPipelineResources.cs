@@ -17,6 +17,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Material defaultDiffuseMaterial;
         public Material defaultMirrorMaterial;
         public Material defaultDecalMaterial;
+        public Material defaultTerrainMaterial;
         public Shader defaultShader;
 
         // Debug
@@ -35,6 +36,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public ComputeShader copyChannelCS;
         public ComputeShader texturePaddingCS;
         public ComputeShader applyDistortionCS;
+        public ComputeShader screenSpaceReflectionsCS;
 
         // Lighting tile pass resources
         public ComputeShader clearDispatchIndirectShader;
@@ -50,7 +52,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public ComputeShader volumetricLightingCS;
 
         public ComputeShader subsurfaceScatteringCS; // Disney SSS
-        public Shader subsurfaceScattering; // Jimenez SSS
         public Shader combineLighting;
 
         // General
@@ -88,6 +89,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Decal
         public Shader decalNormalBuffer;
         
+        // MSAA Shaders
+        public Shader depthValues;
+        public Shader aoResolve;
+        public Shader colorResolve;
+
 #if UNITY_EDITOR
         public void UpgradeIfNeeded()
         {
@@ -131,6 +137,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             copyChannelCS = Load<ComputeShader>(CorePath + "CoreResources/GPUCopy.compute");
             texturePaddingCS = Load<ComputeShader>(CorePath + "CoreResources/TexturePadding.compute");
             applyDistortionCS = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipelineResources/ApplyDistorsion.compute");
+            screenSpaceReflectionsCS = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipelineResources/ScreenSpaceReflections.compute");
 
             clearDispatchIndirectShader = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/LightLoop/cleardispatchindirect.compute");
             buildDispatchIndirectShader = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/LightLoop/builddispatchindirect.compute");
@@ -146,7 +153,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             volumetricLightingCS = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/Volumetrics/VolumetricLighting.compute");
 
             subsurfaceScatteringCS = Load<ComputeShader>(HDRenderPipelinePath + "Material/SubsurfaceScattering/SubsurfaceScattering.compute");
-            subsurfaceScattering = Load<Shader>(HDRenderPipelinePath + "Material/SubsurfaceScattering/SubsurfaceScattering.shader");
             combineLighting = Load<Shader>(HDRenderPipelinePath + "Material/SubsurfaceScattering/CombineLighting.shader");
 
             // General
@@ -184,6 +190,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // decal
             decalNormalBuffer = Load<Shader>(HDRenderPipelinePath + "Material/Decal/DecalNormalBuffer.shader");
+            // MSAA
+            depthValues = Load<Shader>(HDRenderPipelinePath + "RenderPipelineResources/MSAA/DepthValues.shader");
+            aoResolve = Load<Shader>(HDRenderPipelinePath + "RenderPipelineResources/MSAA/AOResolve.shader");
+            colorResolve = Load<Shader>(HDRenderPipelinePath + "RenderPipelineResources/MSAA/ColorResolve.shader");
         }
 #endif
     }
