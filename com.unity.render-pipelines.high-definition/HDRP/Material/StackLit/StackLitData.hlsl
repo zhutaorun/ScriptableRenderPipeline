@@ -336,11 +336,11 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     // Surface Data
     // -------------------------------------------------------------
     float4 sampledBaseColor = float4(1.0, 1.0, 1.0, 1.0);
-    DUMMY_USE_OF_SHARED_TEXTURES(sampledBaseColor);
     
     //if (_BaseColorUseMap) we should always sample this. In case of sampler sharing, if UseMap is not set, we consider opaque white sampled.
     {
         SHARED_SAMPLING(sampledBaseColor, rgba, _BaseColorUseMap, _BaseColorMap); //SHARED_SAMPLING(lvalue, swizzle, useMapProperty, name)
+        DUMMY_USE_OF_SHARED_TEXTURES(sampledBaseColor); // basecolor is always used so a good condidate for flagging the shared samplers' textures "potentially touched" 
     }
 
     float alpha = sampledBaseColor.a * _BaseColor.a;
@@ -361,6 +361,9 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     {
         //gradient = SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(_NormalMap, _NormalScale, _NormalMapObjSpace);
         SHARED_SAMPLING_NORMAL(gradient, _NormalUseMap, _NormalMap, _NormalScale, _NormalMapObjSpace);
+        //DUMMY_USE_OF_SHARED_TEXTURES(gradient); 
+        // normalmap is always sampled so is a good candidate for tricking the compiler on "potentially touched" texture.
+        // see TextureSamplerSharing.hlsl: we disabled sharing for passes other than SHADERPASS_FORWARD, the most sampler consuming one.
     }
 
     float4 bentGradient = float4(gradient.x, gradient.y, gradient.z, NORMALMAP_NEUTRAL_DISPERSION_VALUE);
@@ -381,7 +384,6 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     if (_SmoothnessAUseMap) // we still need to escape the dot if we dont sample
     {
         float4 tmp = (float4)0;
-        DUMMY_USE_OF_SHARED_TEXTURES(tmp);
 
         //SHARED_SAMPLING(lvalue, swizzle, useMapProperty, name)
         SHARED_SAMPLING(tmp, rgba, _SmoothnessAUseMap, _SmoothnessAMap);

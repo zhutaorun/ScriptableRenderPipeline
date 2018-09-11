@@ -16,6 +16,7 @@ Shader "HDRenderPipeline/StackLit"
         [HideInInspector] _BaseColorMapShow("BaseColor Map Show", Float) = 0
         _BaseColorMapUV("BaseColor Map UV", Float) = 0.0
         _BaseColorMapUVLocal("BaseColorMap UV Local", Float) = 0.0
+        [ToggleUI] _BaseColorMapSamplerSharingOptout("BaseColorMap Sampler Sharing Opt-out", Float) = 0
 
         [Enum(Disney BaseColor and Metallic, 0, BaseColor as Diffuse and SpecularColor aka f0, 1)] _BaseParametrization("Base Parametrization", Float) = 0
 
@@ -29,6 +30,7 @@ Shader "HDRenderPipeline/StackLit"
         [HideInInspector] _MetallicMapChannelMask("Metallic Map Channel Mask", Vector) = (1, 0, 0, 0)
         _MetallicMapRemap("Metallic Remap", Vector) = (0, 1, 0, 0)
         [HideInInspector] _MetallicMapRange("Metallic Range", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _MetallicMapSamplerSharingOptout("MetallicMap Sampler Sharing Opt-out", Float) = 0
 
         _DielectricIor("DielectricIor IOR", Range(1.0, 2.5)) = 1.5
 
@@ -39,6 +41,7 @@ Shader "HDRenderPipeline/StackLit"
         _SpecularColorMapUV("SpecularColor Map UV", Float) = 0.0
         _SpecularColorMapUVLocal("SpecularColorMap UV Local", Float) = 0.0
         [ToggleUI] _EnergyConservingSpecularColor("_EnergyConservingSpecularColor", Float) = 1.0
+        [ToggleUI] _SpecularColorMapSamplerSharingOptout("SpecularColorMap Sampler Sharing Opt-out", Float) = 0
 
         [HideInInspector] _SmoothnessAMapShow("SmoothnessA Map Show", Float) = 0
         _SmoothnessA("SmoothnessA", Range(0.0, 1.0)) = 1.0
@@ -51,6 +54,7 @@ Shader "HDRenderPipeline/StackLit"
         _SmoothnessAMapRemap("SmoothnessA Remap", Vector)  = (0, 1, 0, 0)
         [ToggleUI] _SmoothnessAMapRemapInverted("Invert SmoothnessA Remap", Float) = 0.0
         [HideInInspector] _SmoothnessAMapRange("SmoothnessA Range", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _SmoothnessAMapSamplerSharingOptout("SmoothnessAMap Sampler Sharing Opt-out", Float) = 0
 
         [Enum(Direct Parameter Control, 0, Hazy Gloss Parametrization of Barla Pacanowski Vangorp, 1)] _DualSpecularLobeParametrization("Dual Specular Lobe Parametrization", Float) = 0
 
@@ -66,6 +70,7 @@ Shader "HDRenderPipeline/StackLit"
         _SmoothnessBMapRemap("SmoothnessB Remap", Vector) = (0, 1, 0, 0) // Note: this should always match Range() in _SmoothnessB above
         [ToggleUI] _SmoothnessBMapRemapInverted("Invert SmoothnessB Remap", Float) = 0.0
         [HideInInspector] _SmoothnessBMapRange("SmoothnessB Range", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _SmoothnessBMapSamplerSharingOptout("SmoothnessBMap Sampler Sharing Opt-out", Float) = 0
 
         [HideInInspector] _LobeMixMapShow("LobeMix Map Show", Float) = 0
         _LobeMix("LobeMix", Range(0.0, 1.0)) = 0
@@ -78,6 +83,7 @@ Shader "HDRenderPipeline/StackLit"
         _LobeMixMapRemap("LobeMix Remap", Vector) = (0, 1, 0, 0)
         [ToggleUI] _LobeMixMapRemapInverted("Invert LobeMix Remap", Float) = 0.0
         [HideInInspector] _LobeMixMapRange("LobeMix Range", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _LobeMixMapSamplerSharingOptout("LobeMixMap Sampler Sharing Opt-out", Float) = 0
 
         [HideInInspector] _HazinessMapShow("Haziness Map Show", Float) = 0
         _Haziness("Haziness", Range(0.0, 1.0)) = 0
@@ -90,6 +96,7 @@ Shader "HDRenderPipeline/StackLit"
         _HazinessMapRemap("Haziness Remap", Vector) = (0, 1, 0, 0)
         [ToggleUI] _HazinessMapRemapInverted("Invert Haziness Remap", Float) = 0.0
         [HideInInspector] _HazinessMapRange("Haziness Range", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _HazinessMapSamplerSharingOptout("HazinessMap Sampler Sharing Opt-out", Float) = 0
 
         [ToggleUI] _CapHazinessWrtMetallic("Cap Haziness Wrt Metallic", Float) = 0.0
         _HazyGlossMaxDielectricF0UIBuffer("Hazy Gloss Max Dielectric F0 When Using Metallic Parametrization", Range(0.0, 1.0)) = 1.0
@@ -107,6 +114,7 @@ Shader "HDRenderPipeline/StackLit"
         _HazeExtentMapRemap("HazeExtent Remap", Vector) = (0, 1, 0, 0)
         [ToggleUI] _HazeExtentMapRemapInverted("Invert HazeExtent Remap", Float) = 0.0
         [HideInInspector] _HazeExtentMapRange("HazeExtent Range", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _HazeExtentMapSamplerSharingOptout("HazeExtentMap Sampler Sharing Opt-out", Float) = 0
 
         [ToggleUI] _VlayerRecomputePerLight("Vlayer Recompute Per Light", Float) = 0.0 // UI only
         [ToggleUI] _VlayerUseRefractedAnglesForBase("Vlayer Use Refracted Angles For Base", Float) = 0.0 // UI only
@@ -131,6 +139,8 @@ Shader "HDRenderPipeline/StackLit"
         _TangentMapUV("Tangent Map UV", Float) = 0.0
         _TangentMapUVLocal("Tangent Map UV Local", Float) = 0.0
         _TangentMapObjSpace("Tangent Map ObjSpace", Float) = 0.0 // Tangent or object reference frame for normal maps
+        [ToggleUI] _TangentMapSamplerSharingOptout("TangentMap Sampler Sharing Opt-out", Float) = 0
+
 
         // A note on how to use the same anisotropy map as one used with the Lit shader: 
         //
@@ -180,6 +190,7 @@ Shader "HDRenderPipeline/StackLit"
         [ToggleUI] _AnisotropyAMapRemapInverted("Invert AnisotropyA Remap", Float) = 0.0 // UI only
         // the two previous properties MapRemap and MapRemapInverted are combined in this shader-used range vector:
         [HideInInspector] _AnisotropyAMapRange("AnisotropyA Range", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _AnisotropyAMapSamplerSharingOptout("AnisotropyAMap Sampler Sharing Opt-out", Float) = 0
 
         [HideInInspector] _AnisotropyBMapShow("AnisotropyB Map Show", Float) = 0
         _AnisotropyB("AnisotropyB", Range(-1.0, 1.0)) = 0.0
@@ -192,6 +203,7 @@ Shader "HDRenderPipeline/StackLit"
         _AnisotropyBMapRemap("AnisotropyB Remap", Vector) = (0, 1, 0, 0)
         [ToggleUI] _AnisotropyBMapRemapInverted("Invert AnisotropyB Remap", Float) = 0.0
         [HideInInspector] _AnisotropyBMapRange("AnisotropyB Range", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _AnisotropyBMapSamplerSharingOptout("AnisotropyBMap Sampler Sharing Opt-out", Float) = 0
 
         [ToggleUI] _EnableCoat("Enable Coat", Float) = 0.0 // UI only
         [HideInInspector] _CoatSmoothnessMapShow("CoatSmoothness Show", Float) = 0
@@ -205,6 +217,7 @@ Shader "HDRenderPipeline/StackLit"
         _CoatSmoothnessMapRemap("CoatSmoothness Remap", Vector) = (0, 1, 0, 0)
         [ToggleUI] _CoatSmoothnessMapRemapInverted("Invert CoatSmoothness Remap", Float) = 0.0
         [HideInInspector] _CoatSmoothnessMapRange("CoatSmoothness Range", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _CoatSmoothnessMapSamplerSharingOptout("CoatSmoothnessMap Sampler Sharing Opt-out", Float) = 0
 
         // TODOTODO
         _CoatIor("Coat IOR", Range(1.0001, 2.0)) = 1.5
@@ -219,6 +232,7 @@ Shader "HDRenderPipeline/StackLit"
         _CoatNormalMapUVLocal("Coat NormalMapUV Local", Float) = 0.0
         _CoatNormalMapObjSpace("Coat NormalMap ObjSpace", Float) = 0.0
         _CoatNormalScale("Coat NormalMap Scale", Range(0.0, 2.0)) = 1
+        [ToggleUI] _CoatNormalMapSamplerSharingOptout("CoatNormalMap Sampler Sharing Opt-out", Float) = 0
 
         [HideInInspector] _NormalMapShow("NormalMap Show", Float) = 0.0
         _NormalMap("NormalMap", 2D) = "bump" {}     // Tangent space normal map
@@ -227,6 +241,7 @@ Shader "HDRenderPipeline/StackLit"
         _NormalMapUVLocal("NormalMapUV Local", Float) = 0.0
         _NormalMapObjSpace("NormalMapObjSpace", Float) = 0.0
         _NormalScale("Normal Scale", Range(0.0, 8.0)) = 1
+        [ToggleUI] _NormalMapSamplerSharingOptout("NormalMap Sampler Sharing Opt-out", Float) = 0
 
         [HideInInspector] _BentNormalMapShow("Bent NormalMap Show", Float) = 0.0
         _BentNormalMap("Bent NormalMap", 2D) = "bump" {}     // Tangent space bent normal map
@@ -251,7 +266,11 @@ Shader "HDRenderPipeline/StackLit"
         [HideInInspector] _AmbientOcclusionMapChannelMask("AmbientOcclusion Map Channel Mask", Vector) = (1, 0, 0, 0)
         _AmbientOcclusionMapRemap("AmbientOcclusion Remap", Vector) = (0, 1, 0, 0)
         [HideInInspector] _AmbientOcclusionMapRange("AmbientOcclusion Range", Vector) = (0, 1, 0, 0)
-        [HideInInspector] _AmbientOcclusionMapSamplerSharing("AmbientOcclusionMap Sampler Sharing Setting", Float) = 0 // TEST: escape it
+        // Forcing separate and unique sampler for the texture assigned on (eg) "_AmbientOcclusionMap"
+        // (only relevant when sampler sharing is enabled):
+        // 0 = disable sampler sharing for this texture
+        // 1 = default behavior when this property isn't present (can use a shared sampler)
+        [ToggleUI] _AmbientOcclusionMapSamplerSharingOptout("AmbientOcclusionMap Sampler Sharing Opt-out", Float) = 0
 
         [HideInInspector] _EmissiveColorMapShow("Emissive Color Map Show", Float) = 0.0
         [HDR] _EmissiveColor("EmissiveColor", Color) = (0, 0, 0)
@@ -260,6 +279,9 @@ Shader "HDRenderPipeline/StackLit"
         _EmissiveColorMapUV("Emissive Color Map UV", Range(0.0, 1.0)) = 0
         _EmissiveColorMapUVLocal("Emissive Color Map UV Local", Float) = 0.0
         [ToggleUI] _AlbedoAffectEmissive("Albedo Affect Emissive", Float) = 0.0
+        [ToggleUI] _EmissiveColorMapSamplerSharingOptout("EmissiveColorMap Sampler Sharing Opt-out", Float) = 0
+        [ToggleUI] _EmissiveColorMapSamplerSharingNullOptout("EmissiveColorMap Sampler Sharing Allow Null Opt-out", Float) = 1
+        // ...tells to allow/honor optout option even on unassigned texture (only valid for shader generation)
 
         [ToggleUI] _EnableSubsurfaceScattering("Enable Subsurface Scattering", Float) = 0.0
         _DiffusionProfile("Diffusion Profile", Int) = 0
@@ -273,6 +295,7 @@ Shader "HDRenderPipeline/StackLit"
         [HideInInspector] _SubsurfaceMaskMapChannelMask("Subsurface Mask Map Channel Mask", Vector) = (1, 0, 0, 0)
         _SubsurfaceMaskMapRemap("Subsurface Mask Remap", Vector) = (0, 1, 0, 0)
         [HideInInspector] _SubsurfaceMaskMapRange("Subsurface Mask Range", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _SubsurfaceMaskMapSamplerSharingOptout("SubsurfaceMaskMap Sampler Sharing Opt-out", Float) = 0
 
         [ToggleUI] _EnableTransmission("Enable Transmission", Float) = 0.0
         [HideInInspector] _ThicknessMapShow("Thickness Show", Float) = 0
@@ -286,6 +309,7 @@ Shader "HDRenderPipeline/StackLit"
         _ThicknessMapRemap("Thickness Remap", Vector) = (0, 1, 0, 0)
         [ToggleUI] _ThicknessMapRemapInverted("Invert Thickness Remap", Float) = 0.0
         [HideInInspector] _ThicknessMapRange("Thickness Range", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _ThicknessMapSamplerSharingOptout("ThicknessMap Sampler Sharing Opt-out", Float) = 0
 
         [ToggleUI] _EnableIridescence("Enable Iridescence", Float) = 0.0 // UI only
         _IridescenceIor("TopIOR over iridescent layer", Range(1.0, 2.0)) = 1.5
@@ -300,6 +324,7 @@ Shader "HDRenderPipeline/StackLit"
         _IridescenceThicknessMapRemap("IridescenceThickness Remap", Vector) = (0, 1, 0, 0)
         [ToggleUI] _IridescenceThicknessMapRemapInverted("Invert IridescenceThickness Remap", Float) = 0.0
         [HideInInspector] _IridescenceThicknessMapRange("IridescenceThickness Range", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _IridescenceThicknessMapSamplerSharingOptout("IridescenceThicknessMap Sampler Sharing Opt-out", Float) = 0
 
         [HideInInspector] _IridescenceMaskMapShow("Iridescence Mask Map Show", Float) = 0
         _IridescenceMask("Iridescence Mask", Range(0.0, 1.0)) = 1.0
@@ -311,6 +336,7 @@ Shader "HDRenderPipeline/StackLit"
         [HideInInspector] _IridescenceMaskMapChannelMask("Iridescence Mask Map Channel Mask", Vector) = (1, 0, 0, 0)
         _IridescenceMaskMapRemap("Iridescence Mask Remap", Vector) = (0, 1, 0, 0)
         [HideInInspector] _IridescenceMaskMapRange("Iridescence Mask Range", Vector) = (0, 1, 0, 0)
+        [ToggleUI] _IridescenceMaskMapSamplerSharingOptout("IridescenceMaskMap Sampler Sharing Opt-out", Float) = 0
 
         // Detail map (mask, normal, smoothness)
         [ToggleUI] _EnableDetails("Enable Details", Float) = 0.0
@@ -321,6 +347,7 @@ Shader "HDRenderPipeline/StackLit"
         _DetailMaskMapUVLocal("DetailMask Map UV Local", Float) = 0.0
         _DetailMaskMapChannel("DetailMask Map Channel", Float) = 0.0
         [HideInInspector] _DetailMaskMapChannelMask("DetailSmoothness Map Channel Mask", Vector) = (1, 0, 0, 0)
+        [ToggleUI] _DetailMaskMapSamplerSharingOptout("DetailMaskMap Sampler Sharing Opt-out", Float) = 0
 
         [HideInInspector] _DetailNormalMapShow("DetailNormalMap Show", Float) = 0.0
         _DetailNormalMap("DetailNormalMap", 2D) = "bump" {}     // Tangent space normal map
@@ -328,6 +355,7 @@ Shader "HDRenderPipeline/StackLit"
         _DetailNormalMapUV("DetailNormalMapUV", Float) = 0.0
         _DetailNormalMapUVLocal("DetailNormalMapUV Local", Float) = 0.0
         _DetailNormalScale("DetailNormal Scale", Range(0.0, 2.0)) = 1
+        [ToggleUI] _DetailNormalMapSamplerSharingOptout("DetailNormalMap Sampler Sharing Opt-out", Float) = 0
 
         [HideInInspector] _DetailSmoothnessMapShow("DetailSmoothness Map Show", Float) = 0
         _DetailSmoothnessMap("DetailSmoothness Map", 2D) = "lineargrey" {} // Neutral is 0.5 for detail map
@@ -340,6 +368,7 @@ Shader "HDRenderPipeline/StackLit"
         [ToggleUI] _DetailSmoothnessMapRemapInverted("Invert SmoothnessA Remap", Float) = 0.0
         [HideInInspector] _DetailSmoothnessMapRange("DetailSmoothness Range", Vector) = (0, 1, 0, 0)
         _DetailSmoothnessScale("DetailSmoothness Scale", Range(0.0, 2.0)) = 1
+        [ToggleUI] _DetailSmoothnessMapSamplerSharingOptout("DetailSmoothnessMap Sampler Sharing Opt-out", Float) = 0
 
         // Distortion
         _DistortionVectorMap("DistortionVectorMap", 2D) = "black" {}
@@ -397,13 +426,32 @@ Shader "HDRenderPipeline/StackLit"
 
         // Shared samplers
         [ToggleUI] _EnableSamplerSharing("Enable Sampler Sharing", Float) = 0.0
+        [ToggleUI] _EnableSamplerSharingAutoGeneration("Enable Sampler Sharing Auto Generation", Float) = 0.0
+        [HideInInspector] _SamplerSharingUsage("SamplerSharingUsage", Vector) = (0, 0, 0, 0)
+        [HideInInspector] _GeneratedShaderSamplerSharingUsage("GeneratedShaderSamplerSharingUsage", Vector) = (0, 0, 0, 0)
+        // If you need more or less shared samplers, modify 
+        // #define SHARED_SAMPLER_USED_NUM 5 
+        // below in the file "Define" section.
+        // 
+        // _SharedSamplerUsedNumDefine is for the UI only:
+        // This is set to match what SHARED_SAMPLER_USED_NUM is in this file.
+        // If 0, it directs the UI to read the value from the shader file (which is another overhead on each UI ticks)
+        // Otherwise, the value read from is assumed to match the #define in the file.
+        _SharedSamplerUsedNumDefine("SharedSamplerUsedNumDefine", Float) = 0.0
         _SharedSamplerMap0("SharedSamplerMap0", 2D) = "black" {}
         _SharedSamplerMap1("SharedSamplerMap1", 2D) = "black" {}
         _SharedSamplerMap2("SharedSamplerMap2", 2D) = "black" {}
         _SharedSamplerMap3("SharedSamplerMap3", 2D) = "black" {}
         _SharedSamplerMap4("SharedSamplerMap4", 2D) = "black" {}
-        // test: the editor should count 5
+        
+        _SharedSamplerMap5("SharedSamplerMap5", 2D) = "black" {}
         _SharedSamplerMap6("SharedSamplerMap6", 2D) = "black" {}
+        _SharedSamplerMap7("SharedSamplerMap7", 2D) = "black" {}
+        _SharedSamplerMap8("SharedSamplerMap8", 2D) = "black" {}
+        _SharedSamplerMap9("SharedSamplerMap9", 2D) = "black" {}
+        _SharedSamplerMap10("SharedSamplerMap10", 2D) = "black" {}
+        _SharedSamplerMap11("SharedSamplerMap11", 2D) = "black" {}
+        _SharedSamplerMap12("SharedSamplerMap12", 2D) = "black" {}
 
         // Sections show values.
         [HideInInspector] _MaterialFeaturesShow("_MaterialFeaturesShow", Float) = 1.0
@@ -418,6 +466,7 @@ Shader "HDRenderPipeline/StackLit"
         [HideInInspector] _TransmissionShow("_TransmissionShow", Float) = 0.0
         [HideInInspector] _IridescenceShow("_IridescenceShow", Float) = 0.0
         [HideInInspector] _SpecularAntiAliasingShow("_SpecularAntiAliasingShow", Float) = 0.0
+        [HideInInspector] _SamplerSharingShow("_SamplerSharingShow", Float) = 0.0
 
         // Caution: C# code in BaseLitUI.cs call LightmapEmissionFlagsProperty() which assume that there is an existing "_EmissionColor"
         // value that exist to identify if the GI emission need to be enabled.
@@ -486,6 +535,7 @@ Shader "HDRenderPipeline/StackLit"
     //-------------------------------------------------------------------------------------
 
     #define UNITY_MATERIAL_STACKLIT // Need to be define before including Material.hlsl
+    #define SHARED_SAMPLER_USED_NUM 5 // Maximum samplers reserved for the sharing system
 
     // If we use subsurface scattering, enable output split lighting (for forward pass)
     #if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) && !defined(_SURFACE_TYPE_TRANSPARENT)
@@ -497,14 +547,14 @@ Shader "HDRenderPipeline/StackLit"
     //-------------------------------------------------------------------------------------
 
     #include "CoreRP/ShaderLibrary/Common.hlsl"
-    #include "../../ShaderPass/FragInputs.hlsl"
-    #include "../../ShaderPass/ShaderPass.cs.hlsl"
+    #include "HDRP/ShaderPass/FragInputs.hlsl"
+    #include "HDRP/ShaderPass/ShaderPass.cs.hlsl"
 
     //-------------------------------------------------------------------------------------
     // variable declaration
     //-------------------------------------------------------------------------------------
 
-    #include "../../Material/StackLit/StackLitProperties.hlsl"
+    #include "HDRP/Material/StackLit/StackLitProperties.hlsl"
 
     // All our shaders use same name for entry point
     #pragma vertex Vert
@@ -531,11 +581,11 @@ Shader "HDRenderPipeline/StackLit"
             // We reuse depth prepass for the scene selection, allow to handle alpha correctly as well as tessellation and vertex animation
             #define SHADERPASS SHADERPASS_DEPTH_ONLY
             #define SCENESELECTIONPASS // This will drive the output of the scene selection shader
-            #include "../../ShaderVariables.hlsl"
-            #include "../../Material/Material.hlsl"
-            #include "ShaderPass/StackLitDepthPass.hlsl"
-            #include "StackLitData.hlsl"
-            #include "../../ShaderPass/ShaderPassDepthOnly.hlsl"
+            #include "HDRP/ShaderVariables.hlsl"
+            #include "HDRP/Material/Material.hlsl"
+            #include "HDRP/Material/StackLit/ShaderPass/StackLitDepthPass.hlsl"
+            #include "HDRP/Material/StackLit/StackLitData.hlsl"
+            #include "HDRP/ShaderPass/ShaderPassDepthOnly.hlsl"
 
             ENDHLSL
         }
@@ -553,12 +603,12 @@ Shader "HDRenderPipeline/StackLit"
 
             #define WRITE_NORMAL_BUFFER
             #define SHADERPASS SHADERPASS_DEPTH_ONLY
-            #include "../../ShaderVariables.hlsl"
-            #include "../../Material/Material.hlsl"
+            #include "HDRP/ShaderVariables.hlsl"
+            #include "HDRP/Material/Material.hlsl"
             // As we enabled WRITE_NORMAL_BUFFER we need all regular interpolator
-            #include "ShaderPass/StackLitSharePass.hlsl"
-            #include "StackLitData.hlsl"
-            #include "../../ShaderPass/ShaderPassDepthOnly.hlsl"
+            #include "HDRP/Material/StackLit/ShaderPass/StackLitSharePass.hlsl"
+            #include "HDRP/Material/StackLit/StackLitData.hlsl"
+            #include "HDRP/ShaderPass/ShaderPassDepthOnly.hlsl"
 
             ENDHLSL
         }
@@ -579,11 +629,11 @@ Shader "HDRenderPipeline/StackLit"
             // both direct and indirect lighting) will hand up in the "regular" lightmap->LIGHTMAP_ON.
 
             #define SHADERPASS SHADERPASS_LIGHT_TRANSPORT
-            #include "../../ShaderVariables.hlsl"
-            #include "../../Material/Material.hlsl"
-            #include "ShaderPass/StackLitSharePass.hlsl"
-            #include "StackLitData.hlsl"
-            #include "../../ShaderPass/ShaderPassLightTransport.hlsl"
+            #include "HDRP/ShaderVariables.hlsl"
+            #include "HDRP/Material/Material.hlsl"
+            #include "HDRP/Material/StackLit/ShaderPass/StackLitSharePass.hlsl"
+            #include "HDRP/Material/StackLit/StackLitData.hlsl"
+            #include "HDRP/ShaderPass/ShaderPassLightTransport.hlsl"
 
             ENDHLSL
         }
@@ -605,12 +655,12 @@ Shader "HDRenderPipeline/StackLit"
 
             #define SHADERPASS SHADERPASS_SHADOWS
             #define USE_LEGACY_UNITY_MATRIX_VARIABLES
-            #include "../../ShaderVariables.hlsl"
-            #include "../../Material/Material.hlsl"
+            #include "HDRP/ShaderVariables.hlsl"
+            #include "HDRP/Material/Material.hlsl"
 
-            #include "ShaderPass/StackLitDepthPass.hlsl"
-            #include "StackLitData.hlsl"
-            #include "../../ShaderPass/ShaderPassDepthOnly.hlsl"
+            #include "HDRP/Material/StackLit/ShaderPass/StackLitDepthPass.hlsl"
+            #include "HDRP/Material/StackLit/StackLitData.hlsl"
+            #include "HDRP/ShaderPass/ShaderPassDepthOnly.hlsl"
 
             ENDHLSL
         }
@@ -629,11 +679,11 @@ Shader "HDRenderPipeline/StackLit"
             HLSLPROGRAM
 
             #define SHADERPASS SHADERPASS_DISTORTION
-            #include "../../ShaderVariables.hlsl"
-            #include "../../Material/Material.hlsl"
-            #include "ShaderPass/StackLitDistortionPass.hlsl"
-            #include "StackLitData.hlsl"
-            #include "../../ShaderPass/ShaderPassDistortion.hlsl"
+            #include "HDRP/ShaderVariables.hlsl"
+            #include "HDRP/Material/Material.hlsl"
+            #include "HDRP/Material/StackLit/ShaderPass/StackLitDistortionPass.hlsl"
+            #include "HDRP/Material/StackLit/StackLitData.hlsl"
+            #include "HDRP/ShaderPass/ShaderPassDistortion.hlsl"
 
             ENDHLSL
         }
@@ -681,7 +731,7 @@ Shader "HDRenderPipeline/StackLit"
             // Setup DECALS_OFF so the shader stripper can remove variants
             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
 
-            // #include "../../Lighting/Forward.hlsl" : nothing left in there.
+            // #include "HDRP/Lighting/Forward.hlsl" : nothing left in there.
             //#pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
             #define LIGHTLOOP_TILE_PASS
             #pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST
@@ -691,16 +741,16 @@ Shader "HDRenderPipeline/StackLit"
             #ifndef _SURFACE_TYPE_TRANSPARENT
                 #define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
             #endif
-            #include "../../ShaderVariables.hlsl"
+            #include "HDRP/ShaderVariables.hlsl"
             #ifdef DEBUG_DISPLAY
-            #include "../../Debug/DebugDisplay.hlsl"
+            #include "HDRP/Debug/DebugDisplay.hlsl"
             #endif
-            #include "../../Lighting/Lighting.hlsl"
+            #include "HDRP/Lighting/Lighting.hlsl"
             //...this will include #include "../../Material/Material.hlsl" but also LightLoop which the forward pass directly uses.
 
-            #include "ShaderPass/StackLitSharePass.hlsl"
-            #include "StackLitData.hlsl"
-            #include "../../ShaderPass/ShaderPassForward.hlsl"
+            #include "HDRP/Material/StackLit/ShaderPass/StackLitSharePass.hlsl"
+            #include "HDRP/Material/StackLit/StackLitData.hlsl"
+            #include "HDRP/ShaderPass/ShaderPassForward.hlsl"
 
             ENDHLSL
         }

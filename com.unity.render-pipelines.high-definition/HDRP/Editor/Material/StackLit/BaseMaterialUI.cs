@@ -7,6 +7,30 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     public abstract class BaseMaterialGUI : BaseUnlitGUI
     {
+        #region String Constants
+        public const string k_Show = "Show";
+        public const string k_UIBuffer = "UIBuffer";
+        // Maps:
+        public const string k_RangeScale = "RangeScale";
+        public const string k_UV = "UV";
+        public const string k_UVLocal = "UVLocal";
+        public const string k_ObjSpace = "ObjSpace";
+
+        public const string k_Map = "Map";
+        public const string k_UseMap = "UseMap";
+        // Map Suffixes:
+        // Prefix those with k_Map if using base property name,
+        // or not if the property name already ends with "Map"
+        // (ie a texture property name)
+        public const string k_SamplerSharingOptout = "SamplerSharingOptout";
+        public const string k_SamplerSharingAllowNullOptout = "SamplerSharingNullOptout";
+        public const string k_Remap = "Remap";
+        public const string k_RemapInverted = "RemapInverted";
+        public const string k_Range = "Range";
+        public const string k_Channel = "Channel";
+        public const string k_ChannelMask = "ChannelMask";
+        #endregion
+
         #region GUI Property Classes
         public abstract class BaseProperty
         {
@@ -22,9 +46,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             public abstract void OnFindProperty(MaterialProperty[] props);
 
-            public abstract void OnGUI();
+            public abstract void OnGUI(Material material);
 
             internal abstract string ToShaderPropertiesStringInternal();
+
+            public static bool IsNullOrEmpty(Array array)
+            {
+                return array == null || array.Length == 0;
+            }
         }
 
         public class GroupProperty : BaseProperty
@@ -42,7 +71,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public GroupProperty(BaseMaterialGUI parent, string groupName, string groupTitle, BaseProperty[] childProperties, Func<object, bool> isVisible = null)
                 : base(parent, isVisible)
             {
-                m_Show = new Property(parent, groupName + "Show", "", false);
+                m_Show = new Property(parent, groupName + k_Show, "", false);
 
                 m_Title = groupTitle;
                 m_ChildProperties = childProperties;
@@ -58,7 +87,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 }
             }
 
-            public override void OnGUI()
+            public override void OnGUI(Material material)
             {
                 if (IsVisible == null || IsVisible(this))
                 {
@@ -77,7 +106,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                         foreach (var c in m_ChildProperties)
                         {
-                            c.OnGUI();
+                            c.OnGUI(material);
                         }
 
                         EditorGUI.indentLevel--;
@@ -157,7 +186,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 m_MaterialProperty = ShaderGUI.FindProperty(PropertyName, props, IsMandatory);
             }
 
-            public override void OnGUI()
+            public override void OnGUI(Material material)
             {
                 if (IsValid
                     && (IsVisible == null || IsVisible(this)))
@@ -232,7 +261,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 m_Values = values;
             }
 
-            public override void OnGUI()
+            public override void OnGUI(Material material)
             {
                 if (IsValid
                     && (IsVisible == null || IsVisible(this)))
@@ -278,7 +307,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
 
             public UIBufferedProperty(BaseMaterialGUI parent, string propertyName, string guiText, string toolTip, bool isMandatory = true, Func<object, bool> isVisible = null)
-                : base(parent, propertyName + "UIBuffer", guiText, toolTip, isMandatory, isVisible)
+                : base(parent, propertyName + k_UIBuffer, guiText, toolTip, isMandatory, isVisible)
             {
                 RealPropertyName = propertyName;
             }
@@ -289,11 +318,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 m_RealMaterialProperty = ShaderGUI.FindProperty(RealPropertyName, props, IsMandatory);
             }
 
-            public override void OnGUI()
+            public override void OnGUI(Material material)
             {
                 if (IsValid)
                 {
-                    base.OnGUI();
+                    base.OnGUI(material);
                 }
             }
 
@@ -333,7 +362,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             public static void SetupUIBufferedMaterialProperty(Material material, string basePropertyName, MaterialProperty.PropType propType)
             {
-                string uibufferPropertyName = basePropertyName + "UIBuffer";
+                string uibufferPropertyName = basePropertyName + k_UIBuffer;
 
                 if (material.HasProperty(basePropertyName) && material.HasProperty(uibufferPropertyName))
                 {
@@ -370,7 +399,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
             }
 
-            public override void OnGUI()
+            public override void OnGUI(Material material)
             {
                 if (IsValid
                     && (IsVisible == null || IsVisible(this)))
@@ -432,6 +461,53 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
+        public class PropertyWithActionButton : Property
+        {
+            private string[] m_ButtonCaptions;
+            private Action<Property, Material>[] m_OnClickActions;
+            private Action<Property, Material> m_DisplayUnder;
+
+            public PropertyWithActionButton(BaseMaterialGUI parent, string propertyName,
+                string[] buttonCaptions, Action<Property, Material>[] onClickActions,
+                string guiText, string toolTip,
+                Action<Property, Material> displayUnder = null,
+                bool isMandatory = true,
+                Func<object, bool> isVisible = null)
+                : base(parent, propertyName, guiText, toolTip, isMandatory, isVisible)
+            {
+                m_ButtonCaptions = buttonCaptions;
+                m_OnClickActions = onClickActions;
+                m_DisplayUnder = displayUnder;
+            }
+
+            public override void OnGUI(Material material)
+            {
+                if (IsValid
+                    && (IsVisible == null || IsVisible(this)))
+                {
+                    Parent.m_MaterialEditor.ShaderProperty(m_MaterialProperty, m_GuiContent);
+                    if (!IsNullOrEmpty(m_ButtonCaptions) && m_OnClickActions != null)
+                    {
+                        for (int i = 0; i < Math.Min(m_ButtonCaptions.Length, m_OnClickActions.Length); i++)
+                        {
+                            using (new EditorGUILayout.HorizontalScope())
+                            {
+                                EditorGUILayout.PrefixLabel(""); // alignment fix
+                                if (GUILayout.Button(m_ButtonCaptions[i], EditorStyles.miniButton, GUILayout.Width(250f)))
+                                {
+                                    m_OnClickActions[i](this, material);
+                                }
+                            }
+                        }
+                    }
+                    if (m_DisplayUnder != null)
+                    {
+                        m_DisplayUnder(this, material);
+                    }
+                } // valid
+            }
+        }
+
         public class TextureOneLineProperty : Property
         {
             public string ExtraPropertyName;
@@ -464,7 +540,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 }
             }
 
-            public override void OnGUI()
+            public override void OnGUI(Material material)
             {
                 if (IsValid && (IsVisible == null || IsVisible(this)))
                 {
@@ -489,11 +565,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 public float MaxLimit;
             }
 
-            public enum Tiling
-            {
-                Wrap,
-                Clamp,
-            }
             public enum Channel
             {
                 R,
@@ -546,6 +617,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             public Property m_InvertRemapProperty;
 
+            public Property m_SamplerSharingOptoutProperty;
+
+            public Property m_SamplerSharingAllowNullOptoutProperty;
+
             public string m_ConstantPropertyName;
 
             public bool m_IsNormalMap;
@@ -554,21 +629,35 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             public TextureOneLineProperty m_SlaveTexOneLineProp;
 
+            Func<object, Material, bool> m_IsSamplerSharingEnabled;
+
             public RangeMinMax RangeUIMinMax
             {
                 get; set;
             }
 
-            public TextureProperty(BaseMaterialGUI parent, string propertyName, string constantPropertyName, string guiText, bool pairConstantWithTexture, bool isMandatory = true, bool isNormalMap = false, bool showScaleOffset = true, TextureOneLineProperty slaveTexOneLineProp = null, Func<object, bool> isVisible = null)
-                : this(parent, propertyName, constantPropertyName, guiText, string.Empty, pairConstantWithTexture, isMandatory, isNormalMap, showScaleOffset, slaveTexOneLineProp, null, isVisible)
+            public TextureProperty(BaseMaterialGUI parent, string propertyName, string constantPropertyName, string guiText,
+                bool pairConstantWithTexture, bool isMandatory = true, bool isNormalMap = false, bool showScaleOffset = true,
+                Func<object, bool> isVisible = null, Func<object, Material, bool> samplerSharingEnabled = null)
+                : this(parent, propertyName, constantPropertyName, guiText, string.Empty, pairConstantWithTexture, isMandatory, isNormalMap, showScaleOffset, 
+                      slaveTexOneLineProp:null, rangeUILimits: null, isVisible: isVisible, samplerSharingEnabled: samplerSharingEnabled)
             {
             }
 
             public TextureProperty(BaseMaterialGUI parent, string propertyName, string constantPropertyName, string guiText, string toolTip,
                 bool pairConstantWithTexture, bool isMandatory = true, bool isNormalMap = false, bool showScaleOffset = true,
-                TextureOneLineProperty slaveTexOneLineProp = null, RangeMinMax rangeUILimits = null, Func < object, bool> isVisible = null)
+                TextureOneLineProperty slaveTexOneLineProp = null, RangeMinMax rangeUILimits = null, Func < object, bool> isVisible = null,
+                Func<object, Material, bool> samplerSharingEnabled = null)
                 : base(parent, propertyName, guiText, toolTip, isMandatory, isVisible)
             {
+                m_IsSamplerSharingEnabled = samplerSharingEnabled;
+                if (m_IsSamplerSharingEnabled == null)
+                {
+                    //m_IsSamplerSharingEnabled = (_, material) =>
+                    //{
+                    //    return (material.HasProperty("_EnableSamplerSharing") && material.GetFloat("_EnableSamplerSharing") > 0.0f);
+                    //};
+                }
                 RangeUIMinMax = rangeUILimits ?? new RangeMinMax() { MinLimit = 0.0f, MaxLimit = 1.0f };
                 m_IsNormalMap = isNormalMap;
                 m_ShowScaleOffset = showScaleOffset;
@@ -576,26 +665,30 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                 m_ConstantPropertyName = constantPropertyName;
 
-                m_Show = new Property(parent, propertyName + "Show", "", isMandatory);
+                m_Show = new Property(parent, propertyName + k_Show, "", isMandatory);
 
                 if (pairConstantWithTexture == false)
                 {
                     m_ConstantProperty = new Property(parent, constantPropertyName, guiText, toolTip, isMandatory);
                 }
 
-                m_RangeScaleProperty = new Property(parent, propertyName + "RangeScale", "Range Multiplier", false);
+                m_RangeScaleProperty = new Property(parent, propertyName + k_RangeScale, "Range Multiplier", false);
 
                 m_TextureProperty = new TextureOneLineProperty(parent, propertyName, pairConstantWithTexture ? constantPropertyName : string.Empty, guiText, toolTip, isMandatory);
 
-                m_UvSetProperty = new ComboProperty(parent, propertyName + "UV", "UV Mapping", Enum.GetNames(typeof(UVMapping)), false);
-                m_LocalOrWorldProperty = new ComboProperty(parent, propertyName + "UVLocal", "Local or world", Enum.GetNames(typeof(PlanarSpace)), false);
+                m_UvSetProperty = new ComboProperty(parent, propertyName + k_UV, "UV Mapping", Enum.GetNames(typeof(UVMapping)), false);
+                m_LocalOrWorldProperty = new ComboProperty(parent, propertyName + k_UVLocal, "Local or world", Enum.GetNames(typeof(PlanarSpace)), false);
 
-                m_NormalSpaceProperty = new ComboProperty(parent, propertyName + "ObjSpace", "Normal space", Enum.GetNames(typeof(NormalSpace)), false);
+                m_NormalSpaceProperty = new ComboProperty(parent, propertyName + k_ObjSpace, "Normal space", Enum.GetNames(typeof(NormalSpace)), false);
 
-                m_ChannelProperty = new ComboProperty(parent, propertyName + "Channel", "Channel", Enum.GetNames(typeof(Channel)), false);
+                m_ChannelProperty = new ComboProperty(parent, propertyName + k_Channel, "Channel", Enum.GetNames(typeof(Channel)), false);
 
-                m_RemapProperty = new Property(parent, propertyName + "Remap", "Remapping", "Defines the range to remap/scale the values in texture", false);
-                m_InvertRemapProperty = new Property(parent, propertyName + "RemapInverted", "Invert Remapping", "Whether the mapping values are inverted.", false);
+                m_RemapProperty = new Property(parent, propertyName + k_Remap, "Remapping", "Defines the range to remap/scale the values in texture", false);
+                m_InvertRemapProperty = new Property(parent, propertyName + k_RemapInverted, "Invert Remapping", "Whether the mapping values are inverted.", false);
+                m_SamplerSharingOptoutProperty = new Property(parent, propertyName + k_SamplerSharingOptout, "Exclude From Sampler Sharing", "Opt-out of Sampler Sharing", false);
+
+                m_SamplerSharingAllowNullOptoutProperty = new Property(parent, propertyName + k_SamplerSharingAllowNullOptout, "Allow Opt-out When Unassigned (When Generating Shader)",
+                    "Allow Opt-out When Unassigned (When Generating Shader)", false);
             }
 
             public override void OnFindProperty(MaterialProperty[] props)
@@ -615,9 +708,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 m_ChannelProperty.OnFindProperty(props);
                 m_RemapProperty.OnFindProperty(props);
                 m_InvertRemapProperty.OnFindProperty(props);
+                m_SamplerSharingOptoutProperty.OnFindProperty(props);
+                m_SamplerSharingAllowNullOptoutProperty.OnFindProperty(props);
             }
 
-            public override void OnGUI()
+            public override void OnGUI(Material material)
             {
                 if ((IsVisible == null || IsVisible(this))
                     && m_Show.IsValid
@@ -631,22 +726,22 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                         if (m_RangeScaleProperty.IsValid)
                         {
-                            m_RangeScaleProperty.OnGUI();
+                            m_RangeScaleProperty.OnGUI(material);
                         }
 
                         if (m_ConstantProperty != null && m_ConstantProperty.IsValid
                             && m_TextureProperty.TextureValue == null)
                         {
-                            m_ConstantProperty.OnGUI();
+                            m_ConstantProperty.OnGUI(material);
                         }
 
-                        m_TextureProperty.OnGUI();
+                        m_TextureProperty.OnGUI(material);
 
-                        if (m_TextureProperty.TextureValue != null
-                            || ((m_SlaveTexOneLineProp != null) && (m_SlaveTexOneLineProp.TextureValue != null)) )
+                        bool mainTextureOrSlaveTextureAssigned = m_TextureProperty.TextureValue != null || ((m_SlaveTexOneLineProp != null) && (m_SlaveTexOneLineProp.TextureValue != null));
+                        if (mainTextureOrSlaveTextureAssigned)
                         {
-                            m_UvSetProperty.OnGUI();
-                            m_ChannelProperty.OnGUI();
+                            m_UvSetProperty.OnGUI(material);
+                            m_ChannelProperty.OnGUI(material);
 
                             if (m_ShowScaleOffset)
                             {
@@ -655,12 +750,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                             if (m_UvSetProperty.IsValid && m_UvSetProperty.FloatValue >= (float)UVMapping.PlanarXY)
                             {
-                                m_LocalOrWorldProperty.OnGUI();
+                                m_LocalOrWorldProperty.OnGUI(material);
                             }
 
                             if (m_IsNormalMap)
                             {
-                                m_NormalSpaceProperty.OnGUI();
+                                m_NormalSpaceProperty.OnGUI(material);
                             }
 
                             if (m_RemapProperty.IsValid)
@@ -676,9 +771,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                                 if (m_InvertRemapProperty.IsValid)
                                 {
-                                    m_InvertRemapProperty.OnGUI();
+                                    m_InvertRemapProperty.OnGUI(material);
                                 }
                             }
+                        }
+                        if (m_SamplerSharingOptoutProperty.IsValid 
+                            && (m_IsSamplerSharingEnabled == null || m_IsSamplerSharingEnabled(this, material))
+                            && (mainTextureOrSlaveTextureAssigned || (m_SamplerSharingAllowNullOptoutProperty.IsValid && m_SamplerSharingAllowNullOptoutProperty.BoolValue) ) )
+                        {
+                            m_SamplerSharingOptoutProperty.OnGUI(material);
                         }
 
                         EditorGUI.indentLevel--;
@@ -708,9 +809,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     m_ConstantPropertyName, constantName, PropertyName);
             }
 
-            public static void SetupUseMapOfTextureMaterialProperty(Material material, TextureSamplerSharing.SamplerClient samplerClient, int slotAssigned, bool isExternalSampler)
+            public static void SetupUseMapOfTextureMaterialProperty(Material material,
+                TextureSamplerSharingShaderGenerator samplerShaderGenerator, TextureSamplerSharing.SamplerClient samplerClient,
+                int slotAssigned, bool isExternalSampler, bool isClientUnique)
             {
-                string useMapPropertyName = samplerClient.BasePropertyName + "UseMap";
+                // If we opt-out of sharing, we need to ask the sampler sharing system to allocate a sampler just for this property:
+                string useMapPropertyName = samplerClient.BasePropertyName + k_UseMap;
+
                 // It really should have it if we added it to the potential sharer (clients) of TextureSamplerSharing
                 // (see SetupTextureMaterialProperty)
                 if (material.HasProperty(useMapPropertyName))
@@ -731,62 +836,135 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     //
                     // For whatever reason we don't get a callback here to adjust "UseMap" (eg we ran out of sampler slots),
                     // we will use the sampler that have the id == 1.0f (see TextureSamplerSharing.cs and TextureSamplerSharing.hlsl)
-                    material.SetFloat(useMapPropertyName, (isExternalSampler == false) ? (int)(SharedSamplerID.First) + slotAssigned : 1.0f + slotAssigned);
+                    float useMapPropertyValue = (isExternalSampler == false) ? (int)(SharedSamplerID.First) + slotAssigned : 1.0f + slotAssigned;
+                    if(samplerShaderGenerator != null)
+                    {
+                        bool mapUsesOwnSampler = isExternalSampler && isClientUnique;
+                        // The following override of useMapPropertyValue is not really necessary, usemap just need to be > 0
+                        // but the shader generator will override anyway:
+                        samplerShaderGenerator.AddUseMapPropertyConfig(useMapPropertyName, useMapPropertyValue, isExternalSampler, mapUsesOwnSampler);
+                    }
+                    material.SetFloat(useMapPropertyName, useMapPropertyValue);
                 }
             }
 
             //
             // allowUnassignedSampling allows to set UseMap to 1 even though no texture is assigned.
-            // Useful in case we want to sample the default symbolic value.
+            // Useful in case we want to sample the default symbolic value (ends up being a dummy texture assigned by the engine).
             //
             // enableMap allows to set UseMap to 0 even when a texture is assigned.
             // Useful in case there's no feature keyword to exclude sampling and we want to avoid it.
             //
-            // TextureSamplerSharing object is mandatory if _USE_SAMPLER_SHARING is set, otherwise, it is useless
+            // TextureSamplerSharing object is mandatory if shader keyword _USE_SAMPLER_SHARING is set, otherwise, it is useless
             // as it will set UseMap properties to various shared sampler slots (numbers starting at 2.0) but the
             // shader code will only test if(UseMap) so it should be ok. The shader code samples with the texture's
             // own sampler when that keyword isn't set.
-            public static void SetupTextureMaterialProperty(Material material, string basePropertyName, bool enableMap = true, bool allowUnassignedSampling = false, TextureSamplerSharing samplerSharing = null)
+            public static void SetupTextureMaterialProperty(Material material, string basePropertyName, bool enableMap = true, bool allowUnassignedSampling = false,
+                TextureSamplerSharing samplerSharing = null, TextureSamplerSharingShaderGenerator shaderGenerator = null)
             {
 
                 // TODO: Caution this can generate a lot of garbage collection call ?
-                string useMapPropertyName = basePropertyName + "UseMap";
-                string mapPropertyName = basePropertyName + "Map";
-                string mapSamplerSharingPropertyName = basePropertyName + "MapSamplerSharing";
-                string remapPropertyName = basePropertyName + "MapRemap";
-                string invertPropertyName = basePropertyName + "MapRemapInverted";
-                string rangePropertyName = basePropertyName + "MapRange";
-                string channelPropertyName = basePropertyName + "MapChannel";
-                string channelMaskPropertyName = basePropertyName + "MapChannelMask";
+                string useMapPropertyName = basePropertyName + k_UseMap;
+                string mapPropertyName = basePropertyName + k_Map;
+                string mapSamplerSharingOptoutPropertyName = mapPropertyName + k_SamplerSharingOptout;
+                string mapSamplerSharingAllowNullOptoutPropertyName = mapPropertyName + k_SamplerSharingAllowNullOptout;
+                string remapPropertyName = mapPropertyName + k_Remap;
+                string invertPropertyName = mapPropertyName + k_RemapInverted;
+                string rangePropertyName = mapPropertyName + k_Range;
+                string channelPropertyName = mapPropertyName + k_Channel;
+                string channelMaskPropertyName = mapPropertyName + k_ChannelMask;
 
                 Texture texture = material.GetTexture(mapPropertyName);
-                if (enableMap && (allowUnassignedSampling || texture))
+                if (enableMap && (texture || allowUnassignedSampling))
                 {
                     if (material.HasProperty(useMapPropertyName))
                     {
                         material.SetFloat(useMapPropertyName, 1.0f);
 
-                        // If useMap property is there, and we gave a sampler sharing object, add it to the potential
-                        // texture properties that will share a sampler
-                        // unless we escape the feature through the *MapSamplerSharing == 0.0f property.
+                        // If useMap property is there, and we gave a sampler sharing object, add it to the potential texture maps that will share a sampler
+                        // unless we escape the feature through the *MapSamplerSharingOptout == 1.0f property:
+                        //
+                        // In that case, we handle the opt-out differently if we have a texture assigned or not and if we're generating a shader or not:
+                        // If we have a texture assigned (+ opt-out) and:
+                        //     A) If we're not going to be generating a shader, we just allocate a shared sampler for use uniquely for this texture (makeUnique param to AddClient),
+                        //     B) otherwise, when generating, we have the option to just use the texture's own sampler and in that case, the user can screw itself
+                        //      over by using too many samplers than are available before our UI can warn him (the engine shader compilation pipeline will spew a
+                        //      sampler limit exceeded error).
                         if (samplerSharing != null)
                         {
-                            // If sampler sharing property is not there or it isn't 0.0, sampler sharing is enabled,
-                            // otherwise, if we opt-out, we need to ask the sampler sharing system to allocate a
-                            // sampler just for this property:
-                            bool makeUnique = material.HasProperty(mapSamplerSharingPropertyName) && (material.GetFloat(mapSamplerSharingPropertyName) == 0.0f);
-                            if (texture == null)
+                            // If we opt-out of sharing, we need to ask the sampler sharing system to allocate a sampler just for this property:
+                            bool makeUnique = material.HasProperty(mapSamplerSharingOptoutPropertyName) && (material.GetFloat(mapSamplerSharingOptoutPropertyName) == 1.0f);
+                            bool mapWillUseOwnSamplerAndGeneratedCode = (shaderGenerator != null && makeUnique);
+
+                            if (texture != null)
                             {
-                                // This can happen if we allow allowUnassignedSampling. In that case, we sample a single default value,
-                                // any sampler will do (short of bordercolor sampling mode, but Unity doesn't expose that)
-                                samplerSharing.AddClientForExistingSampler(basePropertyName, ExternalExistingSampler.LinearClamp);
+                                if (mapWillUseOwnSamplerAndGeneratedCode == false)
+                                {
+                                    // if makeUnique, this will be Case A) described above:
+                                    samplerSharing.AddClient(basePropertyName, texture, makeUnique, tryExternalExistingSamplers: true);
+                                }
+                                else
+                                {
+                                    // Case B) We still want the client assignment callback in this case so we can streamline shader generation configuration for this map
+                                    // in the same function "SetupUseMapOfTextureMaterialProperty":
+                                    samplerSharing.AddClientForOwnUniqueSampler(basePropertyName);
+                                }
                             }
                             else
                             {
-                                samplerSharing.AddClient(basePropertyName, texture, makeUnique, tryExistingExternalSamplers: true);
-                            }
-                        }
-                    }
+                                // Finally, if there's no texture assigned, we can't use samplerSharing.AddClient() (see point 2) but there could still be texture sampling
+                                // in two cases (either way at this point the sampler state required is unknown):
+                                //
+                                // 1) If we allowUnassignedSampling and we don't expect anything to be assigned (programmatically or by the engine)
+                                //    past the call to this function which configures the material from the UI.
+                                //    In that case, we sample a single default value, and any sampler will do (short of bordercolor sampling mode, but Unity doesn't expose that)
+                                //    and we pick one we know is commonly used.
+                                //
+                                // 2) If we allowUnassignedSampling and condition 1) is not met.
+                                //    Then there's no way for us to allow sharing, even if we let the user specify a state manually, as if this texture property
+                                //    is the only one using that sampler state in the end, there will be no way for us to make the engine transfer this custom sampler state
+                                //    (which normally is done by assigning one of the texture clients with the proper state on the shared map slot.)
+                                //    (An easy solution in that specific case is just to make the user specify that state by assigning a dummy 1 pixel texture instead.)
+                                //
+                                //    If we opt-out of sharing, we have the exact same problem as above with the same solution.
+                                //    If we're generating though, we have the option to use the texture's own sampler (which is what happens when no sampler sharing is used
+                                //    globally anyway)
+                                //
+                                //    => Since this increases the number of samplers used by the shader (and this is the reason for the sampler sharing system in the first place),
+                                //    we can't systematically use that option for all unassigned textures.
+                                //    Instead, the shader needs to specify it (that condition 1 is not met ie to use its own sampler when unassigned).
+                                //
+                                bool allowNullOptout = material.HasProperty(mapSamplerSharingAllowNullOptoutPropertyName) && (material.GetFloat(mapSamplerSharingAllowNullOptoutPropertyName) == 1.0f);
+                                if (makeUnique && allowNullOptout == false)
+                                {
+                                    // Sanitizing the .mat (we've setup the UI to not show the opt-out when the map property is unassigned and we're not allowing unassigned opt-out,
+                                    // because we ignore it):
+                                    // Clear the optout option if we don't allow it for null textures.
+                                    material.SetFloat(mapSamplerSharingOptoutPropertyName, 0f);
+                                }
+
+                                // On a null texture map slot, if we don't have shader generation (which is needed to honor null-slot opt-out), opt-out doesn't change a thing, so
+                                // whether we allow it on a null texture map slot is irrelevant, we still add the texture map as a client for an existing built-in (but external
+                                // to the sharing system) sampler, as this will not change sampler allocation, and is the wanted default behavior of case 1) described above
+                                // (sample an engine allocated dummy texture like UnityWhite).
+                                if(mapWillUseOwnSamplerAndGeneratedCode == false)
+                                {
+                                    samplerSharing.AddClientForExternalExistingSampler(basePropertyName, ExternalExistingSampler.LinearRepeat);
+                                }
+                                else if (allowNullOptout == true)
+                                {
+                                    // ie true == (texture == null) == mapWillUseOwnSamplerAndGeneratedCode == allowNullOptout
+                                    // Case 2) above and we have shader generation.
+                                    // If we want to allow unassigned texture map sampler sharing opt-out (and we do have it), we need generation, and in that case,
+                                    // the UseMap value won't matter (as long as it's > 0), but we need to tell the generator to setup the map to use its own sampler. We register
+                                    // ourself for callback via AddClientForOwnUniqueSampler to then call the generator.
+                                    // (ie we streamline shader generation configuration for this map in the same function "SetupUseMapOfTextureMaterialProperty")
+                                    samplerSharing.AddClientForOwnUniqueSampler(basePropertyName);
+                                }
+
+                            }//else, texture is null
+                        }//samplerSharing
+                    }//usemap
 
                     if (texture)
                     {
