@@ -14,6 +14,7 @@ int _DebugLightingMode; // Match enum DebugLightingMode
 int _DebugLightingSubMode;
 int _DebugViewMaterial; // Contain the id (define in various materialXXX.cs.hlsl) of the property to display
 int _DebugMipMapMode; // Match enum DebugMipMapMode
+int _DebugMipMapModeTerrainTexture; // Match enum DebugMipMapModeTerrainTexture
 int _ColorPickerMode; // Match enum ColorPickerDebugMode
 int _DebugStep;
 float4 _DebugLightingAlbedo; // x == bool override, yzw = albedo for diffuse
@@ -238,6 +239,17 @@ void DrawFloat(float floatValue, float3 fontColor, uint2 currentUnormCoord, inou
         int leading0 = 6 - (int(log10(fracValue)) + 1); // Counting leading0 to add in front of the float
         DrawInteger(fracValue, fontColor, currentUnormCoord, fixedUnormCoord, flipY, color, leading0, false);
     }
+}
+
+// Debug rendering is performed at the end of the frame (after post-processing).
+// Debug textures are never flipped upside-down automatically. Therefore, we must always flip manually.
+bool ShouldFlipDebugTexture()
+{
+    #if UNITY_UV_STARTS_AT_TOP
+        return (_ProjectionParams.x > 0);
+    #else
+        return (_ProjectionParams.x < 0);
+    #endif
 }
 
 #endif
