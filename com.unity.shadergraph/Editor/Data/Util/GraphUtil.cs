@@ -421,8 +421,7 @@ namespace UnityEditor.ShaderGraph
                     if (sourceAssetDependencyPaths != null)
                         sourceAssetDependencyPaths.Add(filePath);
 
-                    string[] templateLines = File.ReadAllLines(filePath);
-                    foreach (string line in templateLines)
+                    foreach (string line in File.ReadLines(filePath))
                     {
                         ProcessTemplateLine(line, 0, line.Length);
                     }
@@ -494,9 +493,14 @@ namespace UnityEditor.ShaderGraph
                         }
                         else
                         {
-                            if (command.Is("include"))
+                            if (command.Is("inline"))
                             {
-                                ProcessIncludeCommand(command, end);                                
+                                ProcessInlineCommand(command, end);                                
+                                break;      // inline command always ignores the rest of the line, error or not
+                            }
+                            else if (command.Is("include"))
+                            {
+                                ProcessIncludeCommand(command, end);
                                 break;      // include command always ignores the rest of the line, error or not
                             }
                             else if (command.Is("splice"))
@@ -539,6 +543,41 @@ namespace UnityEditor.ShaderGraph
                 }
             }
 
+            private void ProcessInlineCommand(Token inlineCommand, int lineEnd)
+            {
+                if (Expect(inlineCommand.s, inlineCommand.end, '('))
+                {
+                    Token param = ParseString(inlineCommand.s, inlineCommand.end + 1, lineEnd);
+
+                    if (!param.IsValid())
+                    {
+                        Error("ERROR: $inline expected a string file path parameter", inlineCommand.s, inlineCommand.end + 1);
+                    }
+                    else
+                    {
+                        string paramString = param.GetString();
+                        var includeLocation = Path.Combine(templatePath, paramString);
+                        if (!File.Exists(includeLocation))
+                        {
+                            Error("ERROR: $inline cannot find file : " + includeLocation, inlineCommand.s, param.start);
+                        }
+                        else
+                        {
+                            // skip a line, just to be sure we've cleaned up the current line
+                            result.AppendNewLine();
+                            result.AppendLine("//-------------------------------------------------------------------------------------");
+                            result.AppendLine("// INLINE TEMPLATE : " + paramString);
+                            result.AppendLine("//-------------------------------------------------------------------------------------");
+                            ProcessTemplateFile(includeLocation);
+                            result.AppendNewLine();
+                            result.AppendLine("//-------------------------------------------------------------------------------------");
+                            result.AppendLine("// END INLINE TEMPLATE : " + paramString);
+                            result.AppendLine("//-------------------------------------------------------------------------------------");
+                        }
+                    }
+                }
+            }
+
             private void ProcessIncludeCommand(Token includeCommand, int lineEnd)
             {
                 if (Expect(includeCommand.s, includeCommand.end, '('))
@@ -551,23 +590,18 @@ namespace UnityEditor.ShaderGraph
                     }
                     else
                     {
-                        var includeLocation = Path.Combine(templatePath, param.GetString());
+                        string paramString = param.GetString();
+                        var includeLocation = Path.Combine(templatePath, paramString);      // TODO NOCHECKIN : need to resolve include paths the correct way
                         if (!File.Exists(includeLocation))
                         {
                             Error("ERROR: $include cannot find file : " + includeLocation, includeCommand.s, param.start);
                         }
                         else
                         {
-                            // skip a line, just to be sure we've cleaned up the current line
-                            result.AppendNewLine();
-                            result.AppendLine("//-------------------------------------------------------------------------------------");
-                            result.AppendLine("// TEMPLATE INCLUDE : " + param.GetString());
-                            result.AppendLine("//-------------------------------------------------------------------------------------");
-                            ProcessTemplateFile(includeLocation);
-                            result.AppendNewLine();
-                            result.AppendLine("//-------------------------------------------------------------------------------------");
-                            result.AppendLine("// END TEMPLATE INCLUDE : " + param.GetString());
-                            result.AppendLine("//-------------------------------------------------------------------------------------");
+                            result.AppendLine("#include " + paramString);
+
+                            if (sourceAssetDependencyPaths != null)
+                                sourceAssetDependencyPaths.Add(includeLocation);
                         }
                     }
                 }

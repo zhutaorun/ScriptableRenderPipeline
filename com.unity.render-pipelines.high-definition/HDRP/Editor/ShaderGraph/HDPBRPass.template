@@ -148,9 +148,9 @@ $splice(Graph)
     // End graph generated code
     //-------------------------------------------------------------------------------------
 
-$features.modifyMesh:   $include("VertexAnimation.template.hlsl")
+$features.modifyMesh:   $inline("VertexAnimation.template.hlsl")
 
-$include("SharedCode.template.hlsl")
+$inline("SharedCode.template.hlsl")
 
 
     void BuildSurfaceData(FragInputs fragInputs, SurfaceDescription surfaceDescription, float3 V, out SurfaceData surfaceData)
