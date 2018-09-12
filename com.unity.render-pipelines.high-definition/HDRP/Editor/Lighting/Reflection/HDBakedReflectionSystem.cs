@@ -1,5 +1,9 @@
+using System;
+using System.IO;
 using UnityEditor;
 using UnityEditor.Experimental.Rendering;
+using UnityEngine.Assertions;
+using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -34,6 +38,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return;
             }
 
+            handle.EnterStage((int)BakingStages.ReflectionProbes, "Baking Reflection Probes", 0);
+
             var bakedProbes = HDProbeSystem.bakedProbes;
             if (bakedProbes.Count > 0)
             {
@@ -46,19 +52,49 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {
                         case ProbeSettings.ProbeType.ReflectionProbe:
                             {
-                                var target = new Cubemap(cubemapSize, GraphicsFormat.R16G16B16A16_SFloat, TextureCreationFlags.None);
+                                var rt = new RenderTexture(cubemapSize, cubemapSize, 1)
+                                {
+                                    dimension = TextureDimension.Cube,
+                                    useMipMap = false,
+                                    autoGenerateMips = false,
+                                    format = RenderTextureFormat.ARGBHalf,
+                                    name = "Temporary Reflection Probe Target"
+                                };
                                 var positionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, null);
-                                HDRenderUtilities.Render(probe.settings, positionSettings, target);
-                                throw new System.NotImplementedException("save asset and link to reflection probe component")
+                                HDRenderUtilities.Render(probe.settings, positionSettings, rt);
+                                var bakedTexture = CreateBakedTextureFromRenderTexture(rt, probe);
+                                var reflectionProbe = probe.GetComponent<ReflectionProbe>();
+                                reflectionProbe.bakedTexture = bakedTexture;
                                 break;
                             }
                     }
                 }
             }
-            
 
-            handle.EnterStage((int)BakingStages.ReflectionProbes, "", 0);
             handle.ExitStage((int)BakingStages.ReflectionProbes);
+            handle.SetIsDone(true);
+        }
+
+        static Texture CreateBakedTextureFromRenderTexture(RenderTexture rt, HDProbe probe)
+        {
+            Assert.IsNotNull(rt);
+            Assert.IsNotNull(probe);
+
+            var targetFile = HDBakingUtilities.GetBakedTextureFilePath(probe);
+            HDBakingUtilities.CreateParentDirectoryIfMissing(targetFile);
+            HDTextureUtilities.WriteTextureFileToDisk(rt, targetFile);
+
+            AssetDatabase.ImportAsset(targetFile);
+
+            var importer = (TextureImporter)AssetImporter.GetAtPath(targetFile);
+            importer.filterMode = FilterMode.Bilinear;
+            importer.generateCubemap = TextureImporterGenerateCubemap.AutoCubemap;
+            importer.mipmapEnabled = false;
+            importer.textureCompression = TextureImporterCompression.Compressed;
+            importer.textureShape = TextureImporterShape.TextureCube;
+            importer.SaveAndReimport();
+
+            return AssetDatabase.LoadAssetAtPath<Texture>(targetFile);
         }
     }
 }

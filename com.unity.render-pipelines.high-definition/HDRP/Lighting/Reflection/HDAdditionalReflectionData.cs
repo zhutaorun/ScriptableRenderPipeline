@@ -128,13 +128,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Migrate();
         }
 
-        void OnEnable()
+        internal override void OnEnable()
         {
+            base.OnEnable();
             ReflectionSystem.RegisterProbe(this);
         }
 
-        void OnDisable()
+        internal override void OnDisable()
         {
+            base.OnDisable();
             ReflectionSystem.UnregisterProbe(this);
         }
 

@@ -28,7 +28,26 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [SerializeField]
         ReflectionProbeRefreshMode m_RefreshMode = ReflectionProbeRefreshMode.OnAwake;
 
-        internal ProbeSettings settings { get; private set; }
+        internal ProbeSettings settings
+        {
+            get
+            {
+                var settings = ProbeSettings.@default;
+                settings.influence = influenceVolume;
+                settings.linkedProxy = proxyVolume != null ? proxyVolume.proxyVolume : null;
+                settings.camera.frameSettings = frameSettings;
+                settings.lighting.multiplier = multiplier;
+                settings.lighting.weight = weight;
+                settings.proxySettings.useInfluenceVolumeAsProxyVolume = !infiniteProjection;
+                switch (mode)
+                {
+                    case ReflectionProbeMode.Baked: settings.mode = ProbeSettings.Mode.Baked; break;
+                    case ReflectionProbeMode.Custom: settings.mode = ProbeSettings.Mode.Custom; break;
+                    case ReflectionProbeMode.Realtime: settings.mode = ProbeSettings.Mode.Realtime; break;
+                }
+                return settings;
+            }
+        }
 
 
         RenderTexture m_RealtimeTexture = null;
