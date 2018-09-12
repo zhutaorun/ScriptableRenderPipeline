@@ -20,6 +20,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     [Serializable]
     public class RenderPipelineSettings
     {
+        // Raytracing
+        public bool raytracingEnabled = false;
+
         // Lighting
         public bool supportShadowMask = true;
         public bool supportSSR = false;

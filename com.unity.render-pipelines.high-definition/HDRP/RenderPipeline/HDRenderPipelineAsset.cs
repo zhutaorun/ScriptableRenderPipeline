@@ -204,6 +204,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return null;
         }
 
+        public override void SetAccelerationStructure(RaytracingAccelerationStructure accelStructure)
+        {
+            m_RenderPipelineResources.raytracingAccelerationStructure = accelStructure;
+        }
+
         void ISerializationCallbackReceiver.OnBeforeSerialize()
         {
         }

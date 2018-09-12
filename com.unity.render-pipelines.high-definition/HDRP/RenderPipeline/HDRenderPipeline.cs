@@ -77,6 +77,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         IBLFilterGGX m_IBLFilterGGX = null;
 
+        // Raytracing resources
+        RaytracingAccelerationStructure m_AccelerationStructure { get { return m_Asset.renderPipelineResources.raytracingAccelerationStructure; } }
+
+        // SSAO
+        RaytracingShader m_RaytracedSSAOShader { get { return m_Asset.renderPipelineResources.raytracedSSAOShader; } }
+        const int m_RaytracedSSAOGoldenSampleCount = 100000;
+        ComputeBuffer m_RaytracedSSAOGoldenSamples = null;
+        ComputeBuffer m_RaytracedSSAOSobolMatrices = null;
+
         ComputeShader m_ScreenSpaceReflectionsCS { get { return m_Asset.renderPipelineResources.screenSpaceReflectionsCS; } }
         int m_SsrTracingKernel      = -1;
         int m_SsrReprojectionKernel = -1;
@@ -304,6 +313,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Propagate it to the debug menu
             m_DebugDisplaySettings.msaaSamples = m_MSAASamples;
+
+            InitializeRaytracingResources();
         }
 
         void UpgradeResourcesIfNeeded()
@@ -402,6 +413,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_DebugScreenSpaceTracingData.Release();
 
             HDCamera.ClearAll();
+        }
+
+        void InitializeRaytracingResources()
+        {
+            if (SystemInfo.supportsRayTracing)
+            {
+                m_RaytracedSSAOGoldenSamples = new ComputeBuffer(m_RaytracedSSAOGoldenSampleCount, sizeof(float));
+                GoldenSamples.FillBuffer(m_RaytracedSSAOGoldenSamples);
+
+                m_RaytracedSSAOSobolMatrices = new ComputeBuffer(qmc.SobolMatrices.Length, sizeof(uint));
+                Sobol.FillBuffer(m_RaytracedSSAOSobolMatrices);
+            }
+        }
+
+        void DestroyRaytracingResources()
+        {
+            if (m_RaytracedSSAOGoldenSamples != null)
+                m_RaytracedSSAOGoldenSamples.Release();
+
+            if (m_RaytracedSSAOSobolMatrices != null)
+                m_RaytracedSSAOSobolMatrices.Release();
         }
 
         bool SetRenderingFeatures()
@@ -592,6 +624,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             HDCamera.ClearAll();
 
             DestroyRenderTextures();
+
+            DestroyRaytracingResources();
 
 #if UNITY_EDITOR
             SceneViewDrawMode.ResetDrawMode();
@@ -1063,7 +1097,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         StartStereoRendering(cmd, renderContext, hdCamera);
 
                         // TODO: Everything here (SSAO, Shadow, Build light list, deferred shadow, material and light classification can be parallelize with Async compute)
-                        RenderSSAO(cmd, hdCamera, renderContext, postProcessLayer, currentFrameSettings);
+
+                        if (SystemInfo.supportsRayTracing && m_Asset.renderPipelineSettings.raytracingEnabled)
+                            RenderRaytracedSSAO(cmd, hdCamera, postProcessLayer);
+                        else
+                            RenderSSAO(cmd, hdCamera, renderContext, postProcessLayer, currentFrameSettings);
 
                         // Needs the depth pyramid and motion vectors, as well as the render of the previous frame.
                         RenderSSR(hdCamera, cmd);
@@ -1656,6 +1694,45 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             cmd.DrawProcedural(Matrix4x4.identity, m_AOResolveMaterial, 0, MeshTopology.Triangles, 3, 1, m_AOPropertyBlock);
                         }
                     }
+                    return;
+                }
+            }
+
+            // No AO applied - neutral is black, see the comment in the shaders
+            cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, RuntimeUtilities.blackTexture);
+            cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, Vector4.zero);
+        }
+
+        void RenderRaytracedSSAO(CommandBuffer cmd, HDCamera hdCamera, PostProcessLayer postProcessLayer)
+        {
+            var camera = hdCamera.camera;
+
+            // Apply SSAO from PostProcessLayer
+            if (hdCamera.frameSettings.enableSSAO && postProcessLayer != null && postProcessLayer.enabled)
+            {
+                var settings = postProcessLayer.GetSettings<AmbientOcclusion>();
+
+                if (/*settings.IsEnabledAndSupported(null) &&*/ m_RaytracedSSAOShader != null)
+                {
+                    // Inputs
+                    cmd.SetRaytracingMatrixParam(m_RaytracedSSAOShader, Shader.PropertyToID("InvViewProjMatrix"), hdCamera.viewProjMatrix.inverse);
+                    cmd.SetRaytracingMatrixParam(m_RaytracedSSAOShader, Shader.PropertyToID("ViewMatrix"), hdCamera.viewMatrix);
+                    cmd.SetRaytracingVectorParam(m_RaytracedSSAOShader, Shader.PropertyToID("CameraPosition"), hdCamera.worldSpaceCameraPos);
+                    cmd.SetRaytracingFloatParam(m_RaytracedSSAOShader, Shader.PropertyToID("GoldenSampleCount"), m_RaytracedSSAOGoldenSampleCount);
+                    cmd.SetRaytracingBufferParam(m_RaytracedSSAOShader, "RayGenShaderSSAO", Shader.PropertyToID("GoldenSamples"), m_RaytracedSSAOGoldenSamples);
+                    cmd.SetRaytracingBufferParam(m_RaytracedSSAOShader, "RayGenShaderSSAO", Shader.PropertyToID("SobolMatrices"), m_RaytracedSSAOSobolMatrices);
+                    cmd.SetRaytracingTextureParam(m_RaytracedSSAOShader, "RayGenShaderSSAO", Shader.PropertyToID("DepthTex"), m_SharedRTManager.GetDepthTexture().rt); 
+                    cmd.SetRaytracingTextureParam(m_RaytracedSSAOShader, "RayGenShaderSSAO", Shader.PropertyToID("NormTex"), m_SharedRTManager.GetNormalBuffer());
+                    cmd.SetRaytracingAccelerationStructure(m_RaytracedSSAOShader, "SceneAS", m_AccelerationStructure);
+
+                    // Output
+                    cmd.SetRaytracingTextureParam(m_RaytracedSSAOShader, "RayGenShaderSSAO", Shader.PropertyToID("SSAOOutput"), m_AmbientOcclusionBuffer);
+
+                    cmd.DispatchRays(m_RaytracedSSAOShader, "RayGenShaderSSAO", (uint)hdCamera.camera.pixelWidth, (uint)hdCamera.camera.pixelHeight);
+
+                    cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, m_AmbientOcclusionBuffer);
+                    cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, new Vector4(settings.color.value.r, settings.color.value.g, settings.color.value.b, settings.directLightingStrength.value));
+                    PushFullScreenDebugTexture(hdCamera, cmd, m_AmbientOcclusionBuffer, FullScreenDebugMode.SSAO);
                     return;
                 }
             }

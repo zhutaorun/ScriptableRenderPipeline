@@ -13,6 +13,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [FormerlySerializedAs("version")]
         int m_Version = 1;
 
+        // Raytracing
+        public RaytracingAccelerationStructure raytracingAccelerationStructure;
+        public RaytracingShader raytracedSSAOShader;
+
         // Default Material / Shader
         public Material defaultDiffuseMaterial;
         public Material defaultMirrorMaterial;

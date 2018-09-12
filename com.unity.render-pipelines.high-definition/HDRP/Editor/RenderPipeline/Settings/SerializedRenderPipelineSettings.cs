@@ -6,6 +6,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     {
         public SerializedProperty root;
 
+        public SerializedProperty raytracingEnabled;
         public SerializedProperty supportShadowMask;
         public SerializedProperty supportSSR;
         public SerializedProperty supportSSAO;
@@ -35,6 +36,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             this.root = root;
 
+            raytracingEnabled               = root.Find((RenderPipelineSettings s) => s.raytracingEnabled);
             supportShadowMask               = root.Find((RenderPipelineSettings s) => s.supportShadowMask);
             supportSSR                      = root.Find((RenderPipelineSettings s) => s.supportSSR);
             supportSSAO                     = root.Find((RenderPipelineSettings s) => s.supportSSAO);

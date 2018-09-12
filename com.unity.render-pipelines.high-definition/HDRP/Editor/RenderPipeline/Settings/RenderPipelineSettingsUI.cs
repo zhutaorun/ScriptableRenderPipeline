@@ -68,6 +68,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             EditorGUILayout.LabelField(_.GetContent("Render Pipeline Settings"), EditorStyles.boldLabel);
             ++EditorGUI.indentLevel;
+			
+			// Raytracing
+            EditorGUILayout.PropertyField(d.raytracingEnabled, _.GetContent("Raytracing Enabled | Enable hardware accelerate raytracing."));
 
             // Lighting
             EditorGUILayout.PropertyField(d.supportShadowMask, _.GetContent("Support Shadow Mask|Enable memory (Extra Gbuffer in deferred) and shader variant for shadow mask."));
