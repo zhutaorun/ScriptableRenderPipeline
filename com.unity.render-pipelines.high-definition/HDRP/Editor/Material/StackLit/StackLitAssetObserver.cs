@@ -169,7 +169,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public static readonly string[] TextureImageExtensions = { ".bmp", ".exr", ".gif", ".hdr", ".iff", ".jpeg", ".jpg", ".pict", ".png", ".psd", ".tga", ".tiff" };
         static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
-            bool k_RefreshAllMaterials = true; // See note below
+            bool k_RefreshAllMaterials = false; // See note below
             bool masterShaderHasChanged = false;
 
             List<string> reImportedTextures = new List<string>();
@@ -197,8 +197,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 }
                 else
                 {
-                    // ...instead of running the refresh for everything like this:
-                    // (SetupMaterialKeywordsAndPass isn't that much an overhead)
+                    // ...instead of running the refresh for everything like this
+                    // (Except maybe for the side effects of setting material dirty
+                    // SetupMaterialKeywordsAndPass isn't that much an overhead)
                     HDRenderPipelineMenuItems.ResetAllMaterialAssetsKeywords();
                     // But crawling scenes though is expensive:
                     //HDRenderPipelineMenuItems.ResetAllMaterialKeywordsInProjectAndScenes();
