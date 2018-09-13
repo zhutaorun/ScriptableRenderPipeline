@@ -1,4 +1,4 @@
-#ifndef LIGHTWEIGHT_PASS_LIT_INCLUDED
+﻿#ifndef LIGHTWEIGHT_PASS_LIT_INCLUDED
 #define LIGHTWEIGHT_PASS_LIT_INCLUDED
 
 #include "LWRP/ShaderLibrary/Lighting.hlsl"
@@ -73,7 +73,6 @@ LightweightVertexOutput LitPassVertexSimple(LightweightVertexInput v)
     LightweightVertexOutput o = (LightweightVertexOutput)0;
 
     UNITY_SETUP_INSTANCE_ID(v);
-    UNITY_TRANSFER_INSTANCE_ID(v, o);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
     o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
@@ -120,7 +119,7 @@ LightweightVertexOutput LitPassVertexSimple(LightweightVertexInput v)
 // Used for StandardSimpleLighting shader
 half4 LitPassFragmentSimple(LightweightVertexOutput IN) : SV_Target
 {
-    UNITY_SETUP_INSTANCE_ID(IN);
+    UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
 
     float2 uv = IN.uv;
     half4 diffuseAlpha = SampleAlbedoAlpha(uv, TEXTURE2D_PARAM(_MainTex, sampler_MainTex));

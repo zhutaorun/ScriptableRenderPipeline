@@ -79,7 +79,6 @@ LightweightVertexOutput LitPassVertex(LightweightVertexInput v)
     LightweightVertexOutput o = (LightweightVertexOutput)0;
 
     UNITY_SETUP_INSTANCE_ID(v);
-    UNITY_TRANSFER_INSTANCE_ID(v, o);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
     o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
@@ -129,7 +128,7 @@ LightweightVertexOutput LitPassVertex(LightweightVertexInput v)
 // Used in Standard (Physically Based) shader
 half4 LitPassFragment(LightweightVertexOutput IN) : SV_Target
 {
-    UNITY_SETUP_INSTANCE_ID(IN);
+    UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
 
     SurfaceData surfaceData;
     InitializeStandardLitSurfaceData(IN.uv, surfaceData);

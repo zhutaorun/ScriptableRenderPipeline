@@ -1,4 +1,4 @@
-using UnityEngine.Rendering;
+﻿using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 {
@@ -44,7 +44,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             if ((int)samples > 1)
             {
-                baseDescriptor.bindMS = (int)samples > 1;
+                baseDescriptor.bindMS = (int)samples > 1 && !SystemInfo.supportsMultisampleAutoResolve;
                 baseDescriptor.msaaSamples = (int)samples;
             }
 
