@@ -184,7 +184,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         // Don't expose, ResetAllMaterialKeywordsInProjectAndScenes include it anyway
         //[MenuItem("Edit/Render Pipeline/Reset All Material Asset's Keywords (Materials in Project)", priority = CoreUtils.editMenuPriority3)]
-        static void ResetAllMaterialAssetsKeywords()
+        public static void ResetAllMaterialAssetsKeywords()
         {
             try
             {
@@ -197,7 +197,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         }
 
         [MenuItem("Edit/Render Pipeline/Reset All Project and Scene High Definition Materials Keywords", priority = CoreUtils.editMenuPriority3)]
-        static void ResetAllMaterialKeywordsInProjectAndScenes()
+        public static void ResetAllMaterialKeywordsInProjectAndScenes()
         {
             var openedScenes = new string[EditorSceneManager.loadedSceneCount];
             for (var i = 0; i < openedScenes.Length; ++i)
