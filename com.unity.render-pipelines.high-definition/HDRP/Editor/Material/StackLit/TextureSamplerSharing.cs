@@ -195,6 +195,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         // Tools for the asset importer observer that takes note that the StackLit shader was edited to reset SHARED_SAMPLER_USED_NUM
         // (see GetMaterialSharedSamplersMaxAllowedNum())
+        // returns true if the property was changed.
         public static bool CheckUpdateMaterialFloatProperty(Material material, string property, float value)
         {
             if (material.HasProperty(property) && material.GetFloat(property) != value)
@@ -204,6 +205,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
             return false;
         }
+
+        // returns true if the property was changed (material now dirty)
         public static bool CheckUpdateMaterialSharedSamplerUsedNumDefineProperty(Material material, float value)
         {
             return CheckUpdateMaterialFloatProperty(material, k_SharedSamplerUsedNumDefine, value);
@@ -278,7 +281,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             SharedSamplersNeededOnLastAssignement = 0;
         }
 
-        public TextureSamplerSharing(Material material, string shaderName = StackLitGUI.k_StacklitShaderName,
+        public TextureSamplerSharing(Material material, string shaderName = StackLitGUI.k_StackLitShaderName,
             Action<SamplerClient, int, bool, bool> assignmentCallback = null, int definedSharedSamplerUsedNum = k_DefaultSharedSamplerUsedNum)
         {
             m_UniqueSharedSamplerStates = new Dictionary<ulong, List<SamplerClient>>();
@@ -528,7 +531,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         private const string k_GeneratedSuffix = "/" + k_Generated + "/";
 
         public const string k_SharedSamplerUsedNumDefine = "SHARED_SAMPLER_USED_NUM";
-        public const string k_StacklitGeneratedShaderNamePrefix = StackLitGUI.k_StacklitShaderName + k_GeneratedSuffix; // shaderlab name string of a generated shader is this the sampling config state MD5
+        public const string k_StackLitGeneratedShaderNamePrefix = StackLitGUI.k_StackLitShaderName + k_GeneratedSuffix; // shaderlab name string of a generated shader is this the sampling config state MD5
+        // Matches main or generated shaders, no anchor (\A \z)
+        public const string k_StackLitFamilyFindRegexPattern = @"(?<shadername>HDRenderPipeline\/StackLit)(\/Generated\/(?<statecode>[0-9a-fA-F]{32}))?";
 
         private const int k_UseMapUseOwnSamplerValue = 1000;
 
@@ -723,7 +728,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         private void SetShaderNameAndPaths(string shaderName)
         {
-            m_ShaderName = shaderName ?? StackLitGUI.k_StacklitShaderName;
+            m_ShaderName = shaderName ?? StackLitGUI.k_StackLitShaderName;
             m_ShaderSimpleName = m_ShaderName.Substring(m_ShaderName.LastIndexOf('/') + 1); // if there's no /, too bad, we take everything
 
             m_DefaultGeneratedFilesPath = "Assets/" + m_ShaderName + k_Generated;

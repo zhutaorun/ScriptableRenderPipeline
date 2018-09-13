@@ -13,7 +13,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         };
 
         #region Strings
-        public const string k_StacklitShaderName = "HDRenderPipeline/StackLit";
+        public const string k_StackLitShaderName = "HDRenderPipeline/StackLit";
         public const string k_StackLitShaderPath = "HDRP/Material/StackLit/StackLit.shader";
         public const string k_StackLitPackagedShaderPath = "Packages/com.unity.render-pipelines.high-definition/" + k_StackLitShaderPath;
 
@@ -282,7 +282,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     // Note: only called when valid and visible so we can safely touch .Value:
                     (thisProperty, material) =>
                     {
-                        Shader orig = Shader.Find(k_StacklitShaderName);
+                        Shader orig = Shader.Find(k_StackLitShaderName);
                         if (orig != null)
                         {
                             material.shader = orig;
@@ -302,9 +302,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     {
                         // Print sampler config: we can only do that if we do the full config again.
                         // Should be idempotent anyway, but if auto-generation is not on, we will assume it is if the shader name assigned to the material
-                        // starts with k_StacklitGeneratedShaderNamePrefix. Since we do an actual SetupMaterialKeywordsAndPassWithOptions() call, if the 
+                        // starts with k_StackLitGeneratedShaderNamePrefix. Since we do an actual SetupMaterialKeywordsAndPassWithOptions() call, if the 
                         // generated shader is not the proper one, this will swap it out, too bad:
-                        bool shaderHasGeneratedName = material.shader.name.StartsWith(TextureSamplerSharingShaderGenerator.k_StacklitGeneratedShaderNamePrefix);
+                        bool shaderHasGeneratedName = material.shader.name.StartsWith(TextureSamplerSharingShaderGenerator.k_StackLitGeneratedShaderNamePrefix);
                         // A bit brutish as this will be called again but it's idempotent:
                         SetupMaterialKeywordsAndPassWithOptions(material, doShaderGeneration: shaderHasGeneratedName, printSamplerSharingInfo: true);
                     },
@@ -313,7 +313,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 {
                     // We will indicate we're not sure the stats match up since we're not auto-generating, but we assume from the shader name assigned to the material:
                     // (thisProperty is the auto shader generation toggle)
-                    bool shaderHasGeneratedName = material.shader.name.StartsWith(TextureSamplerSharingShaderGenerator.k_StacklitGeneratedShaderNamePrefix);
+                    bool shaderHasGeneratedName = material.shader.name.StartsWith(TextureSamplerSharingShaderGenerator.k_StackLitGeneratedShaderNamePrefix);
                     bool generatedStatsAreAssumed = shaderHasGeneratedName && (thisProperty.BoolValue == false);
                     //bool showGeneratedStats = (thisProperty.BoolValue == true) || shaderHasGeneratedName;
 
@@ -579,16 +579,19 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
         }
 
+        // Driven by BaseUnlitGUI:ShaderPropertiesGUI:
         protected override void SetupMaterialKeywordsAndPassInternal(Material material)
-        {
-            SetupMaterialKeywordsAndPass(material);
-        }
-
-        // All Setup Keyword functions must be static. It allow to create script to automatically update the shaders with a script if code change
-        public static void SetupMaterialKeywordsAndPass(Material material)
         {
             SetupMaterialKeywordsAndPassWithOptions(material);
         }
+
+        // All Setup Keyword functions must be static. It allow to create script to automatically update the materials with a script if code change
+        public static void SetupMaterialKeywordsAndPass(Material material)
+        {
+            // This function should not be driven by GUI, so we allow refreshing SamplerUsedNumDefineProperty from the main shader source
+            SetupMaterialKeywordsAndPassWithOptions(material, refreshSharedSamplerUsedNumDefineProperty: true);
+        }
+
         public static void SetupMaterialKeywordsAndPassWithOptions(Material material,
             bool doShaderGeneration = false, bool printSamplerSharingInfo = false, bool refreshSharedSamplerUsedNumDefineProperty = false)
         {
@@ -725,7 +728,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 bool setupOptionUsed = doShaderGeneration || printSamplerSharingInfo || refreshSharedSamplerUsedNumDefineProperty;
                 int sharedSamplerUsedNumDefine = setupOptionUsed ? 0 : TextureSamplerSharing.GetMaterialSharedSamplerUsedNumDefineProperty(material);
 
-                samplerSharing = new TextureSamplerSharing(material, shaderName: k_StacklitShaderName,
+                samplerSharing = new TextureSamplerSharing(material, shaderName: k_StackLitShaderName,
                     assignmentCallback: (samplerClient, slot, isExternalSlot, isClientUnique) => 
                     TextureProperty.SetupUseMapOfTextureMaterialProperty(material, shaderGenerator, samplerClient, slot, isExternalSlot, isClientUnique),
                     definedSharedSamplerUsedNum: sharedSamplerUsedNumDefine);
@@ -736,7 +739,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             else
             {
                 // If sampler sharing is disabled, make sure the original shader is assigned to the material then:
-                Shader orig = Shader.Find(k_StacklitShaderName);
+                Shader orig = Shader.Find(k_StackLitShaderName);
                 if (orig != null)
                 {
                     material.shader = orig;
@@ -803,7 +806,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     }
 
                     Debug.LogFormat(TextureSamplerSharingShaderGenerator.k_SharedSamplerUsedNumDefine + " is " + "{0} " 
-                        + (shaderGenerator != null && material.shader.name.Equals(k_StacklitShaderName, StringComparison.Ordinal) ? "(before generation) \n": "\n")
+                        + (shaderGenerator != null && material.shader.name.Equals(k_StackLitShaderName, StringComparison.Ordinal) ? "(before generation) \n": "\n")
                         + "Maximum shared sampler slots available: {1} \n"
                         + "Needed shared sampler slots: {2} \n",
                         definedSharedSamplerUsedNum, (shaderGenerator != null ? TextureSamplerSharing.SharedSamplersMaxNum : definedSharedSamplerUsedNum), samplerSharing.SharedSamplersNeededOnLastAssignement);
