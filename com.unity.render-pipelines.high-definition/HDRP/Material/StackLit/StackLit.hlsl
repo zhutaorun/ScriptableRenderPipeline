@@ -815,12 +815,24 @@ float GetModifiedAnisotropy(float anisotropy, float perceptualRoughness, float r
 }
 
 // Get the orthogonal component (or complement) of a vector V with regard to the vector N.
-float3 GetOrthogonalComponent(float3 V, float3 N)
+float3 GetOrthogonalComponent(float3 V, float3 N, bool testSingularity = false)
 {
     // V and N are supposed to be unit vectors
     float VdotN = dot(V, N);
-    float3 VOrtho = V - VdotN * N;
-    float3 unitVOrtho = VOrtho * rsqrt(1.0 - Sq(VdotN));
+    float3 unitVOrtho;
+
+    if (testSingularity && (abs(1.0 - VdotN) <= FLT_EPS))
+    {
+        // In this case N == V, and azimuth orientation around N shouldn't matter for the caller,
+        // we can use any quaternion-based method, like Frisvad or Reynold's (Pixar): 
+        float3x3 orthoBasis = GetLocalFrame(N);
+        unitVOrtho = orthoBasis[0]; // we pick any axis, compiler should optimize out calculation of [1]
+    }
+    else
+    {
+        float3 VOrtho = V - VdotN * N;
+        unitVOrtho = VOrtho * rsqrt(1.0 - Sq(VdotN));
+    }
     return unitVOrtho;
 }
 
