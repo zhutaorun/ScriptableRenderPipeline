@@ -6,6 +6,14 @@ namespace UnityEngine.Experimental.Rendering
 {
     public static unsafe class CoreUnsafeUtils
     {
+        public interface IKeyGetter<TValue, TKey>
+        {
+            TKey Get(ref TValue v);
+        }
+
+        internal struct DefaultKeyGetter<T> : IKeyGetter<T, T>
+        { public T Get(ref T v) { return v; } }
+
         public static void CopyTo<T>(this List<T> list, void* dest, int count)
             where T : struct
         {
@@ -25,48 +33,77 @@ namespace UnityEngine.Experimental.Rendering
         public static void QuickSort<T>(int count, void* data)
             where T : struct, IComparable<T>
         {
-            QuickSort<T>(data, 0, count - 1);
+            QuickSort<T, T, DefaultKeyGetter<T>>(data, 0, count - 1);
         }
 
-        public static void QuickSort<T>(void* data, int left, int right)
-            where T : struct, IComparable<T>
+        public static void QuickSort<TValue, TKey, TGetter>(int count, void* data)
+            where TKey : struct, IComparable<TKey>
+            where TValue : struct
+            where TGetter : struct, IKeyGetter<TValue, TKey>
+        {
+            QuickSort<TValue, TKey, TGetter>(data, 0, count - 1);
+        }
+
+        public static void QuickSort<TValue, TKey, TGetter>(void* data, int left, int right)
+            where TKey : struct, IComparable<TKey>
+            where TValue : struct
+            where TGetter : struct, IKeyGetter<TValue, TKey>
         {
             // For Recursion
             if (left < right)
             {
-                int pivot = Partition<T>(data, left, right);
+                int pivot = Partition<TValue, TKey, TGetter>(data, left, right);
 
                 if (pivot > 1)
-                    QuickSort<T>(data, left, pivot);
+                    QuickSort<TValue, TKey, TGetter>(data, left, pivot);
 
                 if (pivot + 1 < right)
-                    QuickSort<T>(data, pivot + 1, right);
+                    QuickSort<TValue, TKey, TGetter>(data, pivot + 1, right);
             }
         }
 
         // Just a sort function that doesn't allocate memory
-        // Note: Shoud be repalc by a radix sort for positive integer
-        static int Partition<T>(void* data, int left, int right)
-            where T : struct, IComparable<T>
+        // Note: Should be replace by a radix sort for positive integer
+        static int Partition<TValue, TKey, TGetter>(void* data, int left, int right)
+            where TKey : struct, IComparable<TKey>
+            where TValue : struct
+            where TGetter : struct, IKeyGetter<TValue, TKey>
         {
-            var pivot = UnsafeUtility.ReadArrayElement<T>(data, left);
+            var getter = new TGetter();
+            var pivotvalue = UnsafeUtility.ReadArrayElement<TValue>(data, left);
+            var pivot = getter.Get(ref pivotvalue);
 
             --left;
             ++right;
             while (true)
             {
-                var lvalue = default(T);
-                do { ++left; }
-                while ((lvalue = UnsafeUtility.ReadArrayElement<T>(data, left)).CompareTo(pivot) < 0);
+                var c = 0;
+                var lvalue = default(TValue);
+                var lkey = default(TKey);
+                do
+                {
+                    ++left;
+                    lvalue = UnsafeUtility.ReadArrayElement<TValue>(data, left);
+                    lkey = getter.Get(ref lvalue);
+                    c = lkey.CompareTo(pivot);
+                }
+                while (c < 0);
 
-                var rvalue = default(T);
-                do { --right; }
-                while ((rvalue = UnsafeUtility.ReadArrayElement<T>(data, right)).CompareTo(pivot) > 0);
+                var rvalue = default(TValue);
+                var rkey = default(TKey);
+                do
+                {
+                    --right;
+                    rvalue = UnsafeUtility.ReadArrayElement<TValue>(data, right);
+                    rkey = getter.Get(ref rvalue);
+                    c = rkey.CompareTo(pivot);
+                }
+                while (c > 0);
 
                 if (left < right)
                 {
-                    UnsafeUtility.WriteArrayElement<T>(data, right, lvalue);
-                    UnsafeUtility.WriteArrayElement<T>(data, left, rvalue);
+                    UnsafeUtility.WriteArrayElement(data, right, lvalue);
+                    UnsafeUtility.WriteArrayElement(data, left, rvalue);
                 }
                 else
                 {
