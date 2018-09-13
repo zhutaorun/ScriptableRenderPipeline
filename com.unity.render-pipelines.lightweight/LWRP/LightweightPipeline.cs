@@ -154,6 +154,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             SetupPerFrameShaderConstants();
 
             SortCameras(cameras);
+            int i = 0;
             foreach (Camera camera in cameras)
             {
                 BeginCameraRendering(camera);
@@ -211,9 +212,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 context.ExecuteCommandBuffer(cmd);
                 CommandBufferPool.Release(cmd);
                 context.Submit();
-#if UNITY_EDITOR
-                Handles.DrawGizmos(camera);
-#endif
             }
         }
 

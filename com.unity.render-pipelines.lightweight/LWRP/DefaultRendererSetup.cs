@@ -24,6 +24,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private EndXRRenderingPass m_EndXrRenderingPass;
 
 #if UNITY_EDITOR
+        private GizmoRenderingPass m_LitGizmoRenderingPass;
+        private GizmoRenderingPass m_UnlitGizmoRenderingPass;
         private SceneViewDepthCopyPass m_SceneViewDepthCopyPass;
 #endif
 
@@ -64,6 +66,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
 #if UNITY_EDITOR
             m_SceneViewDepthCopyPass = new SceneViewDepthCopyPass();
+            m_LitGizmoRenderingPass = new GizmoRenderingPass();
+            m_UnlitGizmoRenderingPass = new GizmoRenderingPass();
 #endif
 
             // RenderTexture format depends on camera and pipeline (HDR, non HDR, etc)
@@ -185,6 +189,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 renderer.EnqueuePass(m_CopyColorPass);
             }
 
+#if UNITY_EDITOR
+            m_LitGizmoRenderingPass.Setup(true);
+            renderer.EnqueuePass(m_LitGizmoRenderingPass);
+#endif
+
             m_RenderTransparentForwardPass.Setup(baseDescriptor, colorHandle, depthHandle, rendererConfiguration);
             renderer.EnqueuePass(m_RenderTransparentForwardPass);
 
@@ -211,6 +220,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             }
 
 #if UNITY_EDITOR
+            m_UnlitGizmoRenderingPass.Setup(false);
+            renderer.EnqueuePass(m_UnlitGizmoRenderingPass);
+
             if (renderingData.cameraData.isSceneViewCamera)
             {
                 m_SceneViewDepthCopyPass.Setup(DepthTexture);
