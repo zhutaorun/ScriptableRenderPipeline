@@ -9,6 +9,7 @@ using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
+#if UNITY_MATERIAL_AUTO_REFRESH
     public class StackLitAssetObserver : AssetPostprocessor
     {
         private static void SaveAssetsAndFreeMemory()
@@ -205,4 +206,5 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
     }
+#endif
 }
