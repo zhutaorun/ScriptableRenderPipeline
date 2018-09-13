@@ -23,11 +23,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RTHandleSystem.RTHandle m_HTile;
         // End Disney SSS Model
 
-        // Jimenez SSS Model
-        Material m_SssVerticalFilterPass;
-        Material m_SssHorizontalFilterAndCombinePass;
-        // End Jimenez SSS Model
-
         // Jimenez need an extra buffer and Disney need one for some platform
         RTHandleSystem.RTHandle m_CameraFilteringBuffer;
 
@@ -105,8 +100,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public void Cleanup()
         {
             CoreUtils.Destroy(m_CombineLightingPass);
-            CoreUtils.Destroy(m_SssVerticalFilterPass);
-            CoreUtils.Destroy(m_SssHorizontalFilterAndCombinePass);
             CoreUtils.Destroy(m_CopyStencilForSplitLighting);
 
             for (int i = 0; i < k_MaxSSSBuffer; ++i)
@@ -160,7 +153,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // In the case our frame is MSAA, for the moment given the fact that we do not have read/write access to the stencil buffer of the MSAA target; we need to keep this pass MSAA
         // However, the compute can't output and MSAA target so we blend the non-MSAA target into the MSAA one.
         public void SubsurfaceScatteringPass(HDCamera hdCamera, CommandBuffer cmd, DiffusionProfileSettings sssParameters,
-            RTHandleSystem.RTHandle colorBufferRT, RTHandleSystem.RTHandle diffuseBufferRT, RTHandleSystem.RTHandle depthStencilBufferRT, RTHandleSystem.RTHandle depthTextureRT, FrameSettings frameSettings)
+            RTHandleSystem.RTHandle colorBufferRT, RTHandleSystem.RTHandle diffuseBufferRT, RTHandleSystem.RTHandle depthStencilBufferRT, RTHandleSystem.RTHandle depthTextureRT)
         {
             if (sssParameters == null || !hdCamera.frameSettings.enableSubsurfaceScattering)
                 return;
@@ -171,7 +164,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             using (new ProfilingSample(cmd, "Subsurface Scattering", CustomSamplerId.SubsurfaceScattering.GetSampler()))
             {
                 // For Jimenez we always need an extra buffer, for Disney it depends on platform
-                if (NeedTemporarySubsurfaceBuffer() || frameSettings.enableMSAA)
+                if (NeedTemporarySubsurfaceBuffer() || hdCamera.frameSettings.enableMSAA)
                 {
                     // Clear the SSS filtering target
                     using (new ProfilingSample(cmd, "Clear SSS filtering target", CustomSamplerId.ClearSSSFilteringTarget.GetSampler()))
@@ -208,7 +201,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cmd.SetComputeVectorArrayParam(m_SubsurfaceScatteringCS, HDShaderIDs._FilterKernels,      sssParameters.filterKernels);
                 cmd.SetComputeVectorArrayParam(m_SubsurfaceScatteringCS, HDShaderIDs._ShapeParams,        sssParameters.shapeParams);
 
-                int sssKernel = frameSettings.enableMSAA ? m_SubsurfaceScatteringKernelMSAA : m_SubsurfaceScatteringKernel;
+                int sssKernel = hdCamera.frameSettings.enableMSAA ? m_SubsurfaceScatteringKernelMSAA : m_SubsurfaceScatteringKernel;
              
                 cmd.SetComputeTextureParam(m_SubsurfaceScatteringCS, sssKernel, HDShaderIDs._DepthTexture,       depthTextureRT);
                 cmd.SetComputeTextureParam(m_SubsurfaceScatteringCS, sssKernel, HDShaderIDs._SSSHTile,           m_HTile);
@@ -219,7 +212,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cmd.SetComputeTextureParam(m_SubsurfaceScatteringCS, sssKernel, HDShaderIDs._SSSBufferTexture[i], GetSSSBuffer(i));
                 }
 
-                if (NeedTemporarySubsurfaceBuffer() || frameSettings.enableMSAA)
+                if (NeedTemporarySubsurfaceBuffer() || hdCamera.frameSettings.enableMSAA)
                 {
                     cmd.SetComputeTextureParam(m_SubsurfaceScatteringCS, sssKernel, HDShaderIDs._CameraFilteringBuffer, m_CameraFilteringBuffer);
 
