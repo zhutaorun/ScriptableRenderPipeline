@@ -232,7 +232,7 @@ float3 GetShadowNormalBias(BSDFData bsdfData)
 
 float3 ConvertF0ForAirInterfaceToF0ForNewTopIor(float3 fresnel0, float newTopIor)
 {
-    float3 ior = Fresnel0ToIor(fresnel0 + 0.0001); // guard against 1.0
+    float3 ior = Fresnel0ToIor(min(fresnel0, float3(1,1,1)*0.999)); // guard against 1.0
     return IorToFresnel0(ior, newTopIor);
 }
 
@@ -1087,11 +1087,14 @@ void ComputeStatistics(in  float  cti, in float3 V, in float3 vOrthoGeomN, in bo
         float stt = sti / n12;
         if( stt <= 1.0f )
         {
-            // Hack: as roughness -> 1, remove the effect of changing angle also note: we never track means per se
-            // because of symmetry, we have no azimuth, and don't consider offspecular effect as well as never
-            // outputting final downward lobes anyway.
-            // We just track cosines of angles for energy transfer calculations (should do with FGD but depends,
-            // see comments above).
+            // See p5 fig5 a) vs b) : using a refraction as a peak mean is the dotted line, while the ref is the solid line.
+            // The scale is a hack to reproduce this effect: 
+            // As roughness -> 1, remove the effect of changing angle of entry.
+            // Note that we never track complete means per se because of symmetry, we have no azimuth, so the "space" of the
+            // means sin(theta) (here sti and stt) is just a line perpendicular to the normal in the plane of incidence.
+            // Moreover, we don't consider offspecular effect as well as never outputting final downward lobes anyway, so we
+            // never output the means but just track them as cosines of angles (cti) for energy transfer calculations
+            // (should do with FGD but depends, see comments above).
             const float alpha = bsdfData.coatRoughness;
             const float scale = clamp((1.0-alpha)*(sqrt(1.0-alpha) + alpha), 0.0, 1.0);
             //http://www.wolframalpha.com/input/?i=f(alpha)+%3D+(1.0-alpha)*(sqrt(1.0-alpha)+%2B+alpha)+alpha+%3D+0+to+1
@@ -1100,10 +1103,9 @@ void ComputeStatistics(in  float  cti, in float3 V, in float3 vOrthoGeomN, in bo
         }
         else
         {
-            // TIR, flip sign: directions either reflected or transmitted always leave
-            // the surface. So here we have ctt instead of cti, we reverse dir by flipping sign.
-            // Not accounted for though check implications of ctt = -1.0
-            // TODO
+            // Even though we really track stats for a lobe, we decide on average we have TIR
+            // (since we can't propagate anyway, we have no direction to use)
+            // TODO: Right now, we block the UI from using coat IOR < 1.0, so can't happen.
             ctt = -1.0;
         }
 
@@ -1120,6 +1122,9 @@ void ComputeStatistics(in  float  cti, in float3 V, in float3 vOrthoGeomN, in bo
     }
     else if(i == 1)
     {
+        // TODO: if TIR is permitted by UI, do this, or early out
+        //float stopFactor = float(cti > 0.0);
+        //T12 = stopFactor * exp(- bsdfData.coatThickness * bsdfData.coatExtinction / cti);
         // Update energy
         R12 = float3(0.0, 0.0, 0.0);
         T12 = exp(- bsdfData.coatThickness * bsdfData.coatExtinction / cti);
