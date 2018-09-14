@@ -153,11 +153,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             get
             {
-                if (m_AdditionalCameraData != null)
-                    return m_AdditionalCameraData.antialiasing;
-
-                return HDAdditionalCameraData.AntialiasingMode.None;
+                return m_AdditionalCameraData != null
+                    ? m_AdditionalCameraData.antialiasing
+                    : HDAdditionalCameraData.AntialiasingMode.None;
             }
+        }
+
+        public bool dithering
+        {
+            get { return m_AdditionalCameraData != null && m_AdditionalCameraData.dithering; }
         }
 
         static Dictionary<Camera, HDCamera> s_Cameras = new Dictionary<Camera, HDCamera>();

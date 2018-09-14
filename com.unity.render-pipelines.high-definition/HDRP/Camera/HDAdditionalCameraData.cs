@@ -59,6 +59,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Transform volumeAnchorOverride;
 
         public AntialiasingMode antialiasing = AntialiasingMode.None;
+        public bool dithering = false;
 
         // Physical parameters
         // TODO: Remove these once hd/postfx is in
@@ -96,6 +97,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             data.renderingPath = renderingPath;
             data.volumeLayerMask = volumeLayerMask;
             data.volumeAnchorOverride = volumeAnchorOverride;
+            data.antialiasing = antialiasing;
+            data.dithering = dithering;
             data.aperture = aperture;
             data.shutterSpeed = shutterSpeed;
             data.iso = iso;

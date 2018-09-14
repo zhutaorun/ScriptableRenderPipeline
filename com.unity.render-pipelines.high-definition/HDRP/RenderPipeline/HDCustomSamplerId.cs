@@ -70,6 +70,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Exposure,
         TemporalAntialiasing,
         DepthOfField,
+        MotionBlur,
         ColorGradingLUTBuilder,
         UberPost,
         FinalPost,

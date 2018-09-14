@@ -102,6 +102,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public ComputeShader lutBuilder3DCS;
         public ComputeShader fxaaCS;
         public ComputeShader taaCS;
+        public Shader finalPassPS;
+
+        public Texture2D[] filmGrainTextures;
+        public Texture2D[] blueNoise64Texture;
         
 #if UNITY_EDITOR
         public void UpgradeIfNeeded()
@@ -211,8 +215,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             exposureCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/Exposure.compute");
             uberPostCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/UberPost.compute");
             lutBuilder3DCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/LutBuilder3D.compute");
-            fxaaCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/FXAA.compute");
             taaCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/TAA.compute");
+            finalPassPS = Load<Shader>(HDRenderPipelinePath + "PostProcessing/Shaders/FinalPass.shader");
+
+            filmGrainTextures = new[]
+            {
+                // These need to stay in this specific order!
+                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Thin01.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Thin02.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Medium01.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Medium02.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Medium03.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Medium04.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Medium05.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Medium06.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Large01.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Large02.png")
+            };
+
+            blueNoise64Texture = new Texture2D[64];
+            for (int i = 0; i < 64; i++)
+                blueNoise64Texture[i] = Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/BlueNoise64/LDR_LLL1_" + i + ".png");
         }
 #endif
     }

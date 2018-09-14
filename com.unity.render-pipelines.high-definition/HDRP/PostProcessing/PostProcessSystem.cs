@@ -13,6 +13,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
         RenderPipelineResources m_Resources;
         bool m_ResetHistory;
+        Material m_FinalPassMaterial;
 
         // Exposure data
         const int k_ExposureCurvePrecision = 128;
@@ -30,6 +31,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RTHandle m_InternalLogLut; // ARGBHalf
         readonly HableCurve m_HableCurve;
 
+        // Dithering data
+        Texture2DArray m_BlueNoise64TextureArray;
+
         // Prefetched components (updated on every frame)
         PhysicalCamera m_PhysicalCamera;
         Exposure m_Exposure;
@@ -44,6 +48,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         SplitToning m_SplitToning;
         LiftGammaGain m_LiftGammaGain;
         ShadowsMidtonesHighlights m_ShadowsMidtonesHighlights;
+        FilmGrain m_FilmGrain;
 
         // Misc (re-usable)
         RTHandle[] m_TempFullSizePingPong = new RTHandle[2]; // R11G11B10F
@@ -59,6 +64,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public PostProcessSystem(HDRenderPipelineAsset hdAsset)
         {
             m_Resources = hdAsset.renderPipelineResources;
+            m_FinalPassMaterial = CoreUtils.CreateEngineMaterial(m_Resources.finalPassPS);
 
             // Feature maps
             // Must be kept in sync with variants defined in UberPost.compute
@@ -90,6 +96,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             );
 
             // Setup a default exposure textures
+            // TODO: Use clear instead of all of that...
             m_EmptyExposureTexture = RTHandles.Alloc(1, 1, colorFormat: RenderTextureFormat.RGHalf,
                 sRGB: false, enableRandomWrite: true, name: "Empty EV100 Exposure"
             );
@@ -99,6 +106,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             tempTex.Apply();
             Graphics.Blit(tempTex, m_EmptyExposureTexture);
             CoreUtils.Destroy(tempTex);
+
+            // Blue noise array used for dithering
+            // TODO: Could probably be exposed to the whole HDRP?
+            m_BlueNoise64TextureArray = new Texture2DArray(64, 64, 64, TextureFormat.Alpha8, false, true);
+
+            for (int i = 0; i < 64; i++)
+                Graphics.CopyTexture(m_Resources.blueNoise64Texture[i], 0, 0, m_BlueNoise64TextureArray, i, 0);
 
             // Ping pong targets
             for (int i = 0; i < 2; i++)
@@ -139,6 +153,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RTHandles.Release(m_TempTexture32);
             CoreUtils.Destroy(m_ExposureCurveTexture);
             CoreUtils.Destroy(m_InternalSpectralLut);
+            CoreUtils.Destroy(m_BlueNoise64TextureArray);
             RTHandles.Release(m_InternalLogLut);
 
             m_EmptyExposureTexture    = null;
@@ -148,6 +163,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_TempTexture1024         = null;
             m_TempTexture32           = null;
             m_ExposureCurveTexture    = null;
+            m_BlueNoise64TextureArray   = null;
             m_InternalSpectralLut     = null;
             m_InternalLogLut          = null;
         }
@@ -175,6 +191,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_SplitToning               = stack.GetComponent<SplitToning>();
             m_LiftGammaGain             = stack.GetComponent<LiftGammaGain>();
             m_ShadowsMidtonesHighlights = stack.GetComponent<ShadowsMidtonesHighlights>();
+            m_FilmGrain                     = stack.GetComponent<FilmGrain>();
 
             // Check if motion vectors are needed, if so we need to enable a flag on the camera so
             // that Unity properly generate motion vectors (internal engine dependency)
@@ -226,23 +243,25 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     }
                 }
 
-                // Depth of Field is done right after TAA as it's easier to just reproject the CoC
+                // Depth of Field is done right after TAA as it's easier to just re-project the CoC
                 // map rather than having to deal with all the implications of doing it before TAA
-                if (m_DepthOfField.mode.value != DepthOfFieldMode.Off)
-                {
-                    using (new ProfilingSample(cmd, "Depth of Field", CustomSamplerId.DepthOfField.GetSampler()))
-                    {
-                        DoDepthOfField(cmd, camera, source, PingPongTarget(), depthBuffer, taaEnabled ? velocityBuffer : null);
-                        source = GetLastPingPongTarget();
-                    }
-                }
+                //if (m_DepthOfField.mode.value != DepthOfFieldMode.Off)
+                //{
+                //    using (new ProfilingSample(cmd, "Depth of Field", CustomSamplerId.DepthOfField.GetSampler()))
+                //    {
+                //        DoDepthOfField(cmd, camera, source, PingPongTarget(), depthBuffer, taaEnabled ? velocityBuffer : null);
+                //        source = GetLastPingPongTarget();
+                //    }
+                //}
 
+                // Motion blur after depth of field for aesthetic reasons (better to see motion
+                // blurred bokeh rather than out of focus motion blur)
                 // TODO: Motion blur goes here
 
                 // Combined post-processing stack - always runs if postfx is enabled
                 using (new ProfilingSample(cmd, "Uber", CustomSamplerId.UberPost.GetSampler()))
                 {
-                    // Feature flags are passed to all effects and it's their reponsability to check
+                    // Feature flags are passed to all effects and it's their responsibility to check
                     // if they are used or not so they can set default values if needed
                     var cs = m_Resources.uberPostCS;
                     var featureFlags = GetUberFeatureFlags();
@@ -548,33 +567,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void DoDepthOfField(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, RTHandle depthBuffer, RTHandle velocityBuffer)
         {
-            bool taaEnabled = velocityBuffer == null;
-            RTHandle prevCoCHistory, nextCoCHistory;
-            GrabDepthOfFieldCoCHistoryTextures(camera, out prevCoCHistory, out nextCoCHistory);
-
-            if (m_ResetHistory)
-            {
-                // TODO: Handle DoF history reset
-            }
-
-            // Pass 1: downsample color & generate CoC
-
         }
 
-        void GrabDepthOfFieldCoCHistoryTextures(HDCamera camera, out RTHandle previous, out RTHandle next)
-        {
-            next = camera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.DepthOfFieldCoC)
-                ?? camera.AllocHistoryFrameRT((int)HDCameraFrameHistoryType.DepthOfFieldCoC, DepthOfFieldCoCHistoryAllocator);
-            previous = camera.GetPreviousFrameRT((int)HDCameraFrameHistoryType.DepthOfFieldCoC);
-        }
+        #endregion
 
-        RTHandle DepthOfFieldCoCHistoryAllocator(string id, int frameIndex, RTHandleSystem rtHandleSystem)
+        #region Motion Blur
+
+        void DoMotionBlur(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, RTHandle depthBuffer, RTHandle velocityBuffer)
         {
-            return rtHandleSystem.Alloc(
-                Vector3.one, depthBufferBits: DepthBits.None,
-                filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RHalf,
-                enableRandomWrite: true, name: "CoC History"
-            );
         }
 
         #endregion
@@ -889,22 +889,55 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void DoFinalPass(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination)
         {
-            // TODO: FIXME
-            // This pass should be the one writing to the backbuffer, but we can't write to it using
-            // a compute so it should be converted to a fragment.
-            // Also missing: 8-bit dithering, ODT transform
+            // Final pass has to be done in a pixel shader as it will be the one writing straight
+            // to the backbuffer eventually
+
+            m_FinalPassMaterial.shaderKeywords = null;
+            m_FinalPassMaterial.SetTexture(HDShaderIDs._InputTexture, source);
+
             if (camera.antialiasing == AntialiasingMode.FastApproximateAntialiasing)
+                m_FinalPassMaterial.EnableKeyword("FXAA");
+
+            if (m_FilmGrain.IsActive())
             {
-                var cs = m_Resources.fxaaCS;
-                int kernel = cs.FindKernel("KFXAA");
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, destination);
-                cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 7) / 8, (camera.actualHeight + 7) / 8, 1);
+                var texture = m_FilmGrain.texture.value;
+
+                if (m_FilmGrain.type.value != FilmGrainLookup.Custom)
+                    texture = m_Resources.filmGrainTextures[(int)m_FilmGrain.type.value];
+
+                if (texture != null) // Fail safe if the resources asset breaks :/
+                {
+                    #if HDRP_DEBUG_STATIC_POSTFX
+                    int offsetX = 0;
+                    int offsetY = 0;
+                    #else
+                    int offsetX = (int)(Random.value * texture.width);
+                    int offsetY = (int)(Random.value * texture.height);
+                    #endif
+
+                    m_FinalPassMaterial.EnableKeyword("GRAIN");
+                    m_FinalPassMaterial.SetTexture("_GrainTexture", texture);
+                    m_FinalPassMaterial.SetVector("_GrainParams", new Vector2(m_FilmGrain.intensity.value * 4f, m_FilmGrain.response.value));
+                    m_FinalPassMaterial.SetVector("_GrainTextureParams", new Vector4(texture.width, texture.height, offsetX, offsetY));
+                }
             }
-            else
+
+            int pass = 0;
+
+            if (camera.dithering)
             {
-                cmd.Blit(source, destination);
+                #if HDRP_DEBUG_STATIC_POSTFX
+                int textureId = 0;
+                #else
+                int textureId = Time.frameCount % m_BlueNoise64TextureArray.depth;
+                #endif
+
+                m_FinalPassMaterial.SetTexture("_BlueNoiseTexture", m_BlueNoise64TextureArray);
+                m_FinalPassMaterial.SetVector("_DitherParams", new Vector3(m_BlueNoise64TextureArray.width, m_BlueNoise64TextureArray.height, textureId));
+                pass = 1;
             }
+
+            HDUtils.DrawFullScreen(cmd, camera, m_FinalPassMaterial, destination, shaderPassId: pass);
         }
 
         #endregion

@@ -44,6 +44,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 CED.Action(Drawer_CameraWarnings),
                 CED.Action(Drawer_FieldRenderingPath),
                 CED.Action(Drawer_Antialiasing),
+                CED.Action(Drawer_Dithering),
                 CED.space
                 );
 
@@ -240,6 +241,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static void Drawer_Antialiasing(HDCameraUI s, SerializedHDCamera p, Editor owner)
         {
             p.antialiasing.intValue = EditorGUILayout.Popup(_.GetContent("Anti-aliasing|The anti-aliasing method to use."), p.antialiasing.intValue, s_AntialiasingModeNames);
+        }
+
+        static void Drawer_Dithering(HDCameraUI s, SerializedHDCamera p, Editor owner)
+        {
+            EditorGUILayout.PropertyField(p.dithering, _.GetContent("Dithering|Should we apply 8-bit dithering to the final render?"));
         }
 
         static void Drawer_FieldClearDepth(HDCameraUI s, SerializedHDCamera p, Editor owner)
