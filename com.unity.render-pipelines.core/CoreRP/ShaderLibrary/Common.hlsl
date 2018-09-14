@@ -437,10 +437,28 @@ real3 Orthonormalize(real3 tangent, real3 normal)
     return normalize(tangent - dot(tangent, normal) * normal);
 }
 
-// Same as smoothstep except it assume 0, 1 interval for x
+// [start, end] -> [0, 1] : (x - start) / (end - start) = x * rcpLength - (start * rcpLength)
+TEMPLATE_3_REAL(Remap01, x, rcpLength, startTimesRcpLength, return saturate(x * rcpLength - startTimesRcpLength))
+
+// [start, end] -> [1, 0] : (end - x) / (end - start) = (end * rcpLength) - x * rcpLength
+TEMPLATE_3_REAL(Remap10, x, rcpLength, endTimesRcpLength, return saturate(endTimesRcpLength - x * rcpLength))
+
+// smoothstep that assumes that 'x' lies within the [0, 1] interval.
 real Smoothstep01(real x)
 {
-    return x * x * (3.0 - (2.0 * x));
+    return x * x * (3 - (2 * x));
+}
+
+real Smootherstep01(real x)
+{
+  return x * x * x * (x * (x * 6 - 15) + 10);
+}
+
+real Smootherstep(real a, real b, real t)
+{
+    real r = rcp(b - a);
+    real x = Remap01(t, r, a * r);
+    return Smootherstep01(x);
 }
 
 real Pow4(real x)
@@ -741,7 +759,7 @@ struct PositionInputs
 // This allow to easily share code.
 // If a compute shader call this function positionSS is an integer usually calculate like: uint2 positionSS = groupId.xy * BLOCK_SIZE + groupThreadId.xy
 // else it is current unormalized screen coordinate like return by SV_Position
-PositionInputs GetPositionInput(float2 positionSS, float2 invScreenSize, uint2 tileCoord)   // Specify explicit tile coordinates so that we can easily make it lane invariant for compute evaluation.
+PositionInputs GetPositionInput_Stereo(float2 positionSS, float2 invScreenSize, uint2 tileCoord, uint eye)   // Specify explicit tile coordinates so that we can easily make it lane invariant for compute evaluation.
 {
     PositionInputs posInput;
     ZERO_INITIALIZE(PositionInputs, posInput);
@@ -753,9 +771,19 @@ PositionInputs GetPositionInput(float2 positionSS, float2 invScreenSize, uint2 t
 #endif
     posInput.positionNDC *= invScreenSize;
 
+#if UNITY_SINGLE_PASS_STEREO
+    posInput.positionNDC.x = posInput.positionNDC.x - eye;
+#endif
+
     posInput.positionSS = uint2(positionSS);
     posInput.tileCoord = tileCoord;
 
+    return posInput;
+}
+
+PositionInputs GetPositionInput(float2 positionSS, float2 invScreenSize, uint2 tileCoord)   // Specify explicit tile coordinates so that we can easily make it lane invariant for compute evaluation.
+{
+    PositionInputs posInput = GetPositionInput_Stereo(positionSS, invScreenSize, tileCoord, 0);
     return posInput;
 }
 
@@ -766,14 +794,19 @@ PositionInputs GetPositionInput(float2 positionSS, float2 invScreenSize)
 
 // From forward
 // deviceDepth and linearDepth come directly from .zw of SV_Position
-PositionInputs GetPositionInput(float2 positionSS, float2 invScreenSize, float deviceDepth, float linearDepth, float3 positionWS, uint2 tileCoord)
+PositionInputs GetPositionInput_Stereo(float2 positionSS, float2 invScreenSize, float deviceDepth, float linearDepth, float3 positionWS, uint2 tileCoord, uint eye)
 {
-    PositionInputs posInput = GetPositionInput(positionSS, invScreenSize, tileCoord);
-    posInput.positionWS     = positionWS;
-    posInput.deviceDepth    = deviceDepth;
-    posInput.linearDepth    = linearDepth;
+    PositionInputs posInput = GetPositionInput_Stereo(positionSS, invScreenSize, tileCoord, eye);
+    posInput.positionWS = positionWS;
+    posInput.deviceDepth = deviceDepth;
+    posInput.linearDepth = linearDepth;
 
     return posInput;
+}
+
+PositionInputs GetPositionInput(float2 positionSS, float2 invScreenSize, float deviceDepth, float linearDepth, float3 positionWS, uint2 tileCoord)
+{
+    return GetPositionInput_Stereo(positionSS, invScreenSize, deviceDepth, linearDepth, positionWS, tileCoord, 0);
 }
 
 PositionInputs GetPositionInput(float2 positionSS, float2 invScreenSize, float deviceDepth, float linearDepth, float3 positionWS)
@@ -784,22 +817,35 @@ PositionInputs GetPositionInput(float2 positionSS, float2 invScreenSize, float d
 // From deferred or compute shader
 // depth must be the depth from the raw depth buffer. This allow to handle all kind of depth automatically with the inverse view projection matrix.
 // For information. In Unity Depth is always in range 0..1 (even on OpenGL) but can be reversed.
-PositionInputs GetPositionInput(float2 positionSS, float2 invScreenSize, float deviceDepth,
-                                float4x4 invViewProjMatrix, float4x4 viewMatrix,
-                                uint2 tileCoord)
+PositionInputs GetPositionInput_Stereo(float2 positionSS, float2 invScreenSize, float deviceDepth,
+    float4x4 invViewProjMatrix, float4x4 viewMatrix,
+    uint2 tileCoord, uint eye)
 {
-    PositionInputs posInput = GetPositionInput(positionSS, invScreenSize, tileCoord);
-    posInput.positionWS     = ComputeWorldSpacePosition(posInput.positionNDC, deviceDepth, invViewProjMatrix);
-    posInput.deviceDepth    = deviceDepth;
-    posInput.linearDepth    = LinearEyeDepth(posInput.positionWS, viewMatrix);
+    PositionInputs posInput = GetPositionInput_Stereo(positionSS, invScreenSize, tileCoord, eye);
+    posInput.positionWS = ComputeWorldSpacePosition(posInput.positionNDC, deviceDepth, invViewProjMatrix);
+    posInput.deviceDepth = deviceDepth;
+    posInput.linearDepth = LinearEyeDepth(posInput.positionWS, viewMatrix);
 
     return posInput;
 }
 
 PositionInputs GetPositionInput(float2 positionSS, float2 invScreenSize, float deviceDepth,
+                                float4x4 invViewProjMatrix, float4x4 viewMatrix,
+                                uint2 tileCoord)
+{
+    return GetPositionInput_Stereo(positionSS, invScreenSize, deviceDepth, invViewProjMatrix, viewMatrix, tileCoord, 0);
+}
+
+PositionInputs GetPositionInput(float2 positionSS, float2 invScreenSize, float deviceDepth,
                                 float4x4 invViewProjMatrix, float4x4 viewMatrix)
 {
-    return GetPositionInput(positionSS, invScreenSize, deviceDepth, invViewProjMatrix, viewMatrix, uint2(0, 0));
+    return GetPositionInput_Stereo(positionSS, invScreenSize, deviceDepth, invViewProjMatrix, viewMatrix, uint2(0, 0), 0);
+}
+
+PositionInputs GetPositionInput_Stereo(float2 positionSS, float2 invScreenSize, float deviceDepth,
+    float4x4 invViewProjMatrix, float4x4 viewMatrix, uint eye)
+{
+    return GetPositionInput_Stereo(positionSS, invScreenSize, deviceDepth, invViewProjMatrix, viewMatrix, uint2(0, 0), eye);
 }
 
 // The view direction 'V' points towards the camera.
@@ -925,11 +971,11 @@ float4 GetQuadVertexPosition(uint vertexID, float z = UNITY_NEAR_CLIP_VALUE)
 // LOD dithering transition helper
 // LOD0 must use this function with ditherFactor 1..0
 // LOD1 must use this function with ditherFactor 0..1
-void LODDitheringTransition(uint2 positionSS, float ditherFactor)
+void LODDitheringTransition(uint3 fadeMaskSeed, float ditherFactor)
 {
     // Generate a spatially varying pattern.
     // Unfortunately, varying the pattern with time confuses the TAA, increasing the amount of noise.
-    float p = GenerateHashedRandomFloat(positionSS);
+    float p = GenerateHashedRandomFloat(fadeMaskSeed);
 
     // We want to have a symmetry between 0..0.5 ditherFactor and 0.5..1 so no pixels are transparent during the transition
     // this is handled by this test which reverse the pattern

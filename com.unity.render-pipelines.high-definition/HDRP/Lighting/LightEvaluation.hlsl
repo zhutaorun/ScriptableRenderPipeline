@@ -56,11 +56,7 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
     // We test NdotL >= 0.0 to not sample the shadow map if it is not required.
     UNITY_BRANCH if (lightData.shadowIndex >= 0 && (dot(N, L) >= 0.0))
     {
-#ifdef USE_DEFERRED_DIRECTIONAL_SHADOWS
-        shadow = LOAD_TEXTURE2D(_DeferredShadowTexture, posInput.positionSS).x;
-#else
-        shadow = GetDirectionalShadowAttenuation(lightLoopContext.shadowContext, positionWS, N, lightData.shadowIndex, L, posInput.positionSS);
-#endif
+        shadow = lightLoopContext.shadowValue;
 
 #ifdef SHADOWS_SHADOWMASK
 
@@ -172,8 +168,8 @@ void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs po
     float  shadowMask    = 1.0;
 
     color       = lightData.color;
-    attenuation = SmoothPunctualLightAttenuation(distances, lightData.rangeAttenuationScale, lightData.rangeAttenuationBias,
-                                                 lightData.angleScale, lightData.angleOffset);
+    attenuation = PunctualLightAttenuation(distances, lightData.rangeAttenuationScale, lightData.rangeAttenuationBias,
+                                           lightData.angleScale, lightData.angleOffset);
 
     // TODO: sample the extinction from the density V-buffer.
     float distVol = (lightData.lightType == GPULIGHTTYPE_PROJECTOR_BOX) ? distances.w : distances.x;
@@ -237,7 +233,7 @@ void EvaluateLight_EnvIntersection(float3 positionWS, float3 normalWS, EnvLightD
 
     float3x3 worldToIS = WorldToInfluenceSpace(lightData); // IS: Influence space
     float3 positionIS = WorldToInfluencePosition(lightData, worldToIS, positionWS);
-    float3 dirIS = mul(R, worldToIS);
+    float3 dirIS = normalize(mul(R, worldToIS));
 
     float3x3 worldToPS = WorldToProxySpace(lightData); // PS: Proxy space
     float3 positionPS = WorldToProxyPosition(lightData, worldToPS, positionWS);
@@ -312,7 +308,6 @@ float3 PreEvaluatePunctualLightTransmission(LightLoopContext lightLoopContext, P
             float thicknessInMeters = thicknessInUnits * _WorldScales[bsdfData.diffusionProfile].x;
             float thicknessInMillimeters = thicknessInMeters * MILLIMETERS_PER_METER;
 
-#if SHADEROPTIONS_USE_DISNEY_SSS
             // We need to make sure it's not less than the baked thickness to minimize light leaking.
             float thicknessDelta = max(0, thicknessInMillimeters - bsdfData.thickness);
 
@@ -322,31 +317,17 @@ float3 PreEvaluatePunctualLightTransmission(LightLoopContext lightLoopContext, P
 #if 0
             float3 expOneThird = exp(((-1.0 / 3.0) * thicknessDelta) * S);
 #else
-            // Help the compiler.
-            float  k = (-1.0 / 3.0) * LOG2_E;
-            float3 p = (k * thicknessDelta) * S;
+            // Help the compiler. S is premultiplied by ((-1.0 / 3.0) * LOG2_E) on the CPU.
+            float3 p = thicknessDelta * S;
             float3 expOneThird = exp2(p);
 #endif
 
             transmittance *= expOneThird;
 
-#else // SHADEROPTIONS_USE_DISNEY_SSS
-
-            // We need to make sure it's not less than the baked thickness to minimize light leaking.
-            thicknessInMillimeters = max(thicknessInMillimeters, bsdfData.thickness);
-
-            transmittance = ComputeTransmittanceJimenez(_HalfRcpVariancesAndWeights[bsdfData.diffusionProfile][0].rgb,
-                                                        _HalfRcpVariancesAndWeights[bsdfData.diffusionProfile][0].a,
-                                                        _HalfRcpVariancesAndWeights[bsdfData.diffusionProfile][1].rgb,
-                                                        _HalfRcpVariancesAndWeights[bsdfData.diffusionProfile][1].a,
-                                                        _TransmissionTintsAndFresnel0[bsdfData.diffusionProfile].rgb,
-                                                        thicknessInMillimeters);
-#endif // SHADEROPTIONS_USE_DISNEY_SSS
-
             // Note: we do not modify the distance to the light, or the light angle for the back face.
             // This is a performance-saving optimization which makes sense as long as the thickness is small.
         }
-        
+
         transmittance = lerp( bsdfData.transmittance, transmittance, lightData.shadowDimmer);
     }
 

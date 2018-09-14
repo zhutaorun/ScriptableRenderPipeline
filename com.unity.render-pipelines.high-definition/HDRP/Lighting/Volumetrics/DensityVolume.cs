@@ -4,30 +4,38 @@ using UnityEngine.Rendering;
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     [Serializable]
-    public struct DensityVolumeParameters
+    public struct DensityVolumeArtistParameters
     {
-        public Color albedo;       // Single scattering albedo [0, 1]. Alpha is ignored
-        public float meanFreePath; // In meters [1, inf]. Should be chromatic - this is an optimization!
-        public float asymmetry;    // Only used if (isLocal == false)
+        public Color     albedo;       // Single scattering albedo [0, 1]. Alpha is ignored
+        public float     meanFreePath; // In meters [1, inf]. Should be chromatic - this is an optimization!
+        public float     asymmetry;    // Only used if (isLocal == false)
 
         public Texture3D volumeMask;
-        public int textureIndex;
-        public Vector3 textureScrollingSpeed;
-        public Vector3 textureTiling;
+        public Vector3   textureScrollingSpeed;
+        public Vector3   textureTiling;
 
-        private Vector3 volumeScrollingAmount;
+        public Vector3   positiveFade;
+        public Vector3   negativeFade;
+        public bool      invertFade;
 
-        public DensityVolumeParameters(Color color, float _meanFreePath, float _asymmetry)
+        public  int      textureIndex; // This shouldn't be public... Internal, maybe?
+        private Vector3  volumeScrollingAmount;
+
+        public DensityVolumeArtistParameters(Color color, float _meanFreePath, float _asymmetry)
         {
-            albedo = color;
-            meanFreePath = _meanFreePath;
-            asymmetry = _asymmetry;
+            albedo                = color;
+            meanFreePath          = _meanFreePath;
+            asymmetry             = _asymmetry;
 
-            volumeMask = null;
-            textureIndex = -1;
+            volumeMask            = null;
+            textureIndex          = -1;
             textureScrollingSpeed = Vector3.zero;
-            textureTiling = Vector3.one;
+            textureTiling         = Vector3.one;
             volumeScrollingAmount = textureScrollingSpeed;
+
+            positiveFade          = Vector3.zero;
+            negativeFade          = Vector3.zero;
+            invertFade            = false;
         }
 
         public void Update(bool animate, float time)
@@ -57,16 +65,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             volumeScrollingAmount = Vector3.zero;
         }
 
-        public DensityVolumeData GetData()
+        public DensityVolumeEngineData ConvertToEngineData()
         {
-            DensityVolumeData data = new DensityVolumeData();
+            DensityVolumeEngineData data = new DensityVolumeEngineData();
 
-            data.extinction = VolumeRenderingUtils.ExtinctionFromMeanFreePath(meanFreePath);
-            data.scattering = VolumeRenderingUtils.ScatteringFromExtinctionAndAlbedo(data.extinction, (Vector3)(Vector4)albedo);
+            data.extinction     = VolumeRenderingUtils.ExtinctionFromMeanFreePath(meanFreePath);
+            data.scattering     = VolumeRenderingUtils.ScatteringFromExtinctionAndAlbedo(data.extinction, (Vector3)(Vector4)albedo);
 
-            data.textureIndex = textureIndex;
-            data.textureScroll = volumeScrollingAmount;
-            data.textureTiling = textureTiling;
+            data.textureIndex   = textureIndex;
+            data.textureScroll  = volumeScrollingAmount;
+            data.textureTiling  = textureTiling;
+
+            // Clamp to avoid NaNs.
+            data.rcpPosFade.x = Mathf.Min(1.0f / positiveFade.x, float.MaxValue);
+            data.rcpPosFade.y = Mathf.Min(1.0f / positiveFade.y, float.MaxValue);
+            data.rcpPosFade.z = Mathf.Min(1.0f / positiveFade.z, float.MaxValue);
+
+            data.rcpNegFade.y = Mathf.Min(1.0f / negativeFade.y, float.MaxValue);
+            data.rcpNegFade.x = Mathf.Min(1.0f / negativeFade.x, float.MaxValue);
+            data.rcpNegFade.z = Mathf.Min(1.0f / negativeFade.z, float.MaxValue);
+
+            data.invertFade = invertFade ? 1 : 0;
 
             return data;
         }
@@ -76,7 +95,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     [AddComponentMenu("Rendering/Density Volume", 1100)]
     public class DensityVolume : MonoBehaviour
     {
-        public DensityVolumeParameters parameters = new DensityVolumeParameters(Color.white, 10.0f, 0.0f);
+        public DensityVolumeArtistParameters parameters = new DensityVolumeArtistParameters(Color.white, 10.0f, 0.0f);
 
         private Texture3D previousVolumeMask = null;
 
@@ -128,8 +147,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void OnDrawGizmos()
         {
-            Gizmos.color  = parameters.albedo;
             Gizmos.matrix = transform.localToWorldMatrix;
+
+            // Positive fade box.
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireCube(-0.5f * parameters.positiveFade, Vector3.one - parameters.positiveFade);
+
+            // Negative fade box.
+            Gizmos.color = Color.blue;
+            Gizmos.DrawWireCube(0.5f * parameters.negativeFade, Vector3.one - parameters.negativeFade);
+
+            // Bounding box.
+            Gizmos.color = parameters.albedo;
             Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
         }
     }

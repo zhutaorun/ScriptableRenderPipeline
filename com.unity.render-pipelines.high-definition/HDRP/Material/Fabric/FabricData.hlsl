@@ -4,6 +4,31 @@
 #include "CoreRP/ShaderLibrary/Sampling/SampleUVMapping.hlsl"
 #include "HDRP/Material/MaterialUtilities.hlsl"
 #include "HDRP/Material/BuiltinUtilities.hlsl"
+#include "HDRP/Material/Decal/DecalUtilities.hlsl"
+
+void ApplyDecalToSurfaceData(DecalSurfaceData decalSurfaceData, inout SurfaceData surfaceData)
+{
+    // using alpha compositing https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch23.html
+    if (decalSurfaceData.HTileMask & DBUFFERHTILEBIT_DIFFUSE)
+    {
+        surfaceData.baseColor.xyz = surfaceData.baseColor.xyz * decalSurfaceData.baseColor.w + decalSurfaceData.baseColor.xyz;
+    }
+
+    if (decalSurfaceData.HTileMask & DBUFFERHTILEBIT_NORMAL)
+    {
+        surfaceData.normalWS.xyz = normalize(surfaceData.normalWS.xyz * decalSurfaceData.normalWS.w + decalSurfaceData.normalWS.xyz);
+    }
+
+    if (decalSurfaceData.HTileMask & DBUFFERHTILEBIT_MASK)
+    {
+#ifdef DECALS_4RT // only smoothness in 3RT mode
+        // Don't apply any metallic modification
+        surfaceData.ambientOcclusion = surfaceData.ambientOcclusion * decalSurfaceData.MAOSBlend.y + decalSurfaceData.mask.y;
+#endif
+
+        surfaceData.perceptualSmoothness = surfaceData.perceptualSmoothness * decalSurfaceData.mask.w + decalSurfaceData.mask.z;
+    }
+}
 
 void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData)
 {
@@ -36,20 +61,24 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 
 
     // Generate the detail uv coordinates
-    float2 uvDetails =  _UVMappingMaskDetail.x * input.texCoord0 +
-                        _UVMappingMaskDetail.y * input.texCoord1 +
-                        _UVMappingMaskDetail.z * input.texCoord2 +
-                        _UVMappingMaskDetail.w * input.texCoord3;
+    float2 uvThread =  _UVMappingMaskThread.x * input.texCoord0 +
+                        _UVMappingMaskThread.y * input.texCoord1 +
+                        _UVMappingMaskThread.z * input.texCoord2 +
+                        _UVMappingMaskThread.w * input.texCoord3;
 
     // Apply offset and tiling
-    uvDetails = uvDetails * _DetailMap_ST.xy + _DetailMap_ST.zw;
+    uvThread = uvThread * _ThreadMap_ST.xy + _ThreadMap_ST.zw;
 
+    if (_LinkDetailsWithBase > 0.0)
+    {
+        uvThread = uvThread * _BaseColorMap_ST.xy + _BaseColorMap_ST.zw;
+    }
 
 // The Mask map also contains the detail mask flag, se we need to read it first
 #ifdef _MASKMAP
     float4 maskValue = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, uvBase);
 #else
-    #ifdef _DETAIL_MAP
+    #ifdef _THREAD_MAP
         // If we have no mask map, but we have a detail map; we use the detail map and the smoothness is the value version
         float4 maskValue = float4(1, 1, 1, _Smoothness);
     #else
@@ -59,36 +88,39 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 #endif
 
 // We need to start by reading the detail (if any available to override the initial values)
-#ifdef _DETAIL_MAP
-    float4 detailSample = SAMPLE_TEXTURE2D(_DetailMap, sampler_DetailMap, uvDetails);
-    float detailAO = detailSample.x * 2.0 - 1.0;
-    float detailSmoothness = detailSample.z * 2.0 - 1.0;
+#ifdef _THREAD_MAP
+    float4 threadSample = SAMPLE_TEXTURE2D(_ThreadMap, sampler_ThreadMap, uvThread);
+    float threadAO = threadSample.x;
+    float threadSmoothness = threadSample.z * 2.0 - 1.0;
 
     // Handle the normal detail
-    float2 detailDerivative = UnpackDerivativeNormalRGorAG(float4(detailSample.w, detailSample.y, 1, 1), _DetailNormalScale);
-    float3 detailGradient =  SurfaceGradientFromTBN(detailDerivative, input.worldToTangent[0], input.worldToTangent[1]);
+    float2 threadDerivative = UnpackDerivativeNormalRGorAG(float4(threadSample.w, threadSample.y, 1, 1), _ThreadNormalScale);
+    float3 threadGradient =  SurfaceGradientFromTBN(threadDerivative, input.worldToTangent[0], input.worldToTangent[1]);
 #else
-    float4 detailSample = float4(1.0, 0.0, 0.0, 1.0);
-    float3 detailGradient = float3(0.0, 0.0, 0.0);
+    float4 threadSample = float4(1.0, 0.0, 0.0, 1.0);
+    float3 threadGradient = float3(0.0, 0.0, 0.0);
 #endif
     
     // The base color of the object mixed with the base color texture
     surfaceData.baseColor = SAMPLE_TEXTURE2D(_BaseColorMap, sampler_BaseColorMap, uvBase).rgb * _BaseColor.rgb;
 
     // Extract the alpha value (will be useful if we need to trigger the alpha test)
-    float alpha = SAMPLE_TEXTURE2D(_BaseColorMap, sampler_BaseColorMap, uvBase).a * _BaseColor.a * detailSample.r;
+    float alpha = SAMPLE_TEXTURE2D(_BaseColorMap, sampler_BaseColorMap, uvBase).a * _BaseColor.a * threadSample.r;
 
+    // Propagate the geometry normal
+    surfaceData.geomNormalWS = input.worldToTangent[2];
+    
 #ifdef _NORMALMAP
     float2 derivative = UnpackDerivativeNormalRGorAG(SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, uvBase), _NormalScale);
-    #ifdef _DETAIL_MAP
-        float3 gradient =  SurfaceGradientFromTBN(derivative, input.worldToTangent[0], input.worldToTangent[1]) + detailGradient * maskValue.z;
+    #ifdef _THREAD_MAP
+        float3 gradient =  SurfaceGradientFromTBN(derivative, input.worldToTangent[0], input.worldToTangent[1]) + threadGradient * maskValue.z;
     #else
         float3 gradient =  SurfaceGradientFromTBN(derivative, input.worldToTangent[0], input.worldToTangent[1]);
     #endif
     surfaceData.normalWS = SurfaceGradientResolveNormal(input.worldToTangent[2], gradient);
 #else
-    #ifdef _DETAIL_MAP
-        surfaceData.normalWS = SurfaceGradientResolveNormal(input.worldToTangent[2], detailGradient);
+    #ifdef _THREAD_MAP
+        surfaceData.normalWS = SurfaceGradientResolveNormal(input.worldToTangent[2], threadGradient);
     #else
         surfaceData.normalWS = input.worldToTangent[2];
     #endif
@@ -115,28 +147,28 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.specularOcclusion = 1.0;
 #endif
 
-// If a detail map was provided, modify the matching smoothness
-#ifdef _DETAIL_MAP
-    float smoothnessDetailSpeed = saturate(abs(detailSmoothness) * _DetailSmoothnessScale);
-    float smoothnessOverlay = lerp(surfaceData.perceptualSmoothness, (detailSmoothness < 0.0) ? 0.0 : 1.0, smoothnessDetailSpeed);
+// If a thread map was provided, modify the matching smoothness
+#ifdef _THREAD_MAP
+    float smoothnessDetailSpeed = saturate(abs(threadSmoothness) * _ThreadSmoothnessScale);
+    float smoothnessOverlay = lerp(surfaceData.perceptualSmoothness, (threadSmoothness < 0.0) ? 0.0 : 1.0, smoothnessDetailSpeed);
     surfaceData.perceptualSmoothness = lerp(surfaceData.perceptualSmoothness, saturate(smoothnessOverlay), maskValue.z);
 #endif
     
-// If a detail map was provided, modify the matching ao
-#ifdef _DETAIL_MAP
-    float aoDetailSpeed = saturate(abs(detailAO) * _DetailAOScale);
-    float aoOverlay = lerp(surfaceData.ambientOcclusion, (aoDetailSpeed < 0.0) ? 0.0 : 1.0, aoDetailSpeed);
+// If a thread map was provided, modify the matching ao
+#ifdef _THREAD_MAP
+    float aoOverlay = lerp(surfaceData.ambientOcclusion, threadAO * surfaceData.ambientOcclusion, _ThreadAOScale);
     surfaceData.ambientOcclusion = lerp(surfaceData.ambientOcclusion, saturate(aoOverlay), maskValue.z);
 #endif
 
     // Propagate the fuzz tint
-    surfaceData.fuzzTint = _FuzzTint.xyz;
+    surfaceData.specularColor = _SpecularColor.xyz;
 
 #ifdef _FUZZDETAIL_MAP
-    surfaceData.fuzzTint *= SAMPLE_TEXTURE2D(_FuzzDetailMap, sampler_FuzzDetailMap, uvDetails).rgb;
+    surfaceData.baseColor.rgb = saturate(surfaceData.baseColor.rgb + SAMPLE_TEXTURE2D(_FuzzDetailMap, sampler_FuzzDetailMap, uvThread * _FuzzDetailUVScale).rgb * _FuzzDetailScale);
 #endif
 
-#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
+    surfaceData.baseColor *= 1.0 - Max3(surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b);
+#if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) || defined(_MATERIAL_FEATURE_TRANSMISSION)
     surfaceData.diffusionProfile = _DiffusionProfile;
     #ifdef _SUBSURFACEMASK
         float4 subSurfaceMaskSample = SAMPLE_TEXTURE2D(_SubsurfaceMaskMap, sampler_SubsurfaceMaskMap, uvBase);
@@ -149,7 +181,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.diffusionProfile = 0;
 #endif
 
-#ifdef _MATERIALFEATUREFLAGS_FABRIC_TRANSMISSION
+#ifdef _THICKNESSMAP
     float4 subSurfaceMaskSample = SAMPLE_TEXTURE2D(_ThicknessMap, sampler_ThicknessMap, uvBase);
     surfaceData.thickness = dot(SAMPLE_TEXTURE2D_SCALE_BIAS(_ThicknessMap), _ThicknessMapChannelMask);
     surfaceData.thickness = lerp(_ThicknessMapRange.x, _ThicknessMapRange.y, surfaceData.thickness);
@@ -169,6 +201,14 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     DoAlphaTest(alpha, _AlphaCutoff);
 #endif
 
+#if HAVE_DECALS
+    if (_EnableDecals)
+    {
+        DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, alpha);
+        ApplyDecalToSurfaceData(decalSurfaceData, surfaceData);
+    }
+#endif
+
 #if defined(DEBUG_DISPLAY)
     if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
     {
@@ -184,7 +224,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     InitBuiltinData(alpha, surfaceData.normalWS, -input.worldToTangent[2], input.positionRWS, input.texCoord1, input.texCoord2, builtinData);
     
     // Support the emissive color and map
-    builtinData.emissiveColor = _EmissiveColor * lerp(float3(1.0, 1.0, 1.0), surfaceData.baseColor.rgb, _AlbedoAffectEmissive);
+    builtinData.emissiveColor = _EmissiveColor.rgb * lerp(float3(1.0, 1.0, 1.0), surfaceData.baseColor.rgb, _AlbedoAffectEmissive);
 #ifdef _EMISSIVE_COLOR_MAP
     // Generate the primart uv coordinates
     float2 uvEmissive = _UVMappingMaskEmissive.x * input.texCoord0 +

@@ -232,6 +232,8 @@ Shader "HDRenderPipeline/StackLit"
         [HideInInspector] _StencilWriteMask("_StencilWriteMask", Int) = 7 // StencilMask.Lighting  (fixed at compile time)
         [HideInInspector] _StencilRefMV("_StencilRefMV", Int) = 128 // StencilLightingUsage.RegularLighting  (fixed at compile time)
         [HideInInspector] _StencilWriteMaskMV("_StencilWriteMaskMV", Int) = 128 // StencilMask.ObjectsVelocity  (fixed at compile time)
+        [HideInInspector] _StencilDepthPrepassRef("_StencilDepthPrepassRef", Int) = 16
+        [HideInInspector] _StencilDepthPrepassWriteMask("_StencilDepthPrepassWriteMask", Int) = 16
 
         // Blending state
         [HideInInspector] _SurfaceType("__surfacetype", Float) = 0.0
@@ -396,7 +398,17 @@ Shader "HDRenderPipeline/StackLit"
 
             ZWrite On
 
+            Stencil
+            {
+                WriteMask[_StencilDepthPrepassWriteMask]
+                Ref[_StencilDepthPrepassRef]
+                Comp Always
+                Pass Replace
+            }
+
             HLSLPROGRAM
+
+            #pragma multi_compile _ WRITE_MSAA_DEPTH
 
             #define WRITE_NORMAL_BUFFER
             #define SHADERPASS SHADERPASS_DEPTH_ONLY
