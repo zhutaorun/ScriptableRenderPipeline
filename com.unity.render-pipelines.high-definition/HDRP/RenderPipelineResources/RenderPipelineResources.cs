@@ -221,21 +221,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             filmGrainTextures = new[]
             {
                 // These need to stay in this specific order!
-                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Thin01.png"),
-                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Thin02.png"),
-                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Medium01.png"),
-                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Medium02.png"),
-                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Medium03.png"),
-                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Medium04.png"),
-                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Medium05.png"),
-                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Medium06.png"),
-                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Large01.png"),
-                Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/FilmGrain/Large02.png")
+                Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Textures/FilmGrain/Thin01.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Textures/FilmGrain/Thin02.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Textures/FilmGrain/Medium01.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Textures/FilmGrain/Medium02.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Textures/FilmGrain/Medium03.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Textures/FilmGrain/Medium04.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Textures/FilmGrain/Medium05.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Textures/FilmGrain/Medium06.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Textures/FilmGrain/Large01.png"),
+                Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Textures/FilmGrain/Large02.png")
             };
 
             blueNoise64Texture = new Texture2D[64];
             for (int i = 0; i < 64; i++)
-                blueNoise64Texture[i] = Load<Texture2D>(HDRenderPipelinePath + "PostProcessing/Textures/BlueNoise64/LDR_LLL1_" + i + ".png");
+                blueNoise64Texture[i] = Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Textures/BlueNoise64/LDR_LLL1_" + i + ".png");
         }
 #endif
     }
