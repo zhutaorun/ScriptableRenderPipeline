@@ -2,7 +2,6 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.AnimatedValues;
 using UnityEditor.Experimental.Rendering;
-using UnityEditor.Rendering.PostProcessing;
 
 namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 {
