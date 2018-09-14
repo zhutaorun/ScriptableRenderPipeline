@@ -916,9 +916,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     #endif
 
                     m_FinalPassMaterial.EnableKeyword("GRAIN");
-                    m_FinalPassMaterial.SetTexture("_GrainTexture", texture);
-                    m_FinalPassMaterial.SetVector("_GrainParams", new Vector2(m_FilmGrain.intensity.value * 4f, m_FilmGrain.response.value));
-                    m_FinalPassMaterial.SetVector("_GrainTextureParams", new Vector4(texture.width, texture.height, offsetX, offsetY));
+                    m_FinalPassMaterial.SetTexture(HDShaderIDs._GrainTexture, texture);
+                    m_FinalPassMaterial.SetVector(HDShaderIDs._GrainParams, new Vector2(m_FilmGrain.intensity.value * 4f, m_FilmGrain.response.value));
+                    m_FinalPassMaterial.SetVector(HDShaderIDs._GrainTextureParams, new Vector4(texture.width, texture.height, offsetX, offsetY));
                 }
             }
 
@@ -934,8 +934,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 int textureId = Time.frameCount % blueNoiseTexture.depth;
                 #endif
 
-                m_FinalPassMaterial.SetTexture("_BlueNoiseTexture", blueNoiseTexture);
-                m_FinalPassMaterial.SetVector("_DitherParams", new Vector3(blueNoiseTexture.width, blueNoiseTexture.height, textureId));
+                m_FinalPassMaterial.SetTexture(HDShaderIDs._BlueNoiseTexture, blueNoiseTexture);
+                m_FinalPassMaterial.SetVector(HDShaderIDs._DitherParams, new Vector3(blueNoiseTexture.width, blueNoiseTexture.height, textureId));
                 pass = 1;
             }
 

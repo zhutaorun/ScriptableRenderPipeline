@@ -501,5 +501,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _LoResAO1                       = Shader.PropertyToID("_LoResAO1");
         public static readonly int _HiResAO                        = Shader.PropertyToID("_HiResAO");
         public static readonly int _AoResult                       = Shader.PropertyToID("_AoResult");
+
+        public static readonly int _GrainTexture                   = Shader.PropertyToID("_GrainTexture");
+        public static readonly int _GrainParams                    = Shader.PropertyToID("_GrainParams");
+        public static readonly int _GrainTextureParams             = Shader.PropertyToID("_GrainTextureParams");
+        public static readonly int _BlueNoiseTexture               = Shader.PropertyToID("_BlueNoiseTexture");
+        public static readonly int _DitherParams                   = Shader.PropertyToID("_DitherParams");
     }
 }
