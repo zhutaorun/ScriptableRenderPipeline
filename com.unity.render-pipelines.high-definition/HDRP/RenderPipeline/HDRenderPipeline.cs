@@ -74,6 +74,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Material m_CopyDepth;
         GPUCopy m_GPUCopy;
         MipGenerator m_MipGenerator;
+        BlueNoise m_BlueNoise;
 
         IBLFilterGGX m_IBLFilterGGX = null;
 
@@ -223,6 +224,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_GPUCopy = new GPUCopy(asset.renderPipelineResources.copyChannelCS);
 
             m_MipGenerator = new MipGenerator(m_Asset);
+            m_BlueNoise = new BlueNoise(m_Asset);
 
             EncodeBC6H.DefaultInstance = EncodeBC6H.DefaultInstance ?? new EncodeBC6H(asset.renderPipelineResources.encodeBC6HCS);
 
@@ -577,6 +579,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_IBLFilterGGX.Cleanup();
             m_PostProcessSystem.Cleanup();
             m_AmbientOcclusionSystem.Cleanup();
+            m_BlueNoise.Cleanup();
 
             HDCamera.ClearAll();
 
@@ -1208,6 +1211,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             m_PostProcessSystem.Render(
                                 cmd: cmd,
                                 camera: hdCamera,
+                                blueNoise: m_BlueNoise,
                                 colorBuffer: m_CameraColorBuffer,
                                 lightingBuffer: null,
                                 depthBuffer: GetDepthTexture(),

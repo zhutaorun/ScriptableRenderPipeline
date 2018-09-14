@@ -213,7 +213,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalTexture(HDShaderIDs._ExposureTexture, GetExposureTexture(camera));
         }
 
-        public void Render(CommandBuffer cmd, HDCamera camera, RTHandle colorBuffer, RTHandle lightingBuffer, RTHandle depthBuffer, RTHandle velocityBuffer)
+        public void Render(CommandBuffer cmd, HDCamera camera, BlueNoise blueNoise, RTHandle colorBuffer, RTHandle lightingBuffer, RTHandle depthBuffer, RTHandle velocityBuffer)
         {
             using (new ProfilingSample(cmd, "Post-processing", CustomSamplerId.PostProcessing.GetSampler()))
             {
@@ -294,7 +294,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // TODO: this pass should be the one writing to the backbuffer and do all the remaining stuff
                 using (new ProfilingSample(cmd, "Final Pass", CustomSamplerId.FinalPost.GetSampler()))
                 {
-                    DoFinalPass(cmd, camera, source, colorBuffer);
+                    DoFinalPass(cmd, camera, blueNoise, source, colorBuffer);
                 }
             }
 
@@ -887,7 +887,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         #region Final Pass
 
-        void DoFinalPass(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination)
+        void DoFinalPass(CommandBuffer cmd, HDCamera camera, BlueNoise blueNoise, RTHandle source, RTHandle destination)
         {
             // Final pass has to be done in a pixel shader as it will be the one writing straight
             // to the backbuffer eventually
@@ -926,14 +926,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (camera.dithering)
             {
+                var blueNoiseTexture = blueNoise.textureArray64;
+
                 #if HDRP_DEBUG_STATIC_POSTFX
                 int textureId = 0;
                 #else
-                int textureId = Time.frameCount % m_BlueNoise64TextureArray.depth;
+                int textureId = Time.frameCount % blueNoiseTexture.depth;
                 #endif
 
-                m_FinalPassMaterial.SetTexture("_BlueNoiseTexture", m_BlueNoise64TextureArray);
-                m_FinalPassMaterial.SetVector("_DitherParams", new Vector3(m_BlueNoise64TextureArray.width, m_BlueNoise64TextureArray.height, textureId));
+                m_FinalPassMaterial.SetTexture("_BlueNoiseTexture", blueNoiseTexture);
+                m_FinalPassMaterial.SetVector("_DitherParams", new Vector3(blueNoiseTexture.width, blueNoiseTexture.height, textureId));
                 pass = 1;
             }
 
