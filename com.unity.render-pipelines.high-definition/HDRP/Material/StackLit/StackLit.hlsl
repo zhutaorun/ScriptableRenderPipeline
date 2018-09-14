@@ -849,7 +849,7 @@ float3 GetDirFromAngleAndOrthoFrame(float3 V, float3 N, float newVdotN)
 }
 
 
-void ComputeAdding_GetVOrthoGeomN(BSDFData bsdfData, float3 V, bool calledPerLight, out float3 vOrthoGeomN, out bool useGeomN)
+void ComputeAdding_GetVOrthoGeomN(BSDFData bsdfData, float3 V, bool calledPerLight, out float3 vOrthoGeomN, out bool useGeomN, bool testSingularity = false)
 {
     vOrthoGeomN = (float3)0;
     useGeomN = false;
@@ -883,7 +883,7 @@ void ComputeAdding_GetVOrthoGeomN(BSDFData bsdfData, float3 V, bool calledPerLig
         // and we calculate everything with it anyway (symmetric parametrization), so no
         // normal map is involved.
 
-        vOrthoGeomN = GetOrthogonalComponent(V, bsdfData.geomNormalWS);
+        vOrthoGeomN = GetOrthogonalComponent(V, bsdfData.geomNormalWS, testSingularity);
         useGeomN = true;
     }
 }
@@ -1217,7 +1217,7 @@ void ComputeStatistics(in  float  cti, in float3 V, in float3 vOrthoGeomN, in bo
 } //...ComputeStatistics()
 
 
-void ComputeAdding(float _cti, float3 V, in BSDFData bsdfData, inout PreLightData preLightData, bool calledPerLight = false)
+void ComputeAdding(float _cti, float3 V, in BSDFData bsdfData, inout PreLightData preLightData, bool calledPerLight = false, bool testSingularity = false)
 {
     // _cti should be LdotH or VdotH if calledPerLight == true (symmetric parametrization), V is unused in this case.
     // _cti should be NdotV if calledPerLight == false and no independent coat normal map is used (ie single normal map), V is unused in this case.
@@ -1247,7 +1247,7 @@ void ComputeAdding(float _cti, float3 V, in BSDFData bsdfData, inout PreLightDat
     // Decide if we need the special path/hack for the coat normal map mode:
     bool useGeomN;
     float3 vOrthoGeomN; // only valid if useGeomN == true
-    ComputeAdding_GetVOrthoGeomN(bsdfData, V, calledPerLight, vOrthoGeomN, useGeomN);
+    ComputeAdding_GetVOrthoGeomN(bsdfData, V, calledPerLight, vOrthoGeomN, useGeomN, testSingularity);
 
     float  cti  = _cti;
     float3 R0i = float3(0.0, 0.0, 0.0), Ri0 = float3(0.0, 0.0, 0.0),
@@ -2341,7 +2341,8 @@ LightTransportData GetLightTransportData(SurfaceData surfaceData, BuiltinData bu
         float NdotV[NB_NORMALS];
         PreLightData_SetupNormals(bsdfData, preLightData, V, N, NdotV);
 
-        ComputeAdding(NdotV[COAT_NORMAL_IDX], V, bsdfData, preLightData, false);
+        // TODOTODO N == V everywhere for now so make sure dual normal maps will work using testSingularity:
+        ComputeAdding(NdotV[COAT_NORMAL_IDX], V, bsdfData, preLightData, false /*calledPerLight*/, true /*testSingularity*/);
 
         roughness = PerceptualRoughnessToRoughness(lerp(preLightData.iblPerceptualRoughness[BASE_LOBEA_IDX], preLightData.iblPerceptualRoughness[BASE_LOBEB_IDX], surfaceData.lobeMix));
         f0forCalculatingFGD = preLightData.vLayerEnergyCoeff[BOTTOM_VLAYER_IDX];
