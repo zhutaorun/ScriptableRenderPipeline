@@ -4,13 +4,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     internal static class HDBakingUtilities
     {
-        internal static string GetBakedTextureFilePath(HDProbe probe)
+        internal static string GetBakedTextureDirectory(SceneManagement.Scene scene)
         {
-            var scene = probe.gameObject.scene;
             var scenePath = scene.path;
             var cacheDirectoryName = Path.GetFileNameWithoutExtension(scenePath);
             var cacheDirectory = Path.Combine(Path.GetDirectoryName(scenePath), cacheDirectoryName);
-            var targetFile = Path.Combine(cacheDirectory, string.Format("ReflectionProbe-{0}.exr", probe.name));
+            return cacheDirectory;
+        }
+
+        internal static string GetBakedTextureFilePath(HDProbe probe, Hash128 hash)
+        {
+            var cacheDirectory = GetBakedTextureDirectory(probe.gameObject.scene);
+            var targetFile = Path.Combine(
+                cacheDirectory,
+                string.Format("ReflectionProbe-{0}-{1}.exr", probe.name, hash)
+            );
             return targetFile;
         }
 

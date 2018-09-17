@@ -189,6 +189,36 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         /// </summary>
         public float sphereBlendNormalDistance { get { return m_SphereBlendNormalDistance; } set { m_SphereBlendNormalDistance = value; } }
 
+        public Hash128 ComputeHash()
+        {
+            var h = new Hash128();
+            var h2 = new Hash128();
+            HashUtilities.ComputeHash128(ref m_Shape, ref h);
+            HashUtilities.ComputeHash128(ref m_Offset, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            HashUtilities.ComputeHash128(ref m_BoxBlendDistanceNegative, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            HashUtilities.ComputeHash128(ref m_BoxBlendDistancePositive, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            HashUtilities.ComputeHash128(ref m_BoxBlendNormalDistanceNegative, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            HashUtilities.ComputeHash128(ref m_BoxBlendNormalDistancePositive, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            HashUtilities.ComputeHash128(ref m_BoxSideFadeNegative, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            HashUtilities.ComputeHash128(ref m_BoxSideFadePositive, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            HashUtilities.ComputeHash128(ref m_BoxSize, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            HashUtilities.ComputeHash128(ref m_SphereBlendDistance, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            HashUtilities.ComputeHash128(ref m_SphereBlendNormalDistance, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            HashUtilities.ComputeHash128(ref m_SphereRadius, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            return h;
+        }
+
         internal void Init(HDProbe probe)
         {
             this.m_Probe = probe;

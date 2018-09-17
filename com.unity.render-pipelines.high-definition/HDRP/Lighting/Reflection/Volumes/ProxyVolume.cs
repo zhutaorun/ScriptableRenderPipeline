@@ -54,5 +54,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 shape = ProxyShape.Infinite;
             }
         }
+
+        internal Hash128 ComputeHash()
+        {
+            var h = new Hash128();
+            var h2 = new Hash128();
+
+            HashUtilities.ComputeHash128(ref m_Shape, ref h);
+            HashUtilities.ComputeHash128(ref m_BoxSize, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            HashUtilities.ComputeHash128(ref m_SphereRadius, ref h2);
+
+            return h;
+        }
     }
 }

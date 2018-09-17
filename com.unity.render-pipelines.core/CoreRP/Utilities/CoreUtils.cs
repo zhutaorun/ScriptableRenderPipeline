@@ -443,7 +443,7 @@ namespace UnityEngine.Experimental.Rendering
         public static unsafe void QuickSort(uint[] arr, int left, int right)
         {
             fixed (uint* ptr = arr)
-                CoreUnsafeUtils.QuickSort<uint>(ptr, left, right);
+                CoreUnsafeUtils.QuickSort<uint, uint, CoreUnsafeUtils.DefaultKeyGetter<uint>>(ptr, left, right);
         }
 
         public static Mesh CreateCubeMesh(Vector3 min, Vector3 max)

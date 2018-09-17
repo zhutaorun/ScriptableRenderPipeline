@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEditor;
 using UnityEditor.Experimental.Rendering;
+using UnityEditor.SceneManagement;
 using UnityEngine.Assertions;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -20,6 +23,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Hash128 probeBakingHash;
         }
 
+        struct HDProbeBakedState
+        {
+            public struct ProbeBakedHash : CoreUnsafeUtils.IKeyGetter<HDProbeBakedState, Hash128>
+            { public Hash128 Get(ref HDProbeBakedState v) { return v.probeBakedHash; } }
+
+            public int instanceID;
+            public Hash128 probeBakedHash;
+        }
+
         [InitializeOnLoadMethod]
         static void Initialize()
         {
@@ -31,8 +43,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ReflectionProbes
         }
 
+        HDProbeBakedState[] m_HDProbeBakedStates = new HDProbeBakedState[0];
+
         HDBakedReflectionSystem() : base(1)
         {
+
         }
 
         public override void Tick(
@@ -63,57 +78,160 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // 5. Remove unused baked data
             // 6. Update probe assets
 
-            var bakedProbes = HDProbeSystem.bakedProbes;
-
-            var states = stackalloc HDProbeBakingState[bakedProbes.Count];
-            ComputeProbeInstanceID(bakedProbes, states);
-            ComputeProbeSettingsHashes(bakedProbes, states);
-            // TODO: Handle bounce dependency here
-
+            // == 1. ==
             var allProbeDependencyHash = new Hash128();
             // TODO: All baked probes depend on custom probes (hash all custom probes and set as dependency)
             // TODO: All baked probes depend on HDRP specific Light settings
             HashUtilities.AppendHash(ref ambientProbeHash, ref allProbeDependencyHash);
             HashUtilities.AppendHash(ref sceneObjectsHash, ref allProbeDependencyHash);
             HashUtilities.AppendHash(ref skySettingsHash, ref allProbeDependencyHash);
+
+            var bakedProbes = HDProbeSystem.bakedProbes;
+
+            // == 2. ==
+            var states = stackalloc HDProbeBakingState[bakedProbes.Count];
+            ComputeProbeInstanceID(bakedProbes, states);
+            ComputeProbeSettingsHashes(bakedProbes, states);
+            // TODO: Handle bounce dependency here
             ComputeProbeBakingHashes(bakedProbes.Count, allProbeDependencyHash, states);
 
             CoreUnsafeUtils.QuickSort<HDProbeBakingState, Hash128, HDProbeBakingState.ProbeBakingHash>(
                 bakedProbes.Count, states
             );
 
-            // TODO: Compare hashes
-            // TODO: baked added probes
-            // TODO: delete data for removed probes
-            // TODO: Batch import/delete baked assets
+            int operationCount = 0, addCount = 0, remCount = 0;
+            var maxProbeCount = Mathf.Max(bakedProbes.Count, m_HDProbeBakedStates.Length);
+            var addIndices = stackalloc int[maxProbeCount];
+            var remIndices = stackalloc int[maxProbeCount];
 
-            handle.EnterStage((int)BakingStages.ReflectionProbes, "Baking Reflection Probes", 0);
-            var cubemapSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.reflectionCubemapSize;
-            for (int i = 0; i < bakedProbes.Count; ++i)
+            if (m_HDProbeBakedStates.Length == 0)
             {
-                var probe = bakedProbes[i];
-                var settings = probe.settings;
-                switch (settings.type)
+                for (int i = 0; i < bakedProbes.Count; ++i)
+                    addIndices[addCount++] = i;
+                operationCount = addCount;
+            }
+            else
+            {
+                fixed (HDProbeBakedState* oldBakedStates = &m_HDProbeBakedStates[0])
                 {
-                    case ProbeSettings.ProbeType.ReflectionProbe:
-                        {
-                            var rt = new RenderTexture(cubemapSize, cubemapSize, 1)
-                            {
-                                dimension = TextureDimension.Cube,
-                                useMipMap = false,
-                                autoGenerateMips = false,
-                                format = RenderTextureFormat.ARGBHalf,
-                                name = "Temporary Reflection Probe Target"
-                            };
-                            var positionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, null);
-                            HDRenderUtilities.Render(probe.settings, positionSettings, rt);
-                            var bakedTexture = CreateBakedTextureFromRenderTexture(rt, probe);
-                            var reflectionProbe = probe.GetComponent<ReflectionProbe>();
-                            reflectionProbe.bakedTexture = bakedTexture;
-                            break;
-                        }
+                    // == 3. ==
+                    // Compare hashes between baked probe states and desired probe states
+                    operationCount = CoreUnsafeUtils.CompareHashes<
+                            HDProbeBakedState, HDProbeBakedState.ProbeBakedHash,
+                            HDProbeBakingState, HDProbeBakingState.ProbeBakingHash
+                       > (
+                       m_HDProbeBakedStates.Length, oldBakedStates, // old hashes
+                       bakedProbes.Count, states,                   // new hashes
+                       addIndices, remIndices,
+                       out addCount, out remCount
+                    );
                 }
             }
+            
+
+            if (operationCount > 0)
+            {
+                // == 4. ==
+                var cubemapSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.reflectionCubemapSize;
+                var cubeRT = new RenderTexture(cubemapSize, cubemapSize, 1)
+                {
+                    dimension = TextureDimension.Cube,
+                    useMipMap = false,
+                    autoGenerateMips = false,
+                    format = RenderTextureFormat.ARGBHalf,
+                    name = "Temporary Reflection Probe Target"
+                };
+
+                handle.EnterStage(
+                    (int)BakingStages.ReflectionProbes,
+                    string.Format("Reflection Probes | {0} jobs", addCount),
+                    0
+                );
+
+                for (int i = 0; i < addCount; ++i)
+                {
+                    handle.EnterStage(
+                        (int)BakingStages.ReflectionProbes,
+                        string.Format("Reflection Probes | {0} jobs", addCount),
+                        i / (float)addCount
+                    );
+
+                    var index = addIndices[i];
+                    var instanceId = states[index].instanceID;
+                    var probe = (HDProbe)EditorUtility.InstanceIDToObject(instanceId);
+                    var settings = probe.settings;
+                    switch (settings.type)
+                    {
+                        case ProbeSettings.ProbeType.ReflectionProbe:
+                            {
+                                var positionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, null);
+                                HDRenderUtilities.Render(probe.settings, positionSettings, cubeRT);
+                                var bakedTexture = CreateBakedTextureFromRenderTexture(
+                                    cubeRT,
+                                    probe,
+                                    states[index].probeBakingHash
+                                );
+                                var reflectionProbe = probe.GetComponent<ReflectionProbe>();
+                                reflectionProbe.bakedTexture = bakedTexture;
+                                break;
+                            }
+                        case ProbeSettings.ProbeType.PlanarProbe:
+                            Debug.LogWarning("Baked Planar Reflections are not supported yet.");
+                            break;
+                    }
+                }
+                cubeRT.Release();
+
+                // == 5. ==
+                for (int i = 0; i < remCount; ++i)
+                {
+                    var index = remIndices[i];
+                    var hash = m_HDProbeBakedStates[index].probeBakedHash;
+                    DeleteBakedTextureWithHash(hash);
+                }
+
+                // Create new baked state array
+                var targetSize = m_HDProbeBakedStates.Length + addCount - remCount;
+                var targetBakedStates = stackalloc HDProbeBakedState[targetSize];
+                // Copy baked state that are not removed
+                var targetI = 0;
+                for (int i = 0; i < m_HDProbeBakedStates.Length; ++i)
+                {
+                    if (CoreUnsafeUtils.IndexOf(remIndices, remCount, i) != -1)
+                        continue;
+                    targetBakedStates[targetI++] = m_HDProbeBakedStates[i];
+                }
+                // Add new baked states
+                for (int i = 0; i < addCount; ++i)
+                {
+                    var state = states[addIndices[i]];
+                    targetBakedStates[targetI++] = new HDProbeBakedState
+                    {
+                        instanceID = state.instanceID,
+                        probeBakedHash = state.probeBakingHash
+                    };
+                }
+
+                Array.Resize(ref m_HDProbeBakedStates, targetSize);
+                if (targetSize > 0)
+                {
+                    fixed (HDProbeBakedState* bakedStates = &m_HDProbeBakedStates[0])
+                    {
+                        UnsafeUtility.MemCpy(
+                            bakedStates,
+                            targetBakedStates,
+                            sizeof(HDProbeBakedState) * targetSize
+                        );
+                    }
+                }
+
+                // Update state hash
+                var allBakedhash = new Hash128();
+                for (int i = 0; i < m_HDProbeBakedStates.Length; ++i)
+                    HashUtilities.AppendHash(ref m_HDProbeBakedStates[i].probeBakedHash, ref allBakedhash);
+                stateHash = allBakedhash;
+            }
+
             handle.ExitStage((int)BakingStages.ReflectionProbes);
 
             handle.SetIsDone(true);
@@ -130,8 +248,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             for (int i = 0; i < probes.Count; ++i)
             {
                 var probe = probes[i];
-                var settings = probe.settings;
-                HashUtilities.ComputeHash128(ref settings, ref states[i].probeSettingsHash);
+                var positionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, null);
+                var positionSettingsHash = new Hash128();
+                HashUtilities.ComputeHash128(ref positionSettings, ref positionSettingsHash);
+                // TODO: make ProbeSettings and unmanaged type so its hash can be the hash of its memory
+                var probeSettingsHash = probe.settings.ComputeHash();
+                HashUtilities.AppendHash(ref positionSettingsHash, ref probeSettingsHash);
+                states[i].probeSettingsHash = probeSettingsHash;
             }
         }
 
@@ -144,12 +267,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        static Texture CreateBakedTextureFromRenderTexture(RenderTexture rt, HDProbe probe)
+        static Texture CreateBakedTextureFromRenderTexture(RenderTexture rt, HDProbe probe, Hash128 hash)
         {
             Assert.IsNotNull(rt);
             Assert.IsNotNull(probe);
 
-            var targetFile = HDBakingUtilities.GetBakedTextureFilePath(probe);
+            var targetFile = HDBakingUtilities.GetBakedTextureFilePath(probe, hash);
             HDBakingUtilities.CreateParentDirectoryIfMissing(targetFile);
             HDTextureUtilities.WriteTextureFileToDisk(rt, targetFile);
 
@@ -164,6 +287,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             importer.SaveAndReimport();
 
             return AssetDatabase.LoadAssetAtPath<Texture>(targetFile);
+        }
+
+        static void DeleteBakedTextureWithHash(Hash128 hash)
+        {
+            for (int i = 0, c = SceneManager.sceneCount; i < c; ++i)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                var directory = HDBakingUtilities.GetBakedTextureDirectory(scene);
+                var files = Directory.GetFiles(directory, string.Format("*{0}*", hash));
+                foreach (var file in files)
+                    AssetDatabase.DeleteAsset(file);
+            }
         }
     }
 }

@@ -62,6 +62,17 @@ namespace UnityEngine.Experimental.Rendering
             }
         }
 
+        public static int IndexOf<T>(void* data, int count, T v)
+            where T : struct, IEquatable<T>
+        {
+            for (int i = 0; i < count; ++i)
+            {
+                if (UnsafeUtility.ReadArrayElement<T>(data, i).Equals(v))
+                    return i;
+            }
+            return -1;
+        }
+
         /// <summary>
         /// Compare hashes of two collections and provide
         /// a list of indices <paramref name="removeIndices"/> to remove in <paramref name="oldHashes"/>
@@ -78,17 +89,20 @@ namespace UnityEngine.Experimental.Rendering
         /// <param name="addCount">Number of elements to add will be written here.</param>
         /// <param name="remCount">Number of elements to remove will be written here.</param>
         /// <returns>The number of operation to perform (<code><paramref name="addCount"/> + <paramref name="remCount"/></code>)</returns>
-        public static int CompareHashes<TValue, TGetter>(
+        public static int CompareHashes<TOldValue, TOldGetter, TNewValue, TNewGetter>(
             int oldHashCount, void* oldHashes,
             int newHashCount, void* newHashes,
             // assume that the capacity of indices is >= max(oldHashCount, newHashCount)
             int* addIndices, int* removeIndices,
             out int addCount, out int remCount
         )
-            where TValue : struct
-            where TGetter : struct, IKeyGetter<TValue, Hash128>
+            where TOldValue : struct
+            where TNewValue : struct
+            where TOldGetter : struct, IKeyGetter<TOldValue, Hash128>
+            where TNewGetter : struct, IKeyGetter<TNewValue, Hash128>
         {
-            var getter = new TGetter();
+            var oldGetter = new TOldGetter();
+            var newGetter = new TNewGetter();
 
             addCount = 0;
             remCount = 0;
@@ -97,8 +111,8 @@ namespace UnityEngine.Experimental.Rendering
             {
                 var oldHash = new Hash128();
                 var newHash = new Hash128();
-                CombineHashes<TValue, TGetter>(oldHashCount, oldHashes, &oldHash);
-                CombineHashes<TValue, TGetter>(newHashCount, newHashes, &newHash);
+                CombineHashes<TOldValue, TOldGetter>(oldHashCount, oldHashes, &oldHash);
+                CombineHashes<TNewValue, TNewGetter>(newHashCount, newHashes, &newHash);
                 if (oldHash == newHash)
                     return 0;
             }
@@ -135,12 +149,11 @@ namespace UnityEngine.Experimental.Rendering
                 }
 
                 // Both arrays have data.
-                var newVal = UnsafeUtility.ReadArrayElement<TValue>(newHashes, newI);
-                var oldVal = UnsafeUtility.ReadArrayElement<TValue>(oldHashes, oldI);
-                var newKey = getter.Get(ref newVal);
-                var oldKey = getter.Get(ref oldVal);
-                var c = newKey.CompareTo(oldKey);
-                if (c == 0)
+                var newVal = UnsafeUtility.ReadArrayElement<TNewValue>(newHashes, newI);
+                var oldVal = UnsafeUtility.ReadArrayElement<TOldValue>(oldHashes, oldI);
+                var newKey = newGetter.Get(ref newVal);
+                var oldKey = oldGetter.Get(ref oldVal);
+                if (newKey == oldKey)
                 {
                     // Matching hash, skip.
                     ++newI;
@@ -149,25 +162,26 @@ namespace UnityEngine.Experimental.Rendering
                 }
 
                 // Both arrays have data, but hashes do not match.
-                if (c < 0)
+                if (newKey < oldKey)
                 {
                     // oldIter is the greater hash. Push "add" jobs from the new array until reaching the oldIter hash.
-                    while (newI < newHashCount && newHashes[newI] < oldHashes[oldI])
+                    while (newI < newHashCount && newKey < oldKey)
                     {
                         addIndices[addCount++] = newI;
                         ++newI;
                         ++numOperations;
-                        newVal = UnsafeUtility.ReadArrayElement<TValue>(newHashes, newI);
-                        newKey = getter.Get(ref newVal);
+                        newVal = UnsafeUtility.ReadArrayElement<TNewValue>(newHashes, newI);
+                        newKey = newGetter.Get(ref newVal);
                     }
                 }
                 else
                 {
                     // newIter is the greater hash. Push "remove" jobs from the old array until reaching the newIter hash.
-                    while (oldI < oldHashCount && oldHashes[oldI] < newHashes[newI])
+                    while (oldI < oldHashCount && oldKey < newKey)
                     {
                         removeIndices[remCount++] = oldI;
                         ++numOperations;
+                        ++oldI;
                     }
                 }
             }
@@ -183,7 +197,7 @@ namespace UnityEngine.Experimental.Rendering
             out int addCount, out int remCount
         )
         {
-            return CompareHashes<Hash128, DefaultKeyGetter<Hash128>>(
+            return CompareHashes<Hash128, DefaultKeyGetter<Hash128>, Hash128, DefaultKeyGetter<Hash128>>(
                 oldHashCount, oldHashes,
                 newHashCount, newHashes,
                 addIndices, removeIndices,
@@ -199,8 +213,14 @@ namespace UnityEngine.Experimental.Rendering
             where TValue : struct
             where TGetter : struct, IKeyGetter<TValue, Hash128>
         {
+            var getter = new TGetter();
             for (int i = 0; i < count; ++i)
-                HashUtilities.AppendHash(ref hashes[i], ref *outHash);
+            {
+                var v = UnsafeUtility.ReadArrayElement<TValue>(hashes, i);
+                var h = getter.Get(ref v);
+                HashUtilities.AppendHash(ref h, ref *outHash);
+            }
+                
         }
 
         public static void CombineHashes(int count, Hash128* hashes, Hash128* outHash)
