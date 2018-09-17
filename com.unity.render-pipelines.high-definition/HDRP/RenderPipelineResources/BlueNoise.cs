@@ -12,6 +12,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             int len = resources.blueNoise64Texture.Length;
             textures64 = new Texture2D[len];
             textureArray64 = new Texture2DArray(64, 64, len, TextureFormat.Alpha8, false, true);
+            textureArray64.hideFlags = HideFlags.HideAndDontSave;
 
             for (int i = 0; i < len; i++)
             {
