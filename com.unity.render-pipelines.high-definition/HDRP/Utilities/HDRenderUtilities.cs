@@ -140,6 +140,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             var go = new GameObject("__Render Camera");
             var camera = go.AddComponent<Camera>();
+            camera.cameraType = CameraType.Reflection;
             go.AddComponent<HDAdditionalCameraData>();
 
             return camera;

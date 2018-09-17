@@ -107,5 +107,31 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public ProxySettings proxySettings;
         /// <summary>Camera settings to use when capturing data.</summary>
         public CameraSettings camera;
+
+        public Hash128 ComputeHash()
+        {
+            var h = new Hash128();
+            var h2 = new Hash128();
+            HashUtilities.ComputeHash128(ref type, ref h);
+            HashUtilities.ComputeHash128(ref mode, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            HashUtilities.ComputeHash128(ref lighting, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            HashUtilities.ComputeHash128(ref proxySettings, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            HashUtilities.ComputeHash128(ref camera, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            if (influence != null)
+            {
+                h2 = influence.ComputeHash();
+                HashUtilities.AppendHash(ref h2, ref h);
+            }
+            if (linkedProxy != null)
+            {
+                h2 = linkedProxy.ComputeHash();
+                HashUtilities.AppendHash(ref h2, ref h);
+            }
+            return h;
+        }
     }
 }
