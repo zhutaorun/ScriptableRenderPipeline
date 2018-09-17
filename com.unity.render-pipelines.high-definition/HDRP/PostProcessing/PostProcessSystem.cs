@@ -31,9 +31,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RTHandle m_InternalLogLut; // ARGBHalf
         readonly HableCurve m_HableCurve;
 
-        // Dithering data
-        Texture2DArray m_BlueNoise64TextureArray;
-
         // Prefetched components (updated on every frame)
         PhysicalCamera m_PhysicalCamera;
         Exposure m_Exposure;
@@ -51,6 +48,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         FilmGrain m_FilmGrain;
 
         // Misc (re-usable)
+        // TODO: Do a small "recycling" utility, this is becoming annoying and hard to maintain
         RTHandle[] m_TempFullSizePingPong = new RTHandle[2]; // R11G11B10F
         int m_CurrentTemporaryPingPong;
 
@@ -107,13 +105,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Graphics.Blit(tempTex, m_EmptyExposureTexture);
             CoreUtils.Destroy(tempTex);
 
-            // Blue noise array used for dithering
-            // TODO: Could probably be exposed to the whole HDRP?
-            m_BlueNoise64TextureArray = new Texture2DArray(64, 64, 64, TextureFormat.Alpha8, false, true);
-
-            for (int i = 0; i < 64; i++)
-                Graphics.CopyTexture(m_Resources.blueNoise64Texture[i], 0, 0, m_BlueNoise64TextureArray, i, 0);
-
             // Ping pong targets
             for (int i = 0; i < 2; i++)
             {
@@ -153,19 +144,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RTHandles.Release(m_TempTexture32);
             CoreUtils.Destroy(m_ExposureCurveTexture);
             CoreUtils.Destroy(m_InternalSpectralLut);
-            CoreUtils.Destroy(m_BlueNoise64TextureArray);
             RTHandles.Release(m_InternalLogLut);
 
-            m_EmptyExposureTexture    = null;
-            m_TempFullSizePingPong[0] = null;
-            m_TempFullSizePingPong[1] = null;
-            m_HalfResTexture          = null;
-            m_TempTexture1024         = null;
-            m_TempTexture32           = null;
-            m_ExposureCurveTexture    = null;
-            m_BlueNoise64TextureArray   = null;
-            m_InternalSpectralLut     = null;
-            m_InternalLogLut          = null;
+            m_EmptyExposureTexture      = null;
+            m_TempFullSizePingPong[0]   = null;
+            m_TempFullSizePingPong[1]   = null;
+            m_HalfResTexture            = null;
+            m_TempTexture1024           = null;
+            m_TempTexture32             = null;
+            m_ExposureCurveTexture      = null;
+            m_InternalSpectralLut       = null;
+            m_InternalLogLut            = null;
         }
 
         public void ResetHistory()
