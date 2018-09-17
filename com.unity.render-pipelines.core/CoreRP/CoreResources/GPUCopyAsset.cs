@@ -157,10 +157,10 @@ namespace UnityEngine.Experimental.Rendering
                 // Compute kernel
                 var kernelName8 = string.Format("KSampleCopy{0}_{1}_{2}_8", o.sourceChannel.ToString(), o.targetChannel.ToString(), o.subscript);
                 var kernelName1 = string.Format("KSampleCopy{0}_{1}_{2}_1", o.sourceChannel.ToString(), o.targetChannel.ToString(), o.subscript);
-                cck.AppendLine(string.Format("#pragma kernel {0}   KERNEL_NAME={0}  KERNEL_SIZE=8", kernelName8));
-                cck.AppendLine(string.Format("#pragma kernel {0}   KERNEL_NAME={0}  KERNEL_SIZE=1", kernelName1));
+                cck.AppendLine(string.Format("#pragma kernel {0}   KERNEL_NAME{1}{2}={0}  KERNEL_SIZE=8", kernelName8, o.sourceChannel, o.targetChannel));
+                cck.AppendLine(string.Format("#pragma kernel {0}   KERNEL_NAME{1}{2}={0}  KERNEL_SIZE=1", kernelName1, o.sourceChannel, o.targetChannel));
                 cck.AppendLine(@"[numthreads(KERNEL_SIZE, KERNEL_SIZE, 1)]");
-                cck.AppendLine(@"void KERNEL_NAME(uint2 dispatchThreadId : SV_DispatchThreadID)");
+                cck.AppendLine(string.Format(@"void KERNEL_NAME{0}{1}(uint2 dispatchThreadId : SV_DispatchThreadID)", o.sourceChannel, o.targetChannel));
                 cck.AppendLine("{");
                 cck.AppendLine(string.Format("    _Result{0}[_RectOffset + dispatchThreadId] = LOAD_TEXTURE2D(_Source{1}, _RectOffset + dispatchThreadId).{2};",
                         o.targetChannel.ToString(), o.sourceChannel.ToString(), o.subscript));
