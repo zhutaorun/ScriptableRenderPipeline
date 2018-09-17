@@ -7,12 +7,47 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [3.4.0-preview]
 
 ### Added
- - Added controls for linear fade at the boundary of density volumes
- - Added new API to control decals without monobehaviour object
+- Added a new TerrainLit shader that supports rendering of Unity terrains.
+- Added controls for linear fade at the boundary of density volumes
+- Added new API to control decals without monobehaviour object
+- Improve Decal Gizmo
+- Implement Screen Space Reflections (SSR) (alpha version, highly experimental)
+- Add an option to invert the fade parameter on a Density Volume
+- Added a Fabric shader (experimental) handling cotton and silk
+- Added support for MSAA in forward only for opaque only
+- Implement smoothness fade for SSR
 
 ### Fixed
-- Stencil test during decals normal buffer update is now properly applied
 - Fixed an issue where sometimes the deferred shadow texture would not be valid, causing wrong rendering.
+- Stencil test during decals normal buffer update is now properly applied
+- Decals corectly update normal buffer in forward
+- Fixed a normalization problem in reflection probe face fading causing artefacts in some cases
+- Fixed multi-selection behavior of Density Volumes overwriting the albedo value
+- Fixed support of depth for RenderTexture. HDRP now correctly output depth to user depth buffer if RenderTexture request it.
+- Fixed support of Gizmo in game view in the editor
+- Fixed gizmo for spot light type
+- Fixed issue with TileViewDebug mode being inversed in gameview
+- Fixed an issue with SAMPLE_TEXTURECUBE_SHADOW macro
+- Fixed issue with color picker not display correctly when game and scene view are visible at the same time
+- Fixed an issue with reflection probe face fading
+- Fixed camera motion vectors shader and associated matrices to update correctly for single-pass double-wide stereo rendering
+- Fixed light attenuation functions when range attenuation is disabled
+- Fixed shadow component algorithm fixup not dirtying the scene, so changes can be saved to disk.
+
+### Changed
+- Changed the way depth & color pyramids are built to be faster and better quality, thus improving the look of distortion and refraction.
+- Stabilize the dithered LOD transition mask with respect to the camera rotation.
+- Avoid multiple depth buffer copies when decals are present
+- Refactor code related to the RT handle system (No more normal buffer manager)
+- Remove deferred directional shadow and move evaluation before lightloop
+- Add a function GetShadowNormalBias() that material need to implement to return the normal used for normal shadow biasing
+- Remove Jimenez Subsurface scattering code (This code was disabled by default, now remove to ease maintenance)
+- Change Decal API, decal contribution is now done in Material. Require update of material using decal
+- Move a lot of files from CoreRP to HDRP/CoreRP. All moved files weren't used by Ligthweight pipeline. Long term they could move back to CoreRP after CoreRP become out of preview
+- Updated camera inspector UI
+- Updated decal gizmo
+- Optimization: The objects that are rendered in the Motion Vector Pass are not rendered in the prepass anymore
+- Removed setting shader inclue path via old API, use package shader include paths
 
 ## [3.3.0-preview]
 
@@ -20,14 +55,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added an error message to say to use Metal or Vulkan when trying to use OpenGL API
 - Added a new Fabric shader model that supports Silk and Cotton/Wool
 - Added a new HDRP Lighting Debug mode to visualize Light Volumes for Point, Spot, Line, Rectangular and Reflection Probes
+- Add support for reflection probe light layers
+- Improve quality of anisotropic on IBL
 
 ### Fixed
 - Fix an issue where the screen where darken when rendering camera preview
 - Fix display correct target platform when showing message to inform user that a platform is not supported
 - Remove workaround for metal and vulkan in normal buffer encoding/decoding
 - Fixed an issue with color picker not working in forward
-- Decals corectly update normal buffer in forward 
 - Fixed an issue where reseting HDLight do not reset all of its parameters
+- Fixed shader compile warning in DebugLightVolumes.shader
 
 ### Changed
 - Changed default reflection probe to be 256x256x6 and array size to be 64

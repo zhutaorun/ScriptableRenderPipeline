@@ -1021,11 +1021,11 @@ namespace UnityEditor.ShaderGraph
 
                 finalShader.AppendLine(@"HLSLINCLUDE");
                 finalShader.AppendLine("#define USE_LEGACY_UNITY_MATRIX_VARIABLES");
-                finalShader.AppendLine(@"#include ""CoreRP/ShaderLibrary/Common.hlsl""");
-                finalShader.AppendLine(@"#include ""CoreRP/ShaderLibrary/Packing.hlsl""");
-                finalShader.AppendLine(@"#include ""CoreRP/ShaderLibrary/Color.hlsl""");
-                finalShader.AppendLine(@"#include ""CoreRP/ShaderLibrary/UnityInstancing.hlsl""");
-                finalShader.AppendLine(@"#include ""CoreRP/ShaderLibrary/EntityLighting.hlsl""");
+                finalShader.AppendLine(@"#include ""Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl""");
+                finalShader.AppendLine(@"#include ""Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl""");
+                finalShader.AppendLine(@"#include ""Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl""");
+                finalShader.AppendLine(@"#include ""Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl""");
+                finalShader.AppendLine(@"#include ""Packages/com.unity.render-pipelines.core/ShaderLibrary/EntityLighting.hlsl""");
                 finalShader.AppendLine(@"#include ""ShaderGraphLibrary/ShaderVariables.hlsl""");
                 finalShader.AppendLine(@"#include ""ShaderGraphLibrary/ShaderVariablesFunctions.hlsl""");
                 finalShader.AppendLine(@"#include ""ShaderGraphLibrary/Functions.hlsl""");
@@ -1131,7 +1131,7 @@ namespace UnityEditor.ShaderGraph
                         (activeNode as IGeneratesFunction).GenerateNodeFunction(functionRegistry, graphContext, mode);
                     }
                     if (activeNode is IGeneratesBodyCode)
-                        (activeNode as IGeneratesBodyCode).GenerateNodeCode(sg, mode);
+                        (activeNode as IGeneratesBodyCode).GenerateNodeCode(sg, graphContext, mode);
                     if (masterNode == null && activeNode.hasPreview)
                     {
                         var outputSlot = activeNode.GetOutputSlots<MaterialSlot>().FirstOrDefault();
@@ -1245,7 +1245,7 @@ namespace UnityEditor.ShaderGraph
                     var generatesBodyCode = node as IGeneratesBodyCode;
                     if (generatesBodyCode != null)
                     {
-                        generatesBodyCode.GenerateNodeCode(sg, mode);
+                        generatesBodyCode.GenerateNodeCode(sg, graphContext, mode);
                     }
                     node.CollectShaderProperties(shaderProperties, mode);
                 }
