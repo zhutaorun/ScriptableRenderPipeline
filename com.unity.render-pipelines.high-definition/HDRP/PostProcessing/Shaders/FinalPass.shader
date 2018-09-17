@@ -47,13 +47,13 @@ Shader "Hidden/HDRenderPipeline/FinalPass"
 
         float3 Fetch(float2 coords, float2 offset)
         {
-            float2 uv = (coords + offset) * _ScreenToTargetScale.xy;
+            float2 uv = saturate(coords + offset) * _ScreenToTargetScale.xy;
             return SAMPLE_TEXTURE2D_LOD(_InputTexture, sampler_LinearClamp, uv, 0.0).xyz;
         }
 
         float3 Load(int2 icoords, int idx, int idy)
         {
-            return LOAD_TEXTURE2D(_InputTexture, icoords + int2(idx, idy)).xyz;
+            return LOAD_TEXTURE2D(_InputTexture, min(icoords + int2(idx, idy), _ScreenSize.xy - 1.0)).xyz;
         }
 
         float3 GetColor(Varyings input, out PositionInputs posInputs)
