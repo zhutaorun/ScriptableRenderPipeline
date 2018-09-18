@@ -78,7 +78,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 mode = Mode.ComputeProjectionMatrix,
                 aspect = 1.0f,
                 farClipPlane = 1000.0f,
-                nearClipPlane = 10.0f,
+                nearClipPlane = 0.1f,
                 fieldOfView = 90.0f,
                 projectionMatrix = Matrix4x4.identity
             };

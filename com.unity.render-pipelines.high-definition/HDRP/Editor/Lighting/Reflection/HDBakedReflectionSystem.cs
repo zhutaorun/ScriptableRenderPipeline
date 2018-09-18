@@ -133,14 +133,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 // == 4. ==
                 var cubemapSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.reflectionCubemapSize;
-                var cubeRT = new RenderTexture(cubemapSize, cubemapSize, 1)
-                {
-                    dimension = TextureDimension.Cube,
-                    useMipMap = false,
-                    autoGenerateMips = false,
-                    format = RenderTextureFormat.ARGBHalf,
-                    name = "Temporary Reflection Probe Target"
-                };
+                var cubeRT = new Cubemap(cubemapSize, GraphicsFormat.R16G16B16A16_SFloat, TextureCreationFlags.None);
 
                 handle.EnterStage(
                     (int)BakingStages.ReflectionProbes,
@@ -166,7 +159,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             {
                                 var positionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, null);
                                 HDRenderUtilities.Render(probe.settings, positionSettings, cubeRT);
-                                var bakedTexture = CreateBakedTextureFromRenderTexture(
+                                var bakedTexture = CreateBakedTextureFromRenderTarget(
                                     cubeRT,
                                     probe,
                                     states[index].probeBakingHash
@@ -180,7 +173,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             break;
                     }
                 }
-                cubeRT.Release();
+                CoreUtils.Destroy(cubeRT);
 
                 // == 5. ==
                 for (int i = 0; i < remCount; ++i)
@@ -267,18 +260,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        static Texture CreateBakedTextureFromRenderTexture(RenderTexture rt, HDProbe probe, Hash128 hash)
+        static Texture CreateBakedTextureFromRenderTarget(Texture target, HDProbe probe, Hash128 hash)
         {
-            Assert.IsNotNull(rt);
+            Assert.IsNotNull(target);
             Assert.IsNotNull(probe);
 
             var targetFile = HDBakingUtilities.GetBakedTextureFilePath(probe, hash);
             HDBakingUtilities.CreateParentDirectoryIfMissing(targetFile);
-            HDTextureUtilities.WriteTextureFileToDisk(rt, targetFile);
+            HDTextureUtilities.WriteTextureFileToDisk(target, targetFile);
 
             AssetDatabase.ImportAsset(targetFile);
 
             var importer = (TextureImporter)AssetImporter.GetAtPath(targetFile);
+            importer.sRGBTexture = false;
             importer.filterMode = FilterMode.Bilinear;
             importer.generateCubemap = TextureImporterGenerateCubemap.AutoCubemap;
             importer.mipmapEnabled = false;
@@ -286,7 +280,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             importer.textureShape = TextureImporterShape.TextureCube;
             importer.SaveAndReimport();
 
-            return AssetDatabase.LoadAssetAtPath<Texture>(targetFile);
+            var asset = AssetDatabase.LoadAssetAtPath<Texture>(targetFile);
+            return asset;
         }
 
         static void DeleteBakedTextureWithHash(Hash128 hash)

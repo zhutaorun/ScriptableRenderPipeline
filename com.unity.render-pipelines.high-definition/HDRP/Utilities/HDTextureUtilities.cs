@@ -7,12 +7,31 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     internal static partial class HDTextureUtilities
     {
-        public static void WriteTextureFileToDisk(Texture renderTarget, string filePath)
+        public static void WriteTextureFileToDisk(Texture target, string filePath)
         {
-            var rt = renderTarget as RenderTexture;
+            var rt = target as RenderTexture;
+            var cube = target as Cubemap;
             if (rt != null)
             {
                 var t2D = CopyRenderTextureToTexture2D(rt);
+                var bytes = t2D.EncodeToEXR(Texture2D.EXRFlags.CompressZIP);
+                HDBakingUtilities.CreateParentDirectoryIfMissing(filePath);
+                File.WriteAllBytes(filePath, bytes);
+                return;
+            }
+            else if (cube != null)
+            {
+                var t2D = new Texture2D(cube.width * 6, cube.height, GraphicsFormat.R16G16B16A16_SFloat, TextureCreationFlags.None);
+                var cmd = new CommandBuffer { name = "CopyCubemapToTexture2D" };
+
+                for (int i = 0; i < 6; ++i)
+                {
+                    cmd.CopyTexture(
+                        cube, i, 0, 0, 0, cube.width, cube.height,
+                        t2D, 0, 0, cube.width * i, 0
+                    );
+                }
+                Graphics.ExecuteCommandBuffer(cmd);
                 var bytes = t2D.EncodeToEXR(Texture2D.EXRFlags.CompressZIP);
                 HDBakingUtilities.CreateParentDirectoryIfMissing(filePath);
                 File.WriteAllBytes(filePath, bytes);
@@ -49,16 +68,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {
                         var resolution = source.width;
                         var result = new Texture2D(resolution * 6, resolution, format, false);
-
+                        
                         var offset = 0;
                         for (var i = 0; i < 6; ++i)
                         {
                             Graphics.SetRenderTarget(source, 0, (CubemapFace)i);
                             result.ReadPixels(new Rect(0, 0, resolution, resolution), offset, 0);
-                            result.Apply();
                             offset += resolution;
                         }
-                        Graphics.SetRenderTarget(null);
+                        result.Apply();
 
                         return result;
                     }

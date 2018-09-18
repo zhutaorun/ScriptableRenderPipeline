@@ -26,6 +26,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ref CameraPositionSettings cameraPosition               // InOut parameter
         )
         {
+            cameraSettings = settings.camera;
             // Compute the modes for each probe type
             PositionMode positionMode;
             bool useReferenceTransformAsNearClipPlane;
@@ -38,22 +39,24 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 case ProbeSettings.ProbeType.ReflectionProbe:
                     positionMode = PositionMode.UseProbeTransform;
                     useReferenceTransformAsNearClipPlane = false;
+                    cameraSettings.frustum.mode = CameraSettings.Frustum.Mode.ComputeProjectionMatrix;
+                    cameraSettings.frustum.aspect = 1;
+                    cameraSettings.frustum.fieldOfView = 90;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
 
             // Update the position
-            cameraPosition.mode = CameraPositionSettings.Mode.UseWorldToCameraMatrixField;
             switch (positionMode)
             {
                 case PositionMode.UseProbeTransform:
-                    cameraPosition.worldToCameraMatrix = GeometryUtils.CalculateWorldToCameraMatrixRHS(
-                        probePosition.proxyPosition,
-                        probePosition.proxyRotation
-                    );
+                    cameraPosition.mode = CameraPositionSettings.Mode.ComputeWorldToCameraMatrix;
+                    cameraPosition.position = probePosition.proxyPosition;
+                    cameraPosition.rotation = probePosition.proxyRotation;
                     break;
                 case PositionMode.MirrorReferenceTransfromWithProbePlane:
+                    cameraPosition.mode = CameraPositionSettings.Mode.UseWorldToCameraMatrixField;
                     ApplyMirroredReferenceTransform(
                         ref settings, ref probePosition,
                         ref cameraSettings, ref cameraPosition
