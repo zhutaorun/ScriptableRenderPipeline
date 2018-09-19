@@ -148,6 +148,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     0
                 );
 
+                // Render probes
                 for (int i = 0; i < addCount; ++i)
                 {
                     handle.EnterStage(
@@ -164,20 +165,39 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Get from cache or render the probe
                     if (!File.Exists(cacheFile))
                         RenderAndWriteToFile(probe, cacheFile, cubeRT);
-
-                    // Get or create the baked texture asset for the probe
-                    var bakedTexturePath = HDBakingUtilities.GetBakedTextureFilePath(probe);
-                    var bakedTexture = AssetDatabase.LoadAssetAtPath<Texture>(bakedTexturePath);
-                    if (bakedTexture == null)
-                    {
-                        CreateDummyAssetAt(probe, bakedTexturePath);
-                        bakedTexture = AssetDatabase.LoadAssetAtPath<Texture>(bakedTexturePath);
-                    }
-                    AssignBakedTexture(probe, bakedTexture);
-
-                    File.Copy(cacheFile, bakedTexturePath, true);
                 }
                 cubeRT.Release();
+                // Copy texture from cache
+                for (int i = 0; i < addCount; ++i)
+                {
+                    var index = addIndices[i];
+                    var instanceId = states[index].instanceID;
+                    var probe = (HDProbe)EditorUtility.InstanceIDToObject(instanceId);
+                    var cacheFile = GetGICacheFileForHDProbe(states[index].probeBakingHash);
+
+                    Assert.IsTrue(File.Exists(cacheFile));
+
+                    var bakedTexturePath = HDBakingUtilities.GetBakedTextureFilePath(probe);
+                    HDBakingUtilities.CreateParentDirectoryIfMissing(bakedTexturePath);
+                    File.Copy(cacheFile, bakedTexturePath, true);
+                }
+                // Import assets
+                AssetDatabase.StartAssetEditing();
+                for (int i = 0; i < addCount; ++i)
+                {
+                    var index = addIndices[i];
+                    var instanceId = states[index].instanceID;
+                    var probe = (HDProbe)EditorUtility.InstanceIDToObject(instanceId);
+                    var cacheFile = GetGICacheFileForHDProbe(states[index].probeBakingHash);
+
+                    var bakedTexturePath = HDBakingUtilities.GetBakedTextureFilePath(probe);
+
+                    // Get or create the baked texture asset for the probe
+                    var bakedTexture = AssetDatabase.LoadAssetAtPath<Texture>(bakedTexturePath);
+                    ImportAssetAt(probe, bakedTexturePath);
+                    AssignBakedTexture(probe, bakedTexture);
+                }
+                AssetDatabase.StopAssetEditing();
 
                 // == 5. ==
 
@@ -263,20 +283,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        void CreateDummyAssetAt(HDProbe probe, string file)
+        void ImportAssetAt(HDProbe probe, string file)
         {
             switch (probe.settings.type)
             {
                 case ProbeSettings.ProbeType.ReflectionProbe:
                     {
-                        var smalltexture = new Cubemap(
-                            8,
-                            GraphicsFormat.R16G16B16A16_SFloat,
-                            TextureCreationFlags.None
-                        );
-                        HDBakingUtilities.CreateParentDirectoryIfMissing(file);
-                        AssetDatabase.CreateAsset(smalltexture, file);
-
                         var importer = (TextureImporter)AssetImporter.GetAtPath(file);
                         importer.sRGBTexture = false;
                         importer.filterMode = FilterMode.Bilinear;
