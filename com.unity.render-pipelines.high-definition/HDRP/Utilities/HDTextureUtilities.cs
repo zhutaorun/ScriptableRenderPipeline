@@ -23,7 +23,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 var t2D = new Texture2D(cube.width * 6, cube.height, GraphicsFormat.R16G16B16A16_SFloat, TextureCreationFlags.None);
                 var cmd = new CommandBuffer { name = "CopyCubemapToTexture2D" };
-
                 for (int i = 0; i < 6; ++i)
                 {
                     cmd.CopyTexture(
@@ -75,6 +74,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             Graphics.SetRenderTarget(source, 0, (CubemapFace)i);
                             result.ReadPixels(new Rect(0, 0, resolution, resolution), offset, 0);
                             offset += resolution;
+                            Graphics.SetRenderTarget(null);
                         }
                         result.Apply();
 
