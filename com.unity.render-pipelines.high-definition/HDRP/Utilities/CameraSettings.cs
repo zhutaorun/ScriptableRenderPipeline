@@ -149,7 +149,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             physical = Physical.@default,
             postProcessLayer = null,
             renderingPath = HDAdditionalCameraData.RenderingPath.Default,
-            volumes = Volumes.@default
+            volumes = Volumes.@default,
+            flipYMode = HDAdditionalCameraData.FlipYMode.Automatic
         };
 
         /// <summary>Rendering path to use.</summary>
@@ -168,5 +169,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Frustum frustum;
         /// <summary>Culling settings to use.</summary>
         public Culling culling;
+        public HDAdditionalCameraData.FlipYMode flipYMode;
     }
 }

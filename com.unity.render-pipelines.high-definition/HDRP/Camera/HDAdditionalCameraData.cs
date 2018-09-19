@@ -7,6 +7,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     [RequireComponent(typeof(Camera))]
     public class HDAdditionalCameraData : MonoBehaviour, ISerializationCallbackReceiver
     {
+        public enum FlipYMode
+        {
+            Automatic,
+            ForceFlipY
+        }
+
         [HideInInspector]
         const int currentVersion = 1;
 
@@ -55,6 +61,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public float aperture = 8f;
         public float shutterSpeed = 1f / 200f;
         public float iso = 400f;
+        public FlipYMode flipYMode;
 
         // To be able to turn on/off FrameSettings properties at runtime for debugging purpose without affecting the original one
         // we create a runtime copy (m_ActiveFrameSettings that is used, and any parametrization is done on serialized frameSettings)
@@ -98,6 +105,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             //data.m_IsDebugRegistered = m_IsDebugRegistered;
             //data.m_CameraRegisterName = m_CameraRegisterName;
             //data.isEditorCameraPreview = isEditorCameraPreview;
+        }
+
+        public void SetPersistentFrameSettings(FrameSettings settings)
+        {
+            m_FrameSettings = settings;
+            m_frameSettingsIsDirty = true;
         }
 
         // This is the function use outside to access FrameSettings. It return the current state of FrameSettings for the camera

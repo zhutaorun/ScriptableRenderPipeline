@@ -16,7 +16,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var add = cam.GetComponent<HDAdditionalCameraData>()
                 ?? cam.gameObject.AddComponent<HDAdditionalCameraData>();
 
-            settings.frameSettings.CopyTo(add.GetFrameSettings());
+            add.SetPersistentFrameSettings(settings.frameSettings);
             // Frustum
             switch (settings.frustum.mode)
             {
@@ -47,6 +47,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             add.iso = settings.physical.iso;
             // HD Specific
             add.renderingPath = settings.renderingPath;
+            add.flipYMode = settings.flipYMode;
 
             add.OnAfterDeserialize();
         }
