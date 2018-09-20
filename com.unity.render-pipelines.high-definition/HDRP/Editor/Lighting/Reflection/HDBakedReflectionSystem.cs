@@ -194,6 +194,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                     // Get or create the baked texture asset for the probe
                     var bakedTexture = AssetDatabase.LoadAssetAtPath<Texture>(bakedTexturePath);
+                    AssetDatabase.ImportAsset(bakedTexturePath);
                     ImportAssetAt(probe, bakedTexturePath);
                     AssignBakedTexture(probe, bakedTexture);
                 }

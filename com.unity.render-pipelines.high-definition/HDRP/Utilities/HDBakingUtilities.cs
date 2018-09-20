@@ -17,7 +17,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var cacheDirectory = GetBakedTextureDirectory(probe.gameObject.scene);
             var targetFile = Path.Combine(
                 cacheDirectory,
-                string.Format("ReflectionProbe-{0}.exr", probe.name)
+                string.Format("ReflectionProbe-{0}.exr", SceneObjectIDMap.GetSceneObjectID(probe.gameObject))
             );
             return targetFile;
         }
