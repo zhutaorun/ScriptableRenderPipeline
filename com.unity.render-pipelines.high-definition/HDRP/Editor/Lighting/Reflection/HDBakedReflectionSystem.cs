@@ -222,6 +222,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         probeBakedHash = state.probeBakingHash
                     };
                 }
+                CoreUnsafeUtils.QuickSort<HDProbeBakedState, Hash128, HDProbeBakedState.ProbeBakedHash>(
+                    targetI, targetBakedStates
+                );
 
                 Array.Resize(ref m_HDProbeBakedStates, targetSize);
                 if (targetSize > 0)
@@ -289,7 +292,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 case ProbeSettings.ProbeType.ReflectionProbe:
                     {
-                        var importer = (TextureImporter)AssetImporter.GetAtPath(file);
+                        var importer = AssetImporter.GetAtPath(file) as TextureImporter;
+                        if (importer == null)
+                            return;
                         importer.sRGBTexture = false;
                         importer.filterMode = FilterMode.Bilinear;
                         importer.generateCubemap = TextureImporterGenerateCubemap.AutoCubemap;
@@ -323,8 +328,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 var probe = probes[i];
                 var positionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, null);
-                var positionSettingsHash = new Hash128();
-                HashUtilities.ComputeHash128(ref positionSettings, ref positionSettingsHash);
+                var positionSettingsHash = positionSettings.ComputeHash();
                 // TODO: make ProbeSettings and unmanaged type so its hash can be the hash of its memory
                 var probeSettingsHash = probe.settings.ComputeHash();
                 HashUtilities.AppendHash(ref positionSettingsHash, ref probeSettingsHash);

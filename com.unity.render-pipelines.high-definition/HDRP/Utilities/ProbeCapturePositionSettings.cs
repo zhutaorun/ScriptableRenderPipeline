@@ -77,5 +77,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
             return result;
         }
+
+        public Hash128 ComputeHash()
+        {
+            var h = new Hash128();
+            var h2 = new Hash128();
+            HashUtilities.QuantisedVectorHash(ref proxyPosition, ref h);
+            HashUtilities.QuantisedVectorHash(ref referencePosition, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            var euler = proxyRotation.eulerAngles;
+            HashUtilities.QuantisedVectorHash(ref euler, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            euler = referenceRotation.eulerAngles;
+            HashUtilities.QuantisedVectorHash(ref euler, ref h2);
+            HashUtilities.AppendHash(ref h2, ref h);
+            return h;
+        }
     }
 }
