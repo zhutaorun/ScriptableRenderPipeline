@@ -54,7 +54,7 @@ namespace UnityEngine.Experimental.Rendering
             {
                 int pivot = Partition<TValue, TKey, TGetter>(data, left, right);
 
-                if (pivot > 1)
+                if (pivot >= 1)
                     QuickSort<TValue, TKey, TGetter>(data, left, pivot);
 
                 if (pivot + 1 < right)
