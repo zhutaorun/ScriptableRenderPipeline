@@ -50,7 +50,6 @@ LightmapSettings:
     m_BounceScale: 1
     m_IndirectOutputScale: 1
     m_AlbedoBoost: 1
-    m_TemporalCoherenceThreshold: 1
     m_EnvironmentLightingMode: 0
     m_EnableBakedLightmaps: 1
     m_EnableRealtimeLightmaps: 1
@@ -64,7 +63,8 @@ LightmapSettings:
     m_CompAOExponent: 1
     m_CompAOExponentDirect: 0
     m_Padding: 2
-    m_LightmapParameters: {fileID: 15203, guid: 0000000000000000f000000000000000, type: 0}
+    m_LightmapParameters: {fileID: 15203, guid: 0000000000000000f000000000000000,
+      type: 0}
     m_LightmapsBakeMode: 1
     m_TextureCompression: 1
     m_FinalGather: 0
@@ -89,7 +89,8 @@ LightmapSettings:
     m_PVRFilteringAtrousPositionSigmaIndirect: 2
     m_PVRFilteringAtrousPositionSigmaAO: 1
     m_ShowResolutionOverlay: 0
-  m_LightingDataAsset: {fileID: 112000028, guid: 69dfd70e8803cd341bd2ad557215bad1, type: 2}
+  m_LightingDataAsset: {fileID: 112000028, guid: cac94849a53c18e4cba5f18ceeba5400,
+    type: 2}
   m_UseShadowmask: 0
 --- !u!196 &4
 NavMeshSettings:
@@ -285,6 +286,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -301,6 +307,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3
@@ -716,6 +723,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -732,6 +744,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3
@@ -1145,6 +1158,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -1161,6 +1179,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3
@@ -1343,6 +1362,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -1359,6 +1383,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3
@@ -1541,6 +1566,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -1557,6 +1587,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3
@@ -1739,6 +1770,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -1755,6 +1791,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3
@@ -2014,6 +2051,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -2030,6 +2072,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3
@@ -2156,39 +2199,48 @@ PrefabInstance:
       propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 114270329781043846, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 114270329781043846, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: width
       value: 853
       objectReference: {fileID: 0}
-    - target: {fileID: 114270329781043846, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 114270329781043846, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: height
       value: 480
       objectReference: {fileID: 0}
-    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: far clip plane
       value: 15
       objectReference: {fileID: 0}
-    - target: {fileID: 114733060649624252, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 114733060649624252, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: width
       value: 853
       objectReference: {fileID: 0}
-    - target: {fileID: 114733060649624252, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 114733060649624252, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: height
       value: 480
       objectReference: {fileID: 0}
-    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: ImageComparisonSettings.AverageCorrectnessThreshold
       value: 0.001
       objectReference: {fileID: 0}
-    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: ImageComparisonSettings.TargetWidth
       value: 400
       objectReference: {fileID: 0}
-    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: ImageComparisonSettings.TargetHeight
       value: 400
       objectReference: {fileID: 0}
-    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: waitFrames
       value: 10
       objectReference: {fileID: 0}
@@ -2289,6 +2341,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -2305,6 +2362,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3
@@ -2744,6 +2802,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -2760,6 +2823,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3
@@ -2942,6 +3006,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -2958,6 +3027,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3
@@ -3371,6 +3441,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -3387,6 +3462,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3
@@ -3569,6 +3645,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -3585,6 +3666,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3
@@ -3844,6 +3926,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -3860,6 +3947,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3
@@ -4507,6 +4595,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -4523,6 +4616,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3
@@ -4705,6 +4799,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -4721,6 +4820,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3
@@ -4903,6 +5003,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -4919,6 +5024,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3
@@ -5378,6 +5484,11 @@ MonoBehaviour:
     enableDistortion: 1
     enablePostprocess: 1
     enableStereo: 1
+    xrGraphicsConfig:
+      renderScale: 0
+      viewportScale: 0
+      useOcclusionMesh: 0
+      occlusionMaskScale: 0
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
@@ -5394,6 +5505,7 @@ MonoBehaviour:
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  lightLayers: 1
   m_Version: 4
   influenceShape: 0
   influenceSphereRadius: 3

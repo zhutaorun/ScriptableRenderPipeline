@@ -50,7 +50,6 @@ LightmapSettings:
     m_BounceScale: 1
     m_IndirectOutputScale: 1
     m_AlbedoBoost: 1
-    m_TemporalCoherenceThreshold: 1
     m_EnvironmentLightingMode: 0
     m_EnableBakedLightmaps: 1
     m_EnableRealtimeLightmaps: 1
@@ -164,6 +163,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &25900112
 GameObject:
   m_ObjectHideFlags: 0
@@ -215,6 +215,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 1.25}
   m_Size: {x: 3, y: 3, z: 3}
+  m_IsCropModeEnabled: 0
 --- !u!1 &32315661
 GameObject:
   m_ObjectHideFlags: 0
@@ -298,6 +299,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 1.25}
   m_Size: {x: 3, y: 3, z: 3}
+  m_IsCropModeEnabled: 0
 --- !u!1 &141681256
 GameObject:
   m_ObjectHideFlags: 0
@@ -464,6 +466,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &160577073
 GameObject:
   m_ObjectHideFlags: 0
@@ -515,6 +518,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &200477802
 GameObject:
   m_ObjectHideFlags: 0
@@ -643,6 +647,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 1.3}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &252667590
 GameObject:
   m_ObjectHideFlags: 0
@@ -694,6 +699,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 1.25}
   m_Size: {x: 3, y: 3, z: 3}
+  m_IsCropModeEnabled: 0
 --- !u!1 &286314541
 GameObject:
   m_ObjectHideFlags: 0
@@ -745,6 +751,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: -0.5, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &294464788
 GameObject:
   m_ObjectHideFlags: 0
@@ -796,6 +803,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &314238958
 GameObject:
   m_ObjectHideFlags: 0
@@ -880,6 +888,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: -0.5, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &338930937
 GameObject:
   m_ObjectHideFlags: 0
@@ -931,6 +940,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &364189310
 GameObject:
   m_ObjectHideFlags: 0
@@ -982,6 +992,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &374113650
 GameObject:
   m_ObjectHideFlags: 0
@@ -1033,6 +1044,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &399218098
 GameObject:
   m_ObjectHideFlags: 0
@@ -1122,6 +1134,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &404697366
 GameObject:
   m_ObjectHideFlags: 0
@@ -1173,6 +1186,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &435068001
 GameObject:
   m_ObjectHideFlags: 0
@@ -1199,13 +1213,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 435068001}
-  m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: -0.000038146973, z: -0.17353821}
+  m_LocalRotation: {x: 0.49999976, y: -0.5000003, z: 0.50000024, w: 0.49999973}
+  m_LocalPosition: {x: -0.17351979, y: -0.0004348755, z: -0.000015258789}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 993425095}
   m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 90.00001, y: 0, z: 90.00001}
 --- !u!102 &435068003
 TextMesh:
   serializedVersion: 3
@@ -1216,9 +1230,9 @@ TextMesh:
   m_GameObject: {fileID: 435068001}
   m_Text: Mix
   m_OffsetZ: 0
-  m_CharacterSize: 0.5783975
+  m_CharacterSize: 0.5783994
   m_LineSpacing: 1
-  m_Anchor: 1
+  m_Anchor: 7
   m_Alignment: 0
   m_TabSize: 4
   m_FontSize: 0
@@ -1245,7 +1259,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1333,6 +1347,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &489350440
 GameObject:
   m_ObjectHideFlags: 0
@@ -1384,6 +1399,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &523168873
 GameObject:
   m_ObjectHideFlags: 0
@@ -1435,6 +1451,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &560803092
 GameObject:
   m_ObjectHideFlags: 0
@@ -1521,6 +1538,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &723869257
 GameObject:
   m_ObjectHideFlags: 0
@@ -1572,6 +1590,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: -0.5, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &730821749
 GameObject:
   m_ObjectHideFlags: 0
@@ -1629,7 +1648,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 780717197}
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -0.1735192, y: -0.000030517578, z: 0.17350769}
+  m_LocalPosition: {x: 0.17351978, y: -0.0004272461, z: 0.17350769}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 993425095}
@@ -1645,9 +1664,9 @@ TextMesh:
   m_GameObject: {fileID: 780717197}
   m_Text: Transparent
   m_OffsetZ: 0
-  m_CharacterSize: 0.57839745
+  m_CharacterSize: 0.5783994
   m_LineSpacing: 1
-  m_Anchor: 8
+  m_Anchor: 6
   m_Alignment: 0
   m_TabSize: 4
   m_FontSize: 0
@@ -1674,7 +1693,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1762,6 +1781,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &802527692
 GameObject:
   m_ObjectHideFlags: 0
@@ -1813,6 +1833,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 1.25}
   m_Size: {x: 3, y: 3, z: 3}
+  m_IsCropModeEnabled: 0
 --- !u!1 &819924651
 GameObject:
   m_ObjectHideFlags: 0
@@ -1864,6 +1885,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 1.3}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &827915173
 GameObject:
   m_ObjectHideFlags: 0
@@ -1915,6 +1937,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &862561408
 GameObject:
   m_ObjectHideFlags: 0
@@ -1966,6 +1989,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 1.25}
   m_Size: {x: 3, y: 3, z: 3}
+  m_IsCropModeEnabled: 0
 --- !u!1 &961752720
 GameObject:
   m_ObjectHideFlags: 0
@@ -2017,6 +2041,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &963831349
 GameObject:
   m_ObjectHideFlags: 0
@@ -2068,6 +2093,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 7, y: 7, z: 7}
+  m_IsCropModeEnabled: 0
 --- !u!1 &990709394
 GameObject:
   m_ObjectHideFlags: 0
@@ -2119,6 +2145,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 1.25}
   m_Size: {x: 3, y: 3, z: 3}
+  m_IsCropModeEnabled: 0
 --- !u!1 &990830727
 GameObject:
   m_ObjectHideFlags: 0
@@ -2170,6 +2197,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &993425094
 GameObject:
   m_ObjectHideFlags: 0
@@ -2255,6 +2283,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1075130376
 GameObject:
   m_ObjectHideFlags: 0
@@ -2383,6 +2412,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1119366948
 GameObject:
   m_ObjectHideFlags: 0
@@ -2434,6 +2464,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1125739647
 GameObject:
   m_ObjectHideFlags: 0
@@ -2554,23 +2585,28 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.x
       value: 90
       objectReference: {fileID: 0}
-    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: orthographic
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: orthographic size
       value: 9.31
       objectReference: {fileID: 0}
-    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: far clip plane
       value: 140
       objectReference: {fileID: 0}
-    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: field of view
       value: 10
       objectReference: {fileID: 0}
-    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: near clip plane
       value: 100
       objectReference: {fileID: 0}
@@ -2578,12 +2614,14 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
 --- !u!20 &1155269888 stripped
 Camera:
-  m_CorrespondingSourceObject: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+  m_CorrespondingSourceObject: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
+    type: 3}
   m_PrefabInstance: {fileID: 1155269887}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &1155269889 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+  m_CorrespondingSourceObject: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7,
+    type: 3}
   m_PrefabInstance: {fileID: 1155269887}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
@@ -2726,6 +2764,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 1.3}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1226551044
 GameObject:
   m_ObjectHideFlags: 0
@@ -2812,6 +2851,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1278989599
 GameObject:
   m_ObjectHideFlags: 0
@@ -2839,7 +2879,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1278989599}
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0.1735192, y: -0.000030517578, z: 0.17350769}
+  m_LocalPosition: {x: 0.17351978, y: -0.0004272461, z: -0.17353821}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 993425095}
@@ -2855,9 +2895,9 @@ TextMesh:
   m_GameObject: {fileID: 1278989599}
   m_Text: Opaque
   m_OffsetZ: 0
-  m_CharacterSize: 0.57839745
+  m_CharacterSize: 0.5783994
   m_LineSpacing: 1
-  m_Anchor: 6
+  m_Anchor: 0
   m_Alignment: 0
   m_TabSize: 4
   m_FontSize: 0
@@ -2884,7 +2924,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 306d620c715872046bf76568b7f382d4, type: 3}
+  - {fileID: 2100000, guid: d76269c34e0fa6d438942a0eba5acac8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3120,6 +3160,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: -0.5, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1374306514
 GameObject:
   m_ObjectHideFlags: 0
@@ -3248,6 +3289,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: -0.5, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1391999686
 GameObject:
   m_ObjectHideFlags: 0
@@ -3299,6 +3341,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1428726872
 GameObject:
   m_ObjectHideFlags: 0
@@ -3350,6 +3393,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1433267499
 GameObject:
   m_ObjectHideFlags: 0
@@ -3401,6 +3445,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1434343681
 GameObject:
   m_ObjectHideFlags: 0
@@ -3452,6 +3497,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: -0.5, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1461738263
 GameObject:
   m_ObjectHideFlags: 0
@@ -3508,6 +3554,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1500732975
 GameObject:
   m_ObjectHideFlags: 0
@@ -3559,6 +3606,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1590901740
 GameObject:
   m_ObjectHideFlags: 0
@@ -3610,6 +3658,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 1.3}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1612392929
 GameObject:
   m_ObjectHideFlags: 0
@@ -3661,6 +3710,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 1.3}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1620166035
 GameObject:
   m_ObjectHideFlags: 0
@@ -3712,6 +3762,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 1.25}
   m_Size: {x: 3, y: 3, z: 3}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1621949867
 GameObject:
   m_ObjectHideFlags: 0
@@ -3763,6 +3814,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1667499483
 GameObject:
   m_ObjectHideFlags: 0
@@ -3814,6 +3866,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1669250955
 GameObject:
   m_ObjectHideFlags: 0
@@ -3865,6 +3918,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1671993998
 GameObject:
   m_ObjectHideFlags: 0
@@ -3916,6 +3970,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1807405572
 GameObject:
   m_ObjectHideFlags: 0
@@ -4156,6 +4211,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 1.3}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1870113121
 GameObject:
   m_ObjectHideFlags: 0
@@ -4207,6 +4263,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1960771562
 GameObject:
   m_ObjectHideFlags: 0
@@ -4258,6 +4315,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1967684284
 GameObject:
   m_ObjectHideFlags: 0
@@ -4309,6 +4367,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 1.3}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1984541561
 GameObject:
   m_ObjectHideFlags: 0
@@ -4360,6 +4419,7 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 1.3}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &2027109099
 GameObject:
   m_ObjectHideFlags: 0
@@ -4411,6 +4471,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 2, y: 2, z: 2}
+  m_IsCropModeEnabled: 0
 --- !u!1 &2045259974
 GameObject:
   m_ObjectHideFlags: 0
@@ -4462,6 +4523,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: -0.5, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &2058823762
 GameObject:
   m_ObjectHideFlags: 0
@@ -4543,6 +4605,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &2121937319
 GameObject:
   m_ObjectHideFlags: 0
@@ -4594,6 +4657,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 1, y: 1, z: 1}
+  m_IsCropModeEnabled: 0
 --- !u!1 &2146440396
 GameObject:
   m_ObjectHideFlags: 0
@@ -4645,3 +4709,4 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 1.25}
   m_Size: {x: 3, y: 3, z: 3}
+  m_IsCropModeEnabled: 0

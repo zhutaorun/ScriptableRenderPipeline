@@ -50,7 +50,6 @@ LightmapSettings:
     m_BounceScale: 1
     m_IndirectOutputScale: 1
     m_AlbedoBoost: 1
-    m_TemporalCoherenceThreshold: 1
     m_EnvironmentLightingMode: 0
     m_EnableBakedLightmaps: 1
     m_EnableRealtimeLightmaps: 1
@@ -696,7 +695,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: e336a185a25e22f4cb7286a91a7303a0, type: 2}
+  m_Material: {fileID: 2100000, guid: 35b138af636209645be1e9accbace87f, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
   m_UVScale: {x: 1, y: 1}
@@ -704,6 +703,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 0.85, y: 0.1, z: 0.85}
+  m_IsCropModeEnabled: 0
 --- !u!1 &384391179
 GameObject:
   m_ObjectHideFlags: 0
@@ -1015,7 +1015,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: bd6abf350ef9656459c676aa04fb9f7c, type: 2}
+  m_Material: {fileID: 2100000, guid: e5524ad1eedde6941ae8f23989358b2a, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
   m_UVScale: {x: 1, y: 1}
@@ -1023,6 +1023,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 0.85, y: 0.1, z: 0.85}
+  m_IsCropModeEnabled: 0
 --- !u!1 &670672355
 GameObject:
   m_ObjectHideFlags: 0
@@ -1363,7 +1364,8 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 114733060649624252, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 114733060649624252, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: renderPipelines.Array.size
       value: 3
       objectReference: {fileID: 0}
@@ -1403,11 +1405,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 114733060649624252, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 114733060649624252, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: renderPipelines.Array.data[3]
       value: 
       objectReference: {fileID: 0}
-    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: field of view
       value: 10
       objectReference: {fileID: 0}
@@ -1415,12 +1419,14 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
 --- !u!20 &999330732 stripped
 Camera:
-  m_CorrespondingSourceObject: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+  m_CorrespondingSourceObject: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
+    type: 3}
   m_PrefabInstance: {fileID: 999330731}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &999330733 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+  m_CorrespondingSourceObject: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7,
+    type: 3}
   m_PrefabInstance: {fileID: 999330731}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
@@ -1821,7 +1827,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: bd6abf350ef9656459c676aa04fb9f7c, type: 2}
+  m_Material: {fileID: 2100000, guid: e5524ad1eedde6941ae8f23989358b2a, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
   m_UVScale: {x: 1, y: 1}
@@ -1829,6 +1835,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 0.85, y: 0.1, z: 0.85}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1579636112
 GameObject:
   m_ObjectHideFlags: 0
@@ -2062,7 +2069,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: a0945a454af9ba94eb4fc18bbe13e420, type: 2}
+  m_Material: {fileID: 2100000, guid: 262ecafb2c360e040b659fa3ceb1dc84, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
   m_UVScale: {x: 1, y: 1}
@@ -2070,6 +2077,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 0.85, y: 0.1, z: 0.85}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1836802045
 GameObject:
   m_ObjectHideFlags: 0
@@ -2113,7 +2121,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: bd6abf350ef9656459c676aa04fb9f7c, type: 2}
+  m_Material: {fileID: 2100000, guid: e5524ad1eedde6941ae8f23989358b2a, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
   m_UVScale: {x: 1, y: 1}
@@ -2121,6 +2129,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 0.85, y: 0.1, z: 0.85}
+  m_IsCropModeEnabled: 0
 --- !u!1 &1857545151
 GameObject:
   m_ObjectHideFlags: 0
@@ -2322,7 +2331,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: 06d9bca7d2d5068479f6c2b6e23d2653, type: 2}
+  m_Material: {fileID: 2100000, guid: 14fcd63136105a14d8896bbdfca80a2f, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
   m_UVScale: {x: 1, y: 1}
@@ -2330,6 +2339,7 @@ MonoBehaviour:
   m_AffectsTransparency: 0
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 0.85, y: 0.1, z: 0.85}
+  m_IsCropModeEnabled: 0
 --- !u!1 &2036360994
 GameObject:
   m_ObjectHideFlags: 0
@@ -2373,7 +2383,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19d9143a39eb3b46bc4563e9889cfbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: bd6abf350ef9656459c676aa04fb9f7c, type: 2}
+  m_Material: {fileID: 2100000, guid: e5524ad1eedde6941ae8f23989358b2a, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
   m_UVScale: {x: 1, y: 1}
@@ -2381,3 +2391,4 @@ MonoBehaviour:
   m_AffectsTransparency: 1
   m_Offset: {x: 0, y: 0, z: 0}
   m_Size: {x: 0.85, y: 0.1, z: 0.85}
+  m_IsCropModeEnabled: 0
