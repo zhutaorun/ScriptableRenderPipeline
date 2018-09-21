@@ -614,7 +614,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return coords;
         }
 
-        public void VolumetricLightingPass(HDCamera hdCamera, CommandBuffer cmd, uint frameIndex)
+        public void VolumetricLightingPass(HDCamera hdCamera, CommandBuffer cmd, uint frameIndex, LightLoop.EvsmData evsmData)
         {
             if (!hdCamera.frameSettings.enableVolumetrics)
                 return;
@@ -693,6 +693,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 // TODO: set 'm_VolumetricLightingPreset'.
                 // TODO: set the constant buffer data only once.
+                cmd.SetComputeVectorParam( m_VolumetricLightingCS,         HDShaderIDs._EvsmParams,              evsmData.parameters);
+                cmd.SetComputeTextureParam(m_VolumetricLightingCS, kernel, HDShaderIDs._Shadowmap_EVSM,          evsmData.downsampledShadowAtlas.rt);
                 cmd.SetComputeMatrixParam( m_VolumetricLightingCS,         HDShaderIDs._VBufferCoordToViewDirWS, transform);
                 cmd.SetComputeVectorParam( m_VolumetricLightingCS,         HDShaderIDs._VBufferSampleOffset,     offset);
                 cmd.SetComputeFloatParam(  m_VolumetricLightingCS,         HDShaderIDs._CornetteShanksConstant,  CornetteShanksPhasePartConstant(fog.anisotropy));

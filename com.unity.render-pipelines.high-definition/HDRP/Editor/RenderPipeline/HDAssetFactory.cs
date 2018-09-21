@@ -118,6 +118,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 newAsset.shadowClearShader = Load<Shader>(CorePath + "Shadow/ShadowClear.shader");
                 newAsset.shadowBlurMoments = Load<ComputeShader>(CorePath + "Shadow/ShadowBlurMoments.compute");
                 newAsset.debugShadowMapShader = Load<Shader>(CorePath + "Shadow/DebugDisplayShadowMap.shader");
+                newAsset.downsampleShadowMaps = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipelineResources/DownsampleShadowMaps.compute");
 
                 AssetDatabase.CreateAsset(newAsset, pathName);
                 ProjectWindowUtil.ShowCreatedAsset(newAsset);

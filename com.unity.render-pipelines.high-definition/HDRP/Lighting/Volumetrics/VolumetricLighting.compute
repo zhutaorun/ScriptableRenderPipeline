@@ -11,6 +11,7 @@
 #pragma kernel VolumetricLightingClusteredHQ        VolumetricLighting=VolumetricLightingClusteredHQ        VL_PRESET_HQ ENABLE_REPROJECTION=0 LIGHTLOOP_TILE_PASS   USE_CLUSTERED_LIGHTLIST
 #pragma kernel VolumetricLightingClusteredReprojHQ  VolumetricLighting=VolumetricLightingClusteredReprojHQ  VL_PRESET_HQ ENABLE_REPROJECTION=1 LIGHTLOOP_TILE_PASS   USE_CLUSTERED_LIGHTLIST
 
+#include "CoreRP/ShaderLibrary/Common.hlsl"
 // #pragma enable_d3d11_debug_symbols
 
 #ifdef VL_PRESET_MQ
@@ -25,9 +26,31 @@
 #define GROUP_SIZE_1D                      8
 #define SUPPORT_PUNCTUAL_LIGHTS            1 // Punctual lights contribute to fog lighting
 #define SHADOW_USE_ONLY_VIEW_BASED_BIASING 1 // We don't use normal biasing as it is not available when doing volumetric
+#define SHADOW_USE_VIEW_BIAS_SCALING       1
+#define SHADOW_USE_PREFILTERED_SHADOWS
+//#define SHADOW_EVSM_USE_GLOBAL_PARAMS
 
 #include "../../ShaderPass/ShaderPass.cs.hlsl"
 #define SHADERPASS SHADERPASS_VOLUMETRIC_LIGHTING
+
+//--------------------------------------------------------------------------------------------------
+// Inputs & outputs
+//--------------------------------------------------------------------------------------------------
+
+RW_TEXTURE3D(float4, _VBufferLightingIntegral); // RGB = radiance, A = optical depth
+RW_TEXTURE3D(float4, _VBufferLightingFeedback); // RGB = radiance, A = interval length
+TEXTURE3D(_VBufferLightingHistory);             // RGB = radiance, A = interval length
+TEXTURE3D(_VBufferDensity);                     // RGB = sqrt(scattering), A = sqrt(extinction)
+
+// TODO: avoid creating another Constant Buffer...
+CBUFFER_START(UnityVolumetricLighting)
+    float4x4 _VBufferCoordToViewDirWS;          // Actually just 3x3, but Unity can only set 4x4
+    float4   _VBufferSampleOffset;              // Not used by this shader
+    float4   _EvsmParams;
+    float    _CornetteShanksConstant;           // Not used by this shader
+    uint     _NumVisibleDensityVolumes;
+CBUFFER_END
+
 
 //--------------------------------------------------------------------------------------------------
 // Included headers
@@ -47,23 +70,6 @@
 #include "../LightEvaluation.hlsl"
 
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
-
-//--------------------------------------------------------------------------------------------------
-// Inputs & outputs
-//--------------------------------------------------------------------------------------------------
-
-RW_TEXTURE3D(float4, _VBufferLightingIntegral); // RGB = radiance, A = optical depth
-RW_TEXTURE3D(float4, _VBufferLightingFeedback); // RGB = radiance, A = interval length
-TEXTURE3D(_VBufferLightingHistory);             // RGB = radiance, A = interval length
-TEXTURE3D(_VBufferDensity);                     // RGB = sqrt(scattering), A = sqrt(extinction)
-
-// TODO: avoid creating another Constant Buffer...
-CBUFFER_START(UnityVolumetricLighting)
-    float4x4 _VBufferCoordToViewDirWS;          // Actually just 3x3, but Unity can only set 4x4
-    float4   _VBufferSampleOffset;              // Not used by this shader
-    float    _CornetteShanksConstant;           // Not used by this shader
-    uint     _NumVisibleDensityVolumes;
-CBUFFER_END
 
 //--------------------------------------------------------------------------------------------------
 // Implementation

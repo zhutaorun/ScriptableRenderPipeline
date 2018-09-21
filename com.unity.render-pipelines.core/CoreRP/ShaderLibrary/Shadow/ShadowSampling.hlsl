@@ -405,7 +405,11 @@ real SampleShadow_EVSM_1tap( ShadowContext shadowContext, inout uint payloadOffs
 #else
     real  depth      = tcs.z;
 #endif
+#ifdef SHADOW_EVSM_USE_GLOBAL_PARAMS
+    real4 params = _EvsmParams;
+#else
     real4 params         = asfloat( shadowContext.payloads[payloadOffset] );
+#endif
     real  lightLeakBias = params.x;
     real  varianceBias   = params.y;
     real2 evsmExponents = params.zw;
@@ -439,7 +443,11 @@ real SampleShadow_EVSM_1tap( ShadowContext shadowContext, inout uint payloadOffs
 #else
     real  depth      = tcs.z;
 #endif
+#ifdef SHADOW_EVSM_USE_GLOBAL_PARAMS
+    real4 params = _EvsmParams;
+#else
     real4 params         = asfloat( shadowContext.payloads[payloadOffset] );
+#endif
     real  lightLeakBias = params.x;
     real  varianceBias  = params.y;
     real2 evsmExponents = params.zw;
