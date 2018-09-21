@@ -201,6 +201,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         ComputeBuffer m_DebugScreenSpaceTracingData = null;
         ScreenSpaceTracingDebug[] m_DebugScreenSpaceTracingDataArray = new ScreenSpaceTracingDebug[1];
 
+        static int livingHDRenderPIpelineCounter = 0;
+
         public HDRenderPipeline(HDRenderPipelineAsset asset)
         {
             DebugManager.instance.RefreshEditor();
@@ -213,6 +215,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 return;
             }
+
+#if UNITY_EDITOR
+            // Hide legacy lighting window
+            ++livingHDRenderPIpelineCounter;
+            SupportedRenderingFeatures.active.rendererOverridesEnvironmentLighting = true;
+#endif
 
             m_Asset = asset;
 
@@ -546,6 +554,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public override void Dispose()
         {
             UnsetRenderingFeatures();
+
+#if UNITY_EDITOR
+            // Unhide legacy lighting window
+            if ((--livingHDRenderPIpelineCounter) == 0)
+                SupportedRenderingFeatures.active.rendererOverridesEnvironmentLighting = false;
+#endif
 
             if (!m_ValidAPI)
                 return;
