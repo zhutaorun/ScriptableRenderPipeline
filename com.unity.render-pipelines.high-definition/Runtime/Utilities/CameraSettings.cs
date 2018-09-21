@@ -148,7 +148,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             frustum = Frustum.@default,
             physical = Physical.@default,
             postProcessLayer = null,
-            renderingPath = HDAdditionalCameraData.RenderingPath.Default,
+            renderingPath = HDAdditionalCameraData.RenderingPath.UseGraphicsSettings,
             volumes = Volumes.@default,
             flipYMode = HDAdditionalCameraData.FlipYMode.Automatic
         };
