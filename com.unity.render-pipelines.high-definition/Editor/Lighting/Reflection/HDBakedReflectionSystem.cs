@@ -52,6 +52,47 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         }
 
+        public override bool BakeAllReflectionProbes()
+        {
+            var hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
+            if (hdPipeline == null)
+            {
+                Debug.LogWarning("HDBakedReflectionSystem work with HDRP, " +
+                    "please switch your render pipeline or use another reflection system");
+                return false;
+            }
+
+            DeleteUnusedCubemapAssets();
+
+            var cubemapSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.reflectionCubemapSize;
+            var bakedProbes = HDProbeSystem.bakedProbes;
+
+            var cubeRT = CreateTemporaryCubemapRenderTexture(cubemapSize);
+            for (int i = 0; i < bakedProbes.Count; ++i)
+            {
+                var probe = bakedProbes[i];
+                var bakedTexturePath = HDBakingUtilities.GetBakedTextureFilePath(probe);
+                RenderAndWriteToFile(probe, bakedTexturePath, cubeRT);
+            }
+
+            AssetDatabase.StartAssetEditing();
+            for (int i = 0; i < bakedProbes.Count; ++i)
+            {
+                var probe = bakedProbes[i];
+                var bakedTexturePath = HDBakingUtilities.GetBakedTextureFilePath(probe);
+
+                // Get or create the baked texture asset for the probe
+                var bakedTexture = AssetDatabase.LoadAssetAtPath<Texture>(bakedTexturePath);
+                AssetDatabase.ImportAsset(bakedTexturePath);
+                ImportAssetAt(probe, bakedTexturePath);
+                AssignBakedTexture(probe, bakedTexture);
+            }
+            AssetDatabase.StopAssetEditing();
+            cubeRT.Release();
+
+            return true;
+        }
+
         public override void Tick(
             SceneStateHash sceneStateHash,
             IScriptableBakedReflectionSystemStageNotifier handle
@@ -69,6 +110,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var ambientProbeHash = sceneStateHash.ambientProbeHash;
             var sceneObjectsHash = sceneStateHash.sceneObjectsHash;
             var skySettingsHash = sceneStateHash.skySettingsHash;
+
+            DeleteUnusedCubemapAssets();
 
             // Explanation of the algorithm:
             // 1. First we create the hash of the world that can impact the reflection probes.
@@ -134,13 +177,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 // == 4. ==
                 var cubemapSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.reflectionCubemapSize;
-                var cubeRT = new RenderTexture(cubemapSize, cubemapSize, 1, GraphicsFormat.R16G16B16A16_SFloat)
-                {
-                    dimension = TextureDimension.Cube,
-                    enableRandomWrite = true,
-                    useMipMap = false,
-                    autoGenerateMips = false
-                };
+                var cubeRT = CreateTemporaryCubemapRenderTexture(cubemapSize);
 
                 handle.EnterStage(
                     (int)BakingStages.ReflectionProbes,
@@ -250,6 +287,62 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             handle.ExitStage((int)BakingStages.ReflectionProbes);
 
             handle.SetIsDone(true);
+        }
+
+        // Look in all baked files if some of them are not used anymore
+        void DeleteUnusedCubemapAssets()
+        {
+            var gameObjects = new List<GameObject>();
+            var indices = new List<int>();
+            var scenes = new List<Scene>();
+            SceneObjectIDMap.GetAllIDsForAllScenes(
+                HDBakingUtilities.SceneObjectCategory.ReflectionProbe,
+                gameObjects, indices, scenes
+            );
+
+            var indicesSet = new HashSet<int>(indices);
+            AssetDatabase.StartAssetEditing();
+            // Look for baked assets in scene folders
+            for (int sceneI = 0, sceneC = SceneManager.sceneCount; sceneI< sceneC; ++sceneI)
+            {
+                var scene = SceneManager.GetSceneAt(sceneI);
+                var sceneFolder = HDBakingUtilities.GetBakedTextureDirectory(scene);
+
+                var types = TypeInfo.GetEnumValues<ProbeSettings.ProbeType>();
+                for (int typeI = 0; typeI < types.Length; ++typeI)
+                {
+                    var files = Directory.GetFiles(
+                        sceneFolder,
+                        HDBakingUtilities.HDProbeAssetPattern(types[typeI])
+                    );
+                    ProbeSettings.ProbeType fileProbeType;
+                    int fileIndex;
+                    for (int fileI = 0; fileI < files.Length; ++fileI)
+                    {
+                        if (!HDBakingUtilities.TryParseBakedProbeAssetFileName(
+                            files[fileI], out fileProbeType, out fileIndex
+                        ))
+                            continue;
+
+                        // This file is a baked asset for a destroyed game object
+                        // We can destroy it
+                        if (!indicesSet.Contains(fileIndex))
+                            AssetDatabase.DeleteAsset(files[fileI]);
+                    }
+                }
+            }
+            AssetDatabase.StopAssetEditing();
+        }
+
+        RenderTexture CreateTemporaryCubemapRenderTexture(int cubemapSize)
+        {
+            return new RenderTexture(cubemapSize, cubemapSize, 1, GraphicsFormat.R16G16B16A16_SFloat)
+            {
+                dimension = TextureDimension.Cube,
+                enableRandomWrite = true,
+                useMipMap = false,
+                autoGenerateMips = false
+            };
         }
 
         void AssignBakedTexture(HDProbe probe, Texture bakedTexture)

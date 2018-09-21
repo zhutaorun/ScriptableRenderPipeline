@@ -1631,11 +1631,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         if(hdCamera.frameSettings.enableMSAA)
                         {
                             // In case we are in an MSAA frame, we need to feed both min and max depth of the pixel so that we compute ao values for both depths and resolve the AO afterwards
-                            postProcessLayer.BakeMSVOMap(cmd, camera, m_MultiAmbientOcclusionBuffer, m_SharedRTManager.GetDepthValuesTexture(), true, true);
+                            postProcessLayer.BakeMSVOMap(cmd, camera, m_MultiAmbientOcclusionBuffer, m_SharedRTManager.GetDepthValuesTexture(), true);
                         }
                         else
                         {
-                            postProcessLayer.BakeMSVOMap(cmd, camera, m_AmbientOcclusionBuffer, m_SharedRTManager.GetDepthTexture(), true, false);
+                            postProcessLayer.BakeMSVOMap(cmd, camera, m_AmbientOcclusionBuffer, m_SharedRTManager.GetDepthTexture(), true);
                         }
 
                     cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, m_AmbientOcclusionBuffer);
