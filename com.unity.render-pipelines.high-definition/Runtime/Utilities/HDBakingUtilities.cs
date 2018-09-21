@@ -7,7 +7,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     internal static class HDBakingUtilities
     {
-        const string k_HDProbeAssetFormat = "ReflectionProbe-{0}.exr";
+        const string k_HDProbeAssetFormat = "{0}-{1}.exr";
         static readonly Regex k_HDProbeAssetRegex = new Regex(@"(?<type>ReflectionProbe|PlanarProbe)-(?<index>\d+)\.exr");
 
         public enum SceneObjectCategory
@@ -65,18 +65,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         )
         {
             var cacheDirectory = GetBakedTextureDirectory(scene);
-            var format = string.Empty;
-            switch (probeType)
-            {
-                case ProbeSettings.ProbeType.ReflectionProbe:
-                    format = k_HDProbeAssetFormat;
-                    break;
-                default:
-                    throw new ArgumentException(string.Format("{0} is not handled.", probeType));
-            }
             var targetFile = Path.Combine(
                 cacheDirectory,
-                string.Format(format, index)
+                string.Format(k_HDProbeAssetFormat, probeType, index)
             );
             return targetFile;
         }
