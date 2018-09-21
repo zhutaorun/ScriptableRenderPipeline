@@ -126,9 +126,15 @@ CBUFFER_END
 #elif defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
     static uint unity_StereoEyeIndex;
 #elif defined(UNITY_SINGLE_PASS_STEREO)
+#if SHADER_STAGE_COMPUTE
+    // Currently the Unity engine doesn't automatically update stereo indices, offsets, and matrices for compute shaders.
+    // Instead, we manually update _ComputeEyeIndex in SRP code. 
+    #define unity_StereoEyeIndex _ComputeEyeIndex
+#else
     CBUFFER_START(UnityStereoEyeIndex)
         int unity_StereoEyeIndex;
     CBUFFER_END
+#endif
 #endif
 
 CBUFFER_START(UnityPerDrawRare)
@@ -202,7 +208,7 @@ CBUFFER_START(UnityGlobal)
     float4x4 _NonJitteredViewProjMatrix;
     float4x4 _PrevViewProjMatrix;       // non-jittered
 
-    float _TextureWidthScaling; // 0.5 for SinglePassDoubleWide (stereo) and 1.0 otherwise
+    float4 _TextureWidthScaling; // 0.5 for SinglePassDoubleWide (stereo) and 1.0 otherwise
 
     // TODO: put commonly used vars together (below), and then sort them by the frequency of use (descending).
     // Note: a matrix is 4 * 4 * 4 = 64 bytes (1x cache line), so no need to sort those.
@@ -298,9 +304,26 @@ float4x4 _InvViewMatrixStereo[2];
 float4x4 _InvProjMatrixStereo[2];
 float4x4 _InvViewProjMatrixStereo[2];
 float4x4 _PrevViewProjMatrixStereo[2];
+#if SHADER_STAGE_COMPUTE
+// Currently the Unity engine doesn't automatically update stereo indices, offsets, and matrices for compute shaders.
+// Instead, we manually update _ComputeEyeIndex in SRP code. 
+float _ComputeEyeIndex;
+#endif
 CBUFFER_END
 
 #endif // USING_STEREO_MATRICES
+
+// Note: To sample camera depth in HDRP we provide these utils functions because the way we store the depth mips can change
+// Currently it's an atlas and it's layout can be found at ComputePackedMipChainInfo in HDUtils.cs
+float SampleCameraDepth(uint2 pixelCoords)
+{
+    return LOAD_TEXTURE2D_LOD(_CameraDepthTexture, pixelCoords, 0).r;
+}
+
+float SampleCameraDepth(float2 uv)
+{
+    return SampleCameraDepth(uint2(uv * _ScreenSize.xy));
+}
 
 float4x4 OptimizeProjectionMatrix(float4x4 M)
 {

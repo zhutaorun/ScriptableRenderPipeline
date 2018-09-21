@@ -122,6 +122,9 @@ Shader "HDRenderPipeline/Fabric"
         _MainTex("Albedo", 2D) = "white" {}
         _Color("Color", Color) = (1,1,1,1)
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
+
+        // this will let collapsable element of material be persistant
+        [HideInInspector] _EditorExpendedAreas("_EditorExpendedAreas", Float) = 0
     }
 
     HLSLINCLUDE
@@ -314,6 +317,14 @@ Shader "HDRenderPipeline/Fabric"
             #define LIGHTLOOP_TILE_PASS
             #pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST
             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
+
+            // TODO: remove this once new shadow system works
+            // Only for dev/test purpose, allow to switch dynamically between HD and Core shadow system
+            // #pragma multi_compile _ USE_CORE_SHADOW_SYSTEM
+            
+            // Supported shadow modes per light type
+            #pragma multi_compile PUNCTUAL_SHADOW_LOW PUNCTUAL_SHADOW_MEDIUM PUNCTUAL_SHADOW_HIGH
+            #pragma multi_compile DIRECTIONAL_SHADOW_LOW DIRECTIONAL_SHADOW_MEDIUM DIRECTIONAL_SHADOW_HIGH
 
             #define SHADERPASS SHADERPASS_FORWARD
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderVariables.hlsl"

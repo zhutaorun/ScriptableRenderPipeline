@@ -18,13 +18,13 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         }
     }
 
-    public class LightweightShadowUtils
+    public static class LightweightShadowUtils
     {
         public static bool ExtractDirectionalLightMatrix(ref CullResults cullResults, ref ShadowData shadowData, int shadowLightIndex, int cascadeIndex, int shadowResolution, float shadowNearPlane, out Vector4 cascadeSplitDistance, out ShadowSliceData shadowSliceData, out Matrix4x4 viewMatrix, out Matrix4x4 projMatrix)
         {
             ShadowSplitData splitData;
             bool success = cullResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(shadowLightIndex,
-                cascadeIndex, shadowData.directionalLightCascadeCount, shadowData.directionalLightCascades, shadowResolution, shadowNearPlane, out viewMatrix, out projMatrix,
+                cascadeIndex, shadowData.mainLightShadowCascadesCount, shadowData.mainLightShadowCascadesSplit, shadowResolution, shadowNearPlane, out viewMatrix, out projMatrix,
                 out splitData);
 
             cascadeSplitDistance = splitData.cullingSphere;
@@ -35,8 +35,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             // If we have shadow cascades baked into the atlas we bake cascade transform
             // in each shadow matrix to save shader ALU and L/S
-            if (shadowData.directionalLightCascadeCount > 1)
-                ApplySliceTransform(ref shadowSliceData, shadowData.directionalShadowAtlasWidth, shadowData.directionalShadowAtlasHeight);
+            if (shadowData.mainLightShadowCascadesCount > 1)
+                ApplySliceTransform(ref shadowSliceData, shadowData.mainLightShadowmapWidth, shadowData.mainLightShadowmapHeight);
 
             return success;
         }

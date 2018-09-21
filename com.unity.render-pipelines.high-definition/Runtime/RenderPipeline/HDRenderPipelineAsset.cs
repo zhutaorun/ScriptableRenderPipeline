@@ -7,7 +7,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
         [HideInInspector]
         const int currentVersion = 1;
-
         // Currently m_Version is not used and produce a warning, remove these pragmas at the next version incrementation
 #pragma warning disable 414
         [SerializeField]
@@ -155,6 +154,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public override Material GetDefaultMaterial()
         {
             return m_RenderPipelineResources.defaultDiffuseMaterial;
+        }
+
+        public override Shader GetAutodeskInteractiveShader()
+        {
+            return m_RenderPipelineResources.AutodeskInteractiveShader;
+        }
+
+        public override Shader GetAutodeskInteractiveTransparentShader()
+        {
+            return m_RenderPipelineResources.AutodeskInteractiveTransparentShader;
+        }
+
+        public override Shader GetAutodeskInteractiveMaskedShader()
+        {
+            return m_RenderPipelineResources.AutodeskInteractiveMaskedShader;
         }
 
         // Note: This function is HD specific

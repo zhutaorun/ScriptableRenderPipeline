@@ -326,10 +326,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_SSSBufferManager.InitSSSBuffers(m_GbufferManager, m_Asset.renderPipelineSettings);
             m_SharedRTManager.InitSharedBuffers(m_GbufferManager, m_Asset.renderPipelineSettings, m_Asset.renderPipelineResources);
-
+            
             m_CameraColorBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: false, name: "CameraColor");
             m_CameraSssDiffuseLightingBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, enableRandomWrite: true, name: "CameraSSSDiffuseLighting");
-            m_CameraColorBufferMipChain = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: true, autoGenerateMips: false, name: "CameraColorBufferMipChain");
+            m_CameraColorBufferMipChain = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: true, autoGenerateMips: false, name: "CameraColorBufferMipChain"); 
 
             if (settings.supportSSAO)
             {
@@ -450,12 +450,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return false;
             }
 
-            // VR is not supported currently in HD
-            //if (XRGraphicsConfig.enabled)
-            //{
-            //    CoreUtils.DisplayUnsupportedXRMessage();
-            //    return false;
-            //}
             return true;
         }
 
@@ -630,9 +624,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 // Set up UnityPerView CBuffer.
                 hdCamera.SetupGlobalParams(cmd, m_Time, m_LastTime, m_FrameCount);
-                if (hdCamera.frameSettings.enableStereo)
-                    hdCamera.SetupGlobalStereoParams(cmd);
-
+                
                 cmd.SetGlobalVector(HDShaderIDs._IndirectLightingMultiplier, new Vector4(VolumeManager.instance.stack.GetComponent<IndirectLightingController>().indirectDiffuseIntensity, 0, 0, 0));
 
                 PushGlobalRTHandle(
@@ -789,6 +781,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // TODO: Render only visible probes
             var probeTypeToRender = ReflectionProbeType.ReflectionProbe;
+            // Caution: Enumerable.Any generate 32B of garbage at each frame here !
             var isPlanarReflection = cameras.Any(c => c.cameraType == CameraType.Reflection);
             if (isPlanarReflection)
                 probeTypeToRender |= ReflectionProbeType.PlanarReflection;
@@ -879,6 +872,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         m_SharedRTManager.SetNumMSAASamples(m_MSAASamples);
                     }
 
+                    // Caution: Component.GetComponent() generate 0.6KB of garbage at each frame here !
                     var postProcessLayer = camera.GetComponent<PostProcessLayer>();
 
                     // Disable post process if we enable debug mode or if the post process layer is disabled
@@ -1049,11 +1043,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // We can't currently render object velocity after depth prepass because if there is no depth prepass we can have motion vector write that should have been rejected
                     RenderCameraVelocity(m_CullResults, hdCamera, renderContext, cmd);
 
+                    StopStereoRendering(cmd, renderContext, hdCamera);
                     // Caution: We require sun light here as some skies use the sun light to render, it means that UpdateSkyEnvironment must be called after PrepareLightsForGPU.
                     // TODO: Try to arrange code so we can trigger this call earlier and use async compute here to run sky convolution during other passes (once we move convolution shader to compute).
                     UpdateSkyEnvironment(hdCamera, cmd);
 
-                    StopStereoRendering(cmd, renderContext, hdCamera);
 
                     if (m_CurrentDebugDisplaySettings.IsDebugMaterialDisplayEnabled())
                     {
@@ -1106,13 +1100,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                             // Overwrite camera properties set during the shadow pass with the original camera properties.
                             renderContext.SetupCameraProperties(camera, hdCamera.frameSettings.enableStereo);
-                            hdCamera.SetupGlobalParams(cmd, m_Time, m_LastTime, m_FrameCount);
-                            if (hdCamera.frameSettings.enableStereo)
-                                hdCamera.SetupGlobalStereoParams(cmd);
+                            hdCamera.SetupGlobalParams(cmd, m_Time, m_LastTime, m_FrameCount);                            
                         }
 
                         using (new ProfilingSample(cmd, "Screen space shadows", CustomSamplerId.ScreenSpaceShadows.GetSampler()))
                         {
+
+                            StartStereoRendering(cmd, renderContext, hdCamera);
                             // When debug is enabled we need to clear otherwise we may see non-shadows areas with stale values.
                             if (m_CurrentDebugDisplaySettings.fullScreenDebugMode == FullScreenDebugMode.ScreenSpaceShadows)
                             {
@@ -1127,6 +1121,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             m_LightLoop.RenderScreenSpaceShadows(hdCamera, m_ScreenSpaceShadowsBuffer, hdCamera.frameSettings.enableMSAA ? m_SharedRTManager.GetDepthValuesTexture() : m_SharedRTManager.GetDepthTexture(), cmd);
 
                             PushFullScreenDebugTexture(hdCamera, cmd, m_ScreenSpaceShadowsBuffer, FullScreenDebugMode.ScreenSpaceShadows);
+                            StopStereoRendering(cmd, renderContext, hdCamera);
                         }
 
                         if (hdCamera.frameSettings.enableAsyncCompute)
@@ -1155,10 +1150,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         // The pass requires the volume properties, the light list and the shadows, and can run async.
                         m_VolumetricLightingSystem.VolumetricLightingPass(hdCamera, cmd, m_FrameCount);
 
-                        RenderDeferredLighting(hdCamera, cmd);
-
                         // Might float this higher if we enable stereo w/ deferred
                         StartStereoRendering(cmd, renderContext, hdCamera);
+
+                        RenderDeferredLighting(hdCamera, cmd);
+
 
                         RenderForward(m_CullResults, hdCamera, renderContext, cmd, ForwardPass.Opaque);
 
@@ -1738,6 +1734,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // In case of forward SSS we will bind all the required target. It is up to the shader to write into it or not.
                     if (hdCamera.frameSettings.enableSubsurfaceScattering)
                     {
+                        // Caution new RenderTargetIdentifier[] generate 160B of garbage at each frame here !
                         RenderTargetIdentifier[] m_MRTWithSSS = new RenderTargetIdentifier[2 + m_SSSBufferManager.sssBufferCount];
                         if(hdCamera.frameSettings.enableMSAA)
                         {
