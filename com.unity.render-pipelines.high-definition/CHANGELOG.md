@@ -4,8 +4,7 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [3.4.0-preview]
-
+## [4.0.0-preview] - 2019-09-21
 ### Added
 - Added a new TerrainLit shader that supports rendering of Unity terrains.
 - Added controls for linear fade at the boundary of density volumes
@@ -16,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added a Fabric shader (experimental) handling cotton and silk
 - Added support for MSAA in forward only for opaque only
 - Implement smoothness fade for SSR
+- Added support for AxF shader (X-rite format - require special AxF importer from Unity not part of HDRP)
+- Added control for sundisc on directional light (hack)
 
 ### Fixed
 - Fixed an issue where sometimes the deferred shadow texture would not be valid, causing wrong rendering.
@@ -33,6 +34,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed camera motion vectors shader and associated matrices to update correctly for single-pass double-wide stereo rendering
 - Fixed light attenuation functions when range attenuation is disabled
 - Fixed shadow component algorithm fixup not dirtying the scene, so changes can be saved to disk.
+= Fixed GC leaks for decals
+- Fixed contact shadow not affected by shadow dimmer
+- Fixed GGX that works correctly for the roughness value of 0 (mean specular highlgiht will disappeard for perfect mirror, we rely on maxSmoothness instead to always have a highlight even on mirror surface)
 
 ### Changed
 - Changed the way depth & color pyramids are built to be faster and better quality, thus improving the look of distortion and refraction.
@@ -48,6 +52,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated decal gizmo
 - Optimization: The objects that are rendered in the Motion Vector Pass are not rendered in the prepass anymore
 - Removed setting shader inclue path via old API, use package shader include paths
+- The default value of 'maxSmoothness' for punctual lights has been changed to 0.99
 
 ## [3.3.0-preview]
 

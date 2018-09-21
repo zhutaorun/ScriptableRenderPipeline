@@ -337,12 +337,6 @@ Shader "HDRenderPipeline/LayeredLit"
         [ToggleUI] _LinkDetailsWithBase2("LinkDetailsWithBase2", Float) = 1.0
         [ToggleUI] _LinkDetailsWithBase3("LinkDetailsWithBase3", Float) = 1.0
 
-        [HideInInspector] _ShowMaterialReferences("_ShowMaterialReferences", Float) = 0
-        [HideInInspector] _ShowLayer0("_ShowLayer0", Float) = 0
-        [HideInInspector] _ShowLayer1("_ShowLayer1", Float) = 0
-        [HideInInspector] _ShowLayer2("_ShowLayer2", Float) = 0
-        [HideInInspector] _ShowLayer3("_ShowLayer3", Float) = 0
-
         // Transparency
         [ToggleUI] _PreRefractionPass("PreRefractionPass", Float) = 0.0
 
@@ -352,6 +346,15 @@ Shader "HDRenderPipeline/LayeredLit"
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 
         [ToggleUI] _SupportDecals("Support Decals", Float) = 1.0
+
+        // this will let collapsable element of material be persistant
+        //this will also replace in a more concise way:
+        //- _ShowMaterialReferences
+        //- _ShowLayer0
+        //- _ShowLayer1
+        //- _ShowLayer2
+        //- _ShowLayer3
+        [HideInInspector] _EditorExpendedAreas("_EditorExpendedAreas", Float) = 0
     }
 
     HLSLINCLUDE
@@ -618,7 +621,11 @@ Shader "HDRenderPipeline/LayeredLit"
             #define SHADERPASS SHADERPASS_VELOCITY
             #include "../../ShaderVariables.hlsl"
             #include "../../Material/Material.hlsl"
+            #ifdef WRITE_NORMAL_BUFFER // If enabled we need all regular interpolator
+            #include "../Lit/ShaderPass/LitSharePass.hlsl"
+            #else
             #include "../Lit/ShaderPass/LitVelocityPass.hlsl"
+            #endif
             #include "LayeredLitData.hlsl"
             #include "../../ShaderPass/ShaderPassVelocity.hlsl"
 
@@ -711,6 +718,14 @@ Shader "HDRenderPipeline/LayeredLit"
             #pragma multi_compile _ SHADOWS_SHADOWMASK
             // Setup DECALS_OFF so the shader stripper can remove variants
             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
+            
+            // TODO: remove this once new shadow system works
+            // Only for dev/test purpose, allow to switch dynamically between HD and Core shadow system
+            // #pragma multi_compile _ USE_CORE_SHADOW_SYSTEM
+            
+            // Supported shadow modes per light type
+            #pragma multi_compile PUNCTUAL_SHADOW_LOW PUNCTUAL_SHADOW_MEDIUM PUNCTUAL_SHADOW_HIGH
+            #pragma multi_compile DIRECTIONAL_SHADOW_LOW DIRECTIONAL_SHADOW_MEDIUM DIRECTIONAL_SHADOW_HIGH
 
             // #include "../../Lighting/Forward.hlsl"
             //#pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS

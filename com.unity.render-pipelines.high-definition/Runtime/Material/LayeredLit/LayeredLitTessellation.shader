@@ -362,6 +362,9 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 
         [ToggleUI] _SupportDecals("Support Decals", Float) = 1.0
+
+        // this will let collapsable element of material be persistant
+        [HideInInspector] _EditorExpendedAreas("_EditorExpendedAreas", Float) = 0
     }
 
     HLSLINCLUDE
@@ -646,7 +649,11 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
             #define SHADERPASS SHADERPASS_VELOCITY
             #include "../../ShaderVariables.hlsl"
             #include "../../Material/Material.hlsl"
+            #ifdef WRITE_NORMAL_BUFFER // If enabled we need all regular interpolator
+            #include "../Lit/ShaderPass/LitSharePass.hlsl"
+            #else
             #include "../Lit/ShaderPass/LitVelocityPass.hlsl"
+            #endif
             #include "LayeredLitData.hlsl"
             #include "../../ShaderPass/ShaderPassVelocity.hlsl"
 
@@ -748,6 +755,14 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
             #pragma multi_compile _ SHADOWS_SHADOWMASK
             // Setup DECALS_OFF so the shader stripper can remove variants
             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
+            
+            // TODO: remove this once new shadow system works
+            // Only for dev/test purpose, allow to switch dynamically between HD and Core shadow system
+            // #pragma multi_compile _ USE_CORE_SHADOW_SYSTEM
+
+            // Supported shadow modes per light type
+            #pragma multi_compile PUNCTUAL_SHADOW_LOW PUNCTUAL_SHADOW_MEDIUM PUNCTUAL_SHADOW_HIGH
+            #pragma multi_compile DIRECTIONAL_SHADOW_LOW DIRECTIONAL_SHADOW_MEDIUM DIRECTIONAL_SHADOW_HIGH
 
             // #include "../../Lighting/Forward.hlsl"
             //#pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
