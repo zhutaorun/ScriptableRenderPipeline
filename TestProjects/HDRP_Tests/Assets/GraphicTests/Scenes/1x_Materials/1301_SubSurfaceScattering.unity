@@ -50,7 +50,6 @@ LightmapSettings:
     m_BounceScale: 1
     m_IndirectOutputScale: 1
     m_AlbedoBoost: 1
-    m_TemporalCoherenceThreshold: 1
     m_EnvironmentLightingMode: 0
     m_EnableBakedLightmaps: 1
     m_EnableRealtimeLightmaps: 1
@@ -188,7 +187,8 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: b579c7fa4fa7b4b41aad9c740d4c6c79, type: 3}
 --- !u!4 &2250932 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 400000, guid: b579c7fa4fa7b4b41aad9c740d4c6c79, type: 3}
+  m_CorrespondingSourceObject: {fileID: 400000, guid: b579c7fa4fa7b4b41aad9c740d4c6c79,
+    type: 3}
   m_PrefabInstance: {fileID: 2250931}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &32904071
@@ -292,6 +292,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -310,6 +312,9 @@ MonoBehaviour:
   displayLightIntensity: 50000
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &32904075
 Light:
   m_ObjectHideFlags: 0
@@ -560,6 +565,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -578,6 +585,9 @@ MonoBehaviour:
   displayLightIntensity: 50000
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &67532669
 Light:
   m_ObjectHideFlags: 0
@@ -715,6 +725,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -733,6 +745,9 @@ MonoBehaviour:
   displayLightIntensity: 2000
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &82246394
 Light:
   m_ObjectHideFlags: 0
@@ -904,6 +919,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -922,6 +939,9 @@ MonoBehaviour:
   displayLightIntensity: 2000
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &112662932
 Light:
   m_ObjectHideFlags: 0
@@ -1059,6 +1079,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -1077,6 +1099,9 @@ MonoBehaviour:
   displayLightIntensity: 2000
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &114217713
 Light:
   m_ObjectHideFlags: 0
@@ -1149,7 +1174,8 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -360}
 --- !u!4 &156921211 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+  m_CorrespondingSourceObject: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+    type: 3}
   m_PrefabInstance: {fileID: 3779317459111865126}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &189121542
@@ -1191,7 +1217,8 @@ PrefabInstance:
       propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: far clip plane
       value: 30
       objectReference: {fileID: 0}
@@ -1207,19 +1234,23 @@ PrefabInstance:
       propertyPath: m_LocalScale.z
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: near clip plane
       value: 10
       objectReference: {fileID: 0}
-    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: field of view
       value: 20
       objectReference: {fileID: 0}
-    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: ImageComparisonSettings.TargetHeight
       value: 360
       objectReference: {fileID: 0}
-    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: ImageComparisonSettings.TargetWidth
       value: 640
       objectReference: {fileID: 0}
@@ -1324,6 +1355,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -1342,6 +1375,9 @@ MonoBehaviour:
   displayLightIntensity: 2000
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &249990722
 Light:
   m_ObjectHideFlags: 0
@@ -1530,6 +1566,7 @@ Material:
     - _DoubleSidedNormalMode: 1
     - _Drag: 1
     - _DstBlend: 0
+    - _EditorExpendedAreas: 0
     - _EmissiveColorMode: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
@@ -1875,6 +1912,7 @@ Material:
     - _DoubleSidedNormalMode: 1
     - _Drag: 1
     - _DstBlend: 0
+    - _EditorExpendedAreas: 0
     - _EmissiveColorMode: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
@@ -1968,63 +2006,78 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 105027694}
     m_Modifications:
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.04
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.z
       value: -0.09
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.x
       value: 0.000000077229444
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.y
       value: -0.94806176
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.z
       value: 0.000000025911415
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.w
       value: 0.31808642
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_RootOrder
       value: 2
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: -142.906
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225844349, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225844349, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_Name
       value: Candle_02 (1)
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.x
       value: 1.407492
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.y
       value: 1.4074913
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.z
       value: 1.407492
       objectReference: {fileID: 0}
@@ -2032,7 +2085,8 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
 --- !u!4 &305192800 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+  m_CorrespondingSourceObject: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+    type: 3}
   m_PrefabInstance: {fileID: 305192799}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &313955622
@@ -2219,6 +2273,7 @@ Material:
     - _DoubleSidedNormalMode: 1
     - _Drag: 1
     - _DstBlend: 0
+    - _EditorExpendedAreas: 0
     - _EmissiveColorMode: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
@@ -2312,67 +2367,83 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 313955623}
     m_Modifications:
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.15
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.z
       value: -1.12
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.x
       value: 0.000000026457535
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.y
       value: -0.8294992
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.z
       value: 0.00000007704407
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.w
       value: -0.55850786
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_RootOrder
       value: 3
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: -247.905
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225844349, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225844349, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_Name
       value: Candle_02 (2)
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.x
       value: 1.1728326
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.y
       value: 1.172832
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.z
       value: 1.1728326
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459227772093, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459227772093, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 919ed9fcf51d51e4488b4a0a318332de, type: 2}
@@ -2380,7 +2451,8 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
 --- !u!4 &350449297 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+  m_CorrespondingSourceObject: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+    type: 3}
   m_PrefabInstance: {fileID: 350449296}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &373477913
@@ -2579,6 +2651,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 2
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -2597,6 +2671,9 @@ MonoBehaviour:
   displayLightIntensity: 0.2
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &381281795
 Light:
   m_ObjectHideFlags: 0
@@ -2748,6 +2825,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -2766,6 +2845,9 @@ MonoBehaviour:
   displayLightIntensity: 2000
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &397456630
 Light:
   m_ObjectHideFlags: 0
@@ -3017,6 +3099,7 @@ Material:
     - _DoubleSidedNormalMode: 1
     - _Drag: 1
     - _DstBlend: 0
+    - _EditorExpendedAreas: 0
     - _EmissiveColorMode: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
@@ -3143,67 +3226,83 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 313955623}
     m_Modifications:
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.36
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.z
       value: 1.02
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.x
       value: 0.000000057601167
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.y
       value: -0.7071068
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.z
       value: 0.000000057601163
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.w
       value: 0.7071068
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_RootOrder
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225844349, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225844349, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_Name
       value: Candle_02
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.x
       value: 1.9043512
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.y
       value: 1.9043503
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.z
       value: 1.9043512
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459227772093, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459227772093, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 919ed9fcf51d51e4488b4a0a318332de, type: 2}
@@ -3211,7 +3310,8 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
 --- !u!4 &483535369 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+  m_CorrespondingSourceObject: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+    type: 3}
   m_PrefabInstance: {fileID: 483535368}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &528761557
@@ -3564,6 +3664,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -3582,6 +3684,9 @@ MonoBehaviour:
   displayLightIntensity: 100
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &568802914
 Light:
   m_ObjectHideFlags: 0
@@ -4388,12 +4493,14 @@ MeshRenderer:
   m_SortingOrder: 0
 --- !u!20 &861912385 stripped
 Camera:
-  m_CorrespondingSourceObject: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+  m_CorrespondingSourceObject: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
+    type: 3}
   m_PrefabInstance: {fileID: 189121542}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &861912386 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+  m_CorrespondingSourceObject: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7,
+    type: 3}
   m_PrefabInstance: {fileID: 189121542}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
@@ -4552,6 +4659,7 @@ Material:
     - _DoubleSidedNormalMode: 1
     - _Drag: 1
     - _DstBlend: 0
+    - _EditorExpendedAreas: 0
     - _EmissiveColorMode: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
@@ -4882,6 +4990,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -4900,6 +5010,9 @@ MonoBehaviour:
   displayLightIntensity: 50000
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &935747173
 Light:
   m_ObjectHideFlags: 0
@@ -5121,7 +5234,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 66d6c688291ac8b48adc878e4fc4d29d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  prefabObject: {fileID: 23096287020260212, guid: e6be141ec19d3554489da286b19b90b2, type: 2}
+  prefabObject: {fileID: 23096287020260212, guid: e6be141ec19d3554489da286b19b90b2,
+    type: 3}
   material: {fileID: 2100000, guid: 102e9c4c7295b2c4b9976573e89a059b, type: 2}
   commonParameters: []
   is2D: 0
@@ -5276,7 +5390,8 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: b579c7fa4fa7b4b41aad9c740d4c6c79, type: 3}
 --- !u!4 &1090084397 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 400000, guid: b579c7fa4fa7b4b41aad9c740d4c6c79, type: 3}
+  m_CorrespondingSourceObject: {fileID: 400000, guid: b579c7fa4fa7b4b41aad9c740d4c6c79,
+    type: 3}
   m_PrefabInstance: {fileID: 1090084396}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1103886324
@@ -5461,6 +5576,7 @@ Material:
     - _DoubleSidedNormalMode: 1
     - _Drag: 1
     - _DstBlend: 0
+    - _EditorExpendedAreas: 0
     - _EmissiveColorMode: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
@@ -5646,6 +5762,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -5664,6 +5782,9 @@ MonoBehaviour:
   displayLightIntensity: 5000
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &1119774104
 Light:
   m_ObjectHideFlags: 0
@@ -5803,6 +5924,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -5821,6 +5944,9 @@ MonoBehaviour:
   displayLightIntensity: 50000
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &1202760083
 Light:
   m_ObjectHideFlags: 0
@@ -6267,7 +6393,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Version: 1
-  shadowResolution: 128
+  shadowResolution: 256
   shadowDimmer: 1
   shadowFadeDistance: 10000
   contactShadows: 0
@@ -6292,13 +6418,15 @@ MonoBehaviour:
   - 0.2
   - 0.2
   shadowAlgorithm: 0
-  shadowVariant: 2
+  shadowVariant: 3
   shadowPrecision: 0
   shadowData:
-    format: 0
+    format: 3
     data: 000000000000803f
   shadowDatas:
   - format: 0
+    data: 000000000000803f
+  - format: 3
     data: 000000000000803f
 --- !u!114 &1411009874
 MonoBehaviour:
@@ -6322,6 +6450,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -6340,6 +6470,9 @@ MonoBehaviour:
   displayLightIntensity: 30000
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &1411009875
 Light:
   m_ObjectHideFlags: 0
@@ -7240,6 +7373,7 @@ Material:
     - _DoubleSidedNormalMode: 1
     - _Drag: 1
     - _DstBlend: 0
+    - _EditorExpendedAreas: 0
     - _EmissiveColorMode: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
@@ -7397,13 +7531,15 @@ MonoBehaviour:
   - 0.2
   - 0.2
   shadowAlgorithm: 0
-  shadowVariant: 2
+  shadowVariant: 3
   shadowPrecision: 0
   shadowData:
-    format: 0
+    format: 3
     data: 000000000000803f
   shadowDatas:
   - format: 0
+    data: 000000000000803f
+  - format: 3
     data: 000000000000803f
 --- !u!114 &1580867141
 MonoBehaviour:
@@ -7427,6 +7563,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -7445,6 +7583,9 @@ MonoBehaviour:
   displayLightIntensity: 500000
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &1580867142
 Light:
   m_ObjectHideFlags: 0
@@ -7633,6 +7774,7 @@ Material:
     - _DoubleSidedNormalMode: 1
     - _Drag: 1
     - _DstBlend: 0
+    - _EditorExpendedAreas: 0
     - _EmissiveColorMode: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
@@ -7794,7 +7936,8 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: b579c7fa4fa7b4b41aad9c740d4c6c79, type: 3}
 --- !u!4 &1606416539 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 400000, guid: b579c7fa4fa7b4b41aad9c740d4c6c79, type: 3}
+  m_CorrespondingSourceObject: {fileID: 400000, guid: b579c7fa4fa7b4b41aad9c740d4c6c79,
+    type: 3}
   m_PrefabInstance: {fileID: 1606416538}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1607820275
@@ -7898,6 +8041,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -7916,6 +8061,9 @@ MonoBehaviour:
   displayLightIntensity: 50000
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &1607820279
 Light:
   m_ObjectHideFlags: 0
@@ -7961,63 +8109,78 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 105027694}
     m_Modifications:
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.21
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.z
       value: -1.3
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.x
       value: 0.000000026457535
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.y
       value: -0.8294992
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.z
       value: 0.00000007704407
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.w
       value: -0.55850786
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_RootOrder
       value: 3
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: -247.905
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225844349, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225844349, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_Name
       value: Candle_02 (2)
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.x
       value: 1.1728326
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.y
       value: 1.172832
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.z
       value: 1.1728326
       objectReference: {fileID: 0}
@@ -8025,7 +8188,8 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
 --- !u!4 &1628349635 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+  m_CorrespondingSourceObject: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+    type: 3}
   m_PrefabInstance: {fileID: 1628349634}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1647460994
@@ -8287,6 +8451,7 @@ Material:
     - _DoubleSidedNormalMode: 1
     - _Drag: 1
     - _DstBlend: 0
+    - _EditorExpendedAreas: 0
     - _EmissiveColorMode: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
@@ -8474,6 +8639,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -8492,6 +8659,9 @@ MonoBehaviour:
   displayLightIntensity: 50000
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &1697228117
 Light:
   m_ObjectHideFlags: 0
@@ -8537,67 +8707,83 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 313955623}
     m_Modifications:
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.04
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.z
       value: -0.09
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.x
       value: 0.000000077229444
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.y
       value: -0.94806176
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.z
       value: 0.000000025911415
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.w
       value: 0.31808642
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_RootOrder
       value: 2
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: -142.906
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225844349, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225844349, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_Name
       value: Candle_02 (1)
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.x
       value: 1.407492
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.y
       value: 1.4074913
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.z
       value: 1.407492
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459227772093, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459227772093, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 919ed9fcf51d51e4488b4a0a318332de, type: 2}
@@ -8605,7 +8791,8 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
 --- !u!4 &1748227758 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+  m_CorrespondingSourceObject: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+    type: 3}
   m_PrefabInstance: {fileID: 1748227757}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1748524277
@@ -8981,6 +9168,7 @@ Material:
     - _DoubleSidedNormalMode: 1
     - _Drag: 1
     - _DstBlend: 0
+    - _EditorExpendedAreas: 0
     - _EmissiveColorMode: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
@@ -9371,6 +9559,7 @@ Material:
     - _DoubleSidedNormalMode: 1
     - _Drag: 1
     - _DstBlend: 0
+    - _EditorExpendedAreas: 0
     - _EmissiveColorMode: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
@@ -9768,13 +9957,15 @@ MonoBehaviour:
   - 0.2
   - 0.2
   shadowAlgorithm: 0
-  shadowVariant: 2
+  shadowVariant: 3
   shadowPrecision: 0
   shadowData:
-    format: 0
+    format: 3
     data: 000000000000803f
   shadowDatas:
   - format: 0
+    data: 000000000000803f
+  - format: 3
     data: 000000000000803f
 --- !u!114 &2088950070
 MonoBehaviour:
@@ -9798,6 +9989,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -9816,6 +10009,9 @@ MonoBehaviour:
   displayLightIntensity: 500000
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &2088950071
 Light:
   m_ObjectHideFlags: 0
@@ -10061,63 +10257,78 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 105027694}
     m_Modifications:
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.36
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalPosition.z
       value: 1.02
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.x
       value: 0.000000057601167
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.y
       value: -0.7071068
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.z
       value: 0.000000057601163
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalRotation.w
       value: 0.7071068
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_RootOrder
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225844349, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225844349, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_Name
       value: Candle_02
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.x
       value: 1.9043512
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.y
       value: 1.9043503
       objectReference: {fileID: 0}
-    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e, type: 3}
+    - target: {fileID: 3779317459225478749, guid: 253cecc547a4cef4fbbc2fe4c1221e1e,
+        type: 3}
       propertyPath: m_LocalScale.z
       value: 1.9043512
       objectReference: {fileID: 0}
