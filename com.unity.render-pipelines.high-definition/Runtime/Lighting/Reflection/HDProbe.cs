@@ -33,6 +33,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             get
             {
                 var settings = ProbeSettings.@default;
+                settings.type = probeType;
                 settings.influence = influenceVolume;
                 settings.linkedProxy = proxyVolume != null ? proxyVolume.proxyVolume : null;
                 settings.camera.frameSettings = frameSettings;
@@ -48,6 +49,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return settings;
             }
         }
+
+        public virtual ProbeSettings.ProbeType probeType { get { return ProbeSettings.ProbeType.ReflectionProbe; } }
 
 
         RenderTexture m_RealtimeTexture = null;

@@ -7,6 +7,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     [ExecuteInEditMode]
     public class PlanarReflectionProbe : HDProbe, ISerializationCallbackReceiver
     {
+        public struct RenderData
+        {
+            public Matrix4x4 worldToCameraRHS;
+            public Matrix4x4 projectionMatrix;
+        }
+
         const int currentVersion = 2;
 
         [SerializeField, FormerlySerializedAs("version")]
@@ -39,6 +45,38 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [SerializeField]
         [Range(0, 180)]
         float m_FieldOfViewOverride = 90;
+
+        [SerializeField]
+        Vector3 m_LocalReferencePosition;
+        [SerializeField]
+        RenderData m_BakedRenderData;
+        [SerializeField]
+        RenderData m_CustomRenderData;
+        RenderData m_RealtimeRenderData;
+
+        public override ProbeSettings.ProbeType probeType { get { return ProbeSettings.ProbeType.PlanarProbe; } }
+
+        public RenderData bakedRenderData { get { return m_BakedRenderData; } internal set { m_BakedRenderData = value; } }
+        public RenderData customRenderData { get { return m_CustomRenderData; } internal set { m_CustomRenderData = value; } }
+        public RenderData realtimeRenderData { get { return m_RealtimeRenderData; } internal set { m_RealtimeRenderData = value; } }
+        public RenderData renderData
+        {
+            get
+            {
+                switch (mode)
+                {
+                    default:
+                    case ReflectionProbeMode.Baked:
+                        return bakedRenderData;
+                    case ReflectionProbeMode.Custom:
+                        return customRenderData;
+                    case ReflectionProbeMode.Realtime:
+                        return realtimeRenderData;
+                }
+            }
+        }
+
+        public Vector3 referencePosition { get { return transform.TransformPoint(m_LocalReferencePosition); } }
 
         public bool overrideFieldOfView { get { return m_OverrideFieldOfView; } }
         public float fieldOfViewOverride { get { return m_FieldOfViewOverride; } }
@@ -141,13 +179,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 ReflectionSystem.RequestRealtimeRender(this);
         }
 
-        void OnEnable()
+        internal override void OnEnable()
         {
+            base.OnEnable();
             ReflectionSystem.RegisterProbe(this);
         }
 
-        void OnDisable()
+        internal override void OnDisable()
         {
+            base.OnDisable();
             ReflectionSystem.UnregisterProbe(this);
         }
 

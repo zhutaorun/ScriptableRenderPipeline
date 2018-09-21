@@ -88,7 +88,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 if (roots[i].name == SceneObjectIDMapSceneAsset.k_GameObjectName)
                 {
                     map = roots[i].GetComponent<SceneObjectIDMapSceneAsset>();
-                    map.gameObject.hideFlags = HideFlags.None;
                     return true;
                 }
             }

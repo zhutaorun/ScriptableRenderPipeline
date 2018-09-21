@@ -48,5 +48,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             return GeometryUtils.CalculateWorldToCameraMatrixRHS(position, rotation);
         }
+
+        public Matrix4x4 GetUsedWorldToCameraMatrix()
+        {
+            switch (mode)
+            {
+                case Mode.ComputeWorldToCameraMatrix: return ComputeWorldToCameraMatrix();
+                case Mode.UseWorldToCameraMatrixField: return worldToCameraMatrix;
+                default: throw new ArgumentException();
+            }
+        }
     }
 }

@@ -143,9 +143,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 d.multiplier.floatValue = Mathf.Max(0.0f, d.multiplier.floatValue);
         }
 
-        static void Drawer_FieldCaptureType(HDProbeUI s, SerializedHDProbe d, Editor o)
+        protected static void Drawer_FieldCaptureType(HDProbeUI s, SerializedHDProbe d, Editor o)
         {
-            GUI.enabled = false;
+            //GUI.enabled = false;
             EditorGUILayout.PropertyField(d.mode, fieldCaptureTypeContent);
             GUI.enabled = true;
         }

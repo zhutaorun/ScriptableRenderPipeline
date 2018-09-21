@@ -63,18 +63,30 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public static ProbeCapturePositionSettings ComputeFrom(HDProbe probe, Transform reference)
         {
+            var referencePosition = Vector3.zero;
+            var referenceRotation = Quaternion.identity;
+            if (reference != null)
+            {
+                referencePosition = reference.position;
+                referenceRotation = reference.rotation;
+            }
+
+            return ComputeFrom(probe, referencePosition, referenceRotation);
+        }
+
+        public static ProbeCapturePositionSettings ComputeFrom(
+            HDProbe probe,
+            Vector3 referencePosition, Quaternion referenceRotation
+        )
+        {
             var result = new ProbeCapturePositionSettings();
             var proxyTransform = probe.proxyVolume != null
                 ? probe.proxyVolume.transform
                 : probe.transform;
             result.proxyPosition = proxyTransform.position;
             result.proxyRotation = proxyTransform.rotation;
-
-            if (reference != null)
-            {
-                result.referencePosition = reference.position;
-                result.referenceRotation = reference.rotation;
-            }
+            result.referencePosition = referencePosition;
+            result.referenceRotation = referenceRotation;
             return result;
         }
 

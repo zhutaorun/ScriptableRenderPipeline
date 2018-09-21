@@ -18,19 +18,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             add.SetPersistentFrameSettings(settings.frameSettings);
             // Frustum
-            switch (settings.frustum.mode)
-            {
-                case CameraSettings.Frustum.Mode.UseProjectionMatrixField:
-                    cam.projectionMatrix = settings.frustum.projectionMatrix;
-                    break;
-                case CameraSettings.Frustum.Mode.ComputeProjectionMatrix:
-                    cam.nearClipPlane = settings.frustum.nearClipPlane;
-                    cam.farClipPlane = settings.frustum.farClipPlane;
-                    cam.fieldOfView = settings.frustum.fieldOfView;
-                    cam.aspect = settings.frustum.aspect;
-                    cam.projectionMatrix = settings.frustum.ComputeProjectionMatrix();
-                    break;
-            }
+            cam.nearClipPlane = settings.frustum.nearClipPlane;
+            cam.farClipPlane = settings.frustum.farClipPlane;
+            cam.fieldOfView = settings.frustum.fieldOfView;
+            cam.aspect = settings.frustum.aspect;
+            cam.projectionMatrix = settings.frustum.GetUsedProjectionMatrix();
             // Culling
             cam.useOcclusionCulling = settings.culling.useOcclusionCulling;
             cam.cullingMask = settings.culling.cullingMask;
@@ -58,17 +50,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static void ApplySettings(this Camera cam, CameraPositionSettings settings)
         {
             // Position
-            switch (settings.mode)
-            {
-                case CameraPositionSettings.Mode.UseWorldToCameraMatrixField:
-                    cam.worldToCameraMatrix = settings.worldToCameraMatrix;
-                    break;
-                case CameraPositionSettings.Mode.ComputeWorldToCameraMatrix:
-                    cam.transform.position = settings.position;
-                    cam.transform.rotation = settings.rotation;
-                    cam.worldToCameraMatrix = settings.ComputeWorldToCameraMatrix();
-                    break;
-            }
+            cam.transform.position = settings.position;
+            cam.transform.rotation = settings.rotation;
+            cam.worldToCameraMatrix = settings.GetUsedWorldToCameraMatrix();
         }
     }
 }

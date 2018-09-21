@@ -65,14 +65,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             DeleteUnusedCubemapAssets();
 
             var cubemapSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.reflectionCubemapSize;
+            var planarSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.planarReflectionTextureSize;
             var bakedProbes = HDProbeSystem.bakedProbes;
 
             var cubeRT = CreateTemporaryCubemapRenderTexture(cubemapSize);
+            var planarRT = CreateTemporaryPlanarRenderTexture(planarSize);
             for (int i = 0; i < bakedProbes.Count; ++i)
             {
                 var probe = bakedProbes[i];
                 var bakedTexturePath = HDBakingUtilities.GetBakedTextureFilePath(probe);
-                RenderAndWriteToFile(probe, bakedTexturePath, cubeRT);
+                RenderAndWriteToFile(probe, bakedTexturePath, cubeRT, planarRT);
             }
 
             AssetDatabase.StartAssetEditing();
@@ -86,9 +88,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 AssetDatabase.ImportAsset(bakedTexturePath);
                 ImportAssetAt(probe, bakedTexturePath);
                 AssignBakedTexture(probe, bakedTexture);
+                AssignBakedRenderData(probe, bakedTexturePath);
             }
             AssetDatabase.StopAssetEditing();
             cubeRT.Release();
+            planarRT.Release();
 
             return true;
         }
@@ -177,7 +181,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 // == 4. ==
                 var cubemapSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.reflectionCubemapSize;
+                var planarSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.planarReflectionTextureSize;
                 var cubeRT = CreateTemporaryCubemapRenderTexture(cubemapSize);
+                var planarRT = CreateTemporaryCubemapRenderTexture(planarSize);
 
                 handle.EnterStage(
                     (int)BakingStages.ReflectionProbes,
@@ -201,9 +207,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                     // Get from cache or render the probe
                     if (!File.Exists(cacheFile))
-                        RenderAndWriteToFile(probe, cacheFile, cubeRT);
+                        RenderAndWriteToFile(probe, cacheFile, cubeRT, planarRT);
                 }
                 cubeRT.Release();
+                planarRT.Release();
                 // Copy texture from cache
                 for (int i = 0; i < addCount; ++i)
                 {
@@ -345,6 +352,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             };
         }
 
+        RenderTexture CreateTemporaryPlanarRenderTexture(int planarSize)
+        {
+            return new RenderTexture(planarSize, planarSize, 1, GraphicsFormat.R16G16B16A16_SFloat)
+            {
+                dimension = TextureDimension.Tex2D,
+                enableRandomWrite = true,
+                useMipMap = false,
+                autoGenerateMips = false
+            };
+        }
+
         void AssignBakedTexture(HDProbe probe, Texture bakedTexture)
         {
             switch (probe.settings.type)
@@ -356,12 +374,34 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         break;
                     }
                 case ProbeSettings.ProbeType.PlanarProbe:
-                    Debug.LogWarning("Baked Planar Reflections are not supported yet.");
-                    break;
+                    {
+                        var planarProbe = (PlanarReflectionProbe)probe;
+                        planarProbe.bakedTexture = bakedTexture;
+                        break;
+                    }
             }
         }
 
-        void RenderAndWriteToFile(HDProbe probe, string cacheFile, RenderTexture cubeRT)
+        void AssignBakedRenderData(HDProbe probe, string bakedTexturePath)
+        {
+            switch (probe.settings.type)
+            {
+                case ProbeSettings.ProbeType.PlanarProbe:
+                    {
+                        var planarProbe = (PlanarReflectionProbe)probe;
+                        var dataFile = bakedTexturePath + ".renderData";
+                        if (File.Exists(dataFile))
+                        {
+                            PlanarReflectionProbe.RenderData renderData;
+                            if (HDBakingUtilities.TryDeserializeFromDisk(dataFile, out renderData))
+                                planarProbe.bakedRenderData = renderData;
+                        }
+                        break;
+                    }
+            }
+        }
+
+        void RenderAndWriteToFile(HDProbe probe, string cacheFile, RenderTexture cubeRT, RenderTexture planarRT)
         {
             var settings = probe.settings;
             switch (settings.type)
@@ -375,8 +415,29 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         break;
                     }
                 case ProbeSettings.ProbeType.PlanarProbe:
-                    Debug.LogWarning("Baked Planar Reflections are not supported yet.");
-                    break;
+                    {
+                        var planarProbe = (PlanarReflectionProbe)probe;
+                        var positionSettings = ProbeCapturePositionSettings.ComputeFrom(
+                            probe,
+                            planarProbe.referencePosition, Quaternion.identity
+                        );
+                        Matrix4x4 worldToCameraRHSMatrix, projectionMatrix;
+                        HDRenderUtilities.Render(
+                            probe.settings,
+                            positionSettings,
+                            planarRT,
+                            out worldToCameraRHSMatrix, out projectionMatrix
+                        );
+                        HDBakingUtilities.CreateParentDirectoryIfMissing(cacheFile);
+                        HDTextureUtilities.WriteTextureFileToDisk(planarRT, cacheFile);
+                        var renderData = new PlanarReflectionProbe.RenderData
+                        {
+                            projectionMatrix = projectionMatrix,
+                            worldToCameraRHS = worldToCameraRHSMatrix
+                        };
+                        HDBakingUtilities.TrySerializeToDisk(renderData, cacheFile + ".renderData");
+                        break;
+                    }
             }
         }
 

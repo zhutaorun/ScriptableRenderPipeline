@@ -117,6 +117,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 return Matrix4x4.Perspective(fieldOfView, aspect, nearClipPlane, farClipPlane);
             }
+
+            public Matrix4x4 GetUsedProjectionMatrix()
+            {
+                switch (mode)
+                {
+                    case Mode.ComputeProjectionMatrix: return ComputeProjectionMatrix();
+                    case Mode.UseProjectionMatrixField: return projectionMatrix;
+                    default: throw new ArgumentException();
+                }
+            }
         }
 
         /// <summary>Defines the culling settings of the camera.</summary>

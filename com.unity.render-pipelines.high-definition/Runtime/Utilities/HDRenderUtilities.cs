@@ -120,7 +120,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        public static void Render(ProbeSettings settings, ProbeCapturePositionSettings position, Texture target)
+        public static void Render(
+            ProbeSettings settings,
+            ProbeCapturePositionSettings position,
+            Texture target
+        )
+        {
+            Matrix4x4 worldToCameraRHSMatrix, projectionMatrix;
+            Render(settings, position, target, out worldToCameraRHSMatrix, out projectionMatrix);
+        }
+
+        public static void Render(
+            ProbeSettings settings,
+            ProbeCapturePositionSettings position,
+            Texture target,
+            out Matrix4x4 worldToCameraRHSMatrix,
+            out Matrix4x4 projectionMatrix
+        )
         {
             // Copy settings
             var cameraSettings = settings.camera;
@@ -134,6 +150,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Perform rendering
             Render(cameraSettings, cameraPositionSettings, target);
+
+            worldToCameraRHSMatrix = cameraPositionSettings.GetUsedWorldToCameraMatrix();
+            projectionMatrix = cameraSettings.frustum.GetUsedProjectionMatrix();
         }
 
         static Camera NewRenderingCamera()

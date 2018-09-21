@@ -22,6 +22,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static PlanarReflectionProbeUI()
         {
             Inspector = CED.Group(
+                  CED.Action(Drawer_FieldCaptureType),
                   CED.Action(Drawer_Toolbars),
                   CED.space,
                   ProxyVolumeSettings,

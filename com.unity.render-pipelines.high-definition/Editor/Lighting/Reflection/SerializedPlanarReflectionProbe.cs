@@ -50,7 +50,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             base.Update();
 
             //temporarily force value until other mode are supported
-            mode.enumValueIndex = (int)ReflectionProbeMode.Realtime;
+            //mode.enumValueIndex = (int)ReflectionProbeMode.Realtime;
             refreshMode.enumValueIndex = (int)ReflectionProbeRefreshMode.EveryFrame;
             capturePositionMode.enumValueIndex = (int)PlanarReflectionProbe.CapturePositionMode.MirrorCamera;
         }

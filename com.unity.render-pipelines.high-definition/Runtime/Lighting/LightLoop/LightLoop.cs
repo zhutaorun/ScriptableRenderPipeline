@@ -1409,24 +1409,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var envIndex = -1;
             if (probe.planarReflectionProbe != null)
             {
+                var renderData = probe.planarReflectionProbe.renderData;
                 var fetchIndex = m_ReflectionPlanarProbeCache.FetchSlice(cmd, probe.texture);
                 envIndex = (fetchIndex << 1) | (int)EnvCacheType.Texture2D;
 
-                float nearClipPlane, farClipPlane, aspect, fov;
-                Color backgroundColor;
-                CameraClearFlags clearFlags;
-                Quaternion captureRotation;
-                Matrix4x4 worldToCamera, projection;
-
-                ReflectionSystem.CalculateCaptureCameraProperties(
-                    probe.planarReflectionProbe,
-                    out nearClipPlane, out farClipPlane,
-                    out aspect, out fov, out clearFlags, out backgroundColor,
-                    out worldToCamera, out projection, out capturePosition, out captureRotation,
-                    camera);
-
-                var gpuProj = GL.GetGPUProjectionMatrix(projection, true); // Had to change this from 'false'
-                var gpuView = worldToCamera;
+                // get the device dependent projection matrix
+                var gpuProj = GL.GetGPUProjectionMatrix(renderData.projectionMatrix, true);
+                var gpuView = renderData.worldToCameraRHS;
 
                 // We transform it to object space by translating the capturePosition
                 var vp = gpuProj * gpuView * Matrix4x4.Translate(capturePosition);
