@@ -48,7 +48,6 @@ Pass
         $Occlusion:                      #define _OCCLUSION 1
         $SpecularOcclusion:              #define _SPECULAR_OCCLUSION 1
         $BentNormalSpecularOcclusion:    #define _BENT_NORMAL_SPECULAR_OCCLUSION 1
-        $BentNormal:                     #define _BENT_NORMAL 1
         $Specular.EnergyConserving:      #define _ENERGY_CONSERVING_SPECULAR 1
         $Specular.AA:                    #define _ENABLE_GEOMETRIC_SPECULAR_AA 1
         $Refraction:                     #define _HAS_REFRACTION 1
@@ -56,7 +55,6 @@ Pass
         $RefractionSphere:               #define _REFRACTION_SPHERE 1
         $RefractionSSRayProxy:           #define _REFRACTION_SSRAY_PROXY 1
         $RefractionSSRayHiZ:             #define _REFRACTION_SSRAY_HIZ 1
-        $Tangent:                        #define _TANGENT_MAP 1
         $Decals:                         #define _DECALS 1
 
     //-------------------------------------------------------------------------------------
@@ -68,8 +66,7 @@ Pass
 
     #define UNITY_MATERIAL_LIT      // Need to be define before including Material.hlsl
 
-    // Use surface gradient normal mapping as it handle correctly triplanar normal mapping and multiple UVSet
-    // this modifies the normal calculation
+    // This will be enabled in an upcoming change. 
     // #define SURFACE_GRADIENT
 
     // If we use subsurface scattering, enable output split lighting (for forward pass)
@@ -131,6 +128,7 @@ $splice(Defines)
     #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/DecalUtilities.hlsl"
     #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitDecalData.hlsl"
 
+    //Used by SceneSelectionPass
     int _ObjectId;
     int _PassValue;
 
@@ -233,22 +231,16 @@ $include("SharedCode.template.hlsl")
         // compute world space normal
         GetNormalWS(fragInputs, normalTS, surfaceData.normalWS);
 
-#ifdef _BENT_NORMAL
-        GetNormalWS(fragInputs, surfaceDescription.BentNormal, bentNormalWS);
-#else
         bentNormalWS = surfaceData.normalWS;
-#endif
+        $BentNormal: GetNormalWS(fragInputs, surfaceDescription.BentNormal, bentNormalWS);
 
 #ifdef _HAS_REFRACTION
         surfaceData.transmittanceMask = 1.0 - surfaceDescription.Alpha;
         surfaceDescription.Alpha = 1.0;
 #endif
 
-#if _TANGENT_MAP
-        surfaceData.tangentWS = TransformTangentToWorld(surfaceDescription.Tangent, fragInputs.worldToTangent);
-#else
         surfaceData.tangentWS = normalize(fragInputs.worldToTangent[0].xyz);    // The tangent is not normalize in worldToTangent for mikkt. TODO: Check if it expected that we normalize with Morten. Tag: SURFACE_GRADIENT
-#endif        
+        $Tangent: surfaceData.tangentWS = TransformTangentToWorld(surfaceDescription.Tangent, fragInputs.worldToTangent);
         surfaceData.tangentWS = Orthonormalize(surfaceData.tangentWS, surfaceData.normalWS);
 
         // By default we use the ambient occlusion with Tri-ace trick (apply outside) for specular occlusion.
@@ -302,10 +294,7 @@ $include("SharedCode.template.hlsl")
         // For back lighting we use the oposite vertex normal 
         InitBuiltinData(surfaceDescription.Alpha, bentNormalWS, -fragInputs.worldToTangent[2], fragInputs.positionRWS, fragInputs.texCoord1, fragInputs.texCoord2, builtinData);
 
-#ifdef _EMISSION
-        builtinData.emissiveColor = surfaceDescription.Emission;
-        $AlbedoAffectsEmissive: builtinData.emissiveColor *= surfaceDescription.Albedo;
-#endif
+        $SurfaceDescription.Emission: builtinData.emissiveColor = surfaceDescription.Emission;
 
         builtinData.depthOffset = 0.0;                        // ApplyPerPixelDisplacement(input, V, layerTexCoord, blendMasks); #ifdef _DEPTHOFFSET_ON : ApplyDepthOffsetPositionInput(V, depthOffset, GetWorldToHClipMatrix(), posInput);
 

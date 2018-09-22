@@ -18,9 +18,9 @@ namespace UnityEditor.ShaderGraph
         public PopupList diffusionProfile
         {
             get 
-			{ 
-				return m_DiffusionProfile; 
-			}
+            { 
+                return m_DiffusionProfile; 
+            }
             set
             {
                 m_DiffusionProfile = value;
@@ -29,7 +29,7 @@ namespace UnityEditor.ShaderGraph
 
         public DiffusionProfileInputMaterialSlot()
         {
-		}
+        }
 
         public DiffusionProfileInputMaterialSlot(int slotId, string displayName, string shaderOutputName,
                                           ShaderStageCapability stageCapability = ShaderStageCapability.All, bool hidden = false)
@@ -54,8 +54,6 @@ namespace UnityEditor.ShaderGraph
                 else
                 {
                     m_DiffusionProfile.selectedEntry = 0;
-                    // Need something equivalent, perhaps via implementation of a warning interface for the node.
-                    //EditorGUILayout.HelpBox("No diffusion profile Settings have been assigned to the render pipeline asset.", MessageType.Warning);
                 }
             }
         }
@@ -74,9 +72,9 @@ namespace UnityEditor.ShaderGraph
         {
             var slot = foundSlot as DiffusionProfileInputMaterialSlot;
             if (slot != null)
-			{
+            {
                 diffusionProfile = slot.diffusionProfile;
-			}
+            }
         }
     }
 }

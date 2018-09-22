@@ -48,12 +48,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 HDLitMasterNode.DiffusionProfileSlotId,
                 HDLitMasterNode.IridescenceMaskSlotId,
                 HDLitMasterNode.IridescenceThicknessSlotId,
-                HDLitMasterNode.SpecularSlotId,
+                HDLitMasterNode.SpecularColorSlotId,
                 HDLitMasterNode.CoatMaskSlotId,
                 HDLitMasterNode.MetallicSlotId,
                 HDLitMasterNode.EmissionSlotId,
                 HDLitMasterNode.SmoothnessSlotId,
-                HDLitMasterNode.OcclusionSlotId,
+                HDLitMasterNode.AmbientOcclusionSlotId,
                 HDLitMasterNode.AlphaSlotId,
                 HDLitMasterNode.AlphaThresholdSlotId,
                 HDLitMasterNode.AnisotropySlotId,
@@ -129,12 +129,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 HDLitMasterNode.DiffusionProfileSlotId,
                 HDLitMasterNode.IridescenceMaskSlotId,
                 HDLitMasterNode.IridescenceThicknessSlotId,
-                HDLitMasterNode.SpecularSlotId,
+                HDLitMasterNode.SpecularColorSlotId,
                 HDLitMasterNode.CoatMaskSlotId,
                 HDLitMasterNode.MetallicSlotId,
                 HDLitMasterNode.EmissionSlotId,
                 HDLitMasterNode.SmoothnessSlotId,
-                HDLitMasterNode.OcclusionSlotId,
+                HDLitMasterNode.AmbientOcclusionSlotId,
                 HDLitMasterNode.AlphaSlotId,
                 HDLitMasterNode.AlphaThresholdSlotId,
                 HDLitMasterNode.AnisotropySlotId,
@@ -381,6 +381,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 "#pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT",
                 "#define LIGHTLOOP_TILE_PASS",
                 "#pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST",
+                "#pragma multi_compile PUNCTUAL_SHADOW_LOW PUNCTUAL_SHADOW_MEDIUM PUNCTUAL_SHADOW_HIGH",
+                "#pragma multi_compile DIRECTIONAL_SHADOW_LOW DIRECTIONAL_SHADOW_MEDIUM DIRECTIONAL_SHADOW_HIGH"
             },
             Includes = new List<string>()
             {
@@ -404,12 +406,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 HDLitMasterNode.DiffusionProfileSlotId,
                 HDLitMasterNode.IridescenceMaskSlotId,
                 HDLitMasterNode.IridescenceThicknessSlotId,
-                HDLitMasterNode.SpecularSlotId,
+                HDLitMasterNode.SpecularColorSlotId,
                 HDLitMasterNode.CoatMaskSlotId,
                 HDLitMasterNode.MetallicSlotId,
                 HDLitMasterNode.EmissionSlotId,
                 HDLitMasterNode.SmoothnessSlotId,
-                HDLitMasterNode.OcclusionSlotId,
+                HDLitMasterNode.AmbientOcclusionSlotId,
                 HDLitMasterNode.AlphaSlotId,
                 HDLitMasterNode.AlphaThresholdSlotId,
                 HDLitMasterNode.AnisotropySlotId,
@@ -443,6 +445,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 "#pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT",
                 "#define LIGHTLOOP_TILE_PASS",
                 "#pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST",
+                "#pragma multi_compile PUNCTUAL_SHADOW_LOW PUNCTUAL_SHADOW_MEDIUM PUNCTUAL_SHADOW_HIGH",
+                "#pragma multi_compile DIRECTIONAL_SHADOW_LOW DIRECTIONAL_SHADOW_MEDIUM DIRECTIONAL_SHADOW_HIGH"
             },
             Includes = new List<string>()
             {
@@ -466,12 +470,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 HDLitMasterNode.DiffusionProfileSlotId,
                 HDLitMasterNode.IridescenceMaskSlotId,
                 HDLitMasterNode.IridescenceThicknessSlotId,
-                HDLitMasterNode.SpecularSlotId,
+                HDLitMasterNode.SpecularColorSlotId,
                 HDLitMasterNode.CoatMaskSlotId,
                 HDLitMasterNode.MetallicSlotId,
                 HDLitMasterNode.EmissionSlotId,
                 HDLitMasterNode.SmoothnessSlotId,
-                HDLitMasterNode.OcclusionSlotId,
+                HDLitMasterNode.AmbientOcclusionSlotId,
                 HDLitMasterNode.AlphaSlotId,
                 HDLitMasterNode.AlphaThresholdSlotId,
                 HDLitMasterNode.AnisotropySlotId,
@@ -681,11 +685,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 activeFields.Add("Specular.EnergyConserving");
             }
 
-            if (masterNode.albedoAffectsEmissive.isOn)
-            {
-                activeFields.Add("AlbedoAffectsEmissive");
-            }
-
             if (masterNode.HasRefraction())
             {
                 activeFields.Add("Refraction");
@@ -744,9 +743,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     break;
             }
 
-            if (pass.PixelShaderUsesSlot(HDLitMasterNode.OcclusionSlotId))
+            if (pass.PixelShaderUsesSlot(HDLitMasterNode.AmbientOcclusionSlotId))
             {
-                var occlusionSlot = masterNode.FindSlot<Vector1MaterialSlot>(HDLitMasterNode.OcclusionSlotId);
+                var occlusionSlot = masterNode.FindSlot<Vector1MaterialSlot>(HDLitMasterNode.AmbientOcclusionSlotId);
                 if (occlusionSlot.value != occlusionSlot.defaultValue)
                 {
                     activeFields.Add("Occlusion");
@@ -806,7 +805,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 // generate the necessary shader passes
                 bool opaque = (masterNode.surfaceType == SurfaceType.Opaque);
                 bool transparent = !opaque;
-                bool velocity = masterNode.motionVectors.isOn;
 
                 bool distortionActive = transparent && masterNode.distortion.isOn;
                 bool transparentBackfaceActive = transparent && masterNode.backThenFrontRendering.isOn;
@@ -823,10 +821,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     GenerateShaderPassLit(masterNode, m_PassDepthOnly, mode, subShader, sourceAssetDependencyPaths);
                 }
 
-                if (velocity)
-                {
-                    GenerateShaderPassLit(masterNode, m_PassMotionVectors, mode, subShader, sourceAssetDependencyPaths);
-                }
+                GenerateShaderPassLit(masterNode, m_PassMotionVectors, mode, subShader, sourceAssetDependencyPaths);
 
                 if (distortionActive)
                 {

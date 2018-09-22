@@ -16,12 +16,23 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         IntegerField m_SortPiorityField;
 
+        Label CreateLabel(string text, int indentLevel)
+        {
+            string label = "";
+            for (var i = 0; i < indentLevel; i++)
+            {
+                label += "    ";
+            }
+            return new Label(label + text);
+        }
+
         public HDLitSettingsView(HDLitMasterNode node)
         {
             m_Node = node;
             PropertySheet ps = new PropertySheet();
 
-            ps.Add(new PropertyRow(new Label("Surface Type")), (row) =>
+            int indentLevel = 0;
+            ps.Add(new PropertyRow(CreateLabel("Surface Type", indentLevel)), (row) =>
             {
                 row.Add(new EnumField(SurfaceType.Opaque), (field) =>
                 {
@@ -32,9 +43,10 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             if (m_Node.surfaceType == SurfaceType.Transparent)
             {
+                ++indentLevel;
                 if (!m_Node.HasRefraction())
                 {
-                    ps.Add(new PropertyRow(new Label("    Blend Mode")), (row) =>
+                    ps.Add(new PropertyRow(CreateLabel("Blend Mode", indentLevel)), (row) =>
                     {
                         row.Add(new EnumField(HDLitMasterNode.AlphaModeLit.Additive), (field) =>
                         {
@@ -44,7 +56,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     });
                 }
 
-                ps.Add(new PropertyRow(new Label("    Blend Preserves Specular")), (row) =>
+                ps.Add(new PropertyRow(CreateLabel("Blend Preserves Specular", indentLevel)), (row) =>
                 {
                     row.Add(new Toggle(), (toggle) =>
                     {
@@ -53,7 +65,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     });
                 });
 
-                ps.Add(new PropertyRow(new Label("    Fog")), (row) =>
+                ps.Add(new PropertyRow(CreateLabel("Fog", indentLevel)), (row) =>
                 {
                     row.Add(new Toggle(), (toggle) =>
                     {
@@ -62,7 +74,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     });
                 });
 
-                ps.Add(new PropertyRow(new Label("    Draw Before Refraction")), (row) =>
+                ps.Add(new PropertyRow(CreateLabel("Draw Before Refraction", indentLevel)), (row) =>
                 {
                     row.Add(new Toggle(), (toggle) =>
                     {
@@ -73,7 +85,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 if (!m_Node.drawBeforeRefraction.isOn)
                 {
-                    ps.Add(new PropertyRow(new Label("    Refraction Model")), (row) =>
+                    ps.Add(new PropertyRow(CreateLabel("Refraction Model", indentLevel)), (row) =>
                     {
                         row.Add(new EnumField(ScreenSpaceLighting.RefractionModel.None), (field) =>
                         {
@@ -84,7 +96,8 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                     if (m_Node.refractionModel != ScreenSpaceLighting.RefractionModel.None)
                     {
-                        ps.Add(new PropertyRow(new Label("        SSRay Model")), (row) =>
+                        ++indentLevel;
+                        ps.Add(new PropertyRow(CreateLabel("SSRay Model", indentLevel)), (row) =>
                         {
                             row.Add(new EnumField(HDLitMasterNode.ProjectionModelLit.Proxy), (field) =>
                             {
@@ -92,10 +105,11 @@ namespace UnityEditor.ShaderGraph.Drawing
                                 field.OnValueChanged(ChangeProjectionModel);
                             });
                         });
+                        --indentLevel;
                     }
                 }
 
-                ps.Add(new PropertyRow(new Label("    Distortion")), (row) =>
+                ps.Add(new PropertyRow(CreateLabel("Distortion", indentLevel)), (row) =>
                 {
                     row.Add(new Toggle(), (toggle) =>
                     {
@@ -106,7 +120,8 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 if (m_Node.distortion.isOn)
                 {
-                    ps.Add(new PropertyRow(new Label("        Mode")), (row) =>
+                    ++indentLevel;
+                    ps.Add(new PropertyRow(CreateLabel("Mode", indentLevel)), (row) =>
                     {
                         row.Add(new EnumField(DistortionMode.Add), (field) =>
                         {
@@ -114,7 +129,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                             field.OnValueChanged(ChangeDistortionMode);
                         });
                     });
-                    ps.Add(new PropertyRow(new Label("        Depth Test")), (row) =>
+                    ps.Add(new PropertyRow(CreateLabel("Depth Test", indentLevel)), (row) =>
                     {
                         row.Add(new Toggle(), (toggle) =>
                         {
@@ -122,9 +137,10 @@ namespace UnityEditor.ShaderGraph.Drawing
                             toggle.OnToggleChanged(ChangeDistortionDepthTest);
                         });
                     });
+                    --indentLevel;
                 }
 
-                ps.Add(new PropertyRow(new Label("    Back Then Front Rendering")), (row) =>
+                ps.Add(new PropertyRow(CreateLabel("Back Then Front Rendering", indentLevel)), (row) =>
                 {
                     row.Add(new Toggle(), (toggle) =>
                     {
@@ -134,7 +150,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 });
 
                 m_SortPiorityField = new IntegerField();
-                ps.Add(new PropertyRow(new Label("    Sort Priority")), (row) =>
+                ps.Add(new PropertyRow(CreateLabel("Sort Priority", indentLevel)), (row) =>
                 {
                     row.Add(m_SortPiorityField, (field) =>
                     {
@@ -142,9 +158,10 @@ namespace UnityEditor.ShaderGraph.Drawing
                         field.OnValueChanged(ChangeSortPriority);
                     });
                 });
+                --indentLevel;
             }
 
-            ps.Add(new PropertyRow(new Label("Alpha Cutoff")), (row) =>
+            ps.Add(new PropertyRow(CreateLabel("Alpha Cutoff", indentLevel)), (row) =>
             {
                 row.Add(new Toggle(), (toggle) =>
                 {
@@ -155,7 +172,8 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             if (m_Node.surfaceType == SurfaceType.Transparent && m_Node.alphaTest.isOn)
             {
-                ps.Add(new PropertyRow(new Label("    Alpha Cutoff Depth Prepass")), (row) =>
+                ++indentLevel;
+                ps.Add(new PropertyRow(CreateLabel("Alpha Cutoff Depth Prepass", indentLevel)), (row) =>
                 {
                     row.Add(new Toggle(), (toggle) =>
                     {
@@ -164,7 +182,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     });
                 });
 
-                ps.Add(new PropertyRow(new Label("    Alpha Cutoff Depth Postpass")), (row) =>
+                ps.Add(new PropertyRow(CreateLabel("Alpha Cutoff Depth Postpass", indentLevel)), (row) =>
                 {
                     row.Add(new Toggle(), (toggle) =>
                     {
@@ -172,9 +190,10 @@ namespace UnityEditor.ShaderGraph.Drawing
                         toggle.OnToggleChanged(ChangeAlphaTestPostpass);
                     });
                 });
+                --indentLevel;
             }
 
-            ps.Add(new PropertyRow(new Label("Double Sided")), (row) =>
+            ps.Add(new PropertyRow(CreateLabel("Double Sided", indentLevel)), (row) =>
             {
                 row.Add(new EnumField(DoubleSidedMode.Disabled), (field) =>
                 {
@@ -183,7 +202,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 });
             });
 
-            ps.Add(new PropertyRow(new Label("Material Type")), (row) =>
+            ps.Add(new PropertyRow(CreateLabel("Material Type", indentLevel)), (row) =>
             {
                 row.Add(new EnumField(HDLitMasterNode.MaterialType.Standard), (field) =>
                 {
@@ -192,9 +211,10 @@ namespace UnityEditor.ShaderGraph.Drawing
                 });
             });
 
+            ++indentLevel;
             if (m_Node.materialType == HDLitMasterNode.MaterialType.SubsurfaceScattering)
             {
-                ps.Add(new PropertyRow(new Label("    Transmission")), (row) =>
+                ps.Add(new PropertyRow(CreateLabel("Transmission", indentLevel)), (row) =>
                 {
                     row.Add(new Toggle(), (toggle) =>
                     {
@@ -206,7 +226,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             if (m_Node.materialType == HDLitMasterNode.MaterialType.SpecularColor)
             {
-                ps.Add(new PropertyRow(new Label("    Energy Conserving Specular")), (row) =>
+                ps.Add(new PropertyRow(CreateLabel("Energy Conserving Specular", indentLevel)), (row) =>
                 {
                     row.Add(new Toggle(), (toggle) =>
                     {
@@ -215,8 +235,9 @@ namespace UnityEditor.ShaderGraph.Drawing
                     });
                 });
             }
+            --indentLevel;
 
-            ps.Add(new PropertyRow(new Label("Receive Decals")), (row) =>
+            ps.Add(new PropertyRow(CreateLabel("Receive Decals", indentLevel)), (row) =>
             {
                 row.Add(new Toggle(), (toggle) =>
                 {
@@ -225,7 +246,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 });
             });
 
-            ps.Add(new PropertyRow(new Label("Specular AA")), (row) =>
+            ps.Add(new PropertyRow(CreateLabel("Specular AA", indentLevel)), (row) =>
             {
                 row.Add(new Toggle(), (toggle) =>
                 {
@@ -234,25 +255,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 });
             });
 
-            ps.Add(new PropertyRow(new Label("Motion Vectors For Vertex Animation")), (row) =>
-            {
-                row.Add(new Toggle(), (toggle) =>
-                {
-                    toggle.value = m_Node.motionVectors.isOn;
-                    toggle.OnToggleChanged(ChangeMotionVectors);
-                });
-            });
-
-            ps.Add(new PropertyRow(new Label("Albedo Affects Emissive")), (row) =>
-            {
-                row.Add(new Toggle(), (toggle) =>
-                {
-                    toggle.value = m_Node.albedoAffectsEmissive.isOn;
-                    toggle.OnToggleChanged(ChangeAlbedoAffectsEmissive);
-                });
-            });
-
-            ps.Add(new PropertyRow(new Label("Specular Occlusion Mode")), (row) =>
+            ps.Add(new PropertyRow(CreateLabel("Specular Occlusion Mode", indentLevel)), (row) =>
             {
                 row.Add(new EnumField(SpecularOcclusionMode.Off), (field) =>
                 {
@@ -443,22 +446,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             ToggleData td = m_Node.energyConservingSpecular;
             td.isOn = evt.newValue;
             m_Node.energyConservingSpecular = td;
-        }
-
-        void ChangeMotionVectors(ChangeEvent<bool> evt)
-        {
-            m_Node.owner.owner.RegisterCompleteObjectUndo("Motion Vectors Change");
-            ToggleData td = m_Node.motionVectors;
-            td.isOn = evt.newValue;
-            m_Node.motionVectors = td;
-        }
-
-        void ChangeAlbedoAffectsEmissive(ChangeEvent<bool> evt)
-        {
-            m_Node.owner.owner.RegisterCompleteObjectUndo("Albedo Affects Emissive Change");
-            ToggleData td = m_Node.albedoAffectsEmissive;
-            td.isOn = evt.newValue;
-            m_Node.albedoAffectsEmissive = td;
         }
 
         void ChangeSpecularOcclusionMode(ChangeEvent<Enum> evt)
