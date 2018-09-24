@@ -158,8 +158,24 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 ld.shape0 = 0.0f;
                 ld.shape1 = 0.0f;
 #endif
-                // TEMP: for now, if we bake a rectangle type this will disable the light for runtime, need to speak with GI team about it!
                 ld.type = UnityEngine.Experimental.GlobalIllumination.LightType.Rectangle;
+                ld.falloff = add.applyRangeAttenuation ? FalloffType.InverseSquared : FalloffType.InverseSquaredNoRangeAttenuation;
+            }
+			else if (add.lightTypeExtent == LightTypeExtent.Disc)
+            {
+                ld.orientation = l.transform.rotation;
+                ld.position = l.transform.position;
+                ld.range = l.range;
+                ld.coneAngle = 0.0f;
+                ld.innerConeAngle = 0.0f;
+#if UNITY_EDITOR
+                ld.shape0 = l.areaSize.x; // radius
+                ld.shape1 = 0.0f;
+#else
+                ld.shape0 = 0.0f;
+                ld.shape1 = 0.0f;
+#endif
+                ld.type = UnityEngine.Experimental.GlobalIllumination.LightType.Disc;
                 ld.falloff = add.applyRangeAttenuation ? FalloffType.InverseSquared : FalloffType.InverseSquaredNoRangeAttenuation;
             }
             else if (add.lightTypeExtent == LightTypeExtent.Line)

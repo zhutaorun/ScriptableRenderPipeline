@@ -15,7 +15,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Rectangle,
         Line,
         // Sphere,
-        // Disc,
+        Disc,
     };
 
     public enum SpotLightShape { Cone, Pyramid, Box };
@@ -484,11 +484,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     break;
             }
 
-            // Sanity check: lightData.lightTypeExtent is init to LightTypeExtent.Punctual (in case for unknow reasons we recreate additional data on an existing line)
+            // Sanity check: lightData.lightTypeExtent used to be initialized to LightTypeExtent.Punctual. Fix this up.
             if (light.type == LightType.Rectangle && lightData.lightTypeExtent == LightTypeExtent.Punctual)
             {
                 lightData.lightTypeExtent = LightTypeExtent.Rectangle;
-                light.type = LightType.Point; // Same as in HDLightEditor
 #if UNITY_EDITOR
                 light.lightmapBakeType = LightmapBakeType.Realtime;
 #endif

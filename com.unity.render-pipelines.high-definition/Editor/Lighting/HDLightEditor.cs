@@ -112,7 +112,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             Rectangle,
             Line,
             //Sphere,
-            //Disc,
+            Disc,
         }
 
         enum DirectionalLightUnit
@@ -403,7 +403,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         void DrawFeatures()
         {
-            bool disabledScope = m_LightShape == LightShape.Line || (m_LightShape == LightShape.Rectangle && settings.isRealtime);
+            bool disabledScope = m_LightShape == LightShape.Line || (m_LightShape == LightShape.Rectangle && settings.isRealtime) || (m_LightShape == LightShape.Disc && settings.isRealtime);
 
             using (new EditorGUI.DisabledScope(disabledScope))
             {
@@ -424,7 +424,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 UpdateLightIntensityUnit();
 
             if (m_LightShape != LightShape.Directional)
-                settings.DrawRange(false);
+                settings.DrawRange();
 
             // LightShape is HD specific, it need to drive LightType from the original LightType
             // when it make sense, so the GI is still in sync with the light shape
@@ -467,10 +467,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     break;
 
                 case LightShape.Rectangle:
-                    // TODO: Currently if we use Area type as it is offline light in legacy, the light will not exist at runtime
-                    //m_BaseData.type.enumValueIndex = (int)LightType.Rectangle;
-                    // In case of change, think to update InitDefaultHDAdditionalLightData()
-                    settings.lightType.enumValueIndex = (int)LightType.Point;
+					settings.lightType.enumValueIndex = (int)LightType.Area;
                     m_AdditionalLightData.lightTypeExtent.enumValueIndex = (int)LightTypeExtent.Rectangle;
                     EditorGUI.BeginChangeCheck();
                     EditorGUILayout.PropertyField(m_AdditionalLightData.shapeWidth, s_Styles.shapeWidthRect);
@@ -502,6 +499,21 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         settings.areaSizeY.floatValue = k_MinAreaWidth;
                     }
                     settings.shadowsType.enumValueIndex = (int)LightShadows.None;
+                    break;
+					
+                case LightShape.Disc:
+                    settings.lightType.enumValueIndex = (int)LightType.Area;
+                    m_AdditionalLightData.lightTypeExtent.enumValueIndex = (int)LightTypeExtent.Disc;
+                    EditorGUI.BeginChangeCheck();
+                    EditorGUILayout.PropertyField(m_AdditionalLightData.shapeWidth, s_Styles.shapeWidthRect);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        m_AdditionalLightData.shapeWidth.floatValue = Mathf.Max(m_AdditionalLightData.shapeWidth.floatValue, k_MinAreaWidth);
+                        settings.areaSizeX.floatValue = m_AdditionalLightData.shapeWidth.floatValue;
+						settings.areaSizeY.floatValue = 0.0f;
+                    }
+                    if (settings.isRealtime)
+                        settings.shadowsType.enumValueIndex = (int)LightShadows.None;
                     break;
 
                 case (LightShape)(-1):
@@ -843,6 +855,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         break;
                     case LightTypeExtent.Line:
                         m_LightShape = LightShape.Line;
+                        break;
+                    case LightTypeExtent.Disc:
+                        m_LightShape = LightShape.Disc;
                         break;
                 }
             }
