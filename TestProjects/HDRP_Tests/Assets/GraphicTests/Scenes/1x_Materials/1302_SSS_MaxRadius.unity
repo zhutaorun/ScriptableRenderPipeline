@@ -50,7 +50,6 @@ LightmapSettings:
     m_BounceScale: 1
     m_IndirectOutputScale: 1
     m_AlbedoBoost: 1
-    m_TemporalCoherenceThreshold: 1
     m_EnvironmentLightingMode: 0
     m_EnableBakedLightmaps: 1
     m_EnableRealtimeLightmaps: 1
@@ -264,6 +263,7 @@ Material:
     - _DoubleSidedNormalMode: 1
     - _Drag: 1
     - _DstBlend: 0
+    - _EditorExpendedAreas: 3e-45
     - _EmissiveColorMode: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
@@ -377,7 +377,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 22486425}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.00008418411, y: 0.016032716, z: 0}
+  m_LocalPosition: {x: 0.0001943633, y: 0.016142894, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1938649642}
@@ -393,7 +393,7 @@ TextMesh:
   m_GameObject: {fileID: 22486425}
   m_Text: 10
   m_OffsetZ: 0
-  m_CharacterSize: 0.0011017767
+  m_CharacterSize: 0.0022035534
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -498,7 +498,8 @@ PrefabInstance:
       propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: far clip plane
       value: 0.2
       objectReference: {fileID: 0}
@@ -514,11 +515,13 @@ PrefabInstance:
       propertyPath: m_LocalScale.z
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: near clip plane
       value: 0.01
       objectReference: {fileID: 0}
-    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+    - target: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7,
+        type: 3}
       propertyPath: ImageComparisonSettings.AverageCorrectnessThreshold
       value: 0.0005
       objectReference: {fileID: 0}
@@ -526,12 +529,14 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
 --- !u!20 &189121543 stripped
 Camera:
-  m_CorrespondingSourceObject: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+  m_CorrespondingSourceObject: {fileID: 20109210616973140, guid: c07ace9ab142ca9469fa377877c2f1e7,
+    type: 3}
   m_PrefabInstance: {fileID: 189121542}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &189121544 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7, type: 3}
+  m_CorrespondingSourceObject: {fileID: 114995348509370400, guid: c07ace9ab142ca9469fa377877c2f1e7,
+    type: 3}
   m_PrefabInstance: {fileID: 189121542}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
@@ -639,6 +644,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -657,6 +664,9 @@ MonoBehaviour:
   displayLightIntensity: 0.015
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &206350332
 Light:
   m_ObjectHideFlags: 0
@@ -834,6 +844,7 @@ Material:
     - _DoubleSidedNormalMode: 1
     - _Drag: 1
     - _DstBlend: 0
+    - _EditorExpendedAreas: 0
     - _EmissiveColorMode: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
@@ -934,7 +945,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 340485232}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.00003489782, y: 0.02097835, z: 0}
+  m_LocalPosition: {x: 0.00014507514, y: 0.020868171, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 970005766}
@@ -950,7 +961,7 @@ TextMesh:
   m_GameObject: {fileID: 340485232}
   m_Text: 15
   m_OffsetZ: 0
-  m_CharacterSize: 0.0011017767
+  m_CharacterSize: 0.0022035534
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -1115,6 +1126,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -1133,6 +1146,9 @@ MonoBehaviour:
   displayLightIntensity: 0.015
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &459634898
 Light:
   m_ObjectHideFlags: 0
@@ -1270,6 +1286,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -1288,6 +1306,9 @@ MonoBehaviour:
   displayLightIntensity: 0.015
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &489376179
 Light:
   m_ObjectHideFlags: 0
@@ -1425,6 +1446,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -1443,6 +1466,9 @@ MonoBehaviour:
   displayLightIntensity: 0.015
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &839916373
 Light:
   m_ObjectHideFlags: 0
@@ -1508,7 +1534,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 842796397}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.00006225705, y: 0.010868279, z: 0}
+  m_LocalPosition: {x: 0.00017243624, y: 0.010868279, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 2138293276}
@@ -1524,7 +1550,7 @@ TextMesh:
   m_GameObject: {fileID: 842796397}
   m_Text: 5
   m_OffsetZ: 0
-  m_CharacterSize: 0.0011017767
+  m_CharacterSize: 0.0022035534
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -1651,7 +1677,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1095913856}
   m_LocalRotation: {x: 0.70710576, y: -0, z: -0, w: 0.7071079}
-  m_LocalPosition: {x: -0.00010012835, y: 0, z: 0.025784183}
+  m_LocalPosition: {x: -0.00021030009, y: 0, z: 0.025784183}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 2022319265}
@@ -1667,7 +1693,7 @@ TextMesh:
   m_GameObject: {fileID: 1095913856}
   m_Text: 20
   m_OffsetZ: 0
-  m_CharacterSize: 0.001101778
+  m_CharacterSize: 0.002203556
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -1787,7 +1813,7 @@ PrefabInstance:
     - target: {fileID: 2300000, guid: e3d03de02188b88428c03d8dca44f18e, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 3f7d1f3b5c774bb40bed9ce56cb8cc02, type: 2}
+      objectReference: {fileID: 1421256617}
     - target: {fileID: 100000, guid: e3d03de02188b88428c03d8dca44f18e, type: 3}
       propertyPath: m_Name
       value: Grid
@@ -1804,7 +1830,8 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: e3d03de02188b88428c03d8dca44f18e, type: 3}
 --- !u!4 &1162708795 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 400000, guid: e3d03de02188b88428c03d8dca44f18e, type: 3}
+  m_CorrespondingSourceObject: {fileID: 400000, guid: e3d03de02188b88428c03d8dca44f18e,
+    type: 3}
   m_PrefabInstance: {fileID: 1162708794}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1211941501
@@ -1878,7 +1905,8 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: e3d03de02188b88428c03d8dca44f18e, type: 3}
 --- !u!4 &1211941502 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 400000, guid: e3d03de02188b88428c03d8dca44f18e, type: 3}
+  m_CorrespondingSourceObject: {fileID: 400000, guid: e3d03de02188b88428c03d8dca44f18e,
+    type: 3}
   m_PrefabInstance: {fileID: 1211941501}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1270417362
@@ -1982,7 +2010,8 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: e3d03de02188b88428c03d8dca44f18e, type: 3}
 --- !u!4 &1283307959 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 400000, guid: e3d03de02188b88428c03d8dca44f18e, type: 3}
+  m_CorrespondingSourceObject: {fileID: 400000, guid: e3d03de02188b88428c03d8dca44f18e,
+    type: 3}
   m_PrefabInstance: {fileID: 1283307958}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1364788941
@@ -2214,9 +2243,223 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: e3d03de02188b88428c03d8dca44f18e, type: 3}
 --- !u!4 &1419573399 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 400000, guid: e3d03de02188b88428c03d8dca44f18e, type: 3}
+  m_CorrespondingSourceObject: {fileID: 400000, guid: e3d03de02188b88428c03d8dca44f18e,
+    type: 3}
   m_PrefabInstance: {fileID: 1419573398}
   m_PrefabAsset: {fileID: 0}
+--- !u!21 &1421256617
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: GridOverlay(Clone)
+  m_Shader: {fileID: 4800000, guid: c4edd00ff2db5b24391a4fcb1762e459, type: 3}
+  m_ShaderKeywords: _ALPHATEST_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 2450
+  stringTagMap:
+    RenderType: TransparentCutout
+  disabledShaderPasses:
+  - DistortionVectors
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _AnisotropyMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseColorMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BentNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BentNormalMapOS:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DistortionVectorMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissiveColorMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _HeightMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MaskMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalMapOS:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SpecularColorMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SubsurfaceMaskMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TangentMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TangentMapOS:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ThicknessMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TransmittanceColorMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _UnlitColorMap:
+        m_Texture: {fileID: 2800000, guid: 496aad9ea7ee1af428cb24dd03fc894c, type: 3}
+        m_Scale: {x: 0.8, y: 0.8}
+        m_Offset: {x: 0.1, y: 0.1}
+    m_Floats:
+    - _AORemapMax: 1
+    - _AORemapMin: 0
+    - _ATDistance: 1
+    - _AlbedoAffectEmissive: 0
+    - _AlphaCutoff: 0.5
+    - _AlphaCutoffEnable: 1
+    - _AlphaCutoffPostpass: 0.5
+    - _AlphaCutoffPrepass: 0.5
+    - _Anisotropy: 0
+    - _BlendMode: 0
+    - _CoatMask: 1
+    - _CullMode: 2
+    - _CullModeForward: 2
+    - _Cutoff: 0.5
+    - _DepthOffsetEnable: 0
+    - _DetailAlbedoScale: 1
+    - _DetailNormalScale: 1
+    - _DetailSmoothnessScale: 1
+    - _DiffusionProfile: 0
+    - _DisplacementLockObjectScale: 1
+    - _DisplacementLockTilingScale: 1
+    - _DisplacementMode: 0
+    - _DistortionBlendMode: 0
+    - _DistortionBlurBlendMode: 0
+    - _DistortionBlurDstBlend: 1
+    - _DistortionBlurRemapMax: 1
+    - _DistortionBlurRemapMin: 0
+    - _DistortionBlurScale: 1
+    - _DistortionBlurSrcBlend: 1
+    - _DistortionDepthTest: 1
+    - _DistortionDstBlend: 1
+    - _DistortionEnable: 0
+    - _DistortionOnly: 0
+    - _DistortionScale: 1
+    - _DistortionSrcBlend: 1
+    - _DistortionVectorBias: -1
+    - _DistortionVectorScale: 2
+    - _DoubleSidedEnable: 0
+    - _DoubleSidedNormalMode: 1
+    - _Drag: 1
+    - _DstBlend: 0
+    - _EditorExpendedAreas: 3e-45
+    - _EmissiveColorMode: 1
+    - _EnableBlendModePreserveSpecularLighting: 1
+    - _EnableFogOnTransparent: 1
+    - _EnableMotionVectorForVertexAnimation: 0
+    - _EnableSpecularOcclusion: 0
+    - _EnableWind: 0
+    - _EnergyConservingSpecularColor: 1
+    - _HdrpVersion: 2
+    - _HeightAmplitude: 0.02
+    - _HeightCenter: 0.5
+    - _HeightMapParametrization: 0
+    - _HeightMax: 1
+    - _HeightMin: -1
+    - _HeightOffset: 0
+    - _HeightPoMAmplitude: 2
+    - _HeightTessAmplitude: 2
+    - _HeightTessCenter: 0.5
+    - _IOR: 1
+    - _InitialBend: 1
+    - _InvTilingScale: 1
+    - _LinkDetailsWithBase: 1
+    - _MaterialID: 1
+    - _Metallic: 0
+    - _NormalMapSpace: 0
+    - _NormalScale: 1
+    - _PPDLodThreshold: 5
+    - _PPDMaxSamples: 15
+    - _PPDMinSamples: 5
+    - _PPDPrimitiveLength: 1
+    - _PPDPrimitiveWidth: 1
+    - _PreRefractionPass: 0
+    - _RefractionMode: 0
+    - _ShiverDirectionality: 0.5
+    - _ShiverDrag: 0.2
+    - _Smoothness: 1
+    - _SmoothnessRemapMax: 1
+    - _SmoothnessRemapMin: 0
+    - _SrcBlend: 1
+    - _StencilRef: 2
+    - _StencilRefMV: 128
+    - _StencilWriteMask: 7
+    - _StencilWriteMaskMV: 128
+    - _Stiffness: 1
+    - _SubsurfaceMask: 1
+    - _SurfaceType: 0
+    - _TexWorldScale: 1
+    - _TexWorldScaleEmissive: 1
+    - _Thickness: 1
+    - _ThicknessMultiplier: 1
+    - _TransparentBackfaceEnable: 0
+    - _TransparentDepthPostpassEnable: 0
+    - _TransparentDepthPrepassEnable: 0
+    - _TransparentSortPriority: 0
+    - _UVBase: 0
+    - _UVDetail: 0
+    - _UVEmissive: 0
+    - _ZTestMode: 4
+    - _ZTestModeDistortion: 4
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 0, g: 0, b: 0, a: 1}
+    - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
+    - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissiveColor: {r: 0, g: 0, b: 0, a: 1}
+    - _InvPrimScale: {r: 1, g: 1, b: 0, a: 0}
+    - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
+    - _ThicknessRemap: {r: 0, g: 1, b: 0, a: 0}
+    - _TransmittanceColor: {r: 1, g: 1, b: 1, a: 1}
+    - _UVDetailsMappingMask: {r: 1, g: 0, b: 0, a: 0}
+    - _UVMappingMask: {r: 1, g: 0, b: 0, a: 0}
+    - _UVMappingMaskEmissive: {r: 1, g: 0, b: 0, a: 0}
+    - _UnlitColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
 --- !u!1 &1630635259
 GameObject:
   m_ObjectHideFlags: 0
@@ -2260,7 +2503,7 @@ TextMesh:
   m_GameObject: {fileID: 1630635259}
   m_Text: 1
   m_OffsetZ: 0
-  m_CharacterSize: 0.0011017765
+  m_CharacterSize: 0.002203553
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -2542,6 +2785,7 @@ Material:
     - _DoubleSidedNormalMode: 1
     - _Drag: 1
     - _DstBlend: 0
+    - _EditorExpendedAreas: 0
     - _EmissiveColorMode: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
@@ -2678,7 +2922,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1982433797}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.0012096949, y: 0.024569621, z: 0}
+  m_LocalPosition: {x: 0.0012096949, y: 0.024459444, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -2696,7 +2940,7 @@ TextMesh:
 
     Max Radius'
   m_OffsetZ: 0
-  m_CharacterSize: 0.0011017767
+  m_CharacterSize: 0.0022035534
   m_LineSpacing: 1
   m_Anchor: 7
   m_Alignment: 1
@@ -2833,7 +3077,8 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: e3d03de02188b88428c03d8dca44f18e, type: 3}
 --- !u!4 &2022025516 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 400000, guid: e3d03de02188b88428c03d8dca44f18e, type: 3}
+  m_CorrespondingSourceObject: {fileID: 400000, guid: e3d03de02188b88428c03d8dca44f18e,
+    type: 3}
   m_PrefabInstance: {fileID: 2022025515}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &2022319265
@@ -2987,7 +3232,8 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: e3d03de02188b88428c03d8dca44f18e, type: 3}
 --- !u!4 &2048782979 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 400000, guid: e3d03de02188b88428c03d8dca44f18e, type: 3}
+  m_CorrespondingSourceObject: {fileID: 400000, guid: e3d03de02188b88428c03d8dca44f18e,
+    type: 3}
   m_PrefabInstance: {fileID: 2048782978}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &2070758265
@@ -3089,6 +3335,8 @@ MonoBehaviour:
   lightDimmer: 1
   volumetricDimmer: 1
   lightUnit: 0
+  sunDiskSize: 1
+  sunHaloSize: 0.1
   fadeDistance: 10000
   affectDiffuse: 1
   affectSpecular: 1
@@ -3107,6 +3355,9 @@ MonoBehaviour:
   displayLightIntensity: 0.015
   displayAreaLightEmissiveMesh: 0
   lightLayers: 1
+  shadowSoftness: 0.5
+  blockerSampleCount: 24
+  filterSampleCount: 32
 --- !u!108 &2070758269
 Light:
   m_ObjectHideFlags: 0
