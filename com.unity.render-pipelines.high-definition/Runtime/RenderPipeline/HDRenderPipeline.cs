@@ -212,8 +212,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         ComputeBuffer m_DebugScreenSpaceTracingData = null;
         ScreenSpaceTracingDebug[] m_DebugScreenSpaceTracingDataArray = new ScreenSpaceTracingDebug[1];
 
-        static int livingHDRenderPIpelineCounter = 0;
-
         public HDRenderPipeline(HDRenderPipelineAsset asset)
         {
             DebugManager.instance.RefreshEditor();
