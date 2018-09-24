@@ -227,12 +227,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return;
             }
 
-#if UNITY_EDITOR
-            // Hide legacy lighting window
-            ++livingHDRenderPIpelineCounter;
-            SupportedRenderingFeatures.active.rendererOverridesEnvironmentLighting = true;
-#endif
-
             m_Asset = asset;
 
             // Upgrade the resources (re-import every references in RenderPipelineResources) if the resource version mismatches
@@ -444,7 +438,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 rendererSupportsMotionVectors = true,
                 rendererSupportsReceiveShadows = false,
                 rendererSupportsReflectionProbes = true,
-                rendererSupportsRendererPriority = true
+                rendererSupportsRendererPriority = true,
+                rendererOverridesEnvironmentLighting = false
             };
 
             Lightmapping.SetDelegate(GlobalIlluminationUtils.hdLightsDelegate);
@@ -564,12 +559,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public override void Dispose()
         {
             UnsetRenderingFeatures();
-
-#if UNITY_EDITOR
-            // Unhide legacy lighting window
-            if ((--livingHDRenderPIpelineCounter) == 0)
-                SupportedRenderingFeatures.active.rendererOverridesEnvironmentLighting = false;
-#endif
 
             if (!m_ValidAPI)
                 return;
