@@ -525,9 +525,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Internal
             var reflectionMatrix = GeometryUtils.CalculateReflectionMatrix(probe.captureMirrorPlanePosition, probe.captureMirrorPlaneNormal);
             worldToCamera = worldToCapture * reflectionMatrix;
 
-            var clipPlane = GeometryUtils.CameraSpacePlane(worldToCamera, probe.captureMirrorPlanePosition, probe.captureMirrorPlaneNormal);
+            // Compute the plane's equation (A, B, C, D) in view space
+            var clipPlaneEquation = GeometryUtils.CameraSpacePlane(worldToCamera, probe.captureMirrorPlanePosition, probe.captureMirrorPlaneNormal);
+            // Compute the projection matrix of the mirror camera
             var sourceProj = Matrix4x4.Perspective(fov, aspect, nearClipPlane, farClipPlane);
-            projection = GeometryUtils.CalculateObliqueMatrix(sourceProj, clipPlane);
+            // Compose the oblique projection matrix
+            projection = GeometryUtils.CalculateObliqueMatrix(sourceProj, clipPlaneEquation);
 
             capturePosition = reflectionMatrix.MultiplyPoint(viewerCamera.transform.position);
 

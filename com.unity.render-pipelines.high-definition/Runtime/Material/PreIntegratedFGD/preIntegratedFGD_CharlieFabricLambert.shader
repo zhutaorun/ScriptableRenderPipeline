@@ -75,6 +75,8 @@ Shader "Hidden/HDRenderPipeline/preIntegratedFGD_CharlieFabricLambert"
 
                 acc /= sampleCount;
 
+                acc.y *= 0.2;
+
                 return acc;
             }
 

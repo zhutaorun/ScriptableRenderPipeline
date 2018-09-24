@@ -748,6 +748,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Raise or remove the depth msaa flag based on the frame setting
             CoreUtils.SetKeyword(cmd, "WRITE_MSAA_DEPTH", hdCamera.frameSettings.enableMSAA);
+
+            CoreUtils.SetKeyword(cmd, "BSDF_REFERENCE_VALUE", m_Asset.renderPipelineSettings.supportReferenceBSDF);
         }
 
         CullResults m_CullResults;

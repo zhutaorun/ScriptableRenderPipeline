@@ -220,8 +220,9 @@ Shader "HDRenderPipeline/Fabric"
                 Pass Replace
             }
             HLSLPROGRAM
-
+            #pragma shader_feature WRITE_NORMAL_BUFFER
             #define WRITE_NORMAL_BUFFER
+            #pragma multi_compile _ WRITE_MSAA_DEPTH
             #define SHADERPASS SHADERPASS_DEPTH_ONLY
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderVariables.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
@@ -307,6 +308,7 @@ Shader "HDRenderPipeline/Fabric"
             HLSLPROGRAM
 
             #pragma multi_compile _ DEBUG_DISPLAY
+            #pragma multi_compile _ BSDF_REFERENCE_VALUE
             #pragma multi_compile _ LIGHTMAP_ON
             #pragma multi_compile _ DIRLIGHTMAP_COMBINED
             #pragma multi_compile _ DYNAMICLIGHTMAP_ON

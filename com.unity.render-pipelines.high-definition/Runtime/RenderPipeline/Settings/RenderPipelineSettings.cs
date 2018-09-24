@@ -40,6 +40,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public bool supportMotionVectors = true;
         public bool supportRuntimeDebugDisplay = true;
         public bool supportDitheringCrossFade = true;
+        public bool supportReferenceBSDF = false;
 
         public XRGraphicsConfig xrConfig = XRGraphicsConfig.s_DefaultXRConfig;
 
