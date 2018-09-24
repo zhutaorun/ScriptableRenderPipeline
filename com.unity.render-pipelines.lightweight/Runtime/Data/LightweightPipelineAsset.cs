@@ -69,7 +69,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         // Default values set when a new LightweightPipeline asset is created
         [SerializeField] int k_AssetVersion = 4;
-        
+
         // General settings
         [SerializeField] bool m_RequireDepthTexture = false;
         [SerializeField] bool m_RequireOpaqueTexture = false;
@@ -85,7 +85,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         [SerializeField] LightRenderingMode m_MainLightRenderingMode = LightRenderingMode.PerPixel;
         [SerializeField] bool m_MainLightShadowsSupported = true;
         [SerializeField] ShadowResolution m_MainLightShadowmapResolution = ShadowResolution._2048;
-        
+
         // Additional lights settings
         [SerializeField] LightRenderingMode m_AdditionalLightsRenderingMode = LightRenderingMode.PerPixel;
         [SerializeField] int m_AdditionalLightsPerObjectLimit = 4;
@@ -103,7 +103,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         [SerializeField] bool m_SupportsDynamicBatching = true;
         [SerializeField] bool m_MixedLightingSupported = true;
         // TODO: Render Pipeline Batcher
-        
+
         [SerializeField] XRGraphicsConfig m_SavedXRConfig = XRGraphicsConfig.s_DefaultXRConfig;
 
         // Deprecated settings
@@ -195,7 +195,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             }
         }
 
-        protected override IRenderPipeline InternalCreatePipeline()
+        protected override RenderPipeline CreatePipeline()
         {
             return new LightweightRenderPipeline(this);
         }
@@ -339,12 +339,57 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             get { return m_MixedLightingSupported; }
         }
 
-        public override Material GetDefaultMaterial()
+        public override Material defaultMaterial
         {
-            return GetMaterial(DefaultMaterialType.Standard);
+            get { return GetMaterial(DefaultMaterialType.Standard); }
         }
 
-        #if UNITY_EDITOR
+        public override Material defaultParticleMaterial
+        {
+            get { return GetMaterial(DefaultMaterialType.Particle); }
+        }
+
+        public override Material defaultLineMaterial
+        {
+            get { return GetMaterial(DefaultMaterialType.UnityBuiltinDefault); }
+        }
+
+        public override Material defaultTerrainMaterial
+        {
+            get { return GetMaterial(DefaultMaterialType.Terrain); }
+        }
+
+        public override Material defaultUIMaterial
+        {
+            get { return GetMaterial(DefaultMaterialType.UnityBuiltinDefault); }
+        }
+
+        public override Material defaultUIOverdrawMaterial
+        {
+            get { return GetMaterial(DefaultMaterialType.UnityBuiltinDefault); }
+        }
+
+        public override Material defaultUIETC1SupportedMaterial
+        {
+            get { return GetMaterial(DefaultMaterialType.UnityBuiltinDefault); }
+        }
+
+        public override Material default2DMaterial
+        {
+            get { return GetMaterial(DefaultMaterialType.UnityBuiltinDefault); }
+        }
+
+        public override Shader defaultShader
+        {
+            get
+            {
+                if (m_DefaultShader == null)
+                    m_DefaultShader = Shader.Find(LightweightShaderUtils.GetShaderPath(ShaderPathID.PhysicallyBased));
+                return m_DefaultShader;
+            }
+        }
+
+#if UNITY_EDITOR
         public override Shader GetAutodeskInteractiveShader()
         {
             return editorResources.AutodeskInteractiveShader;
@@ -360,48 +405,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             return editorResources.AutodeskInteractiveMaskedShader;
         }
         #endif
-
-        public override Material GetDefaultParticleMaterial()
-        {
-            return GetMaterial(DefaultMaterialType.Particle);
-        }
-
-        public override Material GetDefaultLineMaterial()
-        {
-            return GetMaterial(DefaultMaterialType.UnityBuiltinDefault);
-        }
-
-        public override Material GetDefaultTerrainMaterial()
-        {
-            return GetMaterial(DefaultMaterialType.Terrain);
-        }
-
-        public override Material GetDefaultUIMaterial()
-        {
-            return GetMaterial(DefaultMaterialType.UnityBuiltinDefault);
-        }
-
-        public override Material GetDefaultUIOverdrawMaterial()
-        {
-            return GetMaterial(DefaultMaterialType.UnityBuiltinDefault);
-        }
-
-        public override Material GetDefaultUIETC1SupportedMaterial()
-        {
-            return GetMaterial(DefaultMaterialType.UnityBuiltinDefault);
-        }
-
-        public override Material GetDefault2DMaterial()
-        {
-            return GetMaterial(DefaultMaterialType.UnityBuiltinDefault);
-        }
-
-        public override Shader GetDefaultShader()
-        {
-            if (m_DefaultShader == null)
-                m_DefaultShader = Shader.Find(LightweightShaderUtils.GetShaderPath(ShaderPathID.PhysicallyBased));
-            return m_DefaultShader;
-        }
 
         public Shader blitShader
         {

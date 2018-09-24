@@ -107,7 +107,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 m_CascadeSlices[i].Clear();
         }
 
-        void RenderMainLightCascadeShadowmap(ref ScriptableRenderContext context, ref CullResults cullResults, ref LightData lightData, ref ShadowData shadowData)
+        void RenderMainLightCascadeShadowmap(ref ScriptableRenderContext context, ref CullingResults cullResults, ref LightData lightData, ref ShadowData shadowData)
         {
             int shadowLightIndex = lightData.mainLightIndex;
             if (shadowLightIndex == -1)
@@ -133,7 +133,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 float shadowNearPlane = light.shadowNearPlane;
 
                 Matrix4x4 view, proj;
-                var settings = new DrawShadowsSettings(cullResults, shadowLightIndex);
+                var settings = new ShadowDrawingSettings(cullResults, shadowLightIndex);
 
                 m_MainLightShadowmapTexture = RenderTexture.GetTemporary(shadowData.mainLightShadowmapWidth,
                     shadowData.mainLightShadowmapHeight, k_ShadowmapBufferBits, m_ShadowmapFormat);
@@ -148,7 +148,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                     success = LightweightShadowUtils.ExtractDirectionalLightMatrix(ref cullResults, ref shadowData, shadowLightIndex, cascadeIndex, shadowResolution, shadowNearPlane, out m_CascadeSplitDistances[cascadeIndex], out m_CascadeSlices[cascadeIndex], out view, out proj);
                     if (success)
                     {
-                        settings.splitData.cullingSphere = m_CascadeSplitDistances[cascadeIndex];
+                        var settingsSplitData = settings.splitData;
+                        settingsSplitData.cullingSphere = m_CascadeSplitDistances[cascadeIndex];
+                        settings.splitData = settingsSplitData;
                         LightweightShadowUtils.SetupShadowCasterConstants(cmd, ref shadowLight, proj, shadowResolution);
                         LightweightShadowUtils.RenderShadowSlice(cmd, ref context, ref m_CascadeSlices[cascadeIndex], ref settings, proj, view);
                     }

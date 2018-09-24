@@ -102,10 +102,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 m_AdditionalLightsShadowStrength[i] = 0.0f;
         }
 
-        void RenderAdditionalShadowmapAtlas(ref ScriptableRenderContext context, ref CullResults cullResults, ref LightData lightData, ref ShadowData shadowData)
+        void RenderAdditionalShadowmapAtlas(ref ScriptableRenderContext context, ref CullingResults cullResults, ref LightData lightData, ref ShadowData shadowData)
         {
             List<int> additionalLightIndices = lightData.additionalLightIndices;
-            List<VisibleLight> visibleLights = lightData.visibleLights;
+            var visibleLights = lightData.visibleLights;
 
             int shadowCastingLightsCount = 0;
             int additionalLightsCount = additionalLightIndices.Count;
@@ -175,7 +175,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                         if (shadowCastingLightsCount > 1)
                             LightweightShadowUtils.ApplySliceTransform(ref m_AdditionalLightSlices[i], atlasWidth, atlasHeight);
 
-                        var settings = new DrawShadowsSettings(cullResults, shadowLightIndex);
+                        var settings = new ShadowDrawingSettings(cullResults, shadowLightIndex);
                         LightweightShadowUtils.SetupShadowCasterConstants(cmd, ref shadowLight, proj, sliceResolution);
                         LightweightShadowUtils.RenderShadowSlice(cmd, ref context, ref m_AdditionalLightSlices[i], ref settings, proj, view);
                     }
