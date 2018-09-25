@@ -17,7 +17,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
         }
 
-        protected override IRenderPipeline InternalCreatePipeline()
+        protected override RenderPipeline CreatePipeline()
         {
             return new HDRenderPipeline(this);
         }
@@ -141,19 +141,29 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        public override string[] GetRenderingLayerMaskNames()
+        public override string[] renderingLayerMaskNames
         {
-            return renderingLayerNames;
+            get
+            {
+                return renderingLayerNames;
+            }
         }
 
-        public override Shader GetDefaultShader()
+        public override Material defaultMaterial
         {
-            return m_RenderPipelineResources.defaultShader;
+            get
+            {
+                return m_RenderPipelineResources.defaultDiffuseMaterial;
+            }
         }
 
-        public override Material GetDefaultMaterial()
+        public override Shader defaultShader
         {
-            return m_RenderPipelineResources.defaultDiffuseMaterial;
+            get
+            {
+
+                return m_RenderPipelineResources.defaultShader;
+            }
         }
 
         public override Shader GetAutodeskInteractiveShader()
@@ -183,39 +193,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return m_RenderPipelineResources.defaultMirrorMaterial;
         }
 
-        public override Material GetDefaultParticleMaterial()
+        public override Material defaultTerrainMaterial
         {
-            return null;
-        }
-
-        public override Material GetDefaultLineMaterial()
-        {
-            return null;
-        }
-
-        public override Material GetDefaultTerrainMaterial()
-        {
-            return m_RenderPipelineResources.defaultTerrainMaterial;
-        }
-
-        public override Material GetDefaultUIMaterial()
-        {
-            return null;
-        }
-
-        public override Material GetDefaultUIOverdrawMaterial()
-        {
-            return null;
-        }
-
-        public override Material GetDefaultUIETC1SupportedMaterial()
-        {
-            return null;
-        }
-
-        public override Material GetDefault2DMaterial()
-        {
-            return null;
+            get
+            {
+                return m_RenderPipelineResources.defaultTerrainMaterial;
+            }
         }
 
         void ISerializationCallbackReceiver.OnBeforeSerialize()

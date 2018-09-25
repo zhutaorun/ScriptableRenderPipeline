@@ -150,7 +150,7 @@ namespace UnityEngine.Experimental.Rendering
             // calculate view
             Matrix4x4 scaleMatrix = Matrix4x4.identity;
             scaleMatrix.m22 = -1.0f;
-            view = scaleMatrix * vl.localToWorld.inverse;
+            view = scaleMatrix * vl.localToWorldMatrix.inverse;
             // following code is from SharedLightData::GetNearPlaneMinBound
             float percentageBound = 0.01f * vl.light.range;
             float fixedBound = 0.1f;
@@ -202,7 +202,7 @@ namespace UnityEngine.Experimental.Rendering
             return deviceProj * view;
         }
 
-        public static Matrix4x4 ExtractDirectionalLightMatrix(VisibleLight vl, uint cascadeIdx, int cascadeCount, float[] splitRatio, float nearPlaneOffset, uint width, uint height, out Matrix4x4 view, out Matrix4x4 proj, out Matrix4x4 deviceProj, out Matrix4x4 vpinverse, out Vector4 lightDir, out ShadowSplitData splitData, CullResults cullResults, int lightIndex)
+        public static Matrix4x4 ExtractDirectionalLightMatrix(VisibleLight vl, uint cascadeIdx, int cascadeCount, float[] splitRatio, float nearPlaneOffset, uint width, uint height, out Matrix4x4 view, out Matrix4x4 proj, out Matrix4x4 deviceProj, out Matrix4x4 vpinverse, out Vector4 lightDir, out ShadowSplitData splitData, CullingResults cullResults, int lightIndex)
         {
             Debug.Assert(width == height, "Currently the cascaded shadow mapping code requires square cascades.");
             splitData = new ShadowSplitData();

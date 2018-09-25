@@ -13,7 +13,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public static Quaternion GetLocalSpaceRotation(ReflectionProbe probe)
         {
-            var supportsRotation = (SupportedRenderingFeatures.active.reflectionProbeSupportFlags & SupportedRenderingFeatures.ReflectionProbeSupportFlags.Rotation) != 0;
+            var supportsRotation = (SupportedRenderingFeatures.active.reflectionProbeModes & SupportedRenderingFeatures.ReflectionProbeModes.Rotation) != 0;
             return supportsRotation
                 ? probe.transform.rotation
                 : Quaternion.identity;

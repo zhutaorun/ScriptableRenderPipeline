@@ -45,7 +45,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         }
 
         const string k_RenderCameraTag = "Render Camera";
-        CullingResults m_CullResults;
 
         public ScriptableRenderer renderer { get; private set; }
         PipelineSettings settings { get; set; }
@@ -217,7 +216,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 if (cameraData.isSceneViewCamera)
                     ScriptableRenderContext.EmitWorldGeometryForSceneView(camera);
 #endif
-                context.Cull(ref cullingParameters);
+                
+                CullingResults m_CullResults;
+                m_CullResults = context.Cull(ref cullingParameters);
 
                 RenderingData renderingData;
                 InitializeRenderingData(settings, ref cameraData, ref cullResults,

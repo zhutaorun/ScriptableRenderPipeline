@@ -10,22 +10,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
         public static Vector3 GetPosition(this VisibleLight value)
         {
-            return value.localToWorld.GetColumn(3);
+            return value.localToWorldMatrix.GetColumn(3);
         }
 
         public static Vector3 GetForward(this VisibleLight value)
         {
-            return value.localToWorld.GetColumn(2);
+            return value.localToWorldMatrix.GetColumn(2);
         }
 
         public static Vector3 GetUp(this VisibleLight value)
         {
-            return value.localToWorld.GetColumn(1);
+            return value.localToWorldMatrix.GetColumn(1);
         }
 
         public static Vector3 GetRight(this VisibleLight value)
         {
-            return value.localToWorld.GetColumn(0);
+            return value.localToWorldMatrix.GetColumn(0);
         }
     }
 
@@ -1286,7 +1286,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             // Then Culling side
             var range = lightDimensions.z;
-            var lightToWorld = light.localToWorld;
+            var lightToWorld = light.localToWorldMatrix;
             Vector3 positionWS = lightData.positionRWS;
             Vector3 positionVS = worldToView.MultiplyPoint(positionWS);
 
@@ -1684,7 +1684,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             else
             m_ShadowMgr.UpdateCullingParameters(ref cullingParams);
             // In HDRP we don't need per object light/probe info so we disable the native code that handles it.
-            cullingParams.cullingFlags |= CullFlag.DisablePerObjectCulling;
+            cullingParams.cullingOptions |= CullingOptions.DisablePerObjectCulling;
         }
 
         public bool IsBakedShadowMaskLight(Light light)
@@ -1699,7 +1699,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         // Return true if BakedShadowMask are enabled
-        public bool PrepareLightsForGPU(CommandBuffer cmd, HDCamera hdCamera, ShadowSettings shadowSettings, CullResults cullResults,
+        public bool PrepareLightsForGPU(CommandBuffer cmd, HDCamera hdCamera, ShadowSettings shadowSettings, CullingResults cullResults,
             ReflectionProbeCullResults reflectionProbeCullResults, DensityVolumeList densityVolumes, DebugDisplaySettings debugDisplaySettings)
         {
             using (new ProfilingSample(cmd, "Prepare Lights For GPU"))
@@ -1742,7 +1742,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
 
                 // Note: Light with null intensity/Color are culled by the C++, no need to test it here
-                if (cullResults.visibleLights.Count != 0 || cullResults.visibleReflectionProbes.Count != 0)
+                if (cullResults.visibleLights.Length != 0 || cullResults.visibleReflectionProbes.Length != 0)
                 {
                     // 0. deal with shadows
                     {
@@ -1751,8 +1751,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             m_FrameId.frameCount++;
                             // get the indices for all lights that want to have shadows
                             m_ShadowRequests.Clear();
-                            m_ShadowRequests.Capacity = cullResults.visibleLights.Count;
-                            int lcnt = cullResults.visibleLights.Count;
+                            m_ShadowRequests.Capacity = cullResults.visibleLights.Length;
+                            int lcnt = cullResults.visibleLights.Length;
                             for (int i = 0; i < lcnt; ++i)
                             {
                                 VisibleLight vl = cullResults.visibleLights[i];
@@ -1805,10 +1805,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     int punctualLightcount = 0;
                     int areaLightCount = 0;
 
-                    int lightCount = Math.Min(cullResults.visibleLights.Count, k_MaxLightsOnScreen);
+                    int lightCount = Math.Min(cullResults.visibleLights.Length, k_MaxLightsOnScreen);
                     UpdateSortKeysArray(lightCount);
                     int sortCount = 0;
-                    for (int lightIndex = 0, numLights = cullResults.visibleLights.Count; (lightIndex < numLights) && (sortCount < lightCount); ++lightIndex)
+                    for (int lightIndex = 0, numLights = cullResults.visibleLights.Length; (lightIndex < numLights) && (sortCount < lightCount); ++lightIndex)
                     {
                         var light = cullResults.visibleLights[lightIndex];
                         var lightComponent = light.light;
@@ -2042,14 +2042,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     Debug.Assert(k_MaxEnvLightsOnScreen <= 256); //for key construction
                     int envLightCount = 0;
 
-                    var totalProbes = cullResults.visibleReflectionProbes.Count + reflectionProbeCullResults.visiblePlanarReflectionProbeCount;
+                    var totalProbes = cullResults.visibleReflectionProbes.Length + reflectionProbeCullResults.visiblePlanarReflectionProbeCount;
                     int probeCount = Math.Min(totalProbes, k_MaxEnvLightsOnScreen);
                     UpdateSortKeysArray(probeCount);
                     sortCount = 0;
 
                     for (int probeIndex = 0, numProbes = totalProbes; (probeIndex < numProbes) && (sortCount < probeCount); probeIndex++)
                     {
-                        if (probeIndex < cullResults.visibleReflectionProbes.Count)
+                        if (probeIndex < cullResults.visibleReflectionProbes.Length)
                         {
                             VisibleReflectionProbe probe = cullResults.visibleReflectionProbes[probeIndex];
                             HDAdditionalReflectionData additional = probe.probe.GetComponent<HDAdditionalReflectionData>();
@@ -2063,7 +2063,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 continue;
 
                             // Work around the data issues.
-                            if (probe.localToWorld.determinant == 0)
+                            if (probe.localToWorldMatrix.determinant == 0)
                             {
                                 Debug.LogError("Reflection probe " + probe.probe.name + " has an invalid local frame and needs to be fixed.");
                                 continue;
@@ -2080,7 +2080,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         }
                         else
                         {
-                            var planarProbeIndex = probeIndex - cullResults.visibleReflectionProbes.Count;
+                            var planarProbeIndex = probeIndex - cullResults.visibleReflectionProbes.Length;
                             var probe = reflectionProbeCullResults.visiblePlanarReflectionProbes[planarProbeIndex];
 
                             // probe.texture can be null when we are adding a reflection probe in the editor
@@ -2595,7 +2595,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        public void RenderShadows(ScriptableRenderContext renderContext, CommandBuffer cmd, CullResults cullResults)
+        public void RenderShadows(ScriptableRenderContext renderContext, CommandBuffer cmd, CullingResults cullResults)
         {
             // kick off the shadow jobs here
             if (useNewShadowSystem)
@@ -2846,7 +2846,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        public void RenderDebugOverlay(HDCamera hdCamera, CommandBuffer cmd, DebugDisplaySettings debugDisplaySettings, ref float x, ref float y, float overlaySize, float width, CullResults cullResults)
+        public void RenderDebugOverlay(HDCamera hdCamera, CommandBuffer cmd, DebugDisplaySettings debugDisplaySettings, ref float x, ref float y, float overlaySize, float width, CullingResults cullResults)
         {
             LightingDebugSettings lightingDebug = debugDisplaySettings.lightingDebugSettings;
 
@@ -2972,7 +2972,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (lightingDebug.displayLightVolumes)
             {
                 // First of all let's do the regions for the light sources (we only support Poncutal and Area)
-                int numLights = cullResults.visibleLights.Count;
+                int numLights = cullResults.visibleLights.Length;
                 for (int lightIdx = 0; lightIdx < numLights; ++lightIdx)
                 {
                     // Let's build the light's bounding sphere matrix
@@ -3043,7 +3043,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
 
                 // Now let's do the same but for reflection probes
-                int numProbes = cullResults.visibleReflectionProbes.Count;
+                int numProbes = cullResults.visibleReflectionProbes.Length;
                 for (int probeIdx = 0; probeIdx < numProbes; ++probeIdx)
                 {
                     // Let's build the light's bounding sphere matrix

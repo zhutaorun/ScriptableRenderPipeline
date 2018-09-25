@@ -230,7 +230,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cullingParams.shadowDistance = Mathf.Min(VolumeManager.instance.stack.GetComponent<HDShadowSettings>().maxShadowDistance, cullingParams.shadowDistance);
         }
 
-        unsafe public void ProcessShadowRequests(CullResults cullResults, Camera camera, LightingDebugSettings lightingDebugSettings)
+        unsafe public void ProcessShadowRequests(CullingResults cullResults, Camera camera, LightingDebugSettings lightingDebugSettings)
         {
             int shadowIndex = 0;
 
@@ -275,14 +275,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_DirectionalShadowData.cascadeDirection.w = k_DirectionalShadowCascadeCount;
         }
  
-        public void RenderShadows(ScriptableRenderContext renderContext, CommandBuffer cmd, CullResults cullResults)
+        public void RenderShadows(ScriptableRenderContext renderContext, CommandBuffer cmd, CullingResults cullResults)
         {
             // Avoid to do any commands if there is no shadow to draw 
             if (m_ShadowRequests.Count == 0)
                 return ;
 
             // TODO remove DrawShadowSettings, lightIndex and splitData when scriptable culling is available
-            DrawShadowsSettings dss = new DrawShadowsSettings(cullResults, 0);
+            ShadowDrawingSettings dss = new ShadowDrawingSettings(cullResults, 0);
 
             // Clear atlas render targets and draw shadows
             m_Atlas.RenderShadows(renderContext, cmd, dss);

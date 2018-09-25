@@ -205,7 +205,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         // Must return the first executed shadow request
-        public int UpdateShadowRequest(Camera camera, HDShadowInitParameters initParameters, HDShadowManager manager, VisibleLight visibleLight, CullResults cullResults, int lightIndex, out int shadowRequestCount)
+        public int UpdateShadowRequest(Camera camera, HDShadowInitParameters initParameters, HDShadowManager manager, VisibleLight visibleLight, CullingResults cullResults, int lightIndex, out int shadowRequestCount)
         {
             int     firstShadowRequestIndex = -1;
             Vector3 cameraPos = camera.transform.position;
