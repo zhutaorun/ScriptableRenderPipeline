@@ -205,6 +205,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 perObjectLightIndexMap[i] = -1;
 
             cullResults.SetLightIndexMap(perObjectLightIndexMap);
+            perObjectLightIndexMap.Dispose();
 
             // if not using a compute buffer, engine will set indices in 2 vec4 constants
             // unity_4LightIndices0 and unity_4LightIndices1
