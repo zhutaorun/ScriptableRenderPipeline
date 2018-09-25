@@ -25,10 +25,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         public DepthOnlyPass()
         {
             RegisterShaderPassName("DepthOnly");
-            opaqueFilterSettings = new FilteringSettings
-            {
-                renderQueueRange = RenderQueueRange.opaque,
-            };
+            opaqueFilterSettings = new FilteringSettings(RenderQueueRange.opaque);
         }
         
         /// <summary>

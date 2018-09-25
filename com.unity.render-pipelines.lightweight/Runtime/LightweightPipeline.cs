@@ -177,11 +177,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 foreach (var beforeCamera in camera.GetComponents<IBeforeCameraRender>())
                     beforeCamera.ExecuteBeforeCameraRender(this, renderContext, camera);
 
-                RenderSingleCamera(this, renderContext, camera, ref m_CullResults, camera.GetComponent<IRendererSetup>());
+                RenderSingleCamera(this, renderContext, camera, camera.GetComponent<IRendererSetup>());
             }
         }
 
-        public static void RenderSingleCamera(LightweightRenderPipeline pipelineInstance, ScriptableRenderContext context, Camera camera, ref CullingResults cullResults, IRendererSetup setup = null)
+        public static void RenderSingleCamera(LightweightRenderPipeline pipelineInstance, ScriptableRenderContext context, Camera camera, IRendererSetup setup = null)
         {
             if (pipelineInstance == null)
             {
@@ -216,9 +216,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 if (cameraData.isSceneViewCamera)
                     ScriptableRenderContext.EmitWorldGeometryForSceneView(camera);
 #endif
-                
-                CullingResults m_CullResults;
-                m_CullResults = context.Cull(ref cullingParameters);
+
+                var cullResults = context.Cull(ref cullingParameters);
 
                 RenderingData renderingData;
                 InitializeRenderingData(settings, ref cameraData, ref cullResults,

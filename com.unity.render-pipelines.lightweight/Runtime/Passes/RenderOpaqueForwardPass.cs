@@ -28,10 +28,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             RegisterShaderPassName("LightweightForward");
             RegisterShaderPassName("SRPDefaultUnlit");
 
-            m_OpaqueFilterSettings = new FilteringSettings
-            {
-                renderQueueRange = RenderQueueRange.opaque,
-            };
+            m_OpaqueFilterSettings = new FilteringSettings(RenderQueueRange.opaque);
         }
 
         /// <summary>
