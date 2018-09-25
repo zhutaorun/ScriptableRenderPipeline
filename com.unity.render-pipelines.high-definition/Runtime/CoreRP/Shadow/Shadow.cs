@@ -1418,7 +1418,7 @@ namespace UnityEngine.Experimental.Rendering
                 sm.Assign(cullResults);
             }
 
-            if (shadowRequestsCount == 0 || lights == null || shadowRequests == null)
+            if (shadowRequestsCount == 0 || shadowRequests == null)
             {
                 shadowRequestsCount = 0;
                 return;
