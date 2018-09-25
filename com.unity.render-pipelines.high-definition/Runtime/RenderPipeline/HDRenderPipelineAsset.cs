@@ -153,7 +153,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             get
             {
-                return m_RenderPipelineResources.defaultDiffuseMaterial;
+                return m_RenderPipelineResources.materials.defaultDiffuseMat;
             }
         }
 
@@ -162,42 +162,42 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             get
             {
 
-                return m_RenderPipelineResources.defaultShader;
+                return m_RenderPipelineResources.shaders.defaultPS;
             }
         }
 
         public override Shader GetAutodeskInteractiveShader()
         {
-            return m_RenderPipelineResources.AutodeskInteractiveShader;
+            return m_RenderPipelineResources.shaderGraphs.autodeskInteractiveSG;
         }
 
         public override Shader GetAutodeskInteractiveTransparentShader()
         {
-            return m_RenderPipelineResources.AutodeskInteractiveTransparentShader;
+            return m_RenderPipelineResources.shaderGraphs.autodeskInteractiveTransparentSG;
         }
 
         public override Shader GetAutodeskInteractiveMaskedShader()
         {
-            return m_RenderPipelineResources.AutodeskInteractiveMaskedShader;
+            return m_RenderPipelineResources.shaderGraphs.autodeskInteractiveMaskedSG;
         }
 
         // Note: This function is HD specific
         public Material GetDefaultDecalMaterial()
         {
-            return m_RenderPipelineResources.defaultDecalMaterial;
+            return m_RenderPipelineResources.materials.defaultDecalMat;
         }
 
         // Note: This function is HD specific
         public Material GetDefaultMirrorMaterial()
         {
-            return m_RenderPipelineResources.defaultMirrorMaterial;
+            return m_RenderPipelineResources.materials.defaultMirrorMat;
         }
 
         public override Material defaultTerrainMaterial
         {
             get
             {
-                return m_RenderPipelineResources.defaultTerrainMaterial;
+                return m_RenderPipelineResources.materials.defaultTerrainMat;
             }
         }
 
