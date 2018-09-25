@@ -1,3 +1,4 @@
+using System;
 using UnityEngine.Serialization;
 using UnityEngine.Assertions;
 
@@ -30,7 +31,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             UseGraphicsSettings,
             Custom,  // Fine grained
-            FullscreenPassthrough  // Hard coded path
         };
 
         public enum ClearColorMode
@@ -55,6 +55,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public float aperture = 8f;
         public float shutterSpeed = 1f / 200f;
         public float iso = 400f;
+
+        // Event used to override HDRP rendering for this particular camera.
+        public event Action<ScriptableRenderContext, HDCamera> customRender;
 
         // To be able to turn on/off FrameSettings properties at runtime for debugging purpose without affecting the original one
         // we create a runtime copy (m_ActiveFrameSettings that is used, and any parametrization is done on serialized frameSettings)
@@ -241,6 +244,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cameraData.clearColorMode = ClearColorMode.BackgroundColor;
             else     // None
                 cameraData.clearColorMode = ClearColorMode.None;
+        }
+
+        public bool ExecuteCustomRender(ScriptableRenderContext renderContext, HDCamera hdCamera)
+        {
+            if (customRender != null)
+            {
+                customRender(renderContext, hdCamera);
+                return true;
+            }
+            return false;
         }
     }
 }
