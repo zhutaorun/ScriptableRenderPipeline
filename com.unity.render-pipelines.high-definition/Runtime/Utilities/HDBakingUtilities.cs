@@ -87,7 +87,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             FileStream fileStream = null;
             try
             {
-                fileStream = new FileStream(filePath, FileMode.OpenOrCreate);
+                fileStream = new FileStream(filePath, FileMode.Create);
                 serializer.Serialize(fileStream, renderData);
             }
             catch (Exception e)

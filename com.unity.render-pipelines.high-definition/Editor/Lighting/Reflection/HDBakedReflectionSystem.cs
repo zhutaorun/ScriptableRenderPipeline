@@ -452,6 +452,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void ImportAssetAt(HDProbe probe, string file)
         {
+            var hd = (HDRenderPipeline)RenderPipelineManager.currentPipeline;
             switch (probe.settings.type)
             {
                 case ProbeSettings.ProbeType.ReflectionProbe:
@@ -463,7 +464,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         importer.filterMode = FilterMode.Bilinear;
                         importer.generateCubemap = TextureImporterGenerateCubemap.AutoCubemap;
                         importer.mipmapEnabled = false;
-                        importer.textureCompression = TextureImporterCompression.Compressed;
+                        importer.textureCompression = hd.renderPipelineSettings.lightLoopSettings.reflectionCacheCompressed
+                            ? TextureImporterCompression.Compressed
+                            : TextureImporterCompression.Uncompressed;
                         importer.textureShape = TextureImporterShape.TextureCube;
                         importer.SaveAndReimport();
                         break;
@@ -476,7 +479,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         importer.sRGBTexture = false;
                         importer.filterMode = FilterMode.Bilinear;
                         importer.mipmapEnabled = false;
-                        importer.textureCompression = TextureImporterCompression.Compressed;
+                        importer.textureCompression = hd.renderPipelineSettings.lightLoopSettings.planarReflectionCacheCompressed
+                            ? TextureImporterCompression.Compressed
+                            : TextureImporterCompression.Uncompressed;
                         importer.textureShape = TextureImporterShape.Texture2D;
                         importer.SaveAndReimport();
                         break;
