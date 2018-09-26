@@ -71,6 +71,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 serialized.Apply();
             }
 
+            EditorGUILayout.PropertyField(serialized.localReferencePosition);
+
             //GUI.enabled = false;
             //EditorGUILayout.LabelField(resolutionContent, CoreEditorUtils.GetContent(((int)hdrp.GetRenderPipelineSettings().lightLoopSettings.reflectionCubemapSize).ToString()));
             //EditorGUILayout.LabelField(shadowDistanceContent, EditorStyles.label);

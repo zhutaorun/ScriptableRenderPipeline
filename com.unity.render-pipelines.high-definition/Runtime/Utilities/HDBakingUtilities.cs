@@ -95,6 +95,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 Debug.LogException(e);
                 return false;
             }
+            finally
+            {
+                if (fileStream != null)
+                    fileStream.Dispose();
+            }
             return true;
         }
 

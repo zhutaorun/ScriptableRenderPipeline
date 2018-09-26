@@ -421,9 +421,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             probe,
                             planarProbe.referencePosition, Quaternion.identity
                         );
+                        // Set proper orientation for the reference rotation
+                        var proxyMatrix = Matrix4x4.TRS(
+                            positionSettings.proxyPosition,
+                            positionSettings.proxyRotation,
+                            Vector3.one
+                        );
+                        var mirrorPosition = proxyMatrix.MultiplyPoint(settings.proxySettings.mirrorPositionProxySpace);
+                        positionSettings.referenceRotation = Quaternion.LookRotation(mirrorPosition - positionSettings.referencePosition);
+
                         Matrix4x4 worldToCameraRHSMatrix, projectionMatrix;
                         HDRenderUtilities.Render(
-                            probe.settings,
+                            settings,
                             positionSettings,
                             planarRT,
                             out worldToCameraRHSMatrix, out projectionMatrix
@@ -460,8 +469,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         break;
                     }
                 case ProbeSettings.ProbeType.PlanarProbe:
-                    Debug.LogWarning("Baked Planar Reflections are not supported yet.");
-                    break;
+                    {
+                        var importer = AssetImporter.GetAtPath(file) as TextureImporter;
+                        if (importer == null)
+                            return;
+                        importer.sRGBTexture = false;
+                        importer.filterMode = FilterMode.Bilinear;
+                        importer.mipmapEnabled = false;
+                        importer.textureCompression = TextureImporterCompression.Compressed;
+                        importer.textureShape = TextureImporterShape.Texture2D;
+                        importer.SaveAndReimport();
+                        break;
+                    }
             }
         }
 

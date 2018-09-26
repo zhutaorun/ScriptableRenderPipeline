@@ -54,17 +54,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             switch (positionMode)
             {
                 case PositionMode.UseProbeTransform:
-                    cameraPosition.mode = CameraPositionSettings.Mode.ComputeWorldToCameraMatrix;
-                    cameraPosition.position = probePosition.proxyPosition;
-                    cameraPosition.rotation = probePosition.proxyRotation;
-                    break;
+                    {
+                        cameraPosition.mode = CameraPositionSettings.Mode.ComputeWorldToCameraMatrix;
+                        var proxyMatrix = Matrix4x4.TRS(probePosition.proxyPosition, probePosition.proxyRotation, Vector3.one);
+                        cameraPosition.position = proxyMatrix.MultiplyPoint(settings.proxySettings.capturePositionProxySpace);
+                        cameraPosition.rotation = proxyMatrix.rotation * settings.proxySettings.captureRotationProxySpace;
+                        break;
+                    }
                 case PositionMode.MirrorReferenceTransfromWithProbePlane:
-                    cameraPosition.mode = CameraPositionSettings.Mode.UseWorldToCameraMatrixField;
-                    ApplyMirroredReferenceTransform(
-                        ref settings, ref probePosition,
-                        ref cameraSettings, ref cameraPosition
-                    );
-                    break;
+                    {
+                        cameraPosition.mode = CameraPositionSettings.Mode.UseWorldToCameraMatrixField;
+                        ApplyMirroredReferenceTransform(
+                            ref settings, ref probePosition,
+                            ref cameraSettings, ref cameraPosition
+                        );
+                        break;
+                    }
             }
 
             // Update the clip plane
@@ -90,8 +95,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             );
             var proxyMatrix = Matrix4x4.TRS(probePosition.proxyPosition, probePosition.proxyRotation, Vector3.one);
             var reflectionMatrix = GeometryUtils.CalculateReflectionMatrix(
-                proxyMatrix.MultiplyPoint(settings.proxySettings.capturePositionProxySpace),
-                proxyMatrix.MultiplyVector(settings.proxySettings.captureRotationProxySpace * Vector3.forward)
+                proxyMatrix.MultiplyPoint(settings.proxySettings.mirrorPositionProxySpace),
+                proxyMatrix.MultiplyVector(settings.proxySettings.mirrorRotationProxySpace * Vector3.forward)
             );
             cameraPosition.worldToCameraMatrix = worldToCameraRHS * reflectionMatrix;
             // We must invert the culling because we performed a plane reflection

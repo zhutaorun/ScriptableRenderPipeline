@@ -28,6 +28,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         );
                 }
             }
+
+            var referencePosition = d.target.transform.TransformPoint(d.localReferencePosition.vector3Value);
+            referencePosition = Handles.PositionHandle(referencePosition, d.target.transform.rotation);
+            d.localReferencePosition.vector3Value = d.target.transform.InverseTransformPoint(referencePosition);
+            d.serializedObject.ApplyModifiedProperties();
         }
 
         [DrawGizmo(GizmoType.Selected)]

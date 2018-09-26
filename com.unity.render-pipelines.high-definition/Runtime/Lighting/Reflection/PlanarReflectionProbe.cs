@@ -47,7 +47,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         float m_FieldOfViewOverride = 90;
 
         [SerializeField]
-        Vector3 m_LocalReferencePosition;
+        Vector3 m_LocalReferencePosition = -Vector3.forward;
         [SerializeField]
         RenderData m_BakedRenderData;
         [SerializeField]
@@ -76,6 +76,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
+        public Vector3 localReferencePosition { get { return m_LocalReferencePosition; } }
         public Vector3 referencePosition { get { return transform.TransformPoint(m_LocalReferencePosition); } }
 
         public bool overrideFieldOfView { get { return m_OverrideFieldOfView; } }

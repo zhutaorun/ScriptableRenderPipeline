@@ -16,6 +16,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         internal SerializedProperty overrideFieldOfView;
         internal SerializedProperty fieldOfViewOverride;
 
+        internal SerializedProperty localReferencePosition;
+
         internal new PlanarReflectionProbe target { get { return serializedObject.targetObject as PlanarReflectionProbe; } }
 
         internal bool isMirrored
@@ -40,6 +42,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             overrideFieldOfView = serializedObject.Find((PlanarReflectionProbe p) => p.overrideFieldOfView);
             fieldOfViewOverride = serializedObject.Find((PlanarReflectionProbe p) => p.fieldOfViewOverride);
+
+            localReferencePosition = serializedObject.Find((PlanarReflectionProbe p) => p.localReferencePosition);
 
             influenceVolume.editorSimplifiedModeBlendNormalDistance.floatValue = 0;
         }

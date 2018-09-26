@@ -75,10 +75,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             /// when <c><see cref="linkedProxy"/> == null</c>.
             /// </summary>
             public bool useInfluenceVolumeAsProxyVolume;
-            /// <summary>Position of the capture position in proxy space.</summary>
+            /// <summary>Position of the capture in proxy space. (Reflection Probe only)</summary>
             public Vector3 capturePositionProxySpace;
-            /// <summary>Rotation of the capture position in proxy space.</summary>
+            /// <summary>Rotation of the capture in proxy space. (Reflection Probe only)</summary>
             public Quaternion captureRotationProxySpace;
+            /// <summary>Position of the mirror in proxy space. (Planar Probe only)</summary>
+            public Vector3 mirrorPositionProxySpace;
+            /// <summary>Rotation of the mirror in proxy space. (Planar Probe only)</summary>
+            public Quaternion mirrorRotationProxySpace;
         }
 
         /// <summary>Default value.</summary>

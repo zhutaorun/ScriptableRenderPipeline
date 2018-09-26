@@ -50,6 +50,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             base.OnSceneGUI();
 
             SceneViewOverlay_Window(_.GetContent("Planar Probe"), OnOverlayGUI, -100, target);
+
+            var ui = new PlanarReflectionProbeUI();
+            ui.Reset(m_SerializedHDProbe, Repaint);
+            PlanarReflectionProbeUI.DrawHandles(ui, (SerializedPlanarReflectionProbe)m_SerializedHDProbe, this);
         }
 
 
