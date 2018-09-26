@@ -262,18 +262,18 @@ VoxelLighting EvaluateVoxelLighting(LightLoopContext context, uint featureFlags,
                 if (sampleLight)
                 {
                     // We are unable to adequately sample features larger
-                    // than the half of the length of the integration interval
-                    // divided by the number of temporal samples (7).
+                    // than the half of the length of the integration interval.
                     // Therefore, we apply this hack to reduce flickering.
-                    float hackMinDistSq = Sq(dt * (0.5 / 7));
+                    // This clamp is quite aggressive, blurring the light to kill all aliasing.
+                    // The number 7 comes from the number of unique temporal samples.
+                    float hackMinDistSq = Sq(dt * rcp(7));
 
                     float t, distSq, rcpPdf;
                     ImportanceSamplePunctualLight(rndVal, light.positionRWS,
                                                   ray.originWS, ray.jitterDirWS,
                                                   tEntr, tExit, t, distSq, rcpPdf,
+                                                  posInput.positionWS,
                                                   hackMinDistSq);
-
-                    posInput.positionWS = GetPointAtDistance(ray, t);
 
                     float3 lightToSample = posInput.positionWS - light.positionRWS;
                     float  distRcp       = rsqrt(distSq);
@@ -300,7 +300,7 @@ VoxelLighting EvaluateVoxelLighting(LightLoopContext context, uint featureFlags,
                     // and any temporal instability of anisotropy causes causes visible jitter.
                     // In order to stabilize the image, we use the voxel center for all
                     // anisotropy-related calculations.
-                    float3 centerL = light.positionRWS - centerWS;
+                    float3 centerL  = light.positionRWS - centerWS;
                     float  cosTheta = dot(centerL, ray.centerDirWS) * rsqrt(dot(centerL, centerL));
                     float  phase    = CornetteShanksPhasePartVarying(anisotropy, cosTheta);
 
@@ -483,12 +483,17 @@ void FillVolumetricLightingBuffer(LightLoopContext context, uint featureFlags,
         // Prevent division by 0.
         extinction = max(extinction, FLT_MIN);
 
+        // Perform per-pixel randomization by adding an offset and then sampling uniformly
+        // (in the log space) in a vein similar to Stochastic Universal Sampling:
+        // https://en.wikipedia.org/wiki/Stochastic_universal_sampling
+        float perPixelRandomOffset = GenerateHashedRandomFloat(posInput.positionSS);
+
     #if ENABLE_REPROJECTION
-        // This is a sequence of 7 equidistant numbers from 1/14 to 13/14.
+        // This is a time-based sequence of 7 equidistant numbers from 1/14 to 13/14.
         // Each of them is the centroid of the interval of length 2/14.
-        float rndVal = _VBufferSampleOffset.z;
+        float rndVal = frac(perPixelRandomOffset + _VBufferSampleOffset.z);
     #else
-        float rndVal = 0.5;
+        float rndVal = frac(perPixelRandomOffset + 0.5);
     #endif
 
         VoxelLighting lighting = EvaluateVoxelLighting(context, featureFlags, posInput, centerWS,

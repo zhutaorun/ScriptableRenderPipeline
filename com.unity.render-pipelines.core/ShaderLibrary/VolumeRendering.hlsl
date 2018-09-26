@@ -64,7 +64,7 @@ real HenyeyGreensteinPhasePartConstant(real anisotropy)
 real HenyeyGreensteinPhasePartVarying(real anisotropy, real cosTheta)
 {
     real g = anisotropy;
-    real f = rsqrt(1 + g * g - 2 * g * cosTheta); // x^(-1/2)
+    real f = rsqrt(saturate(1 + g * g - 2 * g * cosTheta)); // x^(-1/2)
 
     return f * f * f; // x^(-3/2)
 }
@@ -85,10 +85,14 @@ real CornetteShanksPhasePartConstant(real anisotropy)
 real CornetteShanksPhasePartVarying(real anisotropy, real cosTheta)
 {
     real g = anisotropy;
-    real f = rsqrt(1 + g * g - 2 * g * cosTheta); // x^(-1/2)
+    real f = rsqrt(saturate(1 + g * g - 2 * g * cosTheta)); // x^(-1/2)
     real h = (1 + cosTheta * cosTheta);
 
-    return h * (f * f * f); // h * f^(-3/2)
+    // Note that this function is not perfectly isotropic for (g = 0). We force it to be.
+    // TODO: in the future, when (g = 0), specialize the Volumetric Lighting kernel
+    // to not do anything anisotropy-specific. This way we could avoid this test
+    // (along with tons of other overhead and hacks).
+    return (g == 0) ? 1.33333333 : h * (f * f * f); // h * x^(-3/2)
 }
 
 // A better approximation of the Mie phase function.
@@ -124,30 +128,37 @@ void ImportanceSampleHomogeneousMedium(real rndVal, real extinction, real interv
 void ImportanceSamplePunctualLight(real rndVal, real3 lightPosition,
                                    real3 rayOrigin, real3 rayDirection,
                                    real tMin, real tMax,
-                                   out real dist, out real rSq, out real rcpPdf,
-                                   real minDistSq = FLT_EPS)
+                                   out real t, out real sqDist, out real rcpPdf,
+                                   out real3 virtualSamplePosition,
+                                   real minRayToLightSqDist = FLT_EPS)
 {
-    real3 originToLight       = lightPosition - rayOrigin;
-    real  originToLightProj   = dot(originToLight, rayDirection);
-    real  originToLightDistSq = dot(originToLight, originToLight);
-    real  rayToLightDistSq    = max(originToLightDistSq - originToLightProj * originToLightProj, minDistSq);
+    real3 originToLight         = lightPosition - rayOrigin;
+    real  originToLightProjDist = dot(originToLight, rayDirection);
+    real3 originToLightProj     = originToLightProjDist * rayDirection;
+    real  originToLightSqDist   = dot(originToLight, originToLight);
+    real  rayToLightSqDist      = originToLightSqDist - originToLightProjDist * originToLightProjDist;
+    real3 rayToLight            = originToLight - originToLightProj;
 
-    real a    = tMin - originToLightProj;
-    real b    = tMax - originToLightProj;
-    real dSq  = rayToLightDistSq;
-    real dRcp = rsqrt(dSq);
-    real d    = dSq * dRcp;
+    real a    = tMin - originToLightProjDist;
+    real b    = tMax - originToLightProjDist;
+    real sqD  = max(rayToLightSqDist, minRayToLightSqDist);
+    real rcpD = rsqrt(sqD);
+    real d    = sqD * rcpD;
 
     // TODO: optimize me. :-(
-    real theta0 = FastATan(a * dRcp);
-    real theta1 = FastATan(b * dRcp);
+    real theta0 = FastATan(a * rcpD);
+    real theta1 = FastATan(b * rcpD);
     real gamma  = theta1 - theta0;
     real theta  = lerp(theta0, theta1, rndVal);
-    real t      = d * tan(theta);
 
-    dist   = originToLightProj + t;
-    rSq    = dSq + t * t;
-    rcpPdf = gamma * rSq * dRcp;
+    t      = d * tan(theta);
+    sqDist = sqD + t * t;
+    rcpPdf = gamma * sqDist * rcpD;
+    t      = t + originToLightProjDist;
+
+    // Account for 'minRayToLightSqDist' by orthogonally displacing the sample away from the light.
+    real rayToLightOffset = (rayToLightSqDist > 0) ? (d * rsqrt(rayToLightSqDist) - 1) : 1;
+    virtualSamplePosition = rayOrigin + t * rayDirection - rayToLight * rayToLightOffset;
 }
 
 // Absorption coefficient from Disney: http://blog.selfshadow.com/publications/s2015-shading-course/burley/s2015_pbs_disney_bsdf_notes.pdf
