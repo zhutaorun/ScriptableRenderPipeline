@@ -277,6 +277,10 @@ VoxelLighting EvaluateVoxelLighting(LightLoopContext context, uint featureFlags,
 
                     posInput.positionWS = GetPointAtDistance(ray, t);
 
+                    // Apply the sphere light hack to soften the core of the punctual light.
+                    float sqRadius = light.size.x;
+                    distSq += sqRadius;
+
                     float  distRcp       = rsqrt(distSq);
                     float  dist          = distSq * distRcp;
                     float3 lightToSample = posInput.positionWS - light.positionRWS;
@@ -356,9 +360,8 @@ VoxelLighting EvaluateVoxelLighting(LightLoopContext context, uint featureFlags,
                 float3 o = mul(rotMat, ray.originWS - light.positionRWS);
                 float3 d = mul(rotMat, ray.jitterDirWS);
 
-                float  range  = light.size.x;
                 float3 boxPt0 = float3(-1, -1, 0);
-                float3 boxPt1 = float3( 1,  1, range);
+                float3 boxPt1 = float3( 1,  1, light.range);
 
                 float tEntr, tExit;
 

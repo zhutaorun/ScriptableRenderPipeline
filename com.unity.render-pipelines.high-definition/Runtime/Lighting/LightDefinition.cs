@@ -102,7 +102,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public float diffuseScale;
         public float specularScale;
 
-        public Vector2 size;        // Used by area (X = length or width, Y = height) and box projector lights (X = range (depth))
+        public Vector2 size;        // Used by area (X = length or width, Y = height) and punctual lights (X = radius^2)
         public float volumetricDimmer;
         public float range;
     };

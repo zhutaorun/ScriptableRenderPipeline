@@ -145,8 +145,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Only for pyramid projector
         public float aspectRatio = 1.0f;
 
-        // Only for Sphere/Disc
-        public float shapeRadius;
+        // Only for Punctual/Sphere/Disc
+        public float shapeRadius = 0.01f;
 
         // Only for Spot/Point - use to cheaply fake specular spherical area light
         // It is not 1 to make sure the highlight does not disappear.
@@ -244,7 +244,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 var         shadowRequest = shadowRequests[requestIndex];
                 Matrix4x4   invViewProjection = Matrix4x4.identity;
-                
+
                 // Write per light type matrices, splitDatas and culling parameters
                 switch (m_Light.type)
                 {
@@ -260,7 +260,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         int     cascadeCount;
                         Vector4 cullingSphere;
                         float   nearPlaneOffset = QualitySettings.shadowNearPlaneOffset;
-                        
+
                         m_ShadowData.GetShadowCascades(out cascadeCount, out cascadeRatios, out cascadeBorders);
                         HDShadowUtils.ExtractDirectionalLightData(visibleLight, viewportSize, (uint)requestIndex, m_ShadowData.cascadeCount, cascadeRatios, nearPlaneOffset, cullResults, lightIndex, out shadowRequest.view, out invViewProjection, out shadowRequest.projection, out shadowRequest.deviceProjection, out shadowRequest.splitData);
 
@@ -285,11 +285,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 SetCommonShadowRequestSettings(shadowRequest, cameraPos, invViewProjection, viewportSize, lightIndex);
 
                 int shadowRequestIndex = manager.AddShadowRequest(shadowRequest);
-                
+
                 // Store the first shadow request id to return it
                 if (firstShadowRequestIndex == -1)
                     firstShadowRequestIndex = shadowRequestIndex;
-                
+
                 shadowRequestCount++;
             }
 

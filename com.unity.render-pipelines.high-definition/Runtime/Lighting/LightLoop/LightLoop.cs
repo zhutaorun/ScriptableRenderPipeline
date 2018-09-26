@@ -106,11 +106,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Avoid overflowing the compute buffer
                     if (sds.Length <= k_MaxShadowDataSlots)
                         s_ShadowDataBuffer.SetData(sds);   // unfortunately we can't pass an offset or count to this function
-                    
+
                     ShadowPayload[] payloads;
                     sc.GetPayloads(out payloads, out offset, out count);
                     Debug.Assert(offset == 0);
-                    
+
                     // Avoid overflowing the compute buffer
                     if (payloads.Length <= k_MaxShadowDataSlots)
                         s_ShadowPayloadBuffer.SetData(payloads);
@@ -938,7 +938,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Clamp light list to the maximum allowed lights on screen to avoid ComputeBuffer overflow
             if (m_lightList.directionalLights.Count >= k_MaxDirectionalLightsOnScreen)
                 return false;
-            
+
             var directionalLightData = new DirectionalLightData();
 
             float diffuseDimmer = m_FrameSettings.diffuseGlobalDimmer * additionalData.lightDimmer;
@@ -1061,7 +1061,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Clamp light list to the maximum allowed lights on screen to avoid ComputeBuffer overflow
             if (m_lightList.lights.Count >= k_MaxPunctualLightsOnScreen + k_MaxAreaLightsOnScreen)
                 return false;
-            
+
             var lightData = new LightData();
 
             lightData.lightLayers = additionalLightData.GetLightLayers();
@@ -1128,8 +1128,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (lightData.lightType == GPULightType.ProjectorBox)
             {
-                lightData.size.x = light.range;
-
                 // Rescale for cookies and windowing.
                 lightData.right *= 2.0f / Mathf.Max(additionalLightData.shapeWidth, 0.001f);
                 lightData.up    *= 2.0f / Mathf.Max(additionalLightData.shapeHeight, 0.001f);
@@ -1184,6 +1182,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // These are the neutral values allowing GetAngleAnttenuation in shader code to return 1.0
                 lightData.angleScale = 0.0f;
                 lightData.angleOffset = 1.0f;
+            }
+
+            if (lightData.lightType != GPULightType.Directional && lightData.lightType != GPULightType.ProjectorBox)
+            {
+                lightData.size = new Vector2(additionalLightData.shapeRadius * additionalLightData.shapeRadius, 0);
             }
 
             if (lightData.lightType == GPULightType.Rectangle || lightData.lightType == GPULightType.Line)
@@ -1700,7 +1703,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 light.bakingOutput.mixedLightingMode == MixedLightingMode.Shadowmask &&
                 light.bakingOutput.occlusionMaskChannel != -1;     // We need to have an occlusion mask channel assign, else we have no shadow mask
         }
-        
+
         HDProbe SelectProbe(VisibleReflectionProbe probe, PlanarReflectionProbe planarProbe)
         {
             if (probe.probe != null)
@@ -1762,7 +1765,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     Shader.DisableKeyword("USE_CORE_SHADOW_SYSTEM");
                 else
                     Shader.EnableKeyword("USE_CORE_SHADOW_SYSTEM");
-                
+
                 // We must clear the shadow requests before checking if they are any visible light because we would have requests from the last frame executed in the case where we don't see any lights
                 if (useNewShadowSystem)
                 {
@@ -1843,7 +1846,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                         // Light should always have additional data, however preview light right don't have, so we must handle the case by assigning HDUtils.s_DefaultHDAdditionalLightData
                         var additionalData = GetHDAdditionalLightData(lightComponent);
-                    
+
                         LightCategory lightCategory = LightCategory.Count;
                         GPULightType gpuLightType = GPULightType.Point;
                         LightVolumeType lightVolumeType = LightVolumeType.Count;
@@ -2045,7 +2048,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             }
                         }
                     }
-                    
+
                     if (useNewShadowSystem)
                     {
                         m_NewShadowManager.ProcessShadowRequests(cullResults, camera, debugDisplaySettings.lightingDebugSettings);

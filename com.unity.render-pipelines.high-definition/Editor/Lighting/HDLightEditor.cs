@@ -230,7 +230,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // If the light is disabled in the editor we force the light upgrade from his inspector
             foreach (var additionalLightData in m_AdditionalLightDatas)
                 additionalLightData.UpgradeLight();
-            
+
             m_HDShadowInitParameters = (GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset).renderPipelineSettings.hdShadowInitParams;
             m_ShadowAlgorithmUIs = new Dictionary<HDShadowQuality, Action>
             {
@@ -466,6 +466,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     settings.lightType.enumValueIndex = (int)LightType.Point;
                     m_AdditionalLightData.lightTypeExtent.enumValueIndex = (int)LightTypeExtent.Punctual;
                     EditorGUILayout.PropertyField(m_AdditionalLightData.maxSmoothness, s_Styles.maxSmoothness);
+                    EditorGUILayout.Slider(m_AdditionalLightData.shapeRadius, 0f, 1f, s_Styles.lightRadius);
                     break;
 
                 case LightShape.Spot:
@@ -473,24 +474,30 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     m_AdditionalLightData.lightTypeExtent.enumValueIndex = (int)LightTypeExtent.Punctual;
                     EditorGUILayout.PropertyField(m_AdditionalLightData.spotLightShape, s_Styles.spotLightShape);
                     var spotLightShape = (SpotLightShape)m_AdditionalLightData.spotLightShape.enumValueIndex;
-                    // Cone Spot
-                    if (spotLightShape == SpotLightShape.Cone)
+                    if (spotLightShape == SpotLightShape.Box)
                     {
-                        settings.DrawSpotAngle();
-                        EditorGUILayout.Slider(m_AdditionalLightData.spotInnerPercent, 0f, 100f, s_Styles.spotInnerPercent);
-                    }
-                    // TODO : replace with angle and ratio
-                    else if (spotLightShape == SpotLightShape.Pyramid)
-                    {
-                        settings.DrawSpotAngle();
-                        EditorGUILayout.Slider(m_AdditionalLightData.aspectRatio, 0.05f, 20.0f, s_Styles.aspectRatioPyramid);
-                    }
-                    else if (spotLightShape == SpotLightShape.Box)
-                    {
+                        // Box light is a boxed directional light.
                         EditorGUILayout.PropertyField(m_AdditionalLightData.shapeWidth, s_Styles.shapeWidthBox);
                         EditorGUILayout.PropertyField(m_AdditionalLightData.shapeHeight, s_Styles.shapeHeightBox);
                     }
-                    EditorGUILayout.PropertyField(m_AdditionalLightData.maxSmoothness, s_Styles.maxSmoothness);
+                    else
+                    {
+                        if (spotLightShape == SpotLightShape.Cone)
+                        {
+                            settings.DrawSpotAngle();
+                            EditorGUILayout.Slider(m_AdditionalLightData.spotInnerPercent, 0f, 100f, s_Styles.spotInnerPercent);
+                        }
+                        // TODO : replace with angle and ratio
+                        else if (spotLightShape == SpotLightShape.Pyramid)
+                        {
+                            settings.DrawSpotAngle();
+                            EditorGUILayout.Slider(m_AdditionalLightData.aspectRatio, 0.05f, 20.0f, s_Styles.aspectRatioPyramid);
+                        }
+
+                        EditorGUILayout.Slider(m_AdditionalLightData.shapeRadius, 0f, 1f, s_Styles.lightRadius);
+                        EditorGUILayout.PropertyField(m_AdditionalLightData.maxSmoothness, s_Styles.maxSmoothness);
+                    }
+
                     break;
 
                 case LightShape.Rectangle:
@@ -777,7 +784,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             if (settings.isBakedOrMixed)
                 DrawBakedShadowParameters();
-            
+
             // Draw shadow settings using the current shadow algorithm
             HDShadowQuality currentAlgorithm;
             if (settings.lightType.enumValueIndex == (int)LightType.Directional)
