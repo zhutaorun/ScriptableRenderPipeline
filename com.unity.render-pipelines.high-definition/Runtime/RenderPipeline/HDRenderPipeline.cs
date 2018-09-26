@@ -787,12 +787,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
             }
 
-            // TODO: Render only visible probes
-            var probeTypeToRender = ReflectionProbeType.ReflectionProbe;
-            var isPlanarReflection = cameras.Any(c => c.cameraType == CameraType.Reflection);
-            if (isPlanarReflection)
-                probeTypeToRender |= ReflectionProbeType.PlanarReflection;
-            ReflectionSystem.RenderAllRealtimeProbes(probeTypeToRender);
+            var isAnyCamerasAReflectionCamera = false;
+            for (int i = 0; i < cameras.Length && !isAnyCamerasAReflectionCamera; ++i)
+                isAnyCamerasAReflectionCamera |= cameras[i].cameraType == CameraType.Reflection;
+
+            if (!isAnyCamerasAReflectionCamera)
+            {
+                // TODO: Render only visible probes
+                var realtimeViewDependentProbes = HDProbeSystem.realtimeViewDependentProbes;
+                HDProbeSystem.RenderAndUpdateRealtimeData(realtimeViewDependentProbes, null);
+            }
 
             // We first update the state of asset frame settings as they can be use by various camera
             // but we keep the dirty state to correctly reset other camera that use RenderingPath.Default.
@@ -850,9 +854,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Planar probes rendering is not currently supported for orthographic camera
                     // Avoid rendering to prevent error log spamming
                     && !camera.orthographic)
+                {
                     // TODO: Render only visible probes
-                    ReflectionSystem.RenderAllRealtimeViewerDependentProbesFor(ReflectionProbeType.PlanarReflection, camera);
-
+                    var realtimeViewDependentProbes = HDProbeSystem.realtimeViewDependentProbes;
+                    HDProbeSystem.RenderAndUpdateRealtimeData(realtimeViewDependentProbes, camera.transform);
+                }
+                
                 // Init material if needed
                 // TODO: this should be move outside of the camera loop but we have no command buffer, ask details to Tim or Julien to do this
                 if (!m_IBLFilterGGX.IsInitialized())

@@ -68,8 +68,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var planarSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.planarReflectionTextureSize;
             var bakedProbes = HDProbeSystem.bakedProbes;
 
-            var cubeRT = CreateTemporaryCubemapRenderTexture(cubemapSize);
-            var planarRT = CreateTemporaryPlanarRenderTexture(planarSize);
+            var cubeRT = HDRenderUtilities.CreateReflectionProbeTarget(cubemapSize);
+            var planarRT = HDRenderUtilities.CreatePlanarProbeTarget(planarSize);
             for (int i = 0; i < bakedProbes.Count; ++i)
             {
                 var probe = bakedProbes[i];
@@ -182,8 +182,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // == 4. ==
                 var cubemapSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.reflectionCubemapSize;
                 var planarSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.planarReflectionTextureSize;
-                var cubeRT = CreateTemporaryCubemapRenderTexture(cubemapSize);
-                var planarRT = CreateTemporaryCubemapRenderTexture(planarSize);
+                var cubeRT = HDRenderUtilities.CreateReflectionProbeTarget(cubemapSize);
+                var planarRT = HDRenderUtilities.CreatePlanarProbeTarget(planarSize);
 
                 handle.EnterStage(
                     (int)BakingStages.ReflectionProbes,
@@ -339,28 +339,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
             }
             AssetDatabase.StopAssetEditing();
-        }
-
-        RenderTexture CreateTemporaryCubemapRenderTexture(int cubemapSize)
-        {
-            return new RenderTexture(cubemapSize, cubemapSize, 1, GraphicsFormat.R16G16B16A16_SFloat)
-            {
-                dimension = TextureDimension.Cube,
-                enableRandomWrite = true,
-                useMipMap = false,
-                autoGenerateMips = false
-            };
-        }
-
-        RenderTexture CreateTemporaryPlanarRenderTexture(int planarSize)
-        {
-            return new RenderTexture(planarSize, planarSize, 1, GraphicsFormat.R16G16B16A16_SFloat)
-            {
-                dimension = TextureDimension.Tex2D,
-                enableRandomWrite = true,
-                useMipMap = false,
-                autoGenerateMips = false
-            };
         }
 
         void AssignBakedTexture(HDProbe probe, Texture bakedTexture)

@@ -127,6 +127,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             HDProbeSystem.UnregisterProbe(this);
         }
 
+        internal virtual void OnValidate()
+        {
+            HDProbeSystem.UnregisterProbe(this);
+
+            if (isActiveAndEnabled)
+                HDProbeSystem.RegisterProbe(this);
+        }
+
         void ISerializationCallbackReceiver.OnBeforeSerialize()
         {
         }

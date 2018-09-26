@@ -192,7 +192,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ReflectionSystem.UnregisterProbe(this);
         }
 
-        void OnValidate()
+        internal override void OnValidate()
         {
             ReflectionSystem.UnregisterProbe(this);
 

@@ -155,6 +155,28 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             projectionMatrix = cameraSettings.frustum.GetUsedProjectionMatrix();
         }
 
+        public static RenderTexture CreateReflectionProbeTarget(int cubemapSize)
+        {
+            return new RenderTexture(cubemapSize, cubemapSize, 1, GraphicsFormat.R16G16B16A16_SFloat)
+            {
+                dimension = TextureDimension.Cube,
+                enableRandomWrite = true,
+                useMipMap = false,
+                autoGenerateMips = false
+            };
+        }
+
+        public static RenderTexture CreatePlanarProbeTarget(int planarSize)
+        {
+            return new RenderTexture(planarSize, planarSize, 1, GraphicsFormat.R16G16B16A16_SFloat)
+            {
+                dimension = TextureDimension.Tex2D,
+                enableRandomWrite = true,
+                useMipMap = false,
+                autoGenerateMips = false
+            };
+        }
+
         static Camera NewRenderingCamera()
         {
             var go = new GameObject("__Render Camera");
