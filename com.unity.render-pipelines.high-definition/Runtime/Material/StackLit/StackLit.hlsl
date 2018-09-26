@@ -1938,7 +1938,7 @@ void BSDF_SetupNormalsAndAngles(BSDFData bsdfData, inout PreLightData preLightDa
 
     // Optimized math. Ref: PBR Diffuse Lighting for GGX + Smith Microsurfaces (slide 114).
     float LdotV = dot(L[TOP_DIR_IDX], V[TOP_DIR_IDX]); // note: LdotV isn't reused elsewhere, just here.
-    float invLenLV = rsqrt(max(2.0 * LdotV + 2.0, FLT_EPS)); // invLenLV = rcp(length(L + V)), clamp to avoid rsqrt(0) = NaN
+    float invLenLV = rsqrt(max(2.0 * LdotV + 2.0, FLT_EPS)); // invLenLV = rcp(length(L + V)), clamp to avoid rsqrt(0) = inf, inf * 0 = NaN
     savedLdotH = saturate(invLenLV * LdotV + invLenLV);
     NdotH[COAT_NORMAL_IDX] = saturate((NdotL[DNLV_COAT_IDX] + unclampedNdotV[COAT_NORMAL_IDX]) * invLenLV); // Do not clamp NdotV here
     NdotV[DNLV_COAT_IDX] = ClampNdotV(unclampedNdotV[COAT_NORMAL_IDX]);

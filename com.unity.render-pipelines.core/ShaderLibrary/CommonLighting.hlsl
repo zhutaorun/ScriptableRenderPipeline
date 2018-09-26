@@ -303,7 +303,7 @@ void GetBSDFAngle(float3 V, float3 L, float NdotL, float unclampNdotV, out float
 {
     // Optimized math. Ref: PBR Diffuse Lighting for GGX + Smith Microsurfaces (slide 114).
     LdotV = dot(L, V);
-    invLenLV = rsqrt(max(2.0 * LdotV + 2.0, FLT_EPS));    // invLenLV = rcp(length(L + V)), clamp to avoid rsqrt(0) = NaN
+    invLenLV = rsqrt(max(2.0 * LdotV + 2.0, FLT_EPS));    // invLenLV = rcp(length(L + V)), clamp to avoid rsqrt(0) = inf, inf * 0 = NaN
     NdotH = saturate((NdotL + unclampNdotV) * invLenLV);        // Do not clamp NdotV here
     LdotH = saturate(invLenLV * LdotV + invLenLV);
     clampNdotV = ClampNdotV(unclampNdotV);
