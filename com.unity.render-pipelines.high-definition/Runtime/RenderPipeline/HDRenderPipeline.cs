@@ -931,11 +931,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {
                         // Flush pending command buffer.
                         renderContext.ExecuteCommandBuffer(cmd);
-                        renderContext.Submit();
                         CommandBufferPool.Release(cmd);
 
                         // Execute custom render
                         additionalCameraData.ExecuteCustomRender(renderContext, hdCamera);
+
+                        renderContext.Submit();
                         continue;
                     }
 
