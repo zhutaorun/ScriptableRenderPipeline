@@ -271,16 +271,18 @@ VoxelLighting EvaluateVoxelLighting(LightLoopContext context, uint featureFlags,
                     float t, distSq, rcpPdf;
                     ImportanceSamplePunctualLight(rndVal, light.positionRWS,
                                                   ray.originWS, ray.jitterDirWS,
-                                                  tEntr, tExit, t, distSq, rcpPdf,
-                                                  posInput.positionWS,
+                                                  tEntr, tExit,
+                                                  t, rcpPdf, distSq,
                                                   hackMinDistSq);
 
-                    float3 lightToSample = posInput.positionWS - light.positionRWS;
+                    posInput.positionWS = GetPointAtDistance(ray, t);
+
                     float  distRcp       = rsqrt(distSq);
                     float  dist          = distSq * distRcp;
+                    float3 lightToSample = posInput.positionWS - light.positionRWS;
                     float  distProj      = dot(lightToSample, light.forward);
                     float4 distances     = float4(dist, distSq, distRcp, distProj);
-                    float3 L             = -lightToSample * distRcp;
+                    float3 L             = -lightToSample * distRcp; // Note that (length(lightToSample) != dist)
 
                     float3 color; float attenuation;
                     light.contactShadowIndex = -1; // Disable shadow contact if any

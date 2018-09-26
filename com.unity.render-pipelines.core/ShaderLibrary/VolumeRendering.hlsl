@@ -108,7 +108,7 @@ real CornetteShanksPhaseFunction(real anisotropy, real cosTheta)
 // Returns the offset from the start of the interval and the weight = (transmittance / pdf).
 // Ref: Monte Carlo Methods for Volumetric Light Transport Simulation, p. 5.
 void ImportanceSampleHomogeneousMedium(real rndVal, real extinction, real intervalLength,
-                                      out real offset, out real weight)
+                                       out real offset, out real weight)
 {
     // pdf    = extinction * exp(extinction * (intervalLength - t)) / (exp(intervalLength * extinction - 1)
     // weight = exp(-extinction * t) / pdf
@@ -128,37 +128,44 @@ void ImportanceSampleHomogeneousMedium(real rndVal, real extinction, real interv
 void ImportanceSamplePunctualLight(real rndVal, real3 lightPosition,
                                    real3 rayOrigin, real3 rayDirection,
                                    real tMin, real tMax,
-                                   out real t, out real sqDist, out real rcpPdf,
-                                   out real3 virtualSamplePosition,
+                                   out real t, out real rcpPdf, out real sqDist,
                                    real minRayToLightSqDist = FLT_EPS)
 {
     real3 originToLight         = lightPosition - rayOrigin;
     real  originToLightProjDist = dot(originToLight, rayDirection);
-    real3 originToLightProj     = originToLightProjDist * rayDirection;
     real  originToLightSqDist   = dot(originToLight, originToLight);
     real  rayToLightSqDist      = originToLightSqDist - originToLightProjDist * originToLightProjDist;
-    real3 rayToLight            = originToLight - originToLightProj;
 
     real a    = tMin - originToLightProjDist;
     real b    = tMax - originToLightProjDist;
     real sqD  = max(rayToLightSqDist, minRayToLightSqDist);
     real rcpD = rsqrt(sqD);
     real d    = sqD * rcpD;
+    real x    = a * rcpD;
+    real y    = b * rcpD;
 
-    // TODO: optimize me. :-(
-    real theta0 = FastATan(a * rcpD);
-    real theta1 = FastATan(b * rcpD);
-    real gamma  = theta1 - theta0;
-    real theta  = lerp(theta0, theta1, rndVal);
+#if 0
+    real theta0   = FastATan(x);
+    real theta1   = FastATan(y);
+    real gamma    = theta1 - theta0;
+    real tanTheta = tan(theta0 + rndVal * gamma);
+#else
+    // Same but faster:
+    // atan(y) - atan(x) = atan((y - x) / (1 + x * y))
+    // tan(atan(x) + z)  = (x * cos(z) + sin(z)) / (cos(z) - x * sin(z))
+    real tanGamma = (y - x) * rcp(max(1 + x * y, FLT_EPS));
+    real gamma    = FastATanPos(tanGamma);
+    real z        = rndVal * gamma;
+    real numer    = x * cos(z) + sin(z);
+    real denom    = cos(z) - x * sin(z);
+    real tanTheta = numer * rcp(denom);
+#endif
 
-    t      = d * tan(theta);
-    sqDist = sqD + t * t;
-    rcpPdf = gamma * sqDist * rcpD;
-    t      = t + originToLightProjDist;
+    real tRelative = d * tanTheta;
 
-    // Account for 'minRayToLightSqDist' by orthogonally displacing the sample away from the light.
-    real rayToLightOffset = (rayToLightSqDist > 0) ? (d * rsqrt(rayToLightSqDist) - 1) : 1;
-    virtualSamplePosition = rayOrigin + t * rayDirection - rayToLight * rayToLightOffset;
+    sqDist   = sqD + tRelative * tRelative;
+    rcpPdf   = gamma * sqDist * rcpD;
+    t        = originToLightProjDist + tRelative;
 }
 
 // Absorption coefficient from Disney: http://blog.selfshadow.com/publications/s2015-shading-course/burley/s2015_pbs_disney_bsdf_notes.pdf
