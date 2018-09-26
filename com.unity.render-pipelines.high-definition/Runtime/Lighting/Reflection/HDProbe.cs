@@ -1,3 +1,4 @@
+using System;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
@@ -33,20 +34,25 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             get
             {
                 var settings = ProbeSettings.@default;
-                settings.type = probeType;
-                settings.influence = influenceVolume;
-                settings.linkedProxy = proxyVolume != null ? proxyVolume.proxyVolume : null;
-                settings.camera.frameSettings = frameSettings;
-                settings.lighting.multiplier = multiplier;
-                settings.lighting.weight = weight;
-                settings.proxySettings.useInfluenceVolumeAsProxyVolume = !infiniteProjection;
-                switch (mode)
-                {
-                    case ReflectionProbeMode.Baked: settings.mode = ProbeSettings.Mode.Baked; break;
-                    case ReflectionProbeMode.Custom: settings.mode = ProbeSettings.Mode.Custom; break;
-                    case ReflectionProbeMode.Realtime: settings.mode = ProbeSettings.Mode.Realtime; break;
-                }
+                PopulateSettings(ref settings);
                 return settings;
+            }
+        }
+
+        protected virtual void PopulateSettings(ref ProbeSettings settings)
+        {
+            settings.type = probeType;
+            settings.influence = influenceVolume;
+            settings.linkedProxy = proxyVolume != null ? proxyVolume.proxyVolume : null;
+            settings.camera.frameSettings = frameSettings;
+            settings.lighting.multiplier = multiplier;
+            settings.lighting.weight = weight;
+            settings.proxySettings.useInfluenceVolumeAsProxyVolume = !infiniteProjection;
+            switch (mode)
+            {
+                case ReflectionProbeMode.Baked: settings.mode = ProbeSettings.Mode.Baked; break;
+                case ReflectionProbeMode.Custom: settings.mode = ProbeSettings.Mode.Custom; break;
+                case ReflectionProbeMode.Realtime: settings.mode = ProbeSettings.Mode.Realtime; break;
             }
         }
 

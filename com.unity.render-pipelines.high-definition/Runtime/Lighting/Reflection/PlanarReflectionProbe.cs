@@ -174,6 +174,40 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         #endregion
 
+        protected override void PopulateSettings(ref ProbeSettings settings)
+        {
+            base.PopulateSettings(ref settings);
+
+            if (proxyVolume == null)
+            {
+                if (infiniteProjection)
+                {
+                    // The proxy is the world itself
+                    // The mirror position is the position of the game object
+                    settings.proxySettings.mirrorPositionProxySpace = transform.position;
+                    settings.proxySettings.mirrorRotationProxySpace = transform.rotation;
+                }
+                else
+                {
+                    // The proxy is the influence volume
+                    // The mirror position is at the center of the influence
+                    settings.proxySettings.mirrorPositionProxySpace = Vector3.zero;
+                    settings.proxySettings.mirrorRotationProxySpace = Quaternion.identity;
+                }
+            }
+            else
+            {
+                var influenceToWorld = transform.localToWorldMatrix;
+                var proxyToWorld = proxyVolume.transform.localToWorldMatrix;
+                var proxyToInfluence = proxyToWorld.inverse * influenceToWorld;
+                // The mirror is a the center of the influence
+                var positionPS = proxyToInfluence.MultiplyPoint(Vector3.zero);
+                var rotationPS = proxyToInfluence.rotation;
+                settings.proxySettings.mirrorPositionProxySpace = positionPS;
+                settings.proxySettings.mirrorRotationProxySpace = rotationPS;
+            }
+        }
+
         public void RequestRealtimeRender()
         {
             if (isActiveAndEnabled)

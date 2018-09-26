@@ -89,18 +89,25 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ref CameraPositionSettings cameraPosition               // InOut parameter
         )
         {
+            // Calculate mirror position and forward world space
+            var proxyMatrix = Matrix4x4.TRS(probePosition.proxyPosition, probePosition.proxyRotation, Vector3.one);
+            var mirrorPosition = proxyMatrix.MultiplyPoint(settings.proxySettings.mirrorPositionProxySpace);
+            var mirrorForward = proxyMatrix.MultiplyVector(settings.proxySettings.mirrorRotationProxySpace * Vector3.forward);
+
             var worldToCameraRHS = GeometryUtils.CalculateWorldToCameraMatrixRHS(
                 probePosition.referencePosition,
                 probePosition.referenceRotation
             );
-            var proxyMatrix = Matrix4x4.TRS(probePosition.proxyPosition, probePosition.proxyRotation, Vector3.one);
-            var reflectionMatrix = GeometryUtils.CalculateReflectionMatrix(
-                proxyMatrix.MultiplyPoint(settings.proxySettings.mirrorPositionProxySpace),
-                proxyMatrix.MultiplyVector(settings.proxySettings.mirrorRotationProxySpace * Vector3.forward)
-            );
+            var reflectionMatrix = GeometryUtils.CalculateReflectionMatrix(mirrorPosition, mirrorForward);
             cameraPosition.worldToCameraMatrix = worldToCameraRHS * reflectionMatrix;
             // We must invert the culling because we performed a plane reflection
             cameraSettings.culling.invertCulling = true;
+
+            // Calculate capture position and rotation
+            cameraPosition.position = reflectionMatrix.MultiplyPoint(probePosition.referencePosition);
+            var forward = reflectionMatrix.MultiplyVector(probePosition.referenceRotation * Vector3.forward);
+            var up = reflectionMatrix.MultiplyVector(probePosition.referenceRotation * Vector3.up);
+            cameraPosition.rotation = Quaternion.LookRotation(forward, up);
         }
 
         internal static void ApplyObliqueNearClipPlane(
@@ -111,11 +118,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         )
         {
             var proxyMatrix = Matrix4x4.TRS(probePosition.proxyPosition, probePosition.proxyRotation, Vector3.one);
+            var mirrorPosition = proxyMatrix.MultiplyPoint(settings.proxySettings.mirrorPositionProxySpace);
+            var mirrorForward = proxyMatrix.MultiplyVector(settings.proxySettings.mirrorRotationProxySpace * Vector3.forward);
 
             var clipPlaneCameraSpace = GeometryUtils.CameraSpacePlane(
                 cameraPosition.worldToCameraMatrix,
-                proxyMatrix.MultiplyPoint(settings.proxySettings.capturePositionProxySpace),
-                proxyMatrix.MultiplyVector(settings.proxySettings.captureRotationProxySpace * Vector3.forward)
+                mirrorPosition,
+                mirrorForward
             );
             var sourceProjection = Matrix4x4.Perspective(
                 cameraSettings.frustum.fieldOfView,
