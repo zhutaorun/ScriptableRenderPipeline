@@ -231,7 +231,7 @@ namespace UnityEngine.TestTools.Graphics
 
 #if UNITY_EDITOR
         // Hack do disable writing to the XML Log of TestRunner (to avoid editor hanging when tests are run locally)
-        static string s_DontWriteToLogPath = "ProjectSettings/DontWriteToLog";
+        static string s_DontWriteToLogPath = "Library/DontWriteToLog";
 
         static bool sDontWriteToLog
         {
