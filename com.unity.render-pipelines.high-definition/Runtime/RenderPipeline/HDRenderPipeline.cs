@@ -794,8 +794,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (!isAnyCamerasAReflectionCamera)
             {
                 // TODO: Render only visible probes
-                var realtimeViewDependentProbes = HDProbeSystem.realtimeViewDependentProbes;
-                HDProbeSystem.RenderAndUpdateRealtimeData(realtimeViewDependentProbes, null);
+                var realtimeViewIndependentProbes = HDProbeSystem.realtimeViewIndependentProbes;
+                HDProbeSystem.RenderAndUpdateRealtimeData(realtimeViewIndependentProbes, null);
             }
 
             // We first update the state of asset frame settings as they can be use by various camera
