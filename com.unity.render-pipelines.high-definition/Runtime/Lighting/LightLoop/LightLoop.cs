@@ -79,8 +79,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             atlasInit.baseInit.maxPayloadCount = 0;
             atlasInit.baseInit.shadowSupport   = ShadowmapBase.ShadowSupport.Directional | ShadowmapBase.ShadowSupport.Point | ShadowmapBase.ShadowSupport.Spot;
             atlasInit.shaderKeyword            = null;
-            atlasInit.shadowClearShader         = resources.shadowClearShader;
-            atlasInit.shadowBlurMoments         = resources.shadowBlurMoments;
+            atlasInit.shadowClearShader         = resources.shaders.shadowClearPS;
+            atlasInit.shadowBlurMoments         = resources.shaders.shadowBlurMomentsCS;
 
             /*
             // Code kept here for reference if we want to add VSM/MSM later on
@@ -390,16 +390,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         int m_densityVolumeCount = 0;
         bool m_enableBakeShadowMask = false; // Track if any light require shadow mask. In this case we will need to enable the keyword shadow mask
 
-        private ComputeShader buildScreenAABBShader { get { return m_Resources.buildScreenAABBShader; } }
-        private ComputeShader buildPerTileLightListShader { get { return m_Resources.buildPerTileLightListShader; } }
-        private ComputeShader buildPerBigTileLightListShader { get { return m_Resources.buildPerBigTileLightListShader; } }
-        private ComputeShader buildPerVoxelLightListShader { get { return m_Resources.buildPerVoxelLightListShader; } }
+        private ComputeShader buildScreenAABBShader { get { return m_Resources.shaders.buildScreenAABBCS; } }
+        private ComputeShader buildPerTileLightListShader { get { return m_Resources.shaders.buildPerTileLightListCS; } }
+        private ComputeShader buildPerBigTileLightListShader { get { return m_Resources.shaders.buildPerBigTileLightListCS; } }
+        private ComputeShader buildPerVoxelLightListShader { get { return m_Resources.shaders.buildPerVoxelLightListCS; } }
 
-        private ComputeShader buildMaterialFlagsShader { get { return m_Resources.buildMaterialFlagsShader; } }
-        private ComputeShader buildDispatchIndirectShader { get { return m_Resources.buildDispatchIndirectShader; } }
-        private ComputeShader clearDispatchIndirectShader { get { return m_Resources.clearDispatchIndirectShader; } }
-        private ComputeShader deferredComputeShader { get { return m_Resources.deferredComputeShader; } }
-        private ComputeShader screenSpaceShadowComputeShader { get { return m_Resources.screenSpaceShadowComputeShader; } }
+        private ComputeShader buildMaterialFlagsShader { get { return m_Resources.shaders.buildMaterialFlagsCS; } }
+        private ComputeShader buildDispatchIndirectShader { get { return m_Resources.shaders.buildDispatchIndirectCS; } }
+        private ComputeShader clearDispatchIndirectShader { get { return m_Resources.shaders.clearDispatchIndirectCS; } }
+        private ComputeShader deferredComputeShader { get { return m_Resources.shaders.deferredCS; } }
+        private ComputeShader screenSpaceShadowComputeShader { get { return m_Resources.shaders.screenSpaceShadowCS; } }
 
 
         static int s_GenAABBKernel;
@@ -523,7 +523,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var shadowInitParams = hdAsset.GetRenderPipelineSettings().shadowInitParams;
             m_HDShadowInitParameters = hdAsset.GetRenderPipelineSettings().hdShadowInitParams;
             m_ShadowSetup = new ShadowSetup(hdAsset.renderPipelineResources, shadowInitParams, shadowSettings, out m_ShadowMgr);
-            m_NewShadowManager = new HDShadowManager(m_HDShadowInitParameters.shadowAtlasWidth, m_HDShadowInitParameters.shadowAtlasHeight, m_HDShadowInitParameters.maxShadowRequests, m_HDShadowInitParameters.shadowMapsDepthBits, hdAsset.renderPipelineResources.shadowClearShader);
+            m_NewShadowManager = new HDShadowManager(m_HDShadowInitParameters.shadowAtlasWidth, m_HDShadowInitParameters.shadowAtlasHeight, m_HDShadowInitParameters.maxShadowRequests, m_HDShadowInitParameters.shadowMapsDepthBits, hdAsset.renderPipelineResources.shaders.shadowClearPS);
         }
 
         void DeinitShadowSystem()
@@ -577,11 +577,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             m_Resources = hdAsset.renderPipelineResources;
 
-            m_DebugViewTilesMaterial = CoreUtils.CreateEngineMaterial(m_Resources.debugViewTilesShader);
-            m_DebugShadowMapMaterial = CoreUtils.CreateEngineMaterial(m_Resources.debugShadowMapShader);
-            m_DebugHDShadowMapMaterial = CoreUtils.CreateEngineMaterial(m_Resources.debugHDShadowMapShader);
-            m_DebugLightVolumeMaterial = CoreUtils.CreateEngineMaterial(m_Resources.debugLightVolumeShader);
-            m_CubeToPanoMaterial = CoreUtils.CreateEngineMaterial(m_Resources.cubeToPanoShader);
+            m_DebugViewTilesMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.debugViewTilesPS);
+            m_DebugShadowMapMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.debugShadowMapPS);
+            m_DebugHDShadowMapMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.debugHDShadowMapPS);
+            m_DebugLightVolumeMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.debugLightVolumePS);
+            m_CubeToPanoMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.cubeToPanoPS);
 
             m_lightList = new LightList();
             m_lightList.Allocate();
@@ -665,8 +665,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         {
                             int index = GetDeferredLightingMaterialIndex(outputSplitLighting, lightLoopTilePass, shadowMask, debugDisplay);
 
-                            m_deferredLightingMaterial[index] = CoreUtils.CreateEngineMaterial(m_Resources.deferredShader);
-                            m_deferredLightingMaterial[index].name = string.Format("{0}_{1}", m_Resources.deferredShader.name, index);
+                            m_deferredLightingMaterial[index] = CoreUtils.CreateEngineMaterial(m_Resources.shaders.deferredPS);
+                            m_deferredLightingMaterial[index].name = string.Format("{0}_{1}", m_Resources.shaders.deferredPS.name, index);
                             CoreUtils.SetKeyword(m_deferredLightingMaterial[index], "OUTPUT_SPLIT_LIGHTING", outputSplitLighting == 1);
                             CoreUtils.SelectKeyword(m_deferredLightingMaterial[index], "LIGHTLOOP_TILE_PASS", "LIGHTLOOP_SINGLE_PASS", lightLoopTilePass == 1);
                             CoreUtils.SetKeyword(m_deferredLightingMaterial[index], "SHADOWS_SHADOWMASK", shadowMask == 1);
@@ -1462,7 +1462,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        public bool GetEnvLightData(CommandBuffer cmd, Camera camera, ProbeWrapper probe, DebugDisplaySettings debugDisplaySettings)
+        public bool GetEnvLightData(CommandBuffer cmd, Camera camera, HDProbe probe, DebugDisplaySettings debugDisplaySettings)
         {
             // For now we won't display real time probe when rendering one.
             // TODO: We may want to display last frame result but in this case we need to be careful not to update the atlas before all realtime probes are rendered (for frame coherency).
@@ -1479,9 +1479,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // 31 bits index, 1 bit cache type
             var envIndex = -1;
-            if (probe.planarReflectionProbe != null)
+            if (probe is PlanarReflectionProbe)
             {
-                var fetchIndex = m_ReflectionPlanarProbeCache.FetchSlice(cmd, probe.texture);
+                PlanarReflectionProbe planarProbe = probe as PlanarReflectionProbe;
+                var fetchIndex = m_ReflectionPlanarProbeCache.FetchSlice(cmd, planarProbe.currentTexture);
                 envIndex = (fetchIndex << 1) | (int)EnvCacheType.Texture2D;
 
                 float nearClipPlane, farClipPlane, aspect, fov;
@@ -1491,7 +1492,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 Matrix4x4 worldToCamera, projection;
 
                 ReflectionSystem.CalculateCaptureCameraProperties(
-                    probe.planarReflectionProbe,
+                    planarProbe,
                     out nearClipPlane, out farClipPlane,
                     out aspect, out fov, out clearFlags, out backgroundColor,
                     out worldToCamera, out projection, out capturePosition, out captureRotation,
@@ -1504,11 +1505,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 var vp = gpuProj * gpuView * Matrix4x4.Translate(capturePosition);
                 m_Env2DCaptureVP[fetchIndex] = vp;
             }
-            else if (probe.reflectionProbe != null)
+            else if (probe is HDAdditionalReflectionData)
             {
-                envIndex = m_ReflectionProbeCache.FetchSlice(cmd, probe.texture);
+                HDAdditionalReflectionData cubeProbe = probe as HDAdditionalReflectionData;
+                envIndex = m_ReflectionProbeCache.FetchSlice(cmd, probe.currentTexture);
                 envIndex = envIndex << 1 | (int)EnvCacheType.Cubemap;
-                capturePosition = (Vector3)influenceToWorld.GetColumn(3) - probe.reflectionProbe.center;
+                capturePosition = cubeProbe.capturePosition;
             }
             // -1 means that the texture is not ready yet (ie not convolved/compressed yet)
             if (envIndex == -1)
@@ -1517,17 +1519,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Build light data
             var envLightData = new EnvLightData();
 
+            InfluenceVolume influence = probe.influenceVolume;
             envLightData.lightLayers = probe.GetLightLayers();
-            envLightData.influenceShapeType = probe.influenceShapeType;
+            envLightData.influenceShapeType = influence.envShape;
             envLightData.weight = probe.weight;
             envLightData.multiplier = probe.multiplier * m_indirectLightingController.indirectSpecularIntensity;
-            envLightData.influenceExtents = probe.influenceExtents;
-            envLightData.blendNormalDistancePositive = probe.blendNormalDistancePositive;
-            envLightData.blendNormalDistanceNegative = probe.blendNormalDistanceNegative;
-            envLightData.blendDistancePositive = probe.blendDistancePositive;
-            envLightData.blendDistanceNegative = probe.blendDistanceNegative;
-            envLightData.boxSideFadePositive = probe.boxSideFadePositive;
-            envLightData.boxSideFadeNegative = probe.boxSideFadeNegative;
+            envLightData.influenceExtents = influence.extends;
+            envLightData.blendNormalDistancePositive = influence.boxBlendNormalDistancePositive;
+            envLightData.blendNormalDistanceNegative = influence.boxBlendNormalDistanceNegative;
+            envLightData.blendDistancePositive = influence.boxBlendDistancePositive;
+            envLightData.blendDistanceNegative = influence.boxBlendDistanceNegative;
+            envLightData.boxSideFadePositive = influence.boxSideFadePositive;
+            envLightData.boxSideFadeNegative = influence.boxSideFadeNegative;
 
             envLightData.influenceRight = influenceToWorld.GetColumn(0).normalized;
             envLightData.influenceUp = influenceToWorld.GetColumn(1).normalized;
@@ -1550,7 +1553,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return true;
         }
 
-        public void GetEnvLightVolumeDataAndBound(ProbeWrapper probe, LightVolumeType lightVolumeType, Matrix4x4 worldToView, Camera.StereoscopicEye eyeIndex = Camera.StereoscopicEye.Left)
+        public void GetEnvLightVolumeDataAndBound(HDProbe probe, LightVolumeType lightVolumeType, Matrix4x4 worldToView, Camera.StereoscopicEye eyeIndex = Camera.StereoscopicEye.Left)
         {
             var bound = new SFiniteLightBound();
             var lightVolumeData = new LightVolumeData();
@@ -1696,6 +1699,31 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return light.bakingOutput.lightmapBakeType == LightmapBakeType.Mixed &&
                 light.bakingOutput.mixedLightingMode == MixedLightingMode.Shadowmask &&
                 light.bakingOutput.occlusionMaskChannel != -1;     // We need to have an occlusion mask channel assign, else we have no shadow mask
+        }
+        
+        HDProbe SelectProbe(VisibleReflectionProbe probe, PlanarReflectionProbe planarProbe)
+        {
+            if (probe.probe != null)
+            {
+                var add = probe.probe.GetComponent<HDAdditionalReflectionData>();
+                if (add == null)
+                {
+                    add = HDUtils.s_DefaultHDAdditionalReflectionData;
+                    if (add.influenceVolume == null)
+                    {
+                        add.Awake(); // We need to init the 'default' data if it isn't
+                    }
+                    Vector3 distance = Vector3.one * probe.blendDistance;
+                    add.influenceVolume.boxBlendDistancePositive = distance;
+                    add.influenceVolume.boxBlendDistanceNegative = distance;
+                    add.influenceVolume.shape = InfluenceShape.Box;
+                }
+                return add;
+            }
+            if (planarProbe != null)
+                return planarProbe;
+
+            throw new ArgumentException();
         }
 
         // Return true if BakedShadowMask are enabled
@@ -2084,7 +2112,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             var probe = reflectionProbeCullResults.visiblePlanarReflectionProbes[planarProbeIndex];
 
                             // probe.texture can be null when we are adding a reflection probe in the editor
-                            if (probe.texture == null || envLightCount >= k_MaxEnvLightsOnScreen)
+                            if (probe.currentTexture == null || envLightCount >= k_MaxEnvLightsOnScreen)
                                 continue;
 
                             var lightVolumeType = LightVolumeType.Box;
@@ -2117,7 +2145,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         else
                             planarProbe = reflectionProbeCullResults.visiblePlanarReflectionProbes[probeIndex];
 
-                        var probeWrapper = ProbeWrapper.Wrap(probe, planarProbe);
+                        var probeWrapper = SelectProbe(probe, planarProbe);
 
                         if (GetEnvLightData(cmd, camera, probeWrapper, debugDisplaySettings))
                         {
