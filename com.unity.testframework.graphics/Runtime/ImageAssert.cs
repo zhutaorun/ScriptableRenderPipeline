@@ -1,8 +1,10 @@
 using System;
+using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using Unity.Collections;
 using Unity.Jobs;
+using UnityEditor;
 
 namespace UnityEngine.TestTools.Graphics
 {
@@ -113,14 +115,20 @@ namespace UnityEngine.TestTools.Graphics
                         diffImage.SetPixels32(diffPixelsArray, 0);
                         diffImage.Apply(false);
 
-                        TestContext.CurrentContext.Test.Properties.Set("DiffImage", Convert.ToBase64String(diffImage.EncodeToPNG()));
+#if UNITY_EDITOR
+                        if (!sDontWriteToLog)
+#endif
+                            TestContext.CurrentContext.Test.Properties.Set("DiffImage", Convert.ToBase64String(diffImage.EncodeToPNG()) );
                         throw;
                     }
                 }
             }
             catch (AssertionException)
             {
-                TestContext.CurrentContext.Test.Properties.Set("Image", Convert.ToBase64String(actual.EncodeToPNG()));
+#if UNITY_EDITOR
+                if (!sDontWriteToLog)
+#endif
+                    TestContext.CurrentContext.Test.Properties.Set("Image", Convert.ToBase64String(actual.EncodeToPNG()));
                 throw;
             }
         }
@@ -186,7 +194,7 @@ namespace UnityEngine.TestTools.Graphics
             l = Mathf.Pow(l / 10000f, kN);
             m = Mathf.Pow(m / 10000f, kN);
             s = Mathf.Pow(s / 10000f, kN);
-            
+
             // Can we switch to unity.mathematics yet?
             var lms = new Vector3(l, m, s);
             var a = new Vector3(kC1, kC1, kC1) + kC2 * lms;
@@ -220,5 +228,26 @@ namespace UnityEngine.TestTools.Graphics
             float deltaE = Mathf.Sqrt(Mathf.Pow(v1.x - v2.x, 2f) + Mathf.Pow(c1 - c2, 2f) + deltaH * deltaH);
             return deltaE;
         }
+
+#if UNITY_EDITOR
+        // Hack do disable writing to the XML Log of TestRunner (to avoid editor hanging when tests are run locally)
+        static string s_DontWriteToLogPath = "ProjectSettings/DontWriteToLog";
+
+        static bool sDontWriteToLog
+        {
+            get
+            {
+                return File.Exists( s_DontWriteToLogPath ) ;
+            }
+        }
+
+        [MenuItem("Tests/Disable XML Logging")]
+        public static void DisableXMLLogging()
+        {
+            File.WriteAllText( s_DontWriteToLogPath, "" );
+        }
+
+#endif
+
     }
 }
