@@ -1,6 +1,8 @@
+using System;
 using UnityEditor.AnimatedValues;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering.LightweightPipeline;
+using UnityEngine.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.LightweightPipeline
 {
