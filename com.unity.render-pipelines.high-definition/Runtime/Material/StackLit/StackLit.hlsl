@@ -2356,19 +2356,17 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
     EvaluateBSDF_GetNormalUnclampedNdotV(bsdfData, preLightData, V, N, unclampedNdotV);
     float  NdotL = dot(N, L);
 
-    // For shadow attenuation (ie receiver bias), always use the geometric normal
-    float3 shadowBiasNormal = bsdfData.geomNormalWS;
     float3 transmittance = float3(0.0, 0.0, 0.0);
     if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_TRANSMISSION))
     {
         // Caution: This function modify N and lightData.contactShadowIndex
-        transmittance = PreEvaluatePunctualLightTransmission(lightLoopContext, posInput, distances.x, NdotL, L, bsdfData, shadowBiasNormal, lightData);
+        transmittance = PreEvaluatePunctualLightTransmission(lightLoopContext, posInput, distances.x, NdotL, L, bsdfData, N, lightData);
     }
 
     float3 color;
     float attenuation;
 
-    EvaluateLight_Punctual(lightLoopContext, posInput, lightData, builtinData, shadowBiasNormal, L,
+    EvaluateLight_Punctual(lightLoopContext, posInput, lightData, builtinData, N, L,
                            lightToSample, distances, color, attenuation);
 
 
