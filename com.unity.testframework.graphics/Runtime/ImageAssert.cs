@@ -71,8 +71,11 @@ namespace UnityEngine.TestTools.Graphics
             if (actual == null)
                 throw new ArgumentNullException("actual");
 
+#if UNITY_EDITOR
             var imagesWritten = new HashSet<string>();
             var dirName = Path.Combine("Assets/ActualImages", string.Format("{0}/{1}/{2}", UseGraphicsTestCasesAttribute.ColorSpace, UseGraphicsTestCasesAttribute.Platform, UseGraphicsTestCasesAttribute.GraphicsDevice));
+            Directory.CreateDirectory(dirName);
+#endif
 
             try
             {
