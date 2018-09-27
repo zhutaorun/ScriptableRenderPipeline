@@ -3,8 +3,10 @@ using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using Unity.Collections;
+using System.Collections.Generic;
 using Unity.Jobs;
 using UnityEditor;
+using UnityEngine.SceneManagement;
 
 namespace UnityEngine.TestTools.Graphics
 {
@@ -69,6 +71,9 @@ namespace UnityEngine.TestTools.Graphics
             if (actual == null)
                 throw new ArgumentNullException("actual");
 
+            var imagesWritten = new HashSet<string>();
+            var dirName = Path.Combine("Assets/ActualImages", string.Format("{0}/{1}/{2}", UseGraphicsTestCasesAttribute.ColorSpace, UseGraphicsTestCasesAttribute.Platform, UseGraphicsTestCasesAttribute.GraphicsDevice));
+
             try
             {
                 Assert.That(expected, Is.Not.Null, "No reference image was provided.");
@@ -116,9 +121,17 @@ namespace UnityEngine.TestTools.Graphics
                         diffImage.Apply(false);
 
 #if UNITY_EDITOR
-                        if (!sDontWriteToLog)
+                        if (sDontWriteToLog)
+                        {
+                            var bytes = diffImage.EncodeToPNG();
+                            var path = Path.Combine(dirName, TestContext.CurrentContext.Test.Name + ".diff.png");
+                            File.WriteAllBytes(path, bytes);
+                            imagesWritten.Add(path);
+                        }
+                        else
 #endif
-                            TestContext.CurrentContext.Test.Properties.Set("DiffImage", Convert.ToBase64String(diffImage.EncodeToPNG()) );
+                        TestContext.CurrentContext.Test.Properties.Set("DiffImage", Convert.ToBase64String(diffImage.EncodeToPNG()) );
+
                         throw;
                     }
                 }
@@ -126,9 +139,21 @@ namespace UnityEngine.TestTools.Graphics
             catch (AssertionException)
             {
 #if UNITY_EDITOR
-                if (!sDontWriteToLog)
+                if (sDontWriteToLog)
+                {
+                    var bytes = actual.EncodeToPNG();
+                    var path = Path.Combine(dirName, TestContext.CurrentContext.Test.Name + ".png");
+                    File.WriteAllBytes(path, bytes);
+                    imagesWritten.Add(path);
+
+                    AssetDatabase.Refresh();
+
+                    UnityEditor.TestTools.Graphics.Utils.SetupReferenceImageImportSettings(imagesWritten);
+                }
+                else
 #endif
                     TestContext.CurrentContext.Test.Properties.Set("Image", Convert.ToBase64String(actual.EncodeToPNG()));
+
                 throw;
             }
         }
@@ -241,10 +266,16 @@ namespace UnityEngine.TestTools.Graphics
             }
         }
 
-        [MenuItem("Tests/Disable XML Logging")]
+        [MenuItem("Tests/XML Logging/Disable")]
         public static void DisableXMLLogging()
         {
             File.WriteAllText( s_DontWriteToLogPath, "" );
+        }
+
+        [MenuItem("Tests/XML Logging/Enable")]
+        public static void EnableXMLLogging()
+        {
+            File.Delete(s_DontWriteToLogPath);
         }
 
 #endif
