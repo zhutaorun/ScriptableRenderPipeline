@@ -161,7 +161,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 dimension = TextureDimension.Cube,
                 enableRandomWrite = true,
-                useMipMap = false,
+                useMipMap = true,
                 autoGenerateMips = false
             };
         }
@@ -172,7 +172,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 dimension = TextureDimension.Tex2D,
                 enableRandomWrite = true,
-                useMipMap = false,
+                useMipMap = true,
                 autoGenerateMips = false
             };
         }

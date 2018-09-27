@@ -35,6 +35,40 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
+        protected override void PopulateSettings(ref ProbeSettings settings)
+        {
+            base.PopulateSettings(ref settings);
+
+            if (proxyVolume == null)
+            {
+                if (infiniteProjection)
+                {
+                    // The proxy is the world itself
+                    // The capture position is the position of the game object
+                    settings.proxySettings.capturePositionProxySpace = transform.position;
+                    settings.proxySettings.captureRotationProxySpace = transform.rotation;
+                }
+                else
+                {
+                    // The proxy is the influence volume
+                    // The capture position is at the center of the influence
+                    settings.proxySettings.capturePositionProxySpace = Vector3.zero;
+                    settings.proxySettings.captureRotationProxySpace = Quaternion.identity;
+                }
+            }
+            else
+            {
+                var influenceToWorld = transform.localToWorldMatrix;
+                var proxyToWorld = proxyVolume.transform.localToWorldMatrix;
+                var proxyToInfluence = proxyToWorld.inverse * influenceToWorld;
+                // The mirror is a the center of the influence
+                var positionPS = proxyToInfluence.MultiplyPoint(Vector3.zero);
+                var rotationPS = proxyToInfluence.rotation;
+                settings.proxySettings.capturePositionProxySpace = positionPS;
+                settings.proxySettings.captureRotationProxySpace = rotationPS;
+            }
+        }
+
 #pragma warning disable 649 //never assigned
         //data only kept for migration, to be removed in future version
         [SerializeField, System.Obsolete("influenceShape is deprecated, use influenceVolume parameters instead")]
