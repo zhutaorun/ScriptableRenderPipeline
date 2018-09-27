@@ -1,18 +1,22 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.TestTools.Graphics;
 using UnityEngine.SceneManagement;
 using UnityEngine.Events;
+using System.IO;
 
 public class HDRP_GraphicTestRunner
 {
-    [UnityTest, Category("HDRP Graphic Tests")]
-    [PrebuildSetup("SetupGraphicsTestCases")]
-    [UseGraphicsTestCases]
-    public IEnumerator Run(GraphicsTestCase testCase)
+    //[UnityTest, Category("HDRP Graphic Tests")]
+    //[PrebuildSetup("SetupGraphicsTestCases")]
+    [UseGraphicsTestCases(true)]
+    public IEnumerator Run(string scenePath)
     {
+        GraphicsTestCase testCase = UseGraphicsTestCasesAttribute.GetCaseFromScenePath(scenePath);
+
         SceneManager.LoadScene(testCase.ScenePath);
 
         // Arbitrary wait for 5 frames for the scene to load, and other stuff to happen (like Realtime GI to appear ...)
