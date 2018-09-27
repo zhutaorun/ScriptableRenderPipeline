@@ -79,6 +79,17 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             m_Initialized = true;
         }
 
+        public static bool RequiresIntermediateColorTexture(ref CameraData cameraData, RenderTextureDescriptor baseDescriptor)
+        {
+            if (cameraData.isOffscreenRender)
+                return false;
+
+            bool isScaledRender = !Mathf.Approximately(cameraData.renderScale, 1.0f);
+            bool isTargetTexture2DArray = baseDescriptor.dimension == TextureDimension.Tex2DArray;
+            return cameraData.isSceneViewCamera || isScaledRender || cameraData.isHdrEnabled ||
+                cameraData.postProcessEnabled || cameraData.requiresOpaqueTexture || isTargetTexture2DArray || !cameraData.isDefaultViewport;
+        }
+
         public void Setup(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
             Init();
@@ -110,12 +121,19 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             renderer.EnqueuePass(m_SetupForwardRenderingPass);
 
+            var afterDepthpasses = camera.GetComponents<IAfterDepthPrePass>();
+            var afterOpaquePasses = camera.GetComponents<IAfterOpaquePass>();
+            var afterOpaquePostProcessPasses = camera.GetComponents<IAfterOpaquePostProcess>();
+            var afterSkyboxPasses = camera.GetComponents<IAfterSkyboxPass>();
+            var afterTransparentPasses = camera.GetComponents<IAfterTransparentPass>();
+            var afterRenderPasses = camera.GetComponents<IAfterRender>();
+
             if (requiresDepthPrepass)
             {
                 m_DepthOnlyPass.Setup(baseDescriptor, DepthTexture, SampleCount.One);
                 renderer.EnqueuePass(m_DepthOnlyPass);
 
-                foreach (var pass in camera.GetComponents<IAfterDepthPrePass>())
+                foreach (var pass in afterDepthpasses)
                     renderer.EnqueuePass(pass.GetPassToEnqueue(m_DepthOnlyPass.descriptor, DepthTexture));
             }
 
@@ -126,7 +144,13 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 renderer.EnqueuePass(m_ScreenSpaceShadowResolvePass);
             }
 
-            bool requiresRenderToTexture = ScriptableRenderer.RequiresIntermediateColorTexture(ref renderingData.cameraData, baseDescriptor);
+            bool requiresRenderToTexture = RequiresIntermediateColorTexture(ref renderingData.cameraData, baseDescriptor)
+                    || afterDepthpasses.Length != 0
+                    || afterOpaquePasses.Length != 0
+                    || afterOpaquePostProcessPasses.Length != 0
+                    || afterSkyboxPasses.Length != 0
+                    || afterTransparentPasses.Length != 0
+                    || afterRenderPasses.Length != 0;
 
             RenderTargetHandle colorHandle = RenderTargetHandle.CameraTarget;
             RenderTargetHandle depthHandle = RenderTargetHandle.CameraTarget;
@@ -151,7 +175,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             m_RenderOpaqueForwardPass.Setup(baseDescriptor, colorHandle, depthHandle, ScriptableRenderer.GetCameraClearFlag(camera), camera.backgroundColor, rendererConfiguration);
             renderer.EnqueuePass(m_RenderOpaqueForwardPass);
-            foreach (var pass in camera.GetComponents<IAfterOpaquePass>())
+            foreach (var pass in afterOpaquePasses)
                 renderer.EnqueuePass(pass.GetPassToEnqueue(baseDescriptor, colorHandle, depthHandle));
 
             if (renderingData.cameraData.postProcessEnabled &&
@@ -160,7 +184,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 m_OpaquePostProcessPass.Setup(baseDescriptor, colorHandle);
                 renderer.EnqueuePass(m_OpaquePostProcessPass);
 
-                foreach (var pass in camera.GetComponents<IAfterOpaquePostProcess>())
+                foreach (var pass in afterOpaquePostProcessPasses)
                     renderer.EnqueuePass(pass.GetPassToEnqueue(baseDescriptor, colorHandle, depthHandle));
             }
 
@@ -170,7 +194,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 renderer.EnqueuePass(m_DrawSkyboxPass);
             }
 
-            foreach (var pass in camera.GetComponents<IAfterSkyboxPass>())
+            foreach (var pass in afterSkyboxPasses)
                 renderer.EnqueuePass(pass.GetPassToEnqueue(baseDescriptor, colorHandle, depthHandle));
 
             if (renderingData.cameraData.requiresDepthTexture && !requiresDepthPrepass)
@@ -188,23 +212,47 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             m_RenderTransparentForwardPass.Setup(baseDescriptor, colorHandle, depthHandle, rendererConfiguration);
             renderer.EnqueuePass(m_RenderTransparentForwardPass);
 
-            foreach (var pass in camera.GetComponents<IAfterTransparentPass>())
+            foreach (var pass in afterTransparentPasses)
                 renderer.EnqueuePass(pass.GetPassToEnqueue(baseDescriptor, colorHandle, depthHandle));
 
-            if (!renderingData.cameraData.isStereoEnabled && renderingData.cameraData.postProcessEnabled)
-            {
-                m_TransparentPostProcessPass.Setup(baseDescriptor, colorHandle, BuiltinRenderTextureType.CameraTarget);
-                renderer.EnqueuePass(m_TransparentPostProcessPass);
-            }
-            else if (!renderingData.cameraData.isOffscreenRender && colorHandle != RenderTargetHandle.CameraTarget)
-            {
-                m_FinalBlitPass.Setup(baseDescriptor, colorHandle);
-                renderer.EnqueuePass(m_FinalBlitPass);
-            }
+            bool afterRenderExists = afterRenderPasses.Length != 0;
 
-            foreach (var pass in camera.GetComponents<IAfterRender>())
-                renderer.EnqueuePass(pass.GetPassToEnqueue());
+            // if we have additional filters
+            // we need to stay in a RT
+            if (afterRenderExists)
+            {
+                // perform post with src / dest the same
+                if (!renderingData.cameraData.isStereoEnabled && renderingData.cameraData.postProcessEnabled)
+                {
+                    m_TransparentPostProcessPass.Setup(baseDescriptor, colorHandle, colorHandle.id, false);
+                    renderer.EnqueuePass(m_TransparentPostProcessPass);
+                }
 
+                //execute after passes
+                foreach (var pass in afterRenderPasses)
+                    renderer.EnqueuePass(pass.GetPassToEnqueue(baseDescriptor, colorHandle, depthHandle));
+
+                //now blit into the final target
+                if (!renderingData.cameraData.isOffscreenRender && colorHandle != RenderTargetHandle.CameraTarget)
+                {
+                    m_FinalBlitPass.Setup(baseDescriptor, colorHandle);
+                    renderer.EnqueuePass(m_FinalBlitPass);
+                }
+            }
+            else
+            {
+                if (!renderingData.cameraData.isStereoEnabled && renderingData.cameraData.postProcessEnabled)
+                {
+                    m_TransparentPostProcessPass.Setup(baseDescriptor, colorHandle, BuiltinRenderTextureType.CameraTarget, (!renderingData.cameraData.isStereoEnabled && renderingData.cameraData.camera.targetTexture == null));
+                    renderer.EnqueuePass(m_TransparentPostProcessPass);
+                }
+                else if (!renderingData.cameraData.isOffscreenRender && colorHandle != RenderTargetHandle.CameraTarget)
+                {
+                    m_FinalBlitPass.Setup(baseDescriptor, colorHandle);
+                    renderer.EnqueuePass(m_FinalBlitPass);
+                }
+            }
+            
             if (renderingData.cameraData.isStereoEnabled)
             {
                 renderer.EnqueuePass(m_EndXrRenderingPass);

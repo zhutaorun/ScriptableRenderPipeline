@@ -17,6 +17,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         private RenderTargetHandle colorAttachmentHandle { get; set; }
         private RenderTextureDescriptor descriptor { get; set; }
         private RenderTargetIdentifier destination { get; set; }
+        private bool flip { get; set; }
 
         /// <summary>
         /// Setup the pass
@@ -27,11 +28,13 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         public void Setup(
             RenderTextureDescriptor baseDescriptor,
             RenderTargetHandle colorAttachmentHandle,
-            RenderTargetIdentifier destination)
+            RenderTargetIdentifier destination,
+            bool flip)
         {
             this.colorAttachmentHandle = colorAttachmentHandle;
             this.destination = destination;
             descriptor = baseDescriptor;
+            this.flip = false;
         }
 
         /// <inheritdoc/>
@@ -41,7 +44,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 throw new ArgumentNullException("renderer");
             
             CommandBuffer cmd = CommandBufferPool.Get(k_PostProcessingTag);
-            renderer.RenderPostProcess(cmd, ref renderingData.cameraData, descriptor.colorFormat, colorAttachmentHandle.Identifier(), destination, false);
+            renderer.RenderPostProcess(cmd, ref renderingData.cameraData, descriptor.colorFormat, colorAttachmentHandle.Identifier(), destination, false, flip);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
