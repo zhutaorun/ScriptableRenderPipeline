@@ -8,6 +8,8 @@ using Attribute = System.Attribute;
 
 namespace UnityEngine.TestTools.Graphics
 {
+    public enum TestParameters { GraphicTestCase = 0, ScenePath = 1 }
+
     /// <summary>
     /// Marks a test which takes <c>GraphicsTestCase</c> instances as wanting to have them generated automatically by
     /// the scene/reference-image management feature in the framework.
@@ -18,17 +20,17 @@ namespace UnityEngine.TestTools.Graphics
 
         NUnitTestCaseBuilder _builder = new NUnitTestCaseBuilder();
 
-        bool m_OutputAsString = false;
+        TestParameters m_TestParameters = TestParameters.GraphicTestCase;
 
-        public UseGraphicsTestCasesAttribute(bool outputAsString = false)
+        public UseGraphicsTestCasesAttribute(TestParameters testParameters = TestParameters.GraphicTestCase)
         {
-            m_OutputAsString = outputAsString;
+            m_TestParameters = testParameters;
         }
 
-        public UseGraphicsTestCasesAttribute(string referenceImagePath , bool outputAsString = false)
+        public UseGraphicsTestCasesAttribute(string referenceImagePath , TestParameters testParameters = TestParameters.GraphicTestCase)
         {
             m_ReferenceImagePath = referenceImagePath;
-            m_OutputAsString = outputAsString;
+            m_TestParameters = testParameters;
         }
 
         /// <summary>
@@ -109,11 +111,6 @@ namespace UnityEngine.TestTools.Graphics
 
             Console.WriteLine("Generated {0} graphics test cases.", results.Count);
             return results;
-        }
-
-        public static IEnumerable<GraphicsTestCase> GraphicsTestCaseList()
-        {
-            return new UnityEditor.TestTools.Graphics.EditorGraphicsTestCaseProvider(null).GetTestCases();
         }
 
         public static GraphicsTestCase GetCaseFromScenePath(string scenePath, string referenceImagePath = null )

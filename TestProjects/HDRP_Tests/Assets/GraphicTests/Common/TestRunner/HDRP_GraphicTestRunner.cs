@@ -7,11 +7,12 @@ using UnityEngine.TestTools.Graphics;
 using UnityEngine.SceneManagement;
 using UnityEngine.Events;
 using System.IO;
+using TestParameters = UnityEngine.TestTools.Graphics.TestParameters;
 
 public class HDRP_GraphicTestRunner
 {
     [PrebuildSetup("SetupGraphicsTestCases")]
-    [UseGraphicsTestCases(true)]
+    [UseGraphicsTestCases( TestParameters.ScenePath )]
     public IEnumerator Run(string scenePath)
     {
         GraphicsTestCase testCase = UseGraphicsTestCasesAttribute.GetCaseFromScenePath(scenePath);
