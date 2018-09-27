@@ -11,38 +11,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [Serializable]
         public struct RenderData
         {
-            [SerializeField] Vector4 worldToCameraRHS0;
-            [SerializeField] Vector4 worldToCameraRHS1;
-            [SerializeField] Vector4 worldToCameraRHS2;
-            [SerializeField] Vector4 worldToCameraRHS3;
-
-            [SerializeField] Vector4 projectionMatrix0;
-            [SerializeField] Vector4 projectionMatrix1;
-            [SerializeField] Vector4 projectionMatrix2;
-            [SerializeField] Vector4 projectionMatrix3;
-
-            public Matrix4x4 worldToCameraRHS
-            {
-                get { return new Matrix4x4(worldToCameraRHS0, worldToCameraRHS1, worldToCameraRHS2, worldToCameraRHS3); }
-                set
-                {
-                    worldToCameraRHS0 = value.GetColumn(0);
-                    worldToCameraRHS1 = value.GetColumn(1);
-                    worldToCameraRHS2 = value.GetColumn(2);
-                    worldToCameraRHS3 = value.GetColumn(3);
-                }
-            }
-            public Matrix4x4 projectionMatrix
-            {
-                get { return new Matrix4x4(projectionMatrix0, projectionMatrix1, projectionMatrix2, projectionMatrix3); }
-                set
-                {
-                    projectionMatrix0 = value.GetColumn(0);
-                    projectionMatrix1 = value.GetColumn(1);
-                    projectionMatrix2 = value.GetColumn(2);
-                    projectionMatrix3 = value.GetColumn(3);
-                }
-            }
+            public Matrix4x4 worldToCameraRHS;
+            public Matrix4x4 projectionMatrix;
         }
 
         const int currentVersion = 2;
