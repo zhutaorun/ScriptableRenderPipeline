@@ -10,8 +10,7 @@ using System.IO;
 
 public class HDRP_GraphicTestRunner
 {
-    //[UnityTest, Category("HDRP Graphic Tests")]
-    //[PrebuildSetup("SetupGraphicsTestCases")]
+    [PrebuildSetup("SetupGraphicsTestCases")]
     [UseGraphicsTestCases(true)]
     public IEnumerator Run(string scenePath)
     {
