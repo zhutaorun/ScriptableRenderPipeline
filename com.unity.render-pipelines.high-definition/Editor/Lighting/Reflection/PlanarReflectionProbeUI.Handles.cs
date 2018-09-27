@@ -13,22 +13,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             PlanarReflectionProbe probe = d.target;
             HDProbeUI.DrawHandles(s, d, o);
 
-            if (probe.useMirrorPlane)
-            {
-                var m = Handles.matrix;
-                var mat = Matrix4x4.TRS(probe.transform.position, probe.transform.rotation, Vector3.one*1.5f);
-                using (new Handles.DrawingScope(k_GizmoMirrorPlaneCamera, mat))
-                {
-                    Handles.ArrowHandleCap(
-                        0,
-                        probe.captureMirrorPlaneLocalPosition,
-                        Quaternion.LookRotation(probe.captureMirrorPlaneLocalNormal),
-                        HandleUtility.GetHandleSize(probe.captureMirrorPlaneLocalPosition),
-                        Event.current.type
-                        );
-                }
-            }
-
             var referencePosition = d.target.transform.TransformPoint(d.localReferencePosition.vector3Value);
             referencePosition = Handles.PositionHandle(referencePosition, d.target.transform.rotation);
             d.localReferencePosition.vector3Value = d.target.transform.InverseTransformPoint(referencePosition);
@@ -46,9 +30,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             if (s.showCaptureHandles || EditMode.editMode == EditCenter)
                 DrawGizmos_CaptureFrustrum(d);
-
-            if (d.useMirrorPlane)
-                DrawGizmos_CaptureMirror(d);
         }
 
         static void DrawGizmos_CaptureMirror(PlanarReflectionProbe d)

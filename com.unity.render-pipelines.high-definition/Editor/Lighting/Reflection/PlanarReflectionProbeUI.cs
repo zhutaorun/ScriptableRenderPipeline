@@ -1,5 +1,6 @@
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
+    using System;
     using UnityEngine;
     using UnityEngine.Experimental.Rendering.HDPipeline;
     using UnityEngine.Rendering;
@@ -23,6 +24,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             Inspector = CED.Group(
                   CED.Action(Drawer_FieldCaptureType),
+                  CED.FadeGroup((s, p, o, i) => s.IsSectionExpandedReflectionProbeMode((ReflectionProbeMode)i),
+                      FadeOption.Indent,
+                      CED.noop,                                                       // Baked
+                      CED.noop,                                                       // Realtime
+                      CED.Action((s, d, o) => Drawer_ModeSettingsCustom(s, d, o))     // Custom
+                  ),
                   CED.Action(Drawer_Toolbars),
                   CED.space,
                   ProxyVolumeSettings,
@@ -42,6 +49,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                   CED.space,
                   CED.Action(Drawer_SectionBakeButton)
                   );
+        }
+
+        static void Drawer_ModeSettingsCustom(HDProbeUI s, SerializedHDProbe d, Editor o)
+        {
+            var probe = (SerializedPlanarReflectionProbe)d;
+            EditorGUI.showMixedValue = probe.customTexture.hasMultipleDifferentValues;
+            EditorGUI.BeginChangeCheck();
+            var customBakedTexture = EditorGUILayout.ObjectField(CoreEditorUtils.GetContent("Texture"), probe.customTexture.objectReferenceValue, typeof(Texture2D), false);
+            EditorGUI.showMixedValue = false;
+            if (EditorGUI.EndChangeCheck())
+                probe.customTexture.objectReferenceValue = customBakedTexture;
         }
 
         protected static void Drawer_SectionCaptureSettings(HDProbeUI s, SerializedHDProbe d, Editor o)

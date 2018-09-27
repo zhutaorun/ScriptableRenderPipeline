@@ -29,10 +29,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [SerializeField]
         Vector3 m_CaptureLocalPosition;
         [SerializeField]
-        Texture m_CustomTexture;
-        [SerializeField]
-        Texture m_BakedTexture;
-        [SerializeField]
         float m_CaptureNearPlane = 1;
         [SerializeField]
         float m_CaptureFarPlane = 1000;
@@ -68,11 +64,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 switch (mode)
                 {
                     default:
-                    case ReflectionProbeMode.Baked:
+                    case ProbeSettings.Mode.Baked:
                         return bakedRenderData;
-                    case ReflectionProbeMode.Custom:
+                    case ProbeSettings.Mode.Custom:
                         return customRenderData;
-                    case ReflectionProbeMode.Realtime:
+                    case ProbeSettings.Mode.Realtime:
                         return realtimeRenderData;
                 }
             }
@@ -86,22 +82,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public BoundingSphere boundingSphere { get { return influenceVolume.GetBoundingSphereAt(transform); } }
 
-        public Texture texture
-        {
-            get
-            {
-                switch (mode)
-                {
-                    default:
-                    case ReflectionProbeMode.Baked:
-                        return bakedTexture;
-                    case ReflectionProbeMode.Custom:
-                        return customTexture;
-                    case ReflectionProbeMode.Realtime:
-                        return realtimeTexture;
-                }
-            }
-        }
         public Bounds bounds { get { return influenceVolume.GetBoundsAt(transform); } }
         public Vector3 captureLocalPosition { get { return m_CaptureLocalPosition; } set { m_CaptureLocalPosition = value; } }
         public Matrix4x4 influenceToWorld
@@ -117,8 +97,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     );
             }
         }
-        public Texture customTexture { get { return m_CustomTexture; } set { m_CustomTexture = value; } }
-        public Texture bakedTexture { get { return m_BakedTexture; } set { m_BakedTexture = value; }}
         public float captureNearPlane { get { return m_CaptureNearPlane; } }
         public float captureFarPlane { get { return m_CaptureFarPlane; } }
         public CapturePositionMode capturePositionMode { get { return m_CapturePositionMode; } }
@@ -161,16 +139,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return proxyVolume != null
                     ? proxyVolume.proxyVolume.extents
                     : influenceVolume.boxSize;
-            }
-        }
-
-        public bool useMirrorPlane
-        {
-            get
-            {
-                return mode == ReflectionProbeMode.Realtime
-                    && refreshMode == ReflectionProbeRefreshMode.EveryFrame
-                    && capturePositionMode == CapturePositionMode.MirrorCamera;
             }
         }
 

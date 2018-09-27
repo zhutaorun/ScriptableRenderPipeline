@@ -75,7 +75,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             data.influenceVolume.shape = influenceVolume.shape; //force the legacy probe to refresh its size
 
             data.mode = mode;
-            data.refreshMode = refreshMode;
             data.multiplier = multiplier;
             data.weight = weight;
         }
@@ -161,8 +160,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void MigrateToHDProbeChild()
         {
-            mode = reflectionProbe.mode;
-            refreshMode = reflectionProbe.refreshMode;
             m_Version = (int)Version.HDProbeChild;
             needMigrateToHDProbeChild = false;
         }
@@ -193,28 +190,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             reflectionProbe.boxProjection = false;
             m_Version = (int)Version.MergeEditors;
             needMigrateToMergeEditors = false;
-        }
-
-        public override ReflectionProbeMode mode
-        {
-            set
-            {
-                base.mode = value;
-                reflectionProbe.mode = value; //ensure compatibility till we capture without the legacy component
-                if(value == ReflectionProbeMode.Realtime)
-                {
-                    refreshMode = ReflectionProbeRefreshMode.EveryFrame;
-                }
-            }
-        }
-
-        public override ReflectionProbeRefreshMode refreshMode
-        {
-            set
-            {
-                base.refreshMode = value;
-                reflectionProbe.refreshMode = value; //ensure compatibility till we capture without the legacy component
-            }
         }
 
         internal override void UpdatedInfluenceVolumeShape(Vector3 size, Vector3 offset)

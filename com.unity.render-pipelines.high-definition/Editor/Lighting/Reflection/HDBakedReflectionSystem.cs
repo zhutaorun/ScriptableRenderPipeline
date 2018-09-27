@@ -68,8 +68,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var planarSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.planarReflectionTextureSize;
             var bakedProbes = HDProbeSystem.bakedProbes;
 
-            var cubeRT = HDRenderUtilities.CreateReflectionProbeTarget(cubemapSize);
-            var planarRT = HDRenderUtilities.CreatePlanarProbeTarget(planarSize);
+            var cubeRT = HDRenderUtilities.CreateReflectionProbeRenderTarget(cubemapSize);
+            var planarRT = HDRenderUtilities.CreatePlanarProbeRenderTarget(planarSize);
             for (int i = 0; i < bakedProbes.Count; ++i)
             {
                 var probe = bakedProbes[i];
@@ -87,8 +87,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 var bakedTexture = AssetDatabase.LoadAssetAtPath<Texture>(bakedTexturePath);
                 AssetDatabase.ImportAsset(bakedTexturePath);
                 ImportAssetAt(probe, bakedTexturePath);
-                AssignBakedTexture(probe, bakedTexture);
-                AssignBakedRenderData(probe, bakedTexturePath);
+                HDProbeSystem.AssignTexture(probe, bakedTexture, ProbeSettings.Mode.Baked);
+                AssignRenderData(probe, bakedTexturePath);
             }
             AssetDatabase.StopAssetEditing();
             for (int i = 0; i < bakedProbes.Count; ++i)
@@ -185,8 +185,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // == 4. ==
                 var cubemapSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.reflectionCubemapSize;
                 var planarSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.planarReflectionTextureSize;
-                var cubeRT = HDRenderUtilities.CreateReflectionProbeTarget(cubemapSize);
-                var planarRT = HDRenderUtilities.CreatePlanarProbeTarget(planarSize);
+                var cubeRT = HDRenderUtilities.CreateReflectionProbeRenderTarget(cubemapSize);
+                var planarRT = HDRenderUtilities.CreatePlanarProbeRenderTarget(planarSize);
 
                 handle.EnterStage(
                     (int)BakingStages.ReflectionProbes,
@@ -243,7 +243,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     var bakedTexture = AssetDatabase.LoadAssetAtPath<Texture>(bakedTexturePath);
                     AssetDatabase.ImportAsset(bakedTexturePath);
                     ImportAssetAt(probe, bakedTexturePath);
-                    AssignBakedTexture(probe, bakedTexture);
+                    HDProbeSystem.AssignTexture(probe, bakedTexture, ProbeSettings.Mode.Baked);
                 }
                 AssetDatabase.StopAssetEditing();
                 for (int i = 0; i < addCount; ++i)
@@ -351,26 +351,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             AssetDatabase.StopAssetEditing();
         }
 
-        void AssignBakedTexture(HDProbe probe, Texture bakedTexture)
-        {
-            switch (probe.settings.type)
-            {
-                case ProbeSettings.ProbeType.ReflectionProbe:
-                    {
-                        var reflectionProbe = probe.GetComponent<ReflectionProbe>();
-                        reflectionProbe.bakedTexture = bakedTexture;
-                        break;
-                    }
-                case ProbeSettings.ProbeType.PlanarProbe:
-                    {
-                        var planarProbe = (PlanarReflectionProbe)probe;
-                        planarProbe.bakedTexture = bakedTexture;
-                        break;
-                    }
-            }
-        }
-
-        void AssignBakedRenderData(HDProbe probe, string bakedTexturePath)
+        internal static void AssignRenderData(HDProbe probe, string bakedTexturePath)
         {
             switch (probe.settings.type)
             {
@@ -383,7 +364,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             PlanarReflectionProbe.RenderData renderData;
                             if (HDBakingUtilities.TryDeserializeFromDisk(dataFile, out renderData))
                             {
-                                planarProbe.bakedRenderData = renderData;
+                                HDProbeSystem.AssignRenderData(probe, renderData, ProbeSettings.Mode.Baked);
                                 EditorUtility.SetDirty(probe);
                             }
                         }
@@ -392,7 +373,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        void RenderAndWriteToFile(HDProbe probe, string cacheFile, RenderTexture cubeRT, RenderTexture planarRT)
+        internal static void RenderAndWriteToFile(
+            HDProbe probe, string targetFile,
+            RenderTexture cubeRT, RenderTexture planarRT
+        )
         {
             var settings = probe.settings;
             switch (settings.type)
@@ -401,8 +385,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {
                         var positionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, null);
                         HDRenderUtilities.Render(probe.settings, positionSettings, cubeRT);
-                        HDBakingUtilities.CreateParentDirectoryIfMissing(cacheFile);
-                        HDTextureUtilities.WriteTextureFileToDisk(cubeRT, cacheFile);
+                        HDBakingUtilities.CreateParentDirectoryIfMissing(targetFile);
+                        HDTextureUtilities.WriteTextureFileToDisk(cubeRT, targetFile);
                         break;
                     }
                 case ProbeSettings.ProbeType.PlanarProbe:
@@ -428,20 +412,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             planarRT,
                             out worldToCameraRHSMatrix, out projectionMatrix
                         );
-                        HDBakingUtilities.CreateParentDirectoryIfMissing(cacheFile);
-                        HDTextureUtilities.WriteTextureFileToDisk(planarRT, cacheFile);
+                        HDBakingUtilities.CreateParentDirectoryIfMissing(targetFile);
+                        HDTextureUtilities.WriteTextureFileToDisk(planarRT, targetFile);
                         var renderData = new PlanarReflectionProbe.RenderData
                         {
                             projectionMatrix = projectionMatrix,
                             worldToCameraRHS = worldToCameraRHSMatrix
                         };
-                        HDBakingUtilities.TrySerializeToDisk(renderData, cacheFile + ".renderData");
+                        HDBakingUtilities.TrySerializeToDisk(renderData, targetFile + ".renderData");
                         break;
                     }
             }
         }
 
-        void ImportAssetAt(HDProbe probe, string file)
+        internal static void ImportAssetAt(HDProbe probe, string file)
         {
             var hd = (HDRenderPipeline)RenderPipelineManager.currentPipeline;
             switch (probe.settings.type)

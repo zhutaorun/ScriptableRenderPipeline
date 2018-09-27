@@ -1,5 +1,4 @@
 using System;
-using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
@@ -25,9 +24,31 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         float m_Weight = 1.0f;
 
         [SerializeField]
-        ReflectionProbeMode m_Mode = ReflectionProbeMode.Baked;
+        ProbeSettings.Mode m_Mode = ProbeSettings.Mode.Baked;
+
         [SerializeField]
-        ReflectionProbeRefreshMode m_RefreshMode = ReflectionProbeRefreshMode.OnAwake;
+        Texture m_BakedTexture;
+        [SerializeField]
+        Texture m_CustomTexture;
+        RenderTexture m_RealtimeTexture;
+
+        public Texture bakedTexture { get { return m_BakedTexture; } }
+        public Texture customTexture { get { return m_CustomTexture; } }
+        public RenderTexture realtimeTexture { get { return m_RealtimeTexture; } }
+
+        public Texture texture
+        {
+            get
+            {
+                switch (mode)
+                {
+                    case ProbeSettings.Mode.Baked: return m_BakedTexture;
+                    case ProbeSettings.Mode.Custom: return m_CustomTexture;
+                    case ProbeSettings.Mode.Realtime: return m_RealtimeTexture;
+                    default: throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
 
         internal ProbeSettings settings
         {
@@ -48,12 +69,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             settings.lighting.multiplier = multiplier;
             settings.lighting.weight = weight;
             settings.proxySettings.useInfluenceVolumeAsProxyVolume = !infiniteProjection;
-            switch (mode)
-            {
-                case ReflectionProbeMode.Baked: settings.mode = ProbeSettings.Mode.Baked; break;
-                case ReflectionProbeMode.Custom: settings.mode = ProbeSettings.Mode.Custom; break;
-                case ReflectionProbeMode.Realtime: settings.mode = ProbeSettings.Mode.Realtime; break;
-            }
+            settings.mode = mode;
         }
 
         protected void ComputeTransformRelativeToInfluence(out Vector3 position, out Quaternion rotation)
@@ -91,8 +107,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public virtual ProbeSettings.ProbeType probeType { get { return ProbeSettings.ProbeType.ReflectionProbe; } }
 
 
-        RenderTexture m_RealtimeTexture = null;
-
         /// <summary>Light layer to use by this probe.</summary>
         public LightLayerEnum lightLayers = LightLayerEnum.LightLayerDefault;
 
@@ -118,21 +132,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         /// <summary>Weight for blending amongst probes (non PBR parameter).</summary>
         public float weight { get { return m_Weight; } set { m_Weight = value; } }
 
-        /// <summary>Get the realtime acquired Render Texture</summary>
-        public RenderTexture realtimeTexture { get { return m_RealtimeTexture; } internal set { m_RealtimeTexture = value; } }
-
         /// <summary>The capture mode.</summary>
-        public virtual ReflectionProbeMode mode
+        public virtual ProbeSettings.Mode mode
         {
             get { return m_Mode; }
             set { m_Mode = value; }
-        }
-
-        /// <summary>Refreshing rate of the capture for Realtime capture mode.</summary>
-        public virtual ReflectionProbeRefreshMode refreshMode
-        {
-            get { return m_RefreshMode; }
-            set { m_RefreshMode = value; }
         }
 
         public bool infiniteProjection

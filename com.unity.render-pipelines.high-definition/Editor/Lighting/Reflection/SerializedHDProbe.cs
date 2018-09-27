@@ -18,7 +18,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         internal SerializedProperty multiplier;
 
         internal SerializedProperty mode;
-        internal SerializedProperty refreshMode;
 
         internal SerializedProperty resolution;
         internal SerializedProperty shadowDistance;
@@ -44,7 +43,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             multiplier = serializedObject.Find((HDProbe p) => p.multiplier);
 
             mode = serializedObject.Find((HDProbe p) => p.mode);
-            refreshMode = serializedObject.Find((HDProbe p) => p.refreshMode);
         }
 
         internal virtual void Update()

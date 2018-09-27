@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -21,7 +22,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 CED.Action(Drawer_SectionProxySettings)
                 );
         public static readonly CED.IDrawer SectionProbeModeBakedSettings = CED.noop;
-        public static readonly CED.IDrawer SectionProbeModeRealtimeSettings = CED.Action(Drawer_SectionProbeModeRealtimeSettings);
+        public static readonly CED.IDrawer SectionProbeModeRealtimeSettings = CED.noop;
         public static readonly CED.IDrawer SectionBakeButton = CED.Action(Drawer_SectionBakeButton);
 
         public static readonly CED.IDrawer SectionFoldoutAdditionalSettings = CED.FoldoutGroup(
@@ -75,21 +76,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 }
                 EditorGUILayout.LabelField(content, disabled);
             }
-        }
-
-        protected static void Drawer_SectionBakeButton(HDProbeUI s, SerializedHDProbe d, Editor o)
-        {
-            if (d.target is HDAdditionalReflectionData)
-                EditorReflectionSystemGUI.DrawBakeButton((ReflectionProbeMode)d.mode.intValue, ((HDAdditionalReflectionData)d.target).reflectionProbe);
-            else //PlanarReflectionProbe
-                EditorReflectionSystemGUI.DrawBakeButton((ReflectionProbeMode)d.mode.intValue, d.target as PlanarReflectionProbe);
-        }
-
-        static void Drawer_SectionProbeModeRealtimeSettings(HDProbeUI s, SerializedHDProbe d, Editor o)
-        {
-            GUI.enabled = false;
-            EditorGUILayout.PropertyField(d.refreshMode, _.GetContent("Refresh Mode"));
-            GUI.enabled = true;
         }
 
         protected static void Drawer_SectionProxySettings(HDProbeUI s, SerializedHDProbe d, Editor o)
@@ -300,5 +286,69 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 evt.Use();
             }
         }
+
+        #region Bake Button
+        static readonly string[] k_BakeCustomOptionText = { "Bake as new Cubemap..." };
+        protected static void Drawer_SectionBakeButton(HDProbeUI s, SerializedHDProbe d, Editor o)
+        {
+            var so = d.serializedObject;
+            if (so.isEditingMultipleObjects)
+            {
+
+            }
+            else
+            {
+                var settings = d.target.settings;
+                switch (settings.mode)
+                {
+                    case ProbeSettings.Mode.Baked:
+                        {
+                            if (UnityEditor.Lightmapping.giWorkflowMode != UnityEditor.Lightmapping.GIWorkflowMode.OnDemand)
+                            {
+                                EditorGUILayout.HelpBox("Baking of this probe is automatic because this probe's type is 'Baked' and the Lighting window is using 'Auto Baking'. The texture created is stored in the GI cache.", MessageType.Info);
+                                break;
+                            }
+                            if (ButtonWithDropdownList(
+                                _.GetContent("Bake|Bakes Probe's texture, overwriting the existing texture asset (if any)."), k_BakeCustomOptionText,
+                                data =>
+                                {
+                                    var mode = (int)data;
+                                    switch ((int)data)
+                                    {
+                                        case 0:
+                                            HDProbeSystem.RenderAndUpdateRealtimeData
+                                            break;
+                                    }
+
+                                    if (mode == 0)
+                                    {
+
+                                        if (probe != null)
+                                        {
+                                            EditorReflectionSystem.BakeCustomReflectionProbe(probe, false);
+                                        }
+                                        if (planarProbe != null)
+                                        {
+                                            EditorReflectionSystem.BakeCustomReflectionProbe(planarProbe, false);
+                                        }
+                                    }
+                                }))
+                            break;
+                        }
+                    case ProbeSettings.Mode.Custom:
+                        break;
+                    case ProbeSettings.Mode.Realtime:
+                        break;
+                    default: throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
+
+        static MethodInfo k_EditorGUI_ButtonWithDropdownList = typeof(EditorGUI).GetMethod("ButtonWithDropdownList", BindingFlags.Static | BindingFlags.NonPublic, null, CallingConventions.Any, new[] { typeof(GUIContent), typeof(string[]), typeof(GenericMenu.MenuFunction2), typeof(GUILayoutOption[]) }, new ParameterModifier[0]);
+        static bool ButtonWithDropdownList(GUIContent content, string[] buttonNames, GenericMenu.MenuFunction2 callback, params GUILayoutOption[] options)
+        {
+            return (bool)k_EditorGUI_ButtonWithDropdownList.Invoke(null, new object[] { content, buttonNames, callback, options });
+        }
+        #endregion
     }
 }
