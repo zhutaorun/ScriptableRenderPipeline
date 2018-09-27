@@ -81,10 +81,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         List<HDProbe> m_RealtimeViewDependentProbes = new List<HDProbe>();
         List<HDProbe> m_RealtimeViewIndependentProbes = new List<HDProbe>();
 
-        public IList<HDProbe> bakedProbes { get { return m_BakedProbes; } }
-        public IList<HDProbe> realtimeViewDependentProbes { get { return m_RealtimeViewDependentProbes; } }
-        public IList<HDProbe> realtimeViewIndependentProbes { get { return m_RealtimeViewIndependentProbes; } }
-
+        public IList<HDProbe> bakedProbes
+        { get { RemoveDestroyedProbes(m_BakedProbes); return m_BakedProbes; } }
+        public IList<HDProbe> realtimeViewDependentProbes
+        { get { RemoveDestroyedProbes(m_RealtimeViewDependentProbes); return m_RealtimeViewDependentProbes; } }
+        public IList<HDProbe> realtimeViewIndependentProbes
+        { get { RemoveDestroyedProbes(m_RealtimeViewIndependentProbes); return m_RealtimeViewIndependentProbes; } }
 
         internal void RegisterProbe(HDProbe probe)
         {
@@ -111,6 +113,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         internal void UnregisterProbe(HDProbe probe)
         {
             m_BakedProbes.Remove(probe);
+        }
+
+        void RemoveDestroyedProbes(List<HDProbe> probes)
+        {
+            for (int i = probes.Count - 1; i >= 0; --i)
+            {
+                if (probes[i] == null || probes[i].Equals(null))
+                    probes.RemoveAt(i);
+            }
         }
     }
 }

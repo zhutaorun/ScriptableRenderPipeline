@@ -39,34 +39,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             base.PopulateSettings(ref settings);
 
-            if (proxyVolume == null)
-            {
-                if (infiniteProjection)
-                {
-                    // The proxy is the world itself
-                    // The capture position is the position of the game object
-                    settings.proxySettings.capturePositionProxySpace = transform.position;
-                    settings.proxySettings.captureRotationProxySpace = transform.rotation;
-                }
-                else
-                {
-                    // The proxy is the influence volume
-                    // The capture position is at the center of the influence
-                    settings.proxySettings.capturePositionProxySpace = Vector3.zero;
-                    settings.proxySettings.captureRotationProxySpace = Quaternion.identity;
-                }
-            }
-            else
-            {
-                var influenceToWorld = transform.localToWorldMatrix;
-                var proxyToWorld = proxyVolume.transform.localToWorldMatrix;
-                var proxyToInfluence = proxyToWorld.inverse * influenceToWorld;
-                // The mirror is a the center of the influence
-                var positionPS = proxyToInfluence.MultiplyPoint(Vector3.zero);
-                var rotationPS = proxyToInfluence.rotation;
-                settings.proxySettings.capturePositionProxySpace = positionPS;
-                settings.proxySettings.captureRotationProxySpace = rotationPS;
-            }
+            ComputeTransformRelativeToInfluence(
+                out settings.proxySettings.capturePositionProxySpace,
+                out settings.proxySettings.captureRotationProxySpace
+            );
         }
 
 #pragma warning disable 649 //never assigned
@@ -174,8 +150,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ReflectionSystem.UnregisterProbe(this);
         }
 
-        void OnValidate()
+        internal override void OnValidate()
         {
+            base.OnValidate();
             ReflectionSystem.UnregisterProbe(this);
 
             if (isActiveAndEnabled)

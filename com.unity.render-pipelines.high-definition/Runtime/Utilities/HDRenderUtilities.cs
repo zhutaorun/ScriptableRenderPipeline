@@ -148,6 +148,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 ref cameraSettings, ref cameraPositionSettings
             );
 
+            FixSettings(
+                target,
+                ref settings, ref position,
+                ref cameraSettings, ref cameraPositionSettings
+            );
+
             // Perform rendering
             Render(cameraSettings, cameraPositionSettings, target);
 
@@ -185,6 +191,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             go.AddComponent<HDAdditionalCameraData>();
 
             return camera;
+        }
+
+        static void FixSettings(
+            Texture target,
+            ref ProbeSettings settings, ref ProbeCapturePositionSettings position,
+            ref CameraSettings cameraSettings, ref CameraPositionSettings cameraPositionSettings
+        )
+        {
+            // Fix a specific case
+            // When rendering into a cubemap with Camera.RenderToCubemap
+            // Unity will flip the image during the read back before writing into the cubemap
+            // But in the end, the cubemap is flipped
+            // So we force in the HDRP to flip the last blit so we have the proper flipping.
+            if (target is Cubemap
+                && settings.type == ProbeSettings.ProbeType.ReflectionProbe
+                && SystemInfo.graphicsUVStartsAtTop)
+                cameraSettings.flipYMode = HDAdditionalCameraData.FlipYMode.ForceFlipY;
         }
     }
 }

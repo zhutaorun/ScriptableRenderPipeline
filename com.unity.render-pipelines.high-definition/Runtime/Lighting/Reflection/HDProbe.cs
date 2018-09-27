@@ -56,6 +56,38 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
+        protected void ComputeTransformRelativeToInfluence(out Vector3 position, out Quaternion rotation)
+        {
+            if (proxyVolume == null)
+            {
+                if (infiniteProjection)
+                {
+                    // The proxy is the world itself
+                    // The position is the position of the game object
+                    position = transform.position;
+                    rotation = transform.rotation;
+                }
+                else
+                {
+                    // The proxy is the influence volume
+                    // The position is at the center of the influence
+                    position = Vector3.zero;
+                    rotation = Quaternion.identity;
+                }
+            }
+            else
+            {
+                var influenceToWorld = transform.localToWorldMatrix;
+                var proxyToWorld = proxyVolume.transform.localToWorldMatrix;
+                var proxyToInfluence = proxyToWorld.inverse * influenceToWorld;
+                // The mirror is a the center of the influence
+                var positionPS = proxyToInfluence.MultiplyPoint(Vector3.zero);
+                var rotationPS = proxyToInfluence.rotation;
+                position = positionPS;
+                rotation = rotationPS;
+            }
+        }
+
         public virtual ProbeSettings.ProbeType probeType { get { return ProbeSettings.ProbeType.ReflectionProbe; } }
 
 

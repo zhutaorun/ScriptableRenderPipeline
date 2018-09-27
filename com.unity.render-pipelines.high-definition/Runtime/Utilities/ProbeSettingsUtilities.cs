@@ -42,9 +42,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cameraSettings.frustum.mode = CameraSettings.Frustum.Mode.ComputeProjectionMatrix;
                     cameraSettings.frustum.aspect = 1;
                     cameraSettings.frustum.fieldOfView = 90;
-                    cameraSettings.flipYMode = SystemInfo.graphicsUVStartsAtTop
-                        ? HDAdditionalCameraData.FlipYMode.ForceFlipY
-                        : HDAdditionalCameraData.FlipYMode.Automatic;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();

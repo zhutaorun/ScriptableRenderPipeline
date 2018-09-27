@@ -1,16 +1,48 @@
 using UnityEngine.Serialization;
 using UnityEngine.Rendering;
 using UnityEngine.Assertions;
+using System;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     [ExecuteInEditMode]
     public class PlanarReflectionProbe : HDProbe, ISerializationCallbackReceiver
     {
+        [Serializable]
         public struct RenderData
         {
-            public Matrix4x4 worldToCameraRHS;
-            public Matrix4x4 projectionMatrix;
+            [SerializeField] Vector4 worldToCameraRHS0;
+            [SerializeField] Vector4 worldToCameraRHS1;
+            [SerializeField] Vector4 worldToCameraRHS2;
+            [SerializeField] Vector4 worldToCameraRHS3;
+
+            [SerializeField] Vector4 projectionMatrix0;
+            [SerializeField] Vector4 projectionMatrix1;
+            [SerializeField] Vector4 projectionMatrix2;
+            [SerializeField] Vector4 projectionMatrix3;
+
+            public Matrix4x4 worldToCameraRHS
+            {
+                get { return new Matrix4x4(worldToCameraRHS0, worldToCameraRHS1, worldToCameraRHS2, worldToCameraRHS3); }
+                set
+                {
+                    worldToCameraRHS0 = value.GetColumn(0);
+                    worldToCameraRHS1 = value.GetColumn(1);
+                    worldToCameraRHS2 = value.GetColumn(2);
+                    worldToCameraRHS3 = value.GetColumn(3);
+                }
+            }
+            public Matrix4x4 projectionMatrix
+            {
+                get { return new Matrix4x4(projectionMatrix0, projectionMatrix1, projectionMatrix2, projectionMatrix3); }
+                set
+                {
+                    projectionMatrix0 = value.GetColumn(0);
+                    projectionMatrix1 = value.GetColumn(1);
+                    projectionMatrix2 = value.GetColumn(2);
+                    projectionMatrix3 = value.GetColumn(3);
+                }
+            }
         }
 
         const int currentVersion = 2;
@@ -178,34 +210,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             base.PopulateSettings(ref settings);
 
-            if (proxyVolume == null)
-            {
-                if (infiniteProjection)
-                {
-                    // The proxy is the world itself
-                    // The mirror position is the position of the game object
-                    settings.proxySettings.mirrorPositionProxySpace = transform.position;
-                    settings.proxySettings.mirrorRotationProxySpace = transform.rotation;
-                }
-                else
-                {
-                    // The proxy is the influence volume
-                    // The mirror position is at the center of the influence
-                    settings.proxySettings.mirrorPositionProxySpace = Vector3.zero;
-                    settings.proxySettings.mirrorRotationProxySpace = Quaternion.identity;
-                }
-            }
-            else
-            {
-                var influenceToWorld = transform.localToWorldMatrix;
-                var proxyToWorld = proxyVolume.transform.localToWorldMatrix;
-                var proxyToInfluence = proxyToWorld.inverse * influenceToWorld;
-                // The mirror is a the center of the influence
-                var positionPS = proxyToInfluence.MultiplyPoint(Vector3.zero);
-                var rotationPS = proxyToInfluence.rotation;
-                settings.proxySettings.mirrorPositionProxySpace = positionPS;
-                settings.proxySettings.mirrorRotationProxySpace = rotationPS;
-            }
+            ComputeTransformRelativeToInfluence(
+                out settings.proxySettings.mirrorPositionProxySpace,
+                out settings.proxySettings.mirrorRotationProxySpace
+            );
         }
 
         public void RequestRealtimeRender()

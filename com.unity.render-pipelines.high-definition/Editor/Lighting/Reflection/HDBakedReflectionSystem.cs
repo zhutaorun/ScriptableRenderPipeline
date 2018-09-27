@@ -91,6 +91,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 AssignBakedRenderData(probe, bakedTexturePath);
             }
             AssetDatabase.StopAssetEditing();
+            for (int i = 0; i < bakedProbes.Count; ++i)
+                EditorUtility.SetDirty(bakedProbes[i]);
+
             cubeRT.Release();
             planarRT.Release();
 
@@ -243,6 +246,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     AssignBakedTexture(probe, bakedTexture);
                 }
                 AssetDatabase.StopAssetEditing();
+                for (int i = 0; i < addCount; ++i)
+                {
+                    var index = addIndices[i];
+                    var instanceId = states[index].instanceID;
+                    var probe = (HDProbe)EditorUtility.InstanceIDToObject(instanceId);
+                    EditorUtility.SetDirty(probe);
+                }
 
                 // == 5. ==
 
@@ -372,7 +382,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         {
                             PlanarReflectionProbe.RenderData renderData;
                             if (HDBakingUtilities.TryDeserializeFromDisk(dataFile, out renderData))
+                            {
                                 planarProbe.bakedRenderData = renderData;
+                                EditorUtility.SetDirty(probe);
+                            }
                         }
                         break;
                     }
