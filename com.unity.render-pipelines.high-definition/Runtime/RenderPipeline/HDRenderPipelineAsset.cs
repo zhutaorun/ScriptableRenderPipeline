@@ -7,7 +7,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
         [HideInInspector]
         const int currentVersion = 1;
-
         // Currently m_Version is not used and produce a warning, remove these pragmas at the next version incrementation
 #pragma warning disable 414
         [SerializeField]
@@ -149,24 +148,42 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public override Shader GetDefaultShader()
         {
-            return m_RenderPipelineResources.defaultShader;
+            return m_RenderPipelineResources.shaders.defaultPS;
         }
 
         public override Material GetDefaultMaterial()
         {
-            return m_RenderPipelineResources.defaultDiffuseMaterial;
+            return m_RenderPipelineResources.materials.defaultDiffuseMat;
         }
+
+        #if UNITY_EDITOR
+        // call to GetAutodeskInteractiveShaderXXX are only from within editor
+        public override Shader GetAutodeskInteractiveShader()
+        {
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(HDUtils.GetHDRenderPipelinePath() + "Runtime/RenderPipelineResources/ShaderGraph/AutodeskInteractive.ShaderGraph");
+        }
+
+        public override Shader GetAutodeskInteractiveTransparentShader()
+        {
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(HDUtils.GetHDRenderPipelinePath() + "Runtime/RenderPipelineResources/ShaderGraph/AutodeskInteractiveTransparent.ShaderGraph");
+        }
+
+        public override Shader GetAutodeskInteractiveMaskedShader()
+        {
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(HDUtils.GetHDRenderPipelinePath() + "Runtime/RenderPipelineResources/ShaderGraph/AutodeskInteractiveMasked.ShaderGraph");
+        }
+        #endif
 
         // Note: This function is HD specific
         public Material GetDefaultDecalMaterial()
         {
-            return m_RenderPipelineResources.defaultDecalMaterial;
+            return m_RenderPipelineResources.materials.defaultDecalMat;
         }
 
         // Note: This function is HD specific
         public Material GetDefaultMirrorMaterial()
         {
-            return m_RenderPipelineResources.defaultMirrorMaterial;
+            return m_RenderPipelineResources.materials.defaultMirrorMat;
         }
 
         public override Material GetDefaultParticleMaterial()
@@ -181,7 +198,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public override Material GetDefaultTerrainMaterial()
         {
-            return m_RenderPipelineResources.defaultTerrainMaterial;
+            return m_RenderPipelineResources.materials.defaultTerrainMat;
         }
 
         public override Material GetDefaultUIMaterial()

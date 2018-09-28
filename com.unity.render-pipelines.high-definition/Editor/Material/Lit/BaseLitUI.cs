@@ -13,18 +13,18 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     {
         protected static class StylesBaseLit
         {
-            public static GUIContent doubleSidedNormalModeText = new GUIContent("Normal mode", "This will modify the normal base on the selected mode. Mirror: Mirror the normal with vertex normal plane, Flip: Flip the normal");
+            public static GUIContent doubleSidedNormalModeText = new GUIContent("Normal Mode", "This will modify the normal base on the selected mode. Mirror: Mirror the normal with vertex normal plane, Flip: Flip the normal");
             public static GUIContent depthOffsetEnableText = new GUIContent("Enable Depth Offset", "EnableDepthOffset on this shader (Use with heightmap)");
 
             // Displacement mapping (POM, tessellation, per vertex)
             //public static GUIContent enablePerPixelDisplacementText = new GUIContent("Enable Per Pixel Displacement", "");
 
-            public static GUIContent displacementModeText = new GUIContent("Displacement mode", "Apply heightmap displacement to the selected element: Vertex, pixel or tessellated vertex. Pixel displacement must be use with flat surfaces, it is an expensive features and typical usage is paved road.");
+            public static GUIContent displacementModeText = new GUIContent("Displacement Mode", "Apply heightmap displacement to the selected element: Vertex, pixel or tessellated vertex. Pixel displacement must be use with flat surfaces, it is an expensive features and typical usage is paved road.");
             public static GUIContent lockWithObjectScaleText = new GUIContent("Lock with object scale", "Displacement mapping will take the absolute value of the scale of the object into account.");
             public static GUIContent lockWithTilingRateText = new GUIContent("Lock with height map tiling rate", "Displacement mapping will take the absolute value of the tiling rate of the height map into account.");
 
             // Material ID
-            public static GUIContent materialIDText = new GUIContent("Material type", "Select a material feature to enable on top of regular material");
+            public static GUIContent materialIDText = new GUIContent("Material Type", "Select a material feature to enable on top of regular material");
             public static GUIContent transmissionEnableText = new GUIContent("Enable Transmission", "Enable Transmission for getting  back lighting");
 
             // Per pixel displacement
@@ -47,7 +47,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static GUIContent tessellationBackFaceCullEpsilonText = new GUIContent("Triangle culling Epsilon", "If -1.0 back face culling is enabled for tessellation, higher number mean more aggressive culling and better performance");
 
             // Vertex animation
-            public static string vertexAnimation = "Vertex animation";
+            public static string vertexAnimation = "Vertex Animation";
 
             // Wind
             public static GUIContent windText = new GUIContent("Enable Wind");
@@ -249,9 +249,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected override void BaseMaterialPropertiesGUI()
         {
             base.BaseMaterialPropertiesGUI();
-
-            EditorGUI.indentLevel++;
-
+            
             // This follow double sided option
             if (doubleSidedEnable != null && doubleSidedEnable.floatValue > 0.0f)
             {
@@ -290,9 +288,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 }
             }
 
-            if (enableMotionVectorForVertexAnimation != null)
-                m_MaterialEditor.ShaderProperty(enableMotionVectorForVertexAnimation, StylesBaseUnlit.enableMotionVectorForVertexAnimationText);
-
             if (displacementMode != null)
             {
                 EditorGUI.BeginChangeCheck();
@@ -327,56 +322,100 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     EditorGUI.indentLevel--;
                 }
             }
+        }
 
-            EditorGUI.indentLevel--;
-
+        protected virtual void MaterialTesselationPropertiesGUI()
+        {
             // Display tessellation option if it exist
             if (tessellationMode != null)
             {
-                EditorGUILayout.Space();
-                EditorGUILayout.LabelField(StylesBaseLit.tessellationText, EditorStyles.boldLabel);
-                EditorGUI.indentLevel++;
-                TessellationModePopup();
-                m_MaterialEditor.ShaderProperty(tessellationFactor, StylesBaseLit.tessellationFactorText);
-                m_MaterialEditor.ShaderProperty(tessellationFactorMinDistance, StylesBaseLit.tessellationFactorMinDistanceText);
-                m_MaterialEditor.ShaderProperty(tessellationFactorMaxDistance, StylesBaseLit.tessellationFactorMaxDistanceText);
-                // clamp min distance to be below max distance
-                tessellationFactorMinDistance.floatValue = Math.Min(tessellationFactorMaxDistance.floatValue, tessellationFactorMinDistance.floatValue);
-                m_MaterialEditor.ShaderProperty(tessellationFactorTriangleSize, StylesBaseLit.tessellationFactorTriangleSizeText);
-                if ((TessellationMode)tessellationMode.floatValue == TessellationMode.Phong)
+                using (var header = new HeaderScope(StylesBaseLit.tessellationText.text, (uint)Expendable.Tesselation, this))
                 {
-                    m_MaterialEditor.ShaderProperty(tessellationShapeFactor, StylesBaseLit.tessellationShapeFactorText);
+                    if (header.expended)
+                    {
+                        TessellationModePopup();
+                        m_MaterialEditor.ShaderProperty(tessellationFactor, StylesBaseLit.tessellationFactorText);
+                        m_MaterialEditor.ShaderProperty(tessellationFactorMinDistance, StylesBaseLit.tessellationFactorMinDistanceText);
+                        m_MaterialEditor.ShaderProperty(tessellationFactorMaxDistance, StylesBaseLit.tessellationFactorMaxDistanceText);
+                        // clamp min distance to be below max distance
+                        tessellationFactorMinDistance.floatValue = Math.Min(tessellationFactorMaxDistance.floatValue, tessellationFactorMinDistance.floatValue);
+                        m_MaterialEditor.ShaderProperty(tessellationFactorTriangleSize, StylesBaseLit.tessellationFactorTriangleSizeText);
+                        if ((TessellationMode)tessellationMode.floatValue == TessellationMode.Phong)
+                        {
+                            m_MaterialEditor.ShaderProperty(tessellationShapeFactor, StylesBaseLit.tessellationShapeFactorText);
+                        }
+                        if (doubleSidedEnable.floatValue == 0.0)
+                        {
+                            m_MaterialEditor.ShaderProperty(tessellationBackFaceCullEpsilon, StylesBaseLit.tessellationBackFaceCullEpsilonText);
+                        }
+                    }
                 }
-                if (doubleSidedEnable.floatValue == 0.0)
+            }
+        }
+
+        //override for adding Tesselation
+        public override void ShaderPropertiesGUI(Material material)
+        {
+            // Use default labelWidth
+            EditorGUIUtility.labelWidth = 0f;
+
+            // Detect any changes to the material
+            EditorGUI.BeginChangeCheck();
+            {
+                using (var header = new HeaderScope(StylesBaseUnlit.optionText, (uint)Expendable.Base, this))
                 {
-                    m_MaterialEditor.ShaderProperty(tessellationBackFaceCullEpsilon, StylesBaseLit.tessellationBackFaceCullEpsilonText);
+                    if (header.expended)
+                        BaseMaterialPropertiesGUI();
                 }
-                EditorGUI.indentLevel--;
+                MaterialTesselationPropertiesGUI();
+                VertexAnimationPropertiesGUI();
+                MaterialPropertiesGUI(material);
+                DoEmissionArea(material);
+                using (var header = new HeaderScope(StylesBaseUnlit.advancedText, (uint)Expendable.Advance, this))
+                {
+                    if (header.expended)
+                    {
+                        m_MaterialEditor.EnableInstancingField();
+                        MaterialPropertiesAdvanceGUI(material);
+                    }
+                }
+            }
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                foreach (var obj in m_MaterialEditor.targets)
+                    SetupMaterialKeywordsAndPassInternal((Material)obj);
             }
         }
 
         protected override void VertexAnimationPropertiesGUI()
         {
-            if (windEnable == null)
-                return;
-
-            EditorGUILayout.LabelField(StylesBaseLit.vertexAnimation, EditorStyles.boldLabel);
-
-            EditorGUI.indentLevel++;
-
-            m_MaterialEditor.ShaderProperty(windEnable, StylesBaseLit.windText);
-            if (!windEnable.hasMixedValue && windEnable.floatValue > 0.0f)
+            using (var header = new HeaderScope(StylesBaseLit.vertexAnimation, (uint)Expendable.VertexAnimation, this))
             {
-                EditorGUI.indentLevel++;
-                m_MaterialEditor.ShaderProperty(windInitialBend, StylesBaseLit.windInitialBendText);
-                m_MaterialEditor.ShaderProperty(windStiffness, StylesBaseLit.windStiffnessText);
-                m_MaterialEditor.ShaderProperty(windDrag, StylesBaseLit.windDragText);
-                m_MaterialEditor.ShaderProperty(windShiverDrag, StylesBaseLit.windShiverDragText);
-                m_MaterialEditor.ShaderProperty(windShiverDirectionality, StylesBaseLit.windShiverDirectionalityText);
-                EditorGUI.indentLevel--;
-            }
+                if (header.expended)
+                {
+                    if (windEnable != null)
+                    {
+                        // Hide wind option. Wind is deprecated and will be remove in the future. Use shader graph instead
+                        /*
+                        m_MaterialEditor.ShaderProperty(windEnable, StylesBaseLit.windText);
+                        if (!windEnable.hasMixedValue && windEnable.floatValue > 0.0f)
+                        {
+                            EditorGUI.indentLevel++;
+                            m_MaterialEditor.ShaderProperty(windInitialBend, StylesBaseLit.windInitialBendText);
+                            m_MaterialEditor.ShaderProperty(windStiffness, StylesBaseLit.windStiffnessText);
+                            m_MaterialEditor.ShaderProperty(windDrag, StylesBaseLit.windDragText);
+                            m_MaterialEditor.ShaderProperty(windShiverDrag, StylesBaseLit.windShiverDragText);
+                            m_MaterialEditor.ShaderProperty(windShiverDirectionality, StylesBaseLit.windShiverDirectionalityText);
+                            EditorGUI.indentLevel--;
+                        }
+                        */
+                    }
 
-            EditorGUI.indentLevel--;
+                    if (enableMotionVectorForVertexAnimation != null)
+                        m_MaterialEditor.ShaderProperty(enableMotionVectorForVertexAnimation, StylesBaseUnlit.enableMotionVectorForVertexAnimationText);
+                }
+            }
         }
 
         // All Setup Keyword functions must be static. It allow to create script to automatically update the shaders with a script if code change

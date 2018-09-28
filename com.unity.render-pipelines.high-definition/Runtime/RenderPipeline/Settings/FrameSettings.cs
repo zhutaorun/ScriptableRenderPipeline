@@ -20,6 +20,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public bool enableTransmission = true;  // Caution: this is only for debug, it doesn't save the cost of Transmission execution
         public bool enableAtmosphericScattering = true;
         public bool enableVolumetrics = true;
+        public bool enableReprojectionForVolumetrics = true;
         public bool enableLightLayers = true;
 
         // Setup by system
@@ -50,6 +51,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public bool enableMSAA = false;
 
+        // GC.Alloc
+        // FrameSettings..ctor() 
         public LightLoopSettings lightLoopSettings = new LightLoopSettings();
 
         public void CopyTo(FrameSettings frameSettings)
@@ -63,6 +66,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             frameSettings.enableTransmission = this.enableTransmission;
             frameSettings.enableAtmosphericScattering = this.enableAtmosphericScattering;
             frameSettings.enableVolumetrics = this.enableVolumetrics;
+            frameSettings.enableReprojectionForVolumetrics = this.enableReprojectionForVolumetrics;
             frameSettings.enableLightLayers = this.enableLightLayers;
 
             frameSettings.diffuseGlobalDimmer = this.diffuseGlobalDimmer;
@@ -125,6 +129,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 aggregate.enableAtmosphericScattering = false;
             // Volumetric are disabled if there is no atmospheric scattering
             aggregate.enableVolumetrics = srcFrameSettings.enableVolumetrics && renderPipelineSettings.supportVolumetrics && aggregate.enableAtmosphericScattering;
+            aggregate.enableReprojectionForVolumetrics = srcFrameSettings.enableReprojectionForVolumetrics;
 
             // TODO: Add support of volumetric in planar reflection
             if (camera.cameraType == CameraType.Reflection)
@@ -139,7 +144,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             aggregate.enableTransparentPrepass = srcFrameSettings.enableTransparentPrepass;
             aggregate.enableMotionVectors = camera.cameraType != CameraType.Reflection && srcFrameSettings.enableMotionVectors && renderPipelineSettings.supportMotionVectors;
-            aggregate.enableObjectMotionVectors = camera.cameraType != CameraType.Reflection && srcFrameSettings.enableObjectMotionVectors && renderPipelineSettings.supportMotionVectors;
+            // Object motion vector are disabled if motion vector are disabled
+            aggregate.enableObjectMotionVectors = srcFrameSettings.enableObjectMotionVectors && aggregate.enableMotionVectors;
             aggregate.enableDecals = srcFrameSettings.enableDecals && renderPipelineSettings.supportDecals;
             aggregate.enableRoughRefraction = srcFrameSettings.enableRoughRefraction;
             aggregate.enableTransparentPostpass = srcFrameSettings.enableTransparentPostpass;
@@ -172,6 +178,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 aggregate.enableSSAO = false;
                 aggregate.enableAtmosphericScattering = false;
                 aggregate.enableVolumetrics = false;
+                aggregate.enableReprojectionForVolumetrics = false;
                 aggregate.enableLightLayers = false;
                 aggregate.enableTransparentPrepass = false;
                 aggregate.enableMotionVectors = false;
@@ -203,7 +210,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             if (enableStereo)
             {
-                // Force forward if we request stereo. TODO: We should not enforce that, users should be able to chose deferred
+                // Stereo deferred rendering still has the following problems:
+                // VR TODO: Dispatch tile light-list compute per-eye
+                // VR TODO: Update compute lighting shaders for stereo
                 enableForwardRenderingOnly = true;
 
                 // TODO: The work will be implemented piecemeal to support all passes
@@ -234,7 +243,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         new DebugUI.BoolField { displayName = "Enable Transparent Prepass", getter = () => frameSettings.enableTransparentPrepass, setter = value => frameSettings.enableTransparentPrepass = value },
                         new DebugUI.BoolField { displayName = "Enable Transparent Postpass", getter = () => frameSettings.enableTransparentPostpass, setter = value => frameSettings.enableTransparentPostpass = value },
                         new DebugUI.BoolField { displayName = "Enable Motion Vectors", getter = () => frameSettings.enableMotionVectors, setter = value => frameSettings.enableMotionVectors = value },
-                        new DebugUI.BoolField { displayName = "Enable Object Motion Vectors", getter = () => frameSettings.enableObjectMotionVectors, setter = value => frameSettings.enableObjectMotionVectors = value },
+                        new DebugUI.BoolField { displayName = "  Enable Object Motion Vectors", getter = () => frameSettings.enableObjectMotionVectors, setter = value => frameSettings.enableObjectMotionVectors = value },
                         new DebugUI.BoolField { displayName = "Enable DBuffer", getter = () => frameSettings.enableDecals, setter = value => frameSettings.enableDecals = value },
                         new DebugUI.BoolField { displayName = "Enable Rough Refraction", getter = () => frameSettings.enableRoughRefraction, setter = value => frameSettings.enableRoughRefraction = value },
                         new DebugUI.BoolField { displayName = "Enable Distortion", getter = () => frameSettings.enableDistortion, setter = value => frameSettings.enableDistortion = value },
@@ -268,6 +277,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         new DebugUI.BoolField { displayName = "Enable ShadowMask", getter = () => frameSettings.enableShadowMask, setter = value => frameSettings.enableShadowMask = value },
                         new DebugUI.BoolField { displayName = "Enable Atmospheric Scattering", getter = () => frameSettings.enableAtmosphericScattering, setter = value => frameSettings.enableAtmosphericScattering = value },
                         new DebugUI.BoolField { displayName = "Enable Volumetrics", getter = () => frameSettings.enableVolumetrics, setter = value => frameSettings.enableVolumetrics = value },
+                        new DebugUI.BoolField { displayName = "Enable Reprojection For Volumetrics", getter = () => frameSettings.enableReprojectionForVolumetrics, setter = value => frameSettings.enableReprojectionForVolumetrics = value },
                         new DebugUI.BoolField { displayName = "Enable LightLayers", getter = () => frameSettings.enableLightLayers, setter = value => frameSettings.enableLightLayers = value },
                     }
                 }

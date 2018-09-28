@@ -95,7 +95,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             EditorGUILayout.PropertyField(p.enableTransparentPrepass, _.GetContent("Enable Transparent Prepass"));
             EditorGUILayout.PropertyField(p.enableTransparentPostpass, _.GetContent("Enable Transparent Postpass"));
             EditorGUILayout.PropertyField(p.enableMotionVectors, _.GetContent("Enable Motion Vectors"));
-            EditorGUILayout.PropertyField(p.enableObjectMotionVectors, _.GetContent("Enable Object Motion Vectors"));
+            if (p.enableMotionVectors.boolValue)
+            {
+                EditorGUILayout.PropertyField(p.enableObjectMotionVectors, _.GetContent("  Enable Object Motion Vectors"));
+            }
             EditorGUILayout.PropertyField(p.enableDecals, _.GetContent("Enable Decals"));
             EditorGUILayout.PropertyField(p.enableRoughRefraction, _.GetContent("Enable Rough Refraction"));
             EditorGUILayout.PropertyField(p.enableDistortion, _.GetContent("Enable Distortion"));
@@ -123,8 +126,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             EditorGUILayout.PropertyField(p.enableOpaqueObjects, _.GetContent("Enable Opaque Objects"));
             EditorGUILayout.PropertyField(p.enableTransparentObjects, _.GetContent("Enable Transparent Objects"));
-
-            EditorGUILayout.PropertyField(p.enableMSAA, _.GetContent("Enable MSAA"));
         }
 
         static void Drawer_XR(FrameSettingsUI s, SerializedFrameSettings p, Editor owner)
@@ -143,7 +144,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             EditorGUILayout.PropertyField(p.enableSubsurfaceScattering, _.GetContent("Enable Subsurface Scattering"));
             EditorGUILayout.PropertyField(p.enableTransmission, _.GetContent("Enable Transmission"));
             EditorGUILayout.PropertyField(p.enableAtmosphericScattering, _.GetContent("Enable Atmospheric Scattering"));
-            EditorGUILayout.PropertyField(p.enableVolumetric, _.GetContent("    Enable Volumetric"));
+            EditorGUILayout.PropertyField(p.enableVolumetrics, _.GetContent("    Enable Volumetrics"));
+            EditorGUILayout.PropertyField(p.enableReprojectionForVolumetrics, _.GetContent("    Enable Reprojection For Volumetrics"));
             EditorGUILayout.PropertyField(p.enableLightLayers, _.GetContent("Enable LightLayers"));
         }
     }

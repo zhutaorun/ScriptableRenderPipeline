@@ -112,27 +112,26 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             set { m_CaptureMirrorPlaneLocalNormal = value; }
         }
         public Vector3 captureMirrorPlaneNormal { get { return transform.TransformDirection(m_CaptureMirrorPlaneLocalNormal); } }
+        internal override Vector3 capturePosition
+        {
+            get
+            {
+                return transform.TransformPoint(captureLocalPosition);
+            }
+        }
 
-        #region Proxy Properties
-        public Matrix4x4 proxyToWorld
+        public bool useMirrorPlane
         {
             get
             {
-                return proxyVolume != null
-                    ? Matrix4x4.TRS(proxyVolume.transform.position, proxyVolume.transform.rotation, Vector3.one)
-                    : influenceToWorld;
+                return mode == ReflectionProbeMode.Realtime
+                    && refreshMode == ReflectionProbeRefreshMode.EveryFrame
+                    && capturePositionMode == CapturePositionMode.MirrorCamera;
             }
         }
-        public ProxyShape proxyShape
-        {
-            get
-            {
-                return proxyVolume != null
-                    ? proxyVolume.proxyVolume.shape
-                    : (ProxyShape)influenceVolume.shape;
-            }
-        }
-        public Vector3 proxyExtents
+
+        //for strange reason, current ReflectionSystem needs a proxyExtents two time bigger for planar. To be fixed when refactoring the ReflectionSystem
+        public override Vector3 proxyExtents
         {
             get
             {
@@ -141,8 +140,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     : influenceVolume.boxSize;
             }
         }
-
-        #endregion
 
         protected override void PopulateSettings(ref ProbeSettings settings)
         {

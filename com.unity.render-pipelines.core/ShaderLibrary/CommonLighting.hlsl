@@ -279,6 +279,15 @@ real ComputeWrappedDiffuseLighting(real NdotL, real w)
     return saturate((NdotL + w) / ((1 + w) * (1 + w)));
 }
 
+// Ref: The Technical Art of Uncharted 4 - Brinck and Maximov 2016
+real GetMicroshadowing(real NdotL, real AO, real opacity)
+{
+	real aperture = 2.0 * AO * AO;
+	real microshadow = saturate(NdotL + aperture - 1.0);
+	return lerp(1.0, microshadow, opacity);
+}
+
+
 //-----------------------------------------------------------------------------
 // Helper functions
 //-----------------------------------------------------------------------------
@@ -286,7 +295,7 @@ real ComputeWrappedDiffuseLighting(real NdotL, real w)
 // Ref: "Crafting a Next-Gen Material Pipeline for The Order: 1886".
 float ClampNdotV(float NdotV)
 {
-    return max(NdotV, 0.0001);
+    return max(NdotV, 0.0001); // Approximately 0.0057 degree bias
 }
 
 // return usual BSDF angle
