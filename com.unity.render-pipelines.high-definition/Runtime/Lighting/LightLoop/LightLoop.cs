@@ -1670,6 +1670,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             if (lightComponent == null)
                                 continue;
 
+							// if (vl.light.shadows == LightShadows.None || vl.lightType == LightType.Area)???
                             if (lightComponent.shadows == LightShadows.None)
                                 continue;
 
