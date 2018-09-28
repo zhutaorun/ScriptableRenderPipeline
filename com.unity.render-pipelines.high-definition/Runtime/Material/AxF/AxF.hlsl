@@ -24,8 +24,6 @@
 
 // No transmission support
 // #define MATERIAL_INCLUDE_TRANSMISSION
-#define MATERIALFEATUREFLAGS_TRANSMISSION_MODE_MIXED_THICKNESS 0
-#define MATERIALFEATUREFLAGS_TRANSMISSION_MODE_THIN_THICKNESS  0
 
 // Define this to sample the environment maps/LTC samples for each lobe, instead of a single sample with an average lobe
 #define USE_COOK_TORRANCE_MULTI_LOBES   1

@@ -95,6 +95,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
 
             bool evaluateShadows = (NdotL > 0);
 
+        #ifdef MATERIAL_INCLUDE_TRANSMISSION
             if (MaterialSupportsTransmission(bsdfData))
             {
                 // We support some kind of transmission.
@@ -111,6 +112,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
                     // We only evaluate shadows for reflection, transmission shadows are handled separately.
                 }
             }
+        #endif
 
             if (evaluateShadows)
             {
