@@ -108,7 +108,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             get
             {
+                #if UNITY_2019_1_OR_NEWER
                 return (float)s_annotationIconSize.GetValue(null) * 15f;
+                #else
+                return (float)s_annotationIconSize.GetValue(null, null) * 15f;
+                #endif
             }
             
         }
