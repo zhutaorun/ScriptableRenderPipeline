@@ -297,6 +297,7 @@ LightTransportData GetLightTransportData(SurfaceData surfaceData, BuiltinData bu
 // Here we need to make sure 
 #define USE_DIFFUSE_LAMBERT_BRDF
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightEvaluation.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/SurfaceShading.hlsl"
 #undef USE_DIFFUSE_LAMBERT_BRDF
 //-----------------------------------------------------------------------------
 // BSDF share between directional light, punctual light and area light (reference)

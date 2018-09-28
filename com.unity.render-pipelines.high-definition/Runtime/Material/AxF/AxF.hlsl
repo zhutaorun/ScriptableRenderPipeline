@@ -627,7 +627,7 @@ LightTransportData  GetLightTransportData(SurfaceData surfaceData, BuiltinData b
 #ifdef HAS_LIGHTLOOP
 
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightEvaluation.hlsl"
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Reflection/VolumeProjection.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/SurfaceShading.hlsl"
 
 //-----------------------------------------------------------------------------
 // BSDF shared between directional light, punctual light and area light (reference)

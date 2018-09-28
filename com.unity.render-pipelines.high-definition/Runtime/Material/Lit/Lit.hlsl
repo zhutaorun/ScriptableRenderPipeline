@@ -819,6 +819,23 @@ uint MaterialFeatureFlagsFromGBuffer(uint2 positionSS)
     return DecodeFromGBuffer(positionSS, UINT_MAX, bsdfData, unused);
 }
 
+void ClampRoughness(inout BSDFData bsdfData, float minRoughness)
+{
+    bsdfData.roughnessT    = max(minRoughness, bsdfData.roughnessT);
+    bsdfData.roughnessB    = max(minRoughness, bsdfData.roughnessB);
+    bsdfData.coatRoughness = max(minRoughness, bsdfData.coatRoughness);
+}
+
+float ComputeMicroShadowing(BSDFData bsdfData, float NdotL)
+{
+#ifdef LIGHT_LAYERS
+    return ComputeMicroShadowing(bsdfData.ambientOcclusion, NdotL, _MicroShadowOpacity);
+#else
+    // No extra G-Buffer for AO, so 'bsdfData.ambientOcclusion' does not hold a meaningful value.
+    return ComputeMicroShadowing(bsdfData.specularOcclusion, NdotL, _MicroShadowOpacity);
+#endif
+}
+
 //-----------------------------------------------------------------------------
 // Debug method (use to display values)
 //-----------------------------------------------------------------------------
@@ -1098,7 +1115,6 @@ LightTransportData GetLightTransportData(SurfaceData surfaceData, BuiltinData bu
 #ifdef HAS_LIGHTLOOP
 
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialEvaluation.hlsl"
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightEvaluation.hlsl"
 
 //-----------------------------------------------------------------------------
 // BSDF share between directional light, punctual light and area light (reference)
@@ -1187,22 +1203,12 @@ void BSDF(  float3 V, float3 L, float NdotL, float3 positionWS, PreLightData pre
     }
 }
 
-void ClampRoughness(inout BSDFData bsdfData, float minRoughness)
-{
-    bsdfData.roughnessT    = max(minRoughness, bsdfData.roughnessT);
-    bsdfData.roughnessB    = max(minRoughness, bsdfData.roughnessB);
-    bsdfData.coatRoughness = max(minRoughness, bsdfData.coatRoughness);
-}
+//-----------------------------------------------------------------------------
+// Surface shading (all light types) below
+//-----------------------------------------------------------------------------
 
-float ComputeMicroShadowing(BSDFData bsdfData, float NdotL, float opacity)
-{
-#ifdef LIGHT_LAYERS
-    return ComputeMicroShadowing(bsdfData.ambientOcclusion, NdotL, _MicroShadowOpacity);
-#else
-    // No extra G-Buffer for AO, so 'bsdfData.ambientOcclusion' does not hold a meaningful value.
-    return ComputeMicroShadowing(bsdfData.specularOcclusion, NdotL, _MicroShadowOpacity);
-#endif
-}
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightEvaluation.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/SurfaceShading.hlsl"
 
 //-----------------------------------------------------------------------------
 // EvaluateBSDF_Directional
@@ -1213,69 +1219,10 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
                                         DirectionalLightData lightData, BSDFData bsdfData,
                                         BuiltinData builtinData)
 {
-    DirectLighting lighting;
-    ZERO_INITIALIZE(DirectLighting, lighting);
+    bool supportsLightTransmission = HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_LIT_TRANSMISSION);
 
-    float3 N     = bsdfData.normalWS;
-    float3 L     = ComputeSunLightDirection(lightData, N, V);
-    float  NdotL = dot(N, L); // Do not saturate
-
-    // Note: We use NdotL here to early out, but in case of clear coat this is not correct. But we are OK with this
-    bool surfaceReflection = NdotL > 0;
-
-    // Caution: this function modifies N, NdotL, contactShadowIndex and shadowMaskSelector.
-    float3 transmittance = PreEvaluateDirectionalLightTransmission(lightData, bsdfData, N, NdotL);
-
-    float3 color; float attenuation;
-    EvaluateLight_Directional(lightLoopContext, posInput, lightData, builtinData, N, L, NdotL,
-                              color, attenuation);
-    if (attenuation > 0)
-    {
-        // We must clamp here, otherwise our disk light hack for smooth surfaces does not work.
-        // Explanation: for a perfectly smooth surface, lighting is only reflected if (NdotL = NdotV).
-        // This implies that (NdotH = 1).
-        // Due to the floating point arithmetic (see math in ComputeSunLightDirection() and
-        // GetBSDFAngle()), we will never arrive at this exact number, so no lighting will be reflected.
-        // If we increase the roughness somewhat, the trick still works.
-        ClampRoughness(bsdfData, lightData.minRoughness);
-
-        float3 diffuseBsdf, specularBsdf;
-        BSDF(V, L, NdotL, posInput.positionWS, preLightData, bsdfData, diffuseBsdf, specularBsdf);
-
-        if (surfaceReflection)
-        {
-            attenuation    *= ComputeMicroShadowing(bsdfData, NdotL, _MicroShadowOpacity);
-            float intensity = attenuation * NdotL;
-
-            lighting.diffuse  = diffuseBsdf  * (intensity * lightData.diffuseDimmer);
-            lighting.specular = specularBsdf * (intensity * lightData.specularDimmer);
-        }
-        else if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_LIT_TRANSMISSION))
-        {
-             // Apply wrapped lighting to better handle thin objects at grazing angles.
-            float wrapNdotL = ComputeWrappedDiffuseLighting(NdotL, TRANSMISSION_WRAP_LIGHT);
-            float intensity = attenuation * wrapNdotL;
-
-            // Note: Disney's LdoV term in 'diffuseBsdf' does not hold a meaningful value
-            // in the context of transmission, but we keep it unaltered for performance reasons.
-            lighting.diffuse  = diffuseBsdf * transmittance * (intensity * lightData.diffuseDimmer);
-            lighting.specular = 0; // No spec trans, the compiler should optimize
-        }
-
-        // Save ALU by applying light and cookie colors only once.
-        lighting.diffuse  *= color;
-        lighting.specular *= color;
-    }
-
-#ifdef DEBUG_DISPLAY
-    if (_DebugLightingMode == DEBUGLIGHTINGMODE_LUX_METER)
-    {
-        // Only lighting, not BSDF
-        lighting.diffuse = color * attenuation * saturate(NdotL);
-    }
-#endif
-
-    return lighting;
+    return ShadeSurface_Directional(lightLoopContext, posInput, builtinData, preLightData, lightData,
+                                    bsdfData, bsdfData.normalWS, V, supportsLightTransmission);
 }
 
 //-----------------------------------------------------------------------------
@@ -1286,70 +1233,10 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
                                      float3 V, PositionInputs posInput,
                                      PreLightData preLightData, LightData lightData, BSDFData bsdfData, BuiltinData builtinData)
 {
-    DirectLighting lighting;
-    ZERO_INITIALIZE(DirectLighting, lighting);
+    bool supportsLightTransmission = HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_LIT_TRANSMISSION);
 
-    float3 L;
-    float3 lightToSample;
-    float4 distances; // {d, d^2, 1/d, d_proj}
-    GetPunctualLightVectors(posInput.positionWS, lightData, L, lightToSample, distances);
-
-    float3 N     = bsdfData.normalWS;
-    float  NdotL = dot(N, L); // Do not saturate
-
-    // Note: We use NdotL here to early out, but in case of clear coat this is not correct. But we are OK with this
-    bool surfaceReflection = NdotL > 0;
-
-    // Caution: this function modifies N, NdotL, shadowIndex, contactShadowIndex and shadowMaskSelector.
-    float3 transmittance = PreEvaluatePunctualLightTransmission(lightLoopContext, posInput,
-                                                                lightData, bsdfData,
-                                                                distances.x, N, L, NdotL);
-    float3 color; float attenuation;
-    EvaluateLight_Punctual(lightLoopContext, posInput, lightData, builtinData, N, L, NdotL, lightToSample, distances,
-                           color, attenuation);
-    if (attenuation > 0)
-    {
-        // Simulate a sphere/disk light with this hack
-        // Note that it is not correct with our pre-computation of PartLambdaV (mean if we disable the optimization we will not have the
-        // same result) but we don't care as it is a hack anyway
-        ClampRoughness(bsdfData, lightData.minRoughness);
-
-        float3 diffuseBsdf, specularBsdf;
-        BSDF(V, L, NdotL, posInput.positionWS, preLightData, bsdfData, diffuseBsdf, specularBsdf);
-
-        if (surfaceReflection)
-        {
-            float intensity = attenuation * NdotL;
-
-            lighting.diffuse  = diffuseBsdf  * (intensity * lightData.diffuseDimmer);
-            lighting.specular = specularBsdf * (intensity * lightData.specularDimmer);
-        }
-        else if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_LIT_TRANSMISSION))
-        {
-             // Apply wrapped lighting to better handle thin objects at grazing angles.
-            float wrapNdotL = ComputeWrappedDiffuseLighting(NdotL, TRANSMISSION_WRAP_LIGHT);
-            float intensity = attenuation * wrapNdotL;
-
-            // Note: Disney's LdoV term in 'diffuseBsdf' does not hold a meaningful value
-            // in the context of transmission, but we keep it unaltered for performance reasons.
-            lighting.diffuse  = diffuseBsdf * transmittance * (intensity * lightData.diffuseDimmer);
-            lighting.specular = 0; // No spec trans, the compiler should optimize
-        }
-
-        // Save ALU by applying light and cookie colors only once.
-        lighting.diffuse  *= color;
-        lighting.specular *= color;
-    }
-
-#ifdef DEBUG_DISPLAY
-    if (_DebugLightingMode == DEBUGLIGHTINGMODE_LUX_METER)
-    {
-        // Only lighting, not BSDF
-        lighting.diffuse = color * attenuation * saturate(NdotL);
-    }
-#endif
-
-    return lighting;
+    return ShadeSurface_Punctual(lightLoopContext, posInput, builtinData, preLightData, lightData,
+                                 bsdfData, bsdfData.normalWS, V, supportsLightTransmission);
 }
 
 #include "LitReference.hlsl"
