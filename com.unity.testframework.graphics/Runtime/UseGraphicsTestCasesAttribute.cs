@@ -83,7 +83,7 @@ namespace UnityEngine.TestTools.Graphics
             {
                 foreach (var testCase in provider.GetTestCases())
                 {
-                    TestCaseParameters parms = new TestCaseParameters( new object[]{ m_OutputAsString? testCase.ScenePath : (object) testCase } )
+                    TestCaseParameters parms = new TestCaseParameters( new object[]{ (m_TestParameters==TestParameters.ScenePath)? testCase.ScenePath : (object) testCase } )
                     {
                         ExpectedResult = new object(),
                         HasExpectedResult = true,
