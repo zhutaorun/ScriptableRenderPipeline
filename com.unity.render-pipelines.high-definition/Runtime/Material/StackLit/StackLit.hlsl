@@ -2279,9 +2279,10 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
     float3 shadowBiasNormal = bsdfData.geomNormalWS;
     float3 transmittance = float3(0.0, 0.0, 0.0);
     if (HasFlag(bsdfData.materialFeatures, MATERIAL_FEATURE_FLAGS_TRANSMISSION_MODE_THIN_THICKNESS))
+    if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_TRANSMISSION_MODE_THIN_THICKNESS))
     {
-        // Caution: This function modify N and contactShadowIndex
-        transmittance = PreEvaluateDirectionalLightTransmission(NdotL, lightData, bsdfData, shadowBiasNormal, lightData.contactShadowIndex); // contactShadowIndex is only modify for the code of this function
+        // Caution: This function modify N, NdotL and contactShadowIndex
+        transmittance = PreEvaluateDirectionalLightTransmission(lightData, bsdfData, N, NdotL, lightData.contactShadowIndex); // contactShadowIndex is only modify for the code of this function
     }
 
     // color and attenuation are outputted  by EvaluateLight:
@@ -2296,12 +2297,12 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
     {
         BSDF(V, L, NdotL, posInput.positionWS, preLightData, bsdfData, lighting.diffuse, lighting.specular);
 
-        lighting.diffuse  *= intensity * lightData.diffuseScale;
-        lighting.specular *= intensity * lightData.specularScale;
+        lighting.diffuse  *= intensity * lightData.diffuseDimmer;
+        lighting.specular *= intensity * lightData.specularDimmer;
     }
 
     // The mixed thickness mode is not supported by directional lights due to poor quality and high performance impact.
-    if (HasFlag(bsdfData.materialFeatures, MATERIAL_FEATURE_FLAGS_TRANSMISSION_MODE_THIN_THICKNESS))
+    if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_TRANSMISSION_MODE_THIN_THICKNESS))
     {
         float  NdotV = ClampNdotV(unclampedNdotV);
         float  LdotV = dot(L, V);
@@ -2319,7 +2320,7 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
         //
         // Even without energy conservation, preLightData.diffuseEnergyTransmitted should still != preLightData.diffuseEnergy
         // as although statistics T12 == T21 for the interface, the stack has terms e_T0i != e_Ti0
-        lighting.diffuse += EvaluateTransmission(bsdfData, transmittance, NdotL, NdotV, LdotV, attenuation * lightData.diffuseScale);
+        lighting.diffuse += EvaluateTransmission(bsdfData, transmittance, NdotL, NdotV, LdotV, attenuation * lightData.diffuseDimmer);
     }
 
     // Save ALU by applying light and cookie colors only once.
@@ -2331,7 +2332,7 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
     {
         // Only lighting, not BSDF
         intensity = max(0, attenuation * NdotL);
-        lighting.diffuse = color * intensity * lightData.diffuseScale;
+        lighting.diffuse = color * intensity * lightData.diffuseDimmer;
     }
 #endif
 
@@ -2392,8 +2393,8 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
 
         BSDF(V, L, NdotL, posInput.positionWS, preLightData, bsdfData, lighting.diffuse, lighting.specular);
 
-        lighting.diffuse  *= intensity * lightData.diffuseScale;
-        lighting.specular *= intensity * lightData.specularScale;
+        lighting.diffuse  *= intensity * lightData.diffuseDimmer;
+        lighting.specular *= intensity * lightData.specularDimmer;
     }
 
     if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_TRANSMISSION))
@@ -2402,7 +2403,7 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
         float  LdotV = dot(L, V);
         // We use diffuse lighting for accumulation since it is going to be blurred during the SSS pass.
         // TODOENERGYDIFFUSE
-        lighting.diffuse += EvaluateTransmission(bsdfData, transmittance, NdotL, NdotV, LdotV, attenuation * lightData.diffuseScale);
+        lighting.diffuse += EvaluateTransmission(bsdfData, transmittance, NdotL, NdotV, LdotV, attenuation * lightData.diffuseDimmer);
     }
 
     // Save ALU by applying light and cookie colors only once.
@@ -2414,7 +2415,7 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
     {
         // Only lighting, not BSDF
         intensity = max(0, attenuation * NdotL);
-        lighting.diffuse = color * intensity * lightData.diffuseScale;
+        lighting.diffuse = color * intensity * lightData.diffuseDimmer;
     }
 #endif
 
@@ -2464,8 +2465,8 @@ DirectLighting EvaluateBSDF_Line(   LightLoopContext lightLoopContext,
     if (intensity == 0.0)
         return lighting;
 
-    lightData.diffuseScale  *= intensity;
-    lightData.specularScale *= intensity;
+    lightData.diffuseDimmer  *= intensity;
+    lightData.specularDimmer *= intensity;
 
     // Translate the light s.t. the shaded point is at the origin of the coordinate system.
     lightData.positionRWS -= positionWS;
@@ -2485,7 +2486,7 @@ DirectLighting EvaluateBSDF_Line(   LightLoopContext lightLoopContext,
 
     // Evaluate the diffuse part
     ltcValue = LTCEvaluate(localP1, localP2, B, preLightData.ltcTransformDiffuse);
-    ltcValue *= lightData.diffuseScale;
+    ltcValue *= lightData.diffuseDimmer;
     // We don't multiply by 'bsdfData.diffuseColor' here. It's done only once in PostEvaluateBSDF().
     lighting.diffuse = preLightData.diffuseFGD * preLightData.diffuseEnergy * ltcValue;
 
@@ -2500,7 +2501,7 @@ DirectLighting EvaluateBSDF_Line(   LightLoopContext lightLoopContext,
         // The matrix multiplication should not generate any extra ALU on GCN.
         // TODO: double evaluation is very inefficient! This is a temporary solution.
         ltcValue  = LTCEvaluate(localP1, localP2, B, mul(flipMatrix, k_identity3x3));
-        ltcValue *= lightData.diffuseScale;
+        ltcValue *= lightData.diffuseDimmer;
         // TODOENERGYDIFFUSE: In Lit with Lambert, there's no diffuseFGD, it is one. In our case, we also
         // need a diffuse energy term when vlayered. See preLightData.diffuseEnergyTransmitted
 
@@ -2537,7 +2538,7 @@ DirectLighting EvaluateBSDF_Line(   LightLoopContext lightLoopContext,
             lighting.specular += preLightData.specularFGD[COAT_LOBE_IDX] * ltcValue;
         }
     }
-    lighting.specular *= lightData.specularScale;
+    lighting.specular *= lightData.specularDimmer;
 
 
     // Save ALU by applying 'lightData.color' only once.
@@ -2550,7 +2551,7 @@ DirectLighting EvaluateBSDF_Line(   LightLoopContext lightLoopContext,
         // Only lighting, not BSDF
         // Apply area light on lambert then multiply by PI to cancel Lambert
         lighting.diffuse = LTCEvaluate(localP1, localP2, B, k_identity3x3);
-        lighting.diffuse *= PI * lightData.diffuseScale;
+        lighting.diffuse *= PI * lightData.diffuseDimmer;
     }
 #endif
 
@@ -2620,8 +2621,8 @@ DirectLighting EvaluateBSDF_Rect(   LightLoopContext lightLoopContext,
     if (intensity == 0.0)
         return lighting;
 
-    lightData.diffuseScale  *= intensity;
-    lightData.specularScale *= intensity;
+    lightData.diffuseDimmer  *= intensity;
+    lightData.specularDimmer *= intensity;
 
     // Translate the light s.t. the shaded point is at the origin of the coordinate system.
     lightData.positionRWS -= positionWS;
@@ -2642,7 +2643,7 @@ DirectLighting EvaluateBSDF_Rect(   LightLoopContext lightLoopContext,
     // Evaluate the diffuse part
     // Polygon irradiance in the transformed configuration.
     ltcValue  = PolygonIrradiance(mul(localLightVerts, preLightData.ltcTransformDiffuse));
-    ltcValue *= lightData.diffuseScale;
+    ltcValue *= lightData.diffuseDimmer;
     // We don't multiply by 'bsdfData.diffuseColor' here. It's done only once in PostEvaluateBSDF().
     lighting.diffuse = preLightData.diffuseFGD * preLightData.diffuseEnergy * ltcValue;
 
@@ -2660,7 +2661,7 @@ DirectLighting EvaluateBSDF_Rect(   LightLoopContext lightLoopContext,
         // Polygon irradiance in the transformed configuration.
         // TODO: double evaluation is very inefficient! This is a temporary solution.
         ltcValue  = PolygonIrradiance(mul(localLightVerts, ltcTransform));
-        ltcValue *= lightData.diffuseScale;
+        ltcValue *= lightData.diffuseDimmer;
         // TODOENERGYDIFFUSE: In Lit with Lambert, there's no diffuseFGD, it is one. In our case, we also
         // need a diffuse energy term when vlayered. See preLightData.diffuseEnergyTransmitted
 
@@ -2694,7 +2695,7 @@ DirectLighting EvaluateBSDF_Rect(   LightLoopContext lightLoopContext,
             lighting.specular += preLightData.specularFGD[COAT_LOBE_IDX] * ltcValue;
         }
     }
-    lighting.specular *= lightData.specularScale;
+    lighting.specular *= lightData.specularDimmer;
 
 
     // Save ALU by applying 'lightData.color' only once.
@@ -2707,7 +2708,7 @@ DirectLighting EvaluateBSDF_Rect(   LightLoopContext lightLoopContext,
         // Only lighting, not BSDF
         // Apply area light on lambert then multiply by PI to cancel Lambert
         lighting.diffuse = PolygonIrradiance(mul(localLightVerts, k_identity3x3));
-        lighting.diffuse *= PI * lightData.diffuseScale;
+        lighting.diffuse *= PI * lightData.diffuseDimmer;
     }
 #endif
 

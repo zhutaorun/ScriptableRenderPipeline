@@ -387,8 +387,8 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
     {
         BSDF(V, L, NdotL, posInput.positionWS, preLightData, bsdfData, lighting.diffuse, lighting.specular);
 
-        lighting.diffuse  *= intensity * lightData.diffuseScale;
-        lighting.specular *= intensity * lightData.specularScale;
+        lighting.diffuse  *= intensity * lightData.diffuseDimmer;
+        lighting.specular *= intensity * lightData.specularDimmer;
     }
 
     // The mixed thickness mode is not supported by directional lights due to poor quality and high performance impact.
@@ -397,7 +397,7 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
         float  NdotV = ClampNdotV(preLightData.NdotV);
         float  LdotV = dot(L, V);
         // We use diffuse lighting for accumulation since it is going to be blurred during the SSS pass.
-        lighting.diffuse += EvaluateTransmission(bsdfData, transmittance, NdotL, NdotV, LdotV, attenuation * lightData.diffuseScale);
+        lighting.diffuse += EvaluateTransmission(bsdfData, transmittance, NdotL, NdotV, LdotV, attenuation * lightData.diffuseDimmer);
     }
 
     // Save ALU by applying light and cookie colors only once.
@@ -408,7 +408,7 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
     if (_DebugLightingMode == DEBUGLIGHTINGMODE_LUX_METER)
     {
         // Only lighting, not BSDF
-        lighting.diffuse = color * intensity * lightData.diffuseScale;
+        lighting.diffuse = color * intensity * lightData.diffuseDimmer;
     }
 #endif
 
@@ -458,8 +458,8 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
 
         BSDF(V, L, NdotL, posInput.positionWS, preLightData, bsdfData, lighting.diffuse, lighting.specular);
 
-        lighting.diffuse  *= intensity * lightData.diffuseScale;
-        lighting.specular *= intensity * lightData.specularScale;
+        lighting.diffuse  *= intensity * lightData.diffuseDimmer;
+        lighting.specular *= intensity * lightData.specularDimmer;
     }
 
     if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_FABRIC_TRANSMISSION))
@@ -467,7 +467,7 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
         float  NdotV = ClampNdotV(preLightData.NdotV);
         float  LdotV = dot(L, V);
         // We use diffuse lighting for accumulation since it is going to be blurred during the SSS pass.
-        lighting.diffuse += EvaluateTransmission(bsdfData, transmittance, NdotL, NdotV, LdotV, attenuation * lightData.diffuseScale);
+        lighting.diffuse += EvaluateTransmission(bsdfData, transmittance, NdotL, NdotV, LdotV, attenuation * lightData.diffuseDimmer);
     }
     
 
@@ -479,7 +479,7 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
     if (_DebugLightingMode == DEBUGLIGHTINGMODE_LUX_METER)
     {
         // Only lighting, not BSDF
-        lighting.diffuse = color * intensity * lightData.diffuseScale;
+        lighting.diffuse = color * intensity * lightData.diffuseDimmer;
     }
 #endif
 

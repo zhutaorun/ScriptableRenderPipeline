@@ -85,7 +85,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         sealed class SerializedShadowData
         {
-            public SerializedProperty dimmer;
+            public SerializedProperty shadowDimmer;
+            public SerializedProperty volumetricShadowDimmer;
             public SerializedProperty fadeDistance;
             public SerializedProperty resolution;
             public SerializedProperty contactShadows;
@@ -202,7 +203,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             using (var o = new PropertyFetcher<AdditionalShadowData>(m_SerializedAdditionalShadowData))
                 m_AdditionalShadowData = new SerializedShadowData
                 {
-                    dimmer = o.Find(x => x.shadowDimmer),
+                    shadowDimmer = o.Find(x => x.shadowDimmer),
+                    volumetricShadowDimmer = o.Find(x => x.volumetricShadowDimmer),
                     fadeDistance = o.Find(x => x.shadowFadeDistance),
                     resolution = o.Find(x => x.shadowResolution),
                     contactShadows = o.Find(x => x.contactShadows),
@@ -802,10 +804,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                 EditorGUILayout.PropertyField(m_AdditionalShadowData.contactShadows, s_Styles.contactShadows);
 
+                EditorGUILayout.PropertyField(m_AdditionalShadowData.shadowDimmer,           s_Styles.shadowDimmer);
+                EditorGUILayout.PropertyField(m_AdditionalShadowData.volumetricShadowDimmer, s_Styles.shadowDimmer);
+
                 if (settings.lightType.enumValueIndex != (int)LightType.Directional)
                 {
                     EditorGUILayout.PropertyField(m_AdditionalShadowData.fadeDistance, s_Styles.shadowFadeDistance);
-                    EditorGUILayout.PropertyField(m_AdditionalShadowData.dimmer, s_Styles.shadowDimmer);
                 }
 
                 EditorGUILayout.Slider(m_AdditionalShadowData.viewBiasMin, 0.0f, 5.0f, s_Styles.viewBiasMin);

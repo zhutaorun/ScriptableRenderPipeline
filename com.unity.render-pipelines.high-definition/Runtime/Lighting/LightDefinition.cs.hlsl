@@ -51,52 +51,58 @@
 // PackingRules = Exact
 struct DirectionalLightData
 {
-    uint lightLayers;
     float3 positionRWS;
-    float3 color;
-    int cookieIndex;
-    float volumetricDimmer;
-    float3 right;
-    float3 up;
+    uint lightLayers;
+    float lightDimmer;
+    float shadowDimmer;
+    float volumetricLightDimmer;
+    float volumetricShadowDimmer;
     float3 forward;
-    int tileCookie;
+    float angleScale;
+    float3 right;
+    float angleOffset;
+    float3 up;
     int shadowIndex;
+    float3 color;
     int contactShadowIndex;
     float4 shadowMaskSelector;
-    int nonLightmappedOnly;
-    float diffuseScale;
-    float specularScale;
-    float angleScale;
-    float angleOffset;
+    int cookieIndex;
+    int tileCookie;
+    float diffuseDimmer;
+    float specularDimmer;
+    int nonLightMappedOnly;
 };
 
 // Generated from UnityEngine.Experimental.Rendering.HDPipeline.LightData
 // PackingRules = Exact
 struct LightData
 {
-    uint lightLayers;
     float3 positionRWS;
+    uint lightLayers;
+    float lightDimmer;
+    float shadowDimmer;
+    float volumetricLightDimmer;
+    float volumetricShadowDimmer;
+    float3 forward;
+    float angleScale;
+    float3 right;
+    float angleOffset;
+    float3 up;
+    int shadowIndex;
     float3 color;
+    int contactShadowIndex;
+    float4 shadowMaskSelector;
+    int lightType;
+    float minRoughness;
+    int cookieIndex;
+    int tileCookie;
+    float2 size;
+    float range;
     float rangeAttenuationScale;
     float rangeAttenuationBias;
-    float angleScale;
-    float angleOffset;
-    int cookieIndex;
-    int lightType;
-    float3 right;
-    float3 up;
-    float3 forward;
-    int shadowIndex;
-    int contactShadowIndex;
-    float shadowDimmer;
-    float4 shadowMaskSelector;
-    int nonLightmappedOnly;
-    float minRoughness;
-    float diffuseScale;
-    float specularScale;
-    float2 size;
-    float volumetricDimmer;
-    float range;
+    float diffuseDimmer;
+    float specularDimmer;
+    int nonLightMappedOnly;
 };
 
 // Generated from UnityEngine.Experimental.Rendering.HDPipeline.EnvLightData

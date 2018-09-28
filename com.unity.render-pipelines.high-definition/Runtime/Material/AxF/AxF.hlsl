@@ -1042,8 +1042,8 @@ DirectLighting  EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
     {
         BSDF(viewWS, lightWS, NdotL, posInput.positionWS, preLightData, bsdfData, lighting.diffuse, lighting.specular);
 
-        lighting.diffuse *= intensity * lightData.diffuseScale;
-        lighting.specular *= intensity * lightData.specularScale;
+        lighting.diffuse *= intensity * lightData.diffuseDimmer;
+        lighting.specular *= intensity * lightData.specularDimmer;
     }
 
     // Save ALU by applying light and cookie colors only once.
@@ -1053,7 +1053,7 @@ DirectLighting  EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
 #ifdef DEBUG_DISPLAY
     if (_DebugLightingMode == DEBUGLIGHTINGMODE_LUX_METER)
     {
-        lighting.diffuse = color * intensity * lightData.diffuseScale;  // Only lighting, not BSDF
+        lighting.diffuse = color * intensity * lightData.diffuseDimmer;  // Only lighting, not BSDF
     }
 #endif
 
@@ -1121,8 +1121,8 @@ DirectLighting EvaluateBSDF_Punctual(   LightLoopContext lightLoopContext,
 
         BSDF(viewWS, lightWS, NdotL, posInput.positionWS, preLightData, bsdfData, lighting.diffuse, lighting.specular);
 
-        lighting.diffuse *= intensity * lightData.diffuseScale;
-        lighting.specular *= intensity * lightData.specularScale;
+        lighting.diffuse *= intensity * lightData.diffuseDimmer;
+        lighting.specular *= intensity * lightData.specularDimmer;
     }
 
     // Save ALU by applying light and cookie colors only once.
@@ -1132,7 +1132,7 @@ DirectLighting EvaluateBSDF_Punctual(   LightLoopContext lightLoopContext,
 #ifdef DEBUG_DISPLAY
     if (_DebugLightingMode == DEBUGLIGHTINGMODE_LUX_METER)
     {
-        lighting.diffuse = color * intensity * lightData.diffuseScale;      // Only lighting, not BSDF
+        lighting.diffuse = color * intensity * lightData.diffuseDimmer;      // Only lighting, not BSDF
     }
 #endif
 
@@ -1254,8 +1254,8 @@ DirectLighting  EvaluateBSDF_Line(  LightLoopContext lightLoopContext,
     if (intensity == 0.0)
         return lighting;
 
-    lightData.diffuseScale *= intensity;
-    lightData.specularScale *= intensity;
+    lightData.diffuseDimmer *= intensity;
+    lightData.specularDimmer *= intensity;
 
     // Translate the light s.t. the shaded point is at the origin of the coordinate system.
     float3  lightPositionRWS = lightData.positionRWS - positionWS;
@@ -1279,14 +1279,14 @@ DirectLighting  EvaluateBSDF_Line(  LightLoopContext lightLoopContext,
     // Evaluate the diffuse part
     // Polygon irradiance in the transformed configuration.
     ltcValue = LTCEvaluate(P1, P2, B, preLightData.ltcTransformDiffuse);
-    ltcValue *= lightData.diffuseScale;
+    ltcValue *= lightData.diffuseDimmer;
     lighting.diffuse = preLightData.ltcTransformDiffuse_Amplitude * ltcValue;
 
 
     // Evaluate the specular part
     // Polygon irradiance in the transformed configuration.
     ltcValue = LTCEvaluate(P1, P2, B, preLightData.ltcTransformSpecular);
-    ltcValue *= lightData.specularScale;
+    ltcValue *= lightData.specularDimmer;
     lighting.specular = bsdfData.specularColor * preLightData.ltcTransformSpecular_Amplitude * ltcValue;
 
     //-----------------------------------------------------------------------------
@@ -1297,7 +1297,7 @@ DirectLighting  EvaluateBSDF_Line(  LightLoopContext lightLoopContext,
     //-----------------------------------------------------------------------------
     // Use Lambert for diffuse
     ltcValue = LTCEvaluate(P1, P2, B, k_identity3x3);    // No transform: Lambert uses identity
-    ltcValue *= lightData.diffuseScale;
+    ltcValue *= lightData.diffuseDimmer;
     lighting.diffuse = ltcValue;
 
     // Evaluate average BRDF response in diffuse direction
@@ -1337,7 +1337,7 @@ DirectLighting  EvaluateBSDF_Line(  LightLoopContext lightLoopContext,
 
         lighting.specular += coeff * specularFGD * ltcValue;
     }
-    lighting.specular *= lightData.specularScale;
+    lighting.specular *= lightData.specularDimmer;
 
     // Evaluate average BRDF response in specular direction
     // We project the point onto the area light's plane using the reflected view direction and recompute the light direction from this position
@@ -1359,7 +1359,7 @@ DirectLighting  EvaluateBSDF_Line(  LightLoopContext lightLoopContext,
     float3x3    ltcTransformFlakes = LTCSampleMatrix(UV, LTC_MATRIX_INDEX_GGX);
 
     ltcValue = LTCEvaluate(P1, P2, B, ltcTransformFlakes);
-    ltcValue *= lightData.specularScale;
+    ltcValue *= lightData.specularDimmer;
 
     // Apply FGD
     float3  flakes_FGD;
@@ -1385,7 +1385,7 @@ DirectLighting  EvaluateBSDF_Line(  LightLoopContext lightLoopContext,
 
         // Then add clear-coat contribution
         ltcValue = LTCEvaluate(P1, P2, B, preLightData.ltcTransformClearcoat);
-        ltcValue *= lightData.specularScale;
+        ltcValue *= lightData.specularDimmer;
         lighting.specular += preLightData.ltcTransformClearcoat_Amplitude * ltcValue * (bsdfData.clearcoatColor / PI);
     }
 
@@ -1399,7 +1399,7 @@ DirectLighting  EvaluateBSDF_Line(  LightLoopContext lightLoopContext,
         // Only lighting, not BSDF
         // Apply area light on lambert then multiply by PI to cancel Lambert
         lighting.diffuse = LTCEvaluate(P1, P2, B, k_identity3x3);
-        lighting.diffuse *= PI * lightData.diffuseScale;
+        lighting.diffuse *= PI * lightData.diffuseDimmer;
     }
 #endif
 
@@ -1462,8 +1462,8 @@ DirectLighting  EvaluateBSDF_Rect(LightLoopContext lightLoopContext,
     if (intensity == 0.0)
         return lighting;
 
-    lightData.diffuseScale *= intensity;
-    lightData.specularScale *= intensity;
+    lightData.diffuseDimmer *= intensity;
+    lightData.specularDimmer *= intensity;
 
     // TODO: some of this could be precomputed.
     float4x3    lightVerts;
@@ -1484,14 +1484,14 @@ DirectLighting  EvaluateBSDF_Rect(LightLoopContext lightLoopContext,
     // Evaluate the diffuse part
     // Polygon irradiance in the transformed configuration.
     ltcValue = PolygonIrradiance(mul(lightVerts, preLightData.ltcTransformDiffuse));
-    ltcValue *= lightData.diffuseScale;
+    ltcValue *= lightData.diffuseDimmer;
     lighting.diffuse = preLightData.ltcTransformDiffuse_Amplitude * ltcValue;
 
 
     // Evaluate the specular part
     // Polygon irradiance in the transformed configuration.
     ltcValue = PolygonIrradiance(mul(lightVerts, preLightData.ltcTransformSpecular));
-    ltcValue *= lightData.specularScale;
+    ltcValue *= lightData.specularDimmer;
     lighting.specular = bsdfData.specularColor * preLightData.ltcTransformSpecular_Amplitude * ltcValue;
 
 #elif defined(_AXF_BRDF_TYPE_CAR_PAINT)
@@ -1504,7 +1504,7 @@ DirectLighting  EvaluateBSDF_Rect(LightLoopContext lightLoopContext,
 //        ltcValue  = PolygonIrradiance(lightVerts, bestLightWS_Diffuse);    // No transform: Lambert uses identity
 //        bestLightWS_Diffuse = normalize(bestLightWS_Diffuse);
     ltcValue = PolygonIrradiance(lightVerts);    // No transform: Lambert uses identity
-    ltcValue *= lightData.diffuseScale;
+    ltcValue *= lightData.diffuseDimmer;
     lighting.diffuse = ltcValue;
 
     // Evaluate average BRDF response in diffuse direction
@@ -1544,7 +1544,7 @@ DirectLighting  EvaluateBSDF_Rect(LightLoopContext lightLoopContext,
 
         lighting.specular += coeff * specularFGD * ltcValue;
     }
-    lighting.specular *= lightData.specularScale;
+    lighting.specular *= lightData.specularDimmer;
 
     // Evaluate average BRDF response in specular direction
     // We project the point onto the area light's plane using the reflected view direction and recompute the light direction from this position
@@ -1566,7 +1566,7 @@ DirectLighting  EvaluateBSDF_Rect(LightLoopContext lightLoopContext,
     float3x3    ltcTransformFlakes = LTCSampleMatrix(UV, LTC_MATRIX_INDEX_GGX);
 
     ltcValue = PolygonIrradiance(mul(lightVerts, ltcTransformFlakes));
-    ltcValue *= lightData.specularScale;
+    ltcValue *= lightData.specularDimmer;
 
     // Apply FGD
     float3  flakes_FGD;
@@ -1593,7 +1593,7 @@ DirectLighting  EvaluateBSDF_Rect(LightLoopContext lightLoopContext,
 
         // Then add clear-coat contribution
         ltcValue = PolygonIrradiance(mul(lightVerts, preLightData.ltcTransformClearcoat));
-        ltcValue *= lightData.specularScale;
+        ltcValue *= lightData.specularDimmer;
         lighting.specular += preLightData.ltcTransformClearcoat_Amplitude * ltcValue * (bsdfData.clearcoatColor / PI);
     }
 
@@ -1607,7 +1607,7 @@ DirectLighting  EvaluateBSDF_Rect(LightLoopContext lightLoopContext,
         // Only lighting, not BSDF
         // Apply area light on lambert then multiply by PI to cancel Lambert
         lighting.diffuse = PolygonIrradiance(mul(lightVerts, k_identity3x3));
-        lighting.diffuse *= PI * lightData.diffuseScale;
+        lighting.diffuse *= PI * lightData.diffuseDimmer;
     }
 #endif
 

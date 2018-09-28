@@ -32,8 +32,12 @@ float EvaluateRuntimeSunShadow(LightLoopContext lightLoopContext, PositionInputs
     {
         // Shadow dimmer is applied outside this function.
         return GetDirectionalShadowAttenuation(lightLoopContext.shadowContext, posInput.positionWS,
-                                               shadowBiasNormal, light.shadowIndex, -light.forward,
-                                               posInput.positionSS);
+                                               shadowBiasNormal, light.shadowIndex, -light.forward
+        #ifndef USE_CORE_SHADOW_SYSTEM
+                                               , posInput.positionSS);
+        #else
+                                               );
+        #endif
     }
     else
     {
@@ -47,9 +51,7 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
                                float3 N, float3 L, float NdotL,
                                out float3 color, out float attenuation)
 {
-    color       = 0;
-    attenuation = 0;
-
+    color = attenuation = 0;
     if ((light.lightDimmer <= 0) || (NdotL <= 0)) return;
 
     float3 positionWS = posInput.positionWS;
@@ -95,6 +97,7 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
     #else
         shadowSplitIndex = EvalShadow_GetSplitIndex(lightLoopContext.shadowContext, light.shadowIndex, positionWS, payloadOffset, fade, cascadeCount);
     #endif
+
         // we have a fade caclulation for each cascade but we must lerp with shadow mask only for the last one
         // if shadowSplitIndex is -1 it mean we are outside cascade and should return 1.0 to use shadowmask: saturate(-shadowSplitIndex) return 0 for >= 0 and 1 for -1
         fade = ((shadowSplitIndex + 1) == cascadeCount) ? fade : saturate(-shadowSplitIndex);
@@ -104,12 +107,11 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
         // we will remove fade and add fade * shadowMask which mean we do a lerp with shadow mask
         shadow = shadow - fade + fade * shadowMask;
 
-        // Note: There is no shadowDimmer when there is no shadow mask
-        // TODO: SEB! How to apply shadow dimmer with Shadow Mask???
-    #else
-        shadow = lerp(1, shadow, light.shadowDimmer);
+        // See comment in EvaluateBSDF_Punctual
+        shadow = light.nonLightMappedOnly ? min(shadowMask, shadow) : shadow;
     #endif
 
+        shadow = lerp(shadowMask, shadow, light.shadowDimmer);
     }
 
     attenuation *= shadow;
@@ -187,9 +189,7 @@ void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs po
                             float3 N, float3 L, float NdotL, float3 lightToSample, float4 distances,
                             out float3 color, out float attenuation)
 {
-    color       = 0;
-    attenuation = 0;
-
+    color = attenuation = 0;
     if ((light.lightDimmer <= 0) || (NdotL <= 0)) return;
 
     float3 positionWS = posInput.positionWS;
@@ -241,11 +241,10 @@ void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs po
         // The min handle the case of having only dynamic objects in the ShadowMap
         // The second case for blend with distance is handled with ShadowDimmer. ShadowDimmer is define manually and by shadowDistance by light.
         // With distance, ShadowDimmer become one and only the ShadowMask appear, we get the blend with distance behavior.
-        shadow = lerp(shadowMask, shadow, light.shadowDimmer);
-    #else
-        shadow = lerp(1.0, shadow, light.shadowDimmer);
+        shadow = light.nonLightMappedOnly ? min(shadowMask, shadow) : shadow;
     #endif
 
+        shadow = lerp(shadowMask, shadow, light.shadowDimmer);
     }
 
     attenuation *= shadow;
@@ -306,10 +305,8 @@ void EvaluateLight_EnvIntersection(float3 positionWS, float3 normalWS, EnvLightD
 #ifdef MATERIAL_INCLUDE_TRANSMISSION
 
 // This function returns transmittance to provide to EvaluateTransmission
-float3 PreEvaluateDirectionalLightTransmission(BSDFData    bsdfData,
-                                               inout float NdotL,
-                                               inout int   contactShadowIndex
-                                               inout float shadowMaskSelector)
+float3 PreEvaluateDirectionalLightTransmission(inout DirectionalLightData light,
+                                               BSDFData bsdfData, inout float NdotL)
 {
     if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_LIT_TRANSMISSION))
     {
@@ -323,8 +320,8 @@ float3 PreEvaluateDirectionalLightTransmission(BSDFData    bsdfData,
                 NdotL = -NdotL;
 
                 // However, we don't want baked or contact shadows.
-                contactShadowIndex = -1;
-                shadowMaskSelector = -1;
+                light.contactShadowIndex   = -1;
+                light.shadowMaskSelector.x = -1;
 
                 // We use the precomputed value (based on "baked" thickness).
                 return bsdfData.transmittance;
@@ -344,15 +341,12 @@ float3 PreEvaluateDirectionalLightTransmission(BSDFData    bsdfData,
 // This function return transmittance to provide to EvaluateTransmission
 float3 PreEvaluatePunctualLightTransmission(LightLoopContext lightLoopContext,
                                             PositionInputs posInput,
+                                            inout LightData light,
                                             BSDFData bsdfData,
-                                            float3 lightPositionRWS,
                                             float distFrontFaceToLight,
-                                            float3 L,
                                             inout float3 N,
-                                            inout float  NdotL,
-                                            inout int    shadowIndex,
-                                            inout int    contactShadowIndex
-                                            inout float  shadowMaskSelector)
+                                            float3 L,
+                                            inout float  NdotL)
 {
     if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_LIT_TRANSMISSION))
     {
@@ -364,14 +358,14 @@ float3 PreEvaluatePunctualLightTransmission(LightLoopContext lightLoopContext,
             NdotL = -NdotL;
 
             // However, we don't want baked or contact shadows.
-            contactShadowIndex = -1;
-            shadowMaskSelector = -1;
+            light.contactShadowIndex   = -1;
+            light.shadowMaskSelector.x = -1;
+
+            // Care must be taken to bias in the direction of the light.
+            N = -N;
 
             if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_TRANSMISSION_MODE_THIN_THICKNESS))
             {
-                // Care must be taken to bias in the direction of the light.
-                N = -N;
-
                 // We use the precomputed value (based on "baked" thickness).
                 return bsdfData.transmittance;
             }
@@ -379,13 +373,19 @@ float3 PreEvaluatePunctualLightTransmission(LightLoopContext lightLoopContext,
             {
                 float3 transmittance = bsdfData.transmittance;
 
-                if (shadowIndex >= 0)
+                if (light.shadowIndex >= 0)
                 {
                     // We can compute thickness from shadow.
                     // Compute the distance from the light to the back face of the object along the light direction.
                     // TODO: SHADOW BIAS.
+                #ifndef USE_CORE_SHADOW_SYSTEM
                     float distBackFaceToLight = GetPunctualShadowClosestDistance(lightLoopContext.shadowContext, s_linear_clamp_sampler,
-                                                                                 posInput.positionWS, shadowIndex, lightPositionRWS);
+                                                                                 posInput.positionWS, light.shadowIndex, L, light.positionRWS,
+                                                                                 light.lightType == GPULIGHTTYPE_POINT);
+                #else
+                    float distBackFaceToLight = GetPunctualShadowClosestDistance(lightLoopContext.shadowContext, s_linear_clamp_sampler,
+                                                                                 posInput.positionWS, light.shadowIndex, L, light.positionRWS);
+                #endif
 
                     // Our subsurface scattering models use the semi-infinite planar slab assumption.
                     // Therefore, we need to find the thickness along the normal.
@@ -414,7 +414,7 @@ float3 PreEvaluatePunctualLightTransmission(LightLoopContext lightLoopContext,
                     transmittance = lerp(bsdfData.transmittance, transmittance, light.shadowDimmer);
 
                     // Avoid double shadowing.
-                    shadowIndex = -1;
+                    light.shadowIndex = -1;
                 }
 
                 // Note: we do not modify the distance to the light, or the light angle for the back face.
@@ -427,41 +427,8 @@ float3 PreEvaluatePunctualLightTransmission(LightLoopContext lightLoopContext,
     return 0;
 }
 
-#define TRANSMISSION_WRAP_ANGLE (PI/12)              // 15 degrees
+// 15 degrees
+#define TRANSMISSION_WRAP_ANGLE (PI/12)
 #define TRANSMISSION_WRAP_LIGHT cos(PI/2 - TRANSMISSION_WRAP_ANGLE)
-
-// Currently, we only model diffuse transmission. Specular transmission is not yet supported.
-// Transmitted lighting is computed as follows:
-// - we assume that the object is a thick plane (slab);
-// - we reverse the front-facing normal for the back of the object;
-// - we assume that the incoming radiance is constant along the entire back surface;
-// - we apply BSDF-specific diffuse transmission to transmit the light subsurface and back;
-// - we integrate the diffuse reflectance profile w.r.t. the radius (while also accounting
-//   for the thickness) to compute the transmittance;
-// - we multiply the transmitted radiance by the transmittance.
-
-// transmittance come from the call to PreEvaluateLightTransmission
-// attenuation come from the call to EvaluateLight_Punctual
-float3 EvaluateTransmission(BSDFData bsdfData, float3 transmittance, float NdotL, float NdotV, float LdotV, float attenuation)
-{
-    if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_LIT_TRANSMISSION))
-    {
-        // Apply wrapped lighting to better handle thin objects at grazing angles.
-        float wrappedNdotL = ComputeWrappedDiffuseLighting(NdotL, TRANSMISSION_WRAP_LIGHT);
-
-        // Apply BSDF-specific diffuse transmission to attenuation. See also: [SSS-NOTE-TRSM]
-        // We don't multiply by 'bsdfData.diffuseColor' here. It's done only once in PostEvaluateBSDF().
-    #ifdef USE_DIFFUSE_LAMBERT_BRDF
-        attenuation *= Lambert();
-    #else
-        attenuation *= DisneyDiffuse(NdotV, NdotL, LdotV, bsdfData.perceptualRoughness);
-    #endif
-
-        float intensity = attenuation * wrappedNdotL;
-        return intensity * transmittance;
-    }
-
-    return 0;
-}
 
 #endif // #ifdef MATERIAL_INCLUDE_TRANSMISSION

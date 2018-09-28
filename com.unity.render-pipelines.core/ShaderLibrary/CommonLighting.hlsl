@@ -280,7 +280,7 @@ real ComputeWrappedDiffuseLighting(real NdotL, real w)
 }
 
 // Ref: The Technical Art of Uncharted 4 - Brinck and Maximov 2016
-real GetMicroshadowing(real NdotL, real AO, real opacity)
+real ComputeMicroShadowing(real NdotL, real AO, real opacity)
 {
 	real aperture = 2.0 * AO * AO;
 	real microshadow = saturate(NdotL + aperture - 1.0);

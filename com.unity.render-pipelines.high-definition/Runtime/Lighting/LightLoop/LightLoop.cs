@@ -933,51 +933,65 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return true;
         }
 
-        public bool GetDirectionalLightData(CommandBuffer cmd, ShadowSettings shadowSettings, GPULightType gpuLightType, VisibleLight light, Light lightComponent, HDAdditionalLightData additionalData, AdditionalShadowData additionalShadowData, int lightIndex, int shadowIndex, DebugDisplaySettings debugDisplaySettings, int sortedIndex)
+        public bool GetDirectionalLightData(CommandBuffer cmd, ShadowSettings shadowSettings, GPULightType gpuLightType, VisibleLight light, Light lightComponent, HDAdditionalLightData additionalLightData, AdditionalShadowData additionalShadowData, int lightIndex, int shadowIndex, DebugDisplaySettings debugDisplaySettings, int sortedIndex)
         {
             // Clamp light list to the maximum allowed lights on screen to avoid ComputeBuffer overflow
             if (m_lightList.directionalLights.Count >= k_MaxDirectionalLightsOnScreen)
                 return false;
 
-            var directionalLightData = new DirectionalLightData();
+            bool contributesToLighting = ((additionalLightData.lightDimmer > 0) && (additionalLightData.affectDiffuse || additionalLightData.affectSpecular)) || (additionalLightData.volumetricDimmer > 0);
 
-            float diffuseDimmer = m_FrameSettings.diffuseGlobalDimmer * additionalData.lightDimmer;
-            float specularDimmer = m_FrameSettings.specularGlobalDimmer * additionalData.lightDimmer;
-            if (diffuseDimmer  <= 0.0f && specularDimmer <= 0.0f)
+            if (!contributesToLighting)
                 return false;
 
             // Discard light if disabled in debug display settings
             if (!debugDisplaySettings.lightingDebugSettings.showDirectionalLight)
                 return false;
 
-            directionalLightData.lightLayers = additionalData.GetLightLayers();
+            var lightData = new DirectionalLightData();
+
+            lightData.lightLayers = additionalLightData.GetLightLayers();
 
             // Light direction for directional is opposite to the forward direction
-            directionalLightData.forward = light.GetForward();
+            lightData.forward = light.GetForward();
             // Rescale for cookies and windowing.
-            directionalLightData.right      = light.GetRight() * 2 / Mathf.Max(additionalData.shapeWidth, 0.001f);
-            directionalLightData.up         = light.GetUp() * 2 / Mathf.Max(additionalData.shapeHeight, 0.001f);
-            directionalLightData.positionRWS = light.GetPosition();
-            directionalLightData.color = GetLightColor(light);
+            lightData.right      = light.GetRight() * 2 / Mathf.Max(additionalLightData.shapeWidth, 0.001f);
+            lightData.up         = light.GetUp() * 2 / Mathf.Max(additionalLightData.shapeHeight, 0.001f);
+            lightData.positionRWS = light.GetPosition();
+            lightData.color = GetLightColor(light);
 
             // Caution: This is bad but if additionalData == HDUtils.s_DefaultHDAdditionalLightData it mean we are trying to promote legacy lights, which is the case for the preview for example, so we need to multiply by PI as legacy Unity do implicit divide by PI for direct intensity.
             // So we expect that all light with additionalData == HDUtils.s_DefaultHDAdditionalLightData are currently the one from the preview, light in scene MUST have additionalData
-            directionalLightData.color *= (HDUtils.s_DefaultHDAdditionalLightData == additionalData) ? Mathf.PI : 1.0f;
+            lightData.color *= (HDUtils.s_DefaultHDAdditionalLightData == additionalLightData) ? Mathf.PI : 1.0f;
 
-            directionalLightData.diffuseScale = additionalData.affectDiffuse ? diffuseDimmer : 0.0f;
-            directionalLightData.specularScale = additionalData.affectSpecular ? specularDimmer : 0.0f;
-            directionalLightData.volumetricDimmer = additionalData.volumetricDimmer;
-            directionalLightData.shadowIndex = directionalLightData.cookieIndex = -1;
+            lightData.lightDimmer           = additionalLightData.lightDimmer;
+            lightData.diffuseDimmer         = additionalLightData.affectDiffuse  ? additionalLightData.lightDimmer * m_FrameSettings.diffuseGlobalDimmer  : 0;
+            lightData.specularDimmer        = additionalLightData.affectSpecular ? additionalLightData.lightDimmer * m_FrameSettings.specularGlobalDimmer : 0;
+            lightData.volumetricLightDimmer = additionalLightData.volumetricDimmer;
+
+            lightData.shadowIndex = lightData.cookieIndex = -1;
 
             if (lightComponent != null && lightComponent.cookie != null)
             {
-                directionalLightData.tileCookie = lightComponent.cookie.wrapMode == TextureWrapMode.Repeat ? 1 : 0;
-                directionalLightData.cookieIndex = m_CookieTexArray.FetchSlice(cmd, lightComponent.cookie);
+                lightData.tileCookie = lightComponent.cookie.wrapMode == TextureWrapMode.Repeat ? 1 : 0;
+                lightData.cookieIndex = m_CookieTexArray.FetchSlice(cmd, lightComponent.cookie);
             }
+
+            if (additionalShadowData)
+            {
+                lightData.shadowDimmer           = additionalShadowData.shadowDimmer;
+                lightData.volumetricShadowDimmer = additionalShadowData.volumetricShadowDimmer;
+            }
+            else
+            {
+                lightData.shadowDimmer           = 1.0f;
+                lightData.volumetricShadowDimmer = 1.0f;
+            }
+
             // fix up shadow information
             if (useNewShadowSystem)
             {
-                directionalLightData.shadowIndex = shadowIndex;
+                lightData.shadowIndex = shadowIndex;
                 if (shadowIndex != -1)
                 {
                     m_CurrentSunLight = lightComponent;
@@ -989,50 +1003,51 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 int shadowIdx;
                 if (m_ShadowIndices.TryGetValue(lightIndex, out shadowIdx))
                 {
-                    directionalLightData.shadowIndex = shadowIdx;
+                    lightData.shadowIndex = shadowIdx;
                     m_CurrentSunLight = lightComponent;
                     m_CurrentShadowSortedSunLightIndex = sortedIndex;
                 }
             }
 
-            directionalLightData.shadowMaskSelector = Vector4.zero;
+            lightData.shadowMaskSelector = Vector4.zero;
 
             if (IsBakedShadowMaskLight(lightComponent))
             {
-                directionalLightData.shadowMaskSelector[lightComponent.bakingOutput.occlusionMaskChannel] = 1.0f;
-                directionalLightData.nonLightmappedOnly = lightComponent.lightShadowCasterMode == LightShadowCasterMode.NonLightmappedOnly ? 1 : 0;
+                lightData.shadowMaskSelector[lightComponent.bakingOutput.occlusionMaskChannel] = 1.0f;
+                // TODO: make this option per light, not global
+                lightData.nonLightMappedOnly = lightComponent.lightShadowCasterMode == LightShadowCasterMode.NonLightmappedOnly ? 1 : 0;
             }
             else
             {
                 // use -1 to say that we don't use shadow mask
-                directionalLightData.shadowMaskSelector.x = -1.0f;
-                directionalLightData.nonLightmappedOnly = 0;
+                lightData.shadowMaskSelector.x = -1.0f;
+                lightData.nonLightMappedOnly = 0;
             }
 
             // Sun disk.
             {
-                var sunDiskAngle = additionalData.sunDiskSize;
-                var sunHaloSize  = additionalData.sunHaloSize;
+                var sunDiskAngle = additionalLightData.sunDiskSize;
+                var sunHaloSize  = additionalLightData.sunHaloSize;
 
                 var cosConeInnerHalfAngle = Mathf.Clamp(Mathf.Cos(sunDiskAngle * 0.5f * Mathf.Deg2Rad), 0.0f, 1.0f);
                 var cosConeOuterHalfAngle = Mathf.Clamp(Mathf.Cos(sunDiskAngle * 0.5f * (1 + sunHaloSize) * Mathf.Deg2Rad), 0.0f, 1.0f);
 
                 var val = Mathf.Max(0.0001f, (cosConeInnerHalfAngle - cosConeOuterHalfAngle));
-                directionalLightData.angleScale = 1.0f / val;
-                directionalLightData.angleOffset = -cosConeOuterHalfAngle * directionalLightData.angleScale;
+                lightData.angleScale = 1.0f / val;
+                lightData.angleOffset = -cosConeOuterHalfAngle * lightData.angleScale;
 
             }
 
             // Fallback to the first non shadow casting directional light.
             m_CurrentSunLight = m_CurrentSunLight == null ? lightComponent : m_CurrentSunLight;
 
-            directionalLightData.contactShadowIndex = -1;
+            lightData.contactShadowIndex = -1;
 
             // The first shadow casting directional light with contact shadow enabled is always taken as dominant light
             if (GetDominantLightWithShadows(additionalShadowData, light, lightComponent))
-                directionalLightData.contactShadowIndex = 0;
+                lightData.contactShadowIndex = 0;
 
-            m_lightList.directionalLights.Add(directionalLightData);
+            m_lightList.directionalLights.Add(lightData);
 
             return true;
         }
@@ -1055,11 +1070,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         public bool GetLightData(CommandBuffer cmd, ShadowSettings shadowSettings, Camera camera, GPULightType gpuLightType,
-            VisibleLight light, Light lightComponent, HDAdditionalLightData additionalLightData, AdditionalShadowData additionalshadowData,
+            VisibleLight light, Light lightComponent, HDAdditionalLightData additionalLightData, AdditionalShadowData additionalShadowData,
             int lightIndex, int shadowIndex, ref Vector3 lightDimensions, DebugDisplaySettings debugDisplaySettings)
         {
             // Clamp light list to the maximum allowed lights on screen to avoid ComputeBuffer overflow
             if (m_lightList.lights.Count >= k_MaxPunctualLightsOnScreen + k_MaxAreaLightsOnScreen)
+                return false;
+
+            // Both of these positions are non-camera-relative.
+            float distanceToCamera  = (light.GetPosition() - camera.transform.position).magnitude;
+            float lightDistanceFade = ComputeLinearDistanceFade(distanceToCamera, additionalLightData.fadeDistance);
+
+            bool contributesToLighting = ((additionalLightData.lightDimmer > 0) && (additionalLightData.affectDiffuse || additionalLightData.affectSpecular)) || (additionalLightData.volumetricDimmer > 0);
+                 contributesToLighting = contributesToLighting && (lightDistanceFade > 0);
+
+            if (!contributesToLighting)
                 return false;
 
             var lightData = new LightData();
@@ -1194,17 +1219,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 lightData.size = new Vector2(additionalLightData.shapeWidth, additionalLightData.shapeHeight);
             }
 
-            float distanceToCamera = (lightData.positionRWS - camera.transform.position).magnitude;
-            float distanceFade = ComputeLinearDistanceFade(distanceToCamera, additionalLightData.fadeDistance);
-            float lightScale = additionalLightData.lightDimmer * distanceFade;
-
-            lightData.diffuseScale = additionalLightData.affectDiffuse ? lightScale * m_FrameSettings.diffuseGlobalDimmer : 0.0f;
-            lightData.specularScale = additionalLightData.affectSpecular ? lightScale * m_FrameSettings.specularGlobalDimmer : 0.0f;
-
-            lightData.volumetricDimmer = additionalLightData.volumetricDimmer;
-
-            if (lightData.diffuseScale <= 0.0f && lightData.specularScale <= 0.0f)
-                return false;
+            lightData.lightDimmer           = lightDistanceFade * (additionalLightData.lightDimmer);
+            lightData.diffuseDimmer         = lightDistanceFade * (additionalLightData.affectDiffuse  ? additionalLightData.lightDimmer * m_FrameSettings.diffuseGlobalDimmer  : 0);
+            lightData.specularDimmer        = lightDistanceFade * (additionalLightData.affectSpecular ? additionalLightData.lightDimmer * m_FrameSettings.specularGlobalDimmer : 0);
+            lightData.volumetricLightDimmer = lightDistanceFade * (additionalLightData.volumetricDimmer);
 
             lightData.cookieIndex = -1;
             lightData.shadowIndex = -1;
@@ -1229,14 +1247,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 lightData.cookieIndex = m_CookieTexArray.FetchSlice(cmd, Texture2D.whiteTexture);
             }
 
-            if (additionalshadowData)
+            if (additionalShadowData)
             {
-                float shadowDistanceFade = ComputeLinearDistanceFade(distanceToCamera, Mathf.Min(shadowSettings.maxShadowDistance, additionalshadowData.shadowFadeDistance));
-                lightData.shadowDimmer = additionalshadowData.shadowDimmer * shadowDistanceFade;
+                float shadowDistanceFade         = ComputeLinearDistanceFade(distanceToCamera, Mathf.Min(shadowSettings.maxShadowDistance, additionalShadowData.shadowFadeDistance));
+                lightData.shadowDimmer           = shadowDistanceFade * additionalShadowData.shadowDimmer;
+                lightData.volumetricShadowDimmer = shadowDistanceFade * additionalShadowData.volumetricShadowDimmer;
             }
             else
             {
-                lightData.shadowDimmer = 1.0f;
+                lightData.shadowDimmer           = 1.0f;
+                lightData.volumetricShadowDimmer = 1.0f;
             }
 
             // fix up shadow information
@@ -1262,13 +1282,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 lightData.shadowMaskSelector[lightComponent.bakingOutput.occlusionMaskChannel] = 1.0f;
                 // TODO: make this option per light, not global
-                lightData.nonLightmappedOnly = lightComponent.lightShadowCasterMode == LightShadowCasterMode.NonLightmappedOnly ? 1 : 0;
+                lightData.nonLightMappedOnly = lightComponent.lightShadowCasterMode == LightShadowCasterMode.NonLightmappedOnly ? 1 : 0;
             }
             else
             {
                 // use -1 to say that we don't use shadow mask
                 lightData.shadowMaskSelector.x = -1.0f;
-                lightData.nonLightmappedOnly = 0;
+                lightData.nonLightMappedOnly = 0;
             }
 
             lightData.contactShadowIndex = -1;
@@ -1277,7 +1297,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Check if the current light is dominant and store it's index to change it's property later,
             // as we can't know which one will be dominant before checking all the lights
-            GetDominantLightWithShadows(additionalshadowData, light, lightComponent, m_lightList.lights.Count -1);
+            GetDominantLightWithShadows(additionalShadowData, light, lightComponent, m_lightList.lights.Count -1);
 
             return true;
         }
@@ -1797,7 +1817,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                     continue;
 
                                 AdditionalShadowData asd = lightComponent.GetComponent<AdditionalShadowData>();
-                                if (asd != null && asd.shadowDimmer > 0.0f)
+                                if (asd != null && ((asd.shadowDimmer > 0) || (asd.volumetricShadowDimmer > 0)))
                                 {
                                     m_ShadowRequests.Add(i);
 
