@@ -1,3 +1,5 @@
+using System;
+using System.Reflection;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering.HDPipeline;
@@ -96,8 +98,19 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 material.SetTexture("_Cubemap", GetTexture(e, target));
                 material.SetPass(0);
-                Graphics.DrawMeshNow(sphere, Matrix4x4.TRS(target.transform.position, Quaternion.identity, Vector3.one));
+                Graphics.DrawMeshNow(sphere, Matrix4x4.TRS(target.transform.position, Quaternion.identity, Vector3.one * capturePointPreviewSize));
             }
+        }
+
+        static Type k_AnnotationWindow = Type.GetType("UnityEditor.AnnotationUtility,UnityEditor");
+        static PropertyInfo s_annotationIconSize = k_AnnotationWindow.GetProperty("iconSize", BindingFlags.Static | BindingFlags.NonPublic);
+        static float capturePointPreviewSize
+        {
+            get
+            {
+                return (float)s_annotationIconSize.GetValue(null) * 15f;
+            }
+            
         }
     }
 }
