@@ -3,6 +3,7 @@ using System.Reflection;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering.HDPipeline;
+using System.Linq.Expressions;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
@@ -102,19 +103,25 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        static Type k_AnnotationWindow = Type.GetType("UnityEditor.AnnotationUtility,UnityEditor");
-        static PropertyInfo s_annotationIconSize = k_AnnotationWindow.GetProperty("iconSize", BindingFlags.Static | BindingFlags.NonPublic);
+        static Func<float> s_CapturePointPreviewSizeGetter = ComputeCapturePointPreviewSizeGetter();
+        static Func<float> ComputeCapturePointPreviewSizeGetter()
+        {
+            var type = Type.GetType("UnityEditor.AnnotationUtility,UnityEditor");
+            var property = type.GetProperty("iconSize", BindingFlags.Static | BindingFlags.NonPublic);
+            var lambda = Expression.Lambda<Func<float>>(
+                Expression.Multiply(
+                    Expression.Property(null, property),
+                    Expression.Constant(30.0f)
+                )
+            );
+            return lambda.Compile();
+        }
+
         static float capturePointPreviewSize
         {
             get
-            {
-                #if UNITY_2019_1_OR_NEWER
-                return (float)s_annotationIconSize.GetValue(null) * 15f;
-                #else
-                return (float)s_annotationIconSize.GetValue(null, null) * 15f;
-                #endif
+            { return s_CapturePointPreviewSizeGetter();
             }
-            
         }
     }
 }
