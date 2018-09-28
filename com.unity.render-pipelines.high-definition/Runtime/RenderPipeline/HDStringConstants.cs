@@ -65,14 +65,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     // TODO: Would be nice to clean this up at some point
     public static class HDShaderIDs
     {
-        // TODO: remove these ids from the old shadow system
-        public static readonly int _ShadowDatasExp = Shader.PropertyToID("_ShadowDatasExp");
-        public static readonly int _ShadowPayloads = Shader.PropertyToID("_ShadowPayloads");
-        // public static readonly int _ShadowmapExp_VSM_0 = Shader.PropertyToID("_ShadowmapExp_VSM_0");
-        // public static readonly int _ShadowmapExp_VSM_1 = Shader.PropertyToID("_ShadowmapExp_VSM_1");
-        // public static readonly int _ShadowmapExp_VSM_2 = Shader.PropertyToID("_ShadowmapExp_VSM_2");
-        public static readonly int _ShadowmapExp_PCF = Shader.PropertyToID("_ShadowmapExp_PCF");
-
         public static readonly int _ZClip = Shader.PropertyToID("_ZClip");
         
         public static readonly int _HDShadowDatas = Shader.PropertyToID("_HDShadowDatas");
@@ -335,11 +327,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _SsrRoughnessFadeEndTimesRcpLength = Shader.PropertyToID("_SsrRoughnessFadeEndTimesRcpLength");
         public static readonly int _SsrDepthPyramidMaxMip             = Shader.PropertyToID("_SsrDepthPyramidMaxMip");
         public static readonly int _SsrEdgeFadeRcpLength              = Shader.PropertyToID("_SsrEdgeFadeRcpLength");
-        public static readonly int _SsrDepthPyramidMipLevelOffsetsX   = Shader.PropertyToID("_SsrDepthPyramidMipLevelOffsetsX");
-        public static readonly int _SsrDepthPyramidMipLevelOffsetsY   = Shader.PropertyToID("_SsrDepthPyramidMipLevelOffsetsY");
         public static readonly int _SsrLightingTexture                = Shader.PropertyToID("_SsrLightingTexture");
         public static readonly int _SsrLightingTextureRW              = Shader.PropertyToID("_SsrLightingTextureRW");
         public static readonly int _SsrHitPointTexture                = Shader.PropertyToID("_SsrHitPointTexture");
+        public static readonly int _SsrDepthPyramidMipOffsets         = Shader.PropertyToID("_SsrDepthPyramidMipLevelOffsets");
+
 
         public static readonly int _VelocityTexture = Shader.PropertyToID("_VelocityTexture");
         public static readonly int _ShadowMaskTexture = Shader.PropertyToID("_ShadowMaskTexture");

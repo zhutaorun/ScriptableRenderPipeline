@@ -32,12 +32,8 @@ float EvaluateRuntimeSunShadow(LightLoopContext lightLoopContext, PositionInputs
     {
         // Shadow dimmer is applied outside this function.
         return GetDirectionalShadowAttenuation(lightLoopContext.shadowContext, posInput.positionWS,
-                                               shadowBiasNormal, light.shadowIndex, -light.forward
-        #ifndef USE_CORE_SHADOW_SYSTEM
-                                               , posInput.positionSS);
-        #else
-                                               );
-        #endif
+                                               shadowBiasNormal, light.shadowIndex, -light.forward,
+                                               posInput.positionSS);
     }
     else
     {
@@ -92,11 +88,8 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
         real  fade;
         int cascadeCount;
         int shadowSplitIndex = 0;
-    #ifndef USE_CORE_SHADOW_SYSTEM
+
         shadowSplitIndex = EvalShadow_GetSplitIndex(lightLoopContext.shadowContext, light.shadowIndex, positionWS, fade, cascadeCount);
-    #else
-        shadowSplitIndex = EvalShadow_GetSplitIndex(lightLoopContext.shadowContext, light.shadowIndex, positionWS, payloadOffset, fade, cascadeCount);
-    #endif
 
         // we have a fade caclulation for each cascade but we must lerp with shadow mask only for the last one
         // if shadowSplitIndex is -1 it mean we are outside cascade and should return 1.0 to use shadowmask: saturate(-shadowSplitIndex) return 0 for >= 0 and 1 for -1
@@ -221,19 +214,14 @@ void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs po
 
     if ((light.shadowIndex >= 0) && (light.shadowDimmer > 0))
     {
-        // Note:the case of NdotL < 0 can appear with isThinModeTransmission, in this case we need to flip the shadow bias
-    #ifndef USE_CORE_SHADOW_SYSTEM
         shadow = GetPunctualShadowAttenuation(lightLoopContext.shadowContext, positionWS, N, light.shadowIndex, L, distances.x, light.lightType == GPULIGHTTYPE_POINT, light.lightType != GPULIGHTTYPE_PROJECTOR_BOX);
-    #else
-        shadow = GetPunctualShadowAttenuation(lightLoopContext.shadowContext, positionWS, N, light.shadowIndex, L, distances.x, posInput.positionSS);
-    #endif
 
         // Transparents have no contact shadow information
     #ifndef _SURFACE_TYPE_TRANSPARENT
         shadow = min(shadow, GetContactShadow(lightLoopContext, light.contactShadowIndex));
     #endif
 
-    #ifdef SHADOWS_SHADOWMASK
+#ifdef SHADOWS_SHADOWMASK
         // Note: Legacy Unity have two shadow mask mode. ShadowMask (ShadowMask contain static objects shadow and ShadowMap contain only dynamic objects shadow, final result is the minimun of both value)
         // and ShadowMask_Distance (ShadowMask contain static objects shadow and ShadowMap contain everything and is blend with ShadowMask based on distance (Global distance setup in QualitySettigns)).
         // HDRenderPipeline change this behavior. Only ShadowMask mode is supported but we support both blend with distance AND minimun of both value. Distance is control by light.
