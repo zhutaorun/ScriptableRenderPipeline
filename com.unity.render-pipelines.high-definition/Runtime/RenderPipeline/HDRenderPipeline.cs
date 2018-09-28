@@ -233,7 +233,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             EncodeBC6H.DefaultInstance = EncodeBC6H.DefaultInstance ?? new EncodeBC6H(asset.renderPipelineResources.encodeBC6HCS);
 
             m_ReflectionProbeCullResults = new ReflectionProbeCullResults(asset.reflectionSystemParameters);
-            ReflectionSystem.SetParameters(asset.reflectionSystemParameters);
 
             // Scan material list and assign it
             m_MaterialList = HDUtils.GetRenderPipelineMaterialList();
@@ -795,7 +794,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 // TODO: Render only visible probes
                 var realtimeViewIndependentProbes = HDProbeSystem.realtimeViewIndependentProbes;
-                HDProbeSystem.RenderAndUpdateRenderData(realtimeViewIndependentProbes, null);
+                HDProbeSystem.RenderAndUpdateRenderData(
+                    realtimeViewIndependentProbes, null, ProbeSettings.Mode.Realtime
+                );
             }
 
             // We first update the state of asset frame settings as they can be use by various camera
@@ -857,7 +858,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     // TODO: Render only visible probes
                     var realtimeViewDependentProbes = HDProbeSystem.realtimeViewDependentProbes;
-                    HDProbeSystem.RenderAndUpdateRenderData(realtimeViewDependentProbes, camera.transform);
+                    HDProbeSystem.RenderAndUpdateRenderData(
+                        realtimeViewDependentProbes, camera.transform, ProbeSettings.Mode.Realtime
+                    );
                 }
                 
                 // Init material if needed
@@ -950,7 +953,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         DecalSystem.instance.BeginCull();
                     }
 
-                    ReflectionSystem.PrepareCull(camera, m_ReflectionProbeCullResults);
+                    HDProbeSystem.PrepareCull(camera, m_ReflectionProbeCullResults);
 
                     using (new ProfilingSample(cmd, "CullResults.Cull", CustomSamplerId.CullResultsCull.GetSampler()))
                     {

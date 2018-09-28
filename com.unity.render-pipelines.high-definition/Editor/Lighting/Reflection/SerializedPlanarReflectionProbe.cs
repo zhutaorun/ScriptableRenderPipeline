@@ -20,16 +20,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         internal new PlanarReflectionProbe target { get { return serializedObject.targetObject as PlanarReflectionProbe; } }
 
-        internal bool isMirrored
-        {
-            get
-            {
-                return refreshMode.intValue == (int)ReflectionProbeRefreshMode.EveryFrame
-                    && mode.intValue == (int)ReflectionProbeMode.Realtime
-                    && capturePositionMode.intValue == (int)PlanarReflectionProbe.CapturePositionMode.MirrorCamera;
-            }
-        }
-
         internal SerializedPlanarReflectionProbe(SerializedObject serializedObject) : base(serializedObject)
         {
             captureLocalPosition = serializedObject.Find((PlanarReflectionProbe p) => p.captureLocalPosition);
@@ -55,7 +45,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             //temporarily force value until other mode are supported
             //mode.enumValueIndex = (int)ReflectionProbeMode.Realtime;
-            refreshMode.enumValueIndex = (int)ReflectionProbeRefreshMode.EveryFrame;
             capturePositionMode.enumValueIndex = (int)PlanarReflectionProbe.CapturePositionMode.MirrorCamera;
         }
 

@@ -137,27 +137,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Migrate();
         }
 
-        internal override void OnEnable()
-        {
-            base.OnEnable();
-            ReflectionSystem.RegisterProbe(this);
-        }
-
-        internal override void OnDisable()
-        {
-            base.OnDisable();
-            ReflectionSystem.UnregisterProbe(this);
-        }
-
-        internal override void OnValidate()
-        {
-            base.OnValidate();
-            ReflectionSystem.UnregisterProbe(this);
-
-            if (isActiveAndEnabled)
-                ReflectionSystem.RegisterProbe(this);
-        }
-
         void MigrateToHDProbeChild()
         {
             m_Version = (int)Version.HDProbeChild;

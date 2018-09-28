@@ -54,50 +54,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public override bool BakeAllReflectionProbes()
         {
-            var hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
-            if (hdPipeline == null)
-            {
-                Debug.LogWarning("HDBakedReflectionSystem work with HDRP, " +
-                    "please switch your render pipeline or use another reflection system");
-                return false;
-            }
-
             DeleteUnusedCubemapAssets();
-
-            var cubemapSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.reflectionCubemapSize;
-            var planarSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.planarReflectionTextureSize;
             var bakedProbes = HDProbeSystem.bakedProbes;
 
-            var cubeRT = HDRenderUtilities.CreateReflectionProbeRenderTarget(cubemapSize);
-            var planarRT = HDRenderUtilities.CreatePlanarProbeRenderTarget(planarSize);
-            for (int i = 0; i < bakedProbes.Count; ++i)
-            {
-                var probe = bakedProbes[i];
-                var bakedTexturePath = HDBakingUtilities.GetBakedTextureFilePath(probe);
-                RenderAndWriteToFile(probe, bakedTexturePath, cubeRT, planarRT);
-            }
-
-            AssetDatabase.StartAssetEditing();
-            for (int i = 0; i < bakedProbes.Count; ++i)
-            {
-                var probe = bakedProbes[i];
-                var bakedTexturePath = HDBakingUtilities.GetBakedTextureFilePath(probe);
-
-                // Get or create the baked texture asset for the probe
-                var bakedTexture = AssetDatabase.LoadAssetAtPath<Texture>(bakedTexturePath);
-                AssetDatabase.ImportAsset(bakedTexturePath);
-                ImportAssetAt(probe, bakedTexturePath);
-                probe.SetTexture(bakedTexture, ProbeSettings.Mode.Baked);
-                AssignRenderData(probe, bakedTexturePath);
-            }
-            AssetDatabase.StopAssetEditing();
-            for (int i = 0; i < bakedProbes.Count; ++i)
-                EditorUtility.SetDirty(bakedProbes[i]);
-
-            cubeRT.Release();
-            planarRT.Release();
-
-            return true;
+            return BakeProbes(bakedProbes);
         }
 
         public override void Tick(
@@ -243,7 +203,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     var bakedTexture = AssetDatabase.LoadAssetAtPath<Texture>(bakedTexturePath);
                     AssetDatabase.ImportAsset(bakedTexturePath);
                     ImportAssetAt(probe, bakedTexturePath);
-                    probe.SetTexture(bakedTexture, ProbeSettings.Mode.Baked);
+                    probe.SetTexture(ProbeSettings.Mode.Baked, bakedTexture);
                 }
                 AssetDatabase.StopAssetEditing();
                 for (int i = 0; i < addCount; ++i)
@@ -304,6 +264,51 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             handle.ExitStage((int)BakingStages.ReflectionProbes);
 
             handle.SetIsDone(true);
+        }
+
+        public static bool BakeProbes(IList<HDProbe> bakedProbes)
+        {
+            var hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
+            if (hdPipeline == null)
+            {
+                Debug.LogWarning("HDBakedReflectionSystem work with HDRP, " +
+                    "please switch your render pipeline or use another reflection system");
+                return false;
+            }
+
+            var cubemapSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.reflectionCubemapSize;
+            var planarSize = (int)hdPipeline.renderPipelineSettings.lightLoopSettings.planarReflectionTextureSize;
+
+            var cubeRT = HDRenderUtilities.CreateReflectionProbeRenderTarget(cubemapSize);
+            var planarRT = HDRenderUtilities.CreatePlanarProbeRenderTarget(planarSize);
+            for (int i = 0; i < bakedProbes.Count; ++i)
+            {
+                var probe = bakedProbes[i];
+                var bakedTexturePath = HDBakingUtilities.GetBakedTextureFilePath(probe);
+                RenderAndWriteToFile(probe, bakedTexturePath, cubeRT, planarRT);
+            }
+
+            AssetDatabase.StartAssetEditing();
+            for (int i = 0; i < bakedProbes.Count; ++i)
+            {
+                var probe = bakedProbes[i];
+                var bakedTexturePath = HDBakingUtilities.GetBakedTextureFilePath(probe);
+
+                // Get or create the baked texture asset for the probe
+                var bakedTexture = AssetDatabase.LoadAssetAtPath<Texture>(bakedTexturePath);
+                AssetDatabase.ImportAsset(bakedTexturePath);
+                ImportAssetAt(probe, bakedTexturePath);
+                probe.SetTexture(ProbeSettings.Mode.Baked, bakedTexture);
+                AssignRenderData(probe, bakedTexturePath);
+            }
+            AssetDatabase.StopAssetEditing();
+            for (int i = 0; i < bakedProbes.Count; ++i)
+                EditorUtility.SetDirty(bakedProbes[i]);
+
+            cubeRT.Release();
+            planarRT.Release();
+
+            return true;
         }
 
         // Look in all baked files if some of them are not used anymore

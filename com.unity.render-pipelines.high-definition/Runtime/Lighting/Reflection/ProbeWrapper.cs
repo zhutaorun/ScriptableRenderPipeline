@@ -43,7 +43,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public ReflectionProbe reflectionProbe { get; protected set; }
         public PlanarReflectionProbe planarReflectionProbe { get; protected set; }
 
-        public abstract ReflectionProbeMode mode { get; }
+        public abstract ProbeSettings.Mode mode { get; }
         public abstract Texture texture { get; }
         // Position of the center of the probe in capture space
         public abstract float weight { get; }
@@ -111,7 +111,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             get
             {
-                if(additional.mode == ReflectionProbeMode.Realtime)
+                if(additional.mode == ProbeSettings.Mode.Realtime)
                 {
                     return additional.realtimeTexture;
                 }
@@ -122,7 +122,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        public override ReflectionProbeMode mode { get { return probe.probe.mode; } }
+        public override ProbeSettings.Mode mode { get { return (ProbeSettings.Mode)probe.probe.mode; } }
         public override EnvShapeType influenceShapeType { get { return ConvertShape(additional.influenceVolume.shape); } }
         public override float weight { get { return additional.weight; } }
         public override float multiplier { get { return additional.multiplier; } }
@@ -216,7 +216,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public override EnvShapeType proxyShapeType { get { return ConvertShape(planarReflectionProbe.proxyShape); } }
         public override Vector3 proxyExtents { get { return planarReflectionProbe.proxyExtents; } }
         public override bool infiniteProjection { get { return planarReflectionProbe.infiniteProjection; } }
-        public override ReflectionProbeMode mode { get { return planarReflectionProbe.mode; } }
+        public override ProbeSettings.Mode mode { get { return planarReflectionProbe.mode; } }
 
         public override Matrix4x4 proxyToWorld { get { return planarReflectionProbe.proxyToWorld; } }
 

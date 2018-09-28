@@ -16,16 +16,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     [CanEditMultipleObjects]
     class PlanarReflectionProbeEditor : HDProbeEditor
     {
-        [DidReloadScripts]
-        static void DidReloadScripts()
-        {
-            foreach (var probe in FindObjectsOfType<PlanarReflectionProbe>())
-            {
-                if (probe.enabled)
-                    ReflectionSystem.RegisterProbe(probe);
-            }
-        }
-
         internal override HDProbe GetTarget(Object editorTarget)
         {
             return editorTarget as HDProbe;

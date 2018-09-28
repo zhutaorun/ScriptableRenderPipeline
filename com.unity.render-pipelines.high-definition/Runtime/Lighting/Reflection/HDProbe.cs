@@ -190,11 +190,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 HDProbeSystem.RegisterProbe(this);
         }
 
-        internal void SetTexture(Texture target, ProbeSettings.Mode targetMode)
-        {
-            throw new NotImplementedException();
-        }
-
         void ISerializationCallbackReceiver.OnBeforeSerialize()
         {
         }

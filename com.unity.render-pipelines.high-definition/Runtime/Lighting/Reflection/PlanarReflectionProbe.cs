@@ -154,32 +154,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             );
         }
 
-        public void RequestRealtimeRender()
-        {
-            if (isActiveAndEnabled)
-                ReflectionSystem.RequestRealtimeRender(this);
-        }
-
-        internal override void OnEnable()
-        {
-            base.OnEnable();
-            ReflectionSystem.RegisterProbe(this);
-        }
-
-        internal override void OnDisable()
-        {
-            base.OnDisable();
-            ReflectionSystem.UnregisterProbe(this);
-        }
-
-        internal override void OnValidate()
-        {
-            ReflectionSystem.UnregisterProbe(this);
-
-            if (isActiveAndEnabled)
-                ReflectionSystem.RegisterProbe(this);
-        }
-
         public void OnBeforeSerialize()
         {
         }

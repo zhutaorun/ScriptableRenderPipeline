@@ -109,8 +109,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public override void Update()
         {
             SerializedPlanarReflectionProbe serialized = data as SerializedPlanarReflectionProbe;
-            isSectionExpandedCaptureMirrorSettings.target = serialized.isMirrored;
-            isSectionExpandedCaptureStaticSettings.target = !serialized.isMirrored;
             base.Update();
         }
     }

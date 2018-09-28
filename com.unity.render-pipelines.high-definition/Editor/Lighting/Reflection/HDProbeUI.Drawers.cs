@@ -289,6 +289,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         #region Bake Button
         static readonly string[] k_BakeCustomOptionText = { "Bake as new Cubemap..." };
+        static readonly string[] k_BakeButtonsText = { "Bake All Reflection Probes" };
         protected static void Drawer_SectionBakeButton(HDProbeUI s, SerializedHDProbe d, Editor o)
         {
             var so = d.serializedObject;
@@ -301,7 +302,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 var settings = d.target.settings;
                 switch (settings.mode)
                 {
-                    case ProbeSettings.Mode.Baked:
+                    case ProbeSettings.Mode.Custom:
                         {
                             if (UnityEditor.Lightmapping.giWorkflowMode
                                 != UnityEditor.Lightmapping.GIWorkflowMode.OnDemand)
@@ -338,8 +339,32 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                             }
                             break;
                         }
-                    case ProbeSettings.Mode.Custom:
-                        break;
+                    case ProbeSettings.Mode.Baked:
+                        {
+                            GUI.enabled = d.target.enabled;
+
+                            // Bake button in non-continous mode
+                            if (ButtonWithDropdownList(
+                                    _.GetContent("Bake"),
+                                    k_BakeButtonsText,
+                                    data =>
+                                    {
+                                        var mode = (int)data;
+                                        if (mode == 0)
+                                        {
+                                            var system = ScriptableBakedReflectionSystemSettings.system;
+                                            system.BakeAllReflectionProbes();
+                                        }
+                                    },
+                                    GUILayout.ExpandWidth(true)))
+                            {
+                                HDBakedReflectionSystem.BakeProbes(new HDProbe[] { d.target });
+                                GUIUtility.ExitGUI();
+                            }
+
+                            GUI.enabled = true;
+                            break;
+                        }
                     case ProbeSettings.Mode.Realtime:
                         break;
                     default: throw new ArgumentOutOfRangeException();

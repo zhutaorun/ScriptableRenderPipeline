@@ -35,10 +35,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             /// <summary>Capture data is baked in editor and loaded as assets.</summary>
             Baked,
-            /// <summary>Capture data provided as an assets.</summary>
-            Custom,
             /// <summary>Capture data is computed during runtime.</summary>
-            Realtime
+            Realtime,
+            /// <summary>Capture data provided as an assets.</summary>
+            Custom
         }
 
         /// <summary>Lighting parameters for the probe.</summary>
