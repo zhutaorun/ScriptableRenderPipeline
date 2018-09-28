@@ -95,7 +95,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
 
             bool evaluateShadows = (NdotL > 0);
 
-            if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_LIT_TRANSMISSION))
+            if (MaterialSupportsTransmission(bsdfData))
             {
                 // We support some kind of transmission.
                 if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_TRANSMISSION_MODE_THIN_THICKNESS))

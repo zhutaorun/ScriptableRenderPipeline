@@ -336,6 +336,28 @@ float3 GetShadowNormalBias(BSDFData bsdfData)
     return bsdfData.normalWS;
 }
 
+void ClampRoughness(inout BSDFData bsdfData, float minRoughness)
+{
+    bsdfData.roughnessT    = max(minRoughness, bsdfData.roughnessT);
+    bsdfData.roughnessB    = max(minRoughness, bsdfData.roughnessB);
+    bsdfData.coatRoughness = max(minRoughness, bsdfData.coatRoughness);
+}
+
+float ComputeMicroShadowing(BSDFData bsdfData, float NdotL)
+{
+#ifdef LIGHT_LAYERS
+    return ComputeMicroShadowing(bsdfData.ambientOcclusion, NdotL, _MicroShadowOpacity);
+#else
+    // No extra G-Buffer for AO, so 'bsdfData.ambientOcclusion' does not hold a meaningful value.
+    return ComputeMicroShadowing(bsdfData.specularOcclusion, NdotL, _MicroShadowOpacity);
+#endif
+}
+
+bool MaterialSupportsTransmission(BSDFData bsdfData)
+{
+    return HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_LIT_TRANSMISSION);
+}
+
 //-----------------------------------------------------------------------------
 // conversion function for forward
 //-----------------------------------------------------------------------------
@@ -819,23 +841,6 @@ uint MaterialFeatureFlagsFromGBuffer(uint2 positionSS)
     return DecodeFromGBuffer(positionSS, UINT_MAX, bsdfData, unused);
 }
 
-void ClampRoughness(inout BSDFData bsdfData, float minRoughness)
-{
-    bsdfData.roughnessT    = max(minRoughness, bsdfData.roughnessT);
-    bsdfData.roughnessB    = max(minRoughness, bsdfData.roughnessB);
-    bsdfData.coatRoughness = max(minRoughness, bsdfData.coatRoughness);
-}
-
-float ComputeMicroShadowing(BSDFData bsdfData, float NdotL)
-{
-#ifdef LIGHT_LAYERS
-    return ComputeMicroShadowing(bsdfData.ambientOcclusion, NdotL, _MicroShadowOpacity);
-#else
-    // No extra G-Buffer for AO, so 'bsdfData.ambientOcclusion' does not hold a meaningful value.
-    return ComputeMicroShadowing(bsdfData.specularOcclusion, NdotL, _MicroShadowOpacity);
-#endif
-}
-
 //-----------------------------------------------------------------------------
 // Debug method (use to display values)
 //-----------------------------------------------------------------------------
@@ -1219,10 +1224,8 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
                                         DirectionalLightData lightData, BSDFData bsdfData,
                                         BuiltinData builtinData)
 {
-    bool supportsLightTransmission = HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_LIT_TRANSMISSION);
-
     return ShadeSurface_Directional(lightLoopContext, posInput, builtinData, preLightData, lightData,
-                                    bsdfData, bsdfData.normalWS, V, supportsLightTransmission);
+                                    bsdfData, bsdfData.normalWS, V);
 }
 
 //-----------------------------------------------------------------------------
@@ -1233,10 +1236,8 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
                                      float3 V, PositionInputs posInput,
                                      PreLightData preLightData, LightData lightData, BSDFData bsdfData, BuiltinData builtinData)
 {
-    bool supportsLightTransmission = HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_LIT_TRANSMISSION);
-
     return ShadeSurface_Punctual(lightLoopContext, posInput, builtinData, preLightData, lightData,
-                                 bsdfData, bsdfData.normalWS, V, supportsLightTransmission);
+                                 bsdfData, bsdfData.normalWS, V);
 }
 
 #include "LitReference.hlsl"
