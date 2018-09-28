@@ -505,7 +505,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     settings.lightType.enumValueIndex = (int)LightType.Area;
                     m_AdditionalLightData.lightTypeExtent.enumValueIndex = (int)LightTypeExtent.Disc;
                     EditorGUI.BeginChangeCheck();
-                    EditorGUILayout.PropertyField(m_AdditionalLightData.shapeWidth, s_Styles.shapeWidthRect);
+                    EditorGUILayout.PropertyField(m_AdditionalLightData.shapeWidth, s_Styles.lightRadius);
                     if (EditorGUI.EndChangeCheck())
                     {
                         m_AdditionalLightData.shapeWidth.floatValue = Mathf.Max(m_AdditionalLightData.shapeWidth.floatValue, k_MinAreaWidth);
