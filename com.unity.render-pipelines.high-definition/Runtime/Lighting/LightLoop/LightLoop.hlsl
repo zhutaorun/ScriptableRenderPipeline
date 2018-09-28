@@ -41,7 +41,8 @@ void ApplyDebug(LightLoopContext lightLoopContext, float3 positionWS, inout floa
             uint  payloadOffset;
             real  alpha;
             int cascadeCount;
-            int shadowSplitIndex = EvalShadow_GetSplitIndex(lightLoopContext.shadowContext, shadowIdx, positionWS, payloadOffset, alpha, cascadeCount);
+
+            int shadowSplitIndex = EvalShadow_GetSplitIndex(lightLoopContext.shadowContext, shadowIdx, positionWS, alpha, cascadeCount);
             if (shadowSplitIndex >= 0)
             {
                 diffuseLighting = lerp(s_CascadeColors[shadowSplitIndex], s_CascadeColors[shadowSplitIndex+1], alpha) * shadow;
@@ -76,7 +77,11 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
     {
         UNITY_BRANCH if(_DirectionalShadowIndex != -1)
         {
-            context.shadowValue = GetDirectionalShadowAttenuation(context.shadowContext, posInput.positionWS, GetShadowNormalBias(bsdfData), _DirectionalLightDatas[_DirectionalShadowIndex].shadowIndex, -_DirectionalLightDatas[_DirectionalShadowIndex].forward, posInput.positionSS);
+            context.shadowValue = GetDirectionalShadowAttenuation(
+                context.shadowContext, posInput.positionWS, GetShadowNormalBias(bsdfData),
+                _DirectionalLightDatas[_DirectionalShadowIndex].shadowIndex,
+                -_DirectionalLightDatas[_DirectionalShadowIndex].forward
+            );
         }
         else
         {

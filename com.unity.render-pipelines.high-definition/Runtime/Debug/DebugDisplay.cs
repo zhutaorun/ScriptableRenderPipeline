@@ -14,7 +14,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Lighting
         MinLightingFullScreenDebug,
         SSAO,
-        ScreenSpaceShadows,
+        ContactShadows,
         PreRefractionColorPyramid,
         DepthPyramid,
         FinalColorPyramid,
@@ -656,17 +656,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 list.Add(container);
             }
-            else if (lightingDebugSettings.shadowDebugMode == ShadowMapDebugMode.VisualizeAtlas)
+
+            list.Add(new DebugUI.FloatField
             {
-                list.Add(new DebugUI.Container
-                {
-                    children =
-                    {
-                        new DebugUI.UIntField { displayName = "Shadow Atlas Index", getter = () => lightingDebugSettings.shadowAtlasIndex, setter = value => lightingDebugSettings.shadowAtlasIndex = value, min = () => 0u, max = () => (uint)(RenderPipelineManager.currentPipeline as HDRenderPipeline).GetShadowAtlasCount() - 1u },
-                        new DebugUI.UIntField { displayName = "Shadow Slice Index", getter = () => lightingDebugSettings.shadowSliceIndex, setter = value => lightingDebugSettings.shadowSliceIndex = value, min = () => 0u, max = () => (uint)(RenderPipelineManager.currentPipeline as HDRenderPipeline).GetShadowSliceCount(lightingDebugSettings.shadowAtlasIndex) - 1u }
-                    }
-                });
-            }
+                displayName = "Global Shadow Scale Factor",
+                getter = () => lightingDebugSettings.shadowResolutionScaleFactor,
+                setter = (v) => lightingDebugSettings.shadowResolutionScaleFactor = v,
+                min = () => 0.01f,
+                max = () => 4.0f,
+            });
 
             list.Add(new DebugUI.FloatField { displayName = "Shadow Range Min Value", getter = () => lightingDebugSettings.shadowMinValue, setter = value => lightingDebugSettings.shadowMinValue = value });
             list.Add(new DebugUI.FloatField { displayName = "Shadow Range Max Value", getter = () => lightingDebugSettings.shadowMaxValue, setter = value => lightingDebugSettings.shadowMaxValue = value });
