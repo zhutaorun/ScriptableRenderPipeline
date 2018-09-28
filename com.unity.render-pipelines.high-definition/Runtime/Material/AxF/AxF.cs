@@ -76,6 +76,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public struct BSDFData
         {
             [SurfaceDataAttributes(new string[] { "Normal WS", "Normal View Space" }, true)]
+            public uint     materialFeatures; // statically 0
+
             public Vector3  normalWS;
             public Vector3  tangentWS;
             public Vector3  biTangentWS;

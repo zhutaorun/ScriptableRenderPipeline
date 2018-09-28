@@ -22,15 +22,32 @@
 #define FLAKES_PERCEPTUAL_ROUGHNESS RoughnessToPerceptualRoughness(FLAKES_ROUGHNESS)
 #define FLAKES_F0 1.0
 
+// No transmission support
+// #define MATERIAL_INCLUDE_TRANSMISSION
+#define MATERIALFEATUREFLAGS_TRANSMISSION_MODE_MIXED_THICKNESS 0
+#define MATERIALFEATUREFLAGS_TRANSMISSION_MODE_THIN_THICKNESS  0
 
 // Define this to sample the environment maps/LTC samples for each lobe, instead of a single sample with an average lobe
 #define USE_COOK_TORRANCE_MULTI_LOBES   1
 
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialEvaluation.hlsl"
-
 float3 GetShadowNormalBias(BSDFData bsdfData)
 {
     return bsdfData.geomNormalWS;
+}
+
+void ClampRoughness(inout BSDFData bsdfData, float minRoughness)
+{
+    // TODO
+}
+
+float ComputeMicroShadowing(BSDFData bsdfData, float NdotL)
+{
+    return 1; // TODO
+}
+
+bool MaterialSupportsTransmission(BSDFData bsdfData)
+{
+    return false; // TODO
 }
 
 //-----------------------------------------------------------------------------
@@ -275,6 +292,8 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
 {
     BSDFData    bsdfData;
     //  ZERO_INITIALIZE(BSDFData, data);
+
+    bsdfData.materialFeatures = 0;
 
     bsdfData.normalWS = surfaceData.normalWS;
     bsdfData.tangentWS = surfaceData.tangentWS;
@@ -625,9 +644,6 @@ LightTransportData  GetLightTransportData(SurfaceData surfaceData, BuiltinData b
 //-----------------------------------------------------------------------------
 
 #ifdef HAS_LIGHTLOOP
-
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightEvaluation.hlsl"
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/SurfaceShading.hlsl"
 
 //-----------------------------------------------------------------------------
 // BSDF shared between directional light, punctual light and area light (reference)
@@ -1013,132 +1029,37 @@ void    BSDF(float3 viewWS, float3 lightWS, float NdotL, float3 positionWS, PreL
 #endif
 
 //-----------------------------------------------------------------------------
+// Surface shading (all light types) below
+//-----------------------------------------------------------------------------
+
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightEvaluation.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialEvaluation.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/SurfaceShading.hlsl"
+
+//-----------------------------------------------------------------------------
 // EvaluateBSDF_Directional
 //-----------------------------------------------------------------------------
 
-DirectLighting  EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
-    float3 viewWS, PositionInputs posInput, PreLightData preLightData,
-    DirectionalLightData lightData, BSDFData bsdfData,
-    BuiltinData builtinData)
+DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
+                                        float3 V, PositionInputs posInput, PreLightData preLightData,
+                                        DirectionalLightData lightData, BSDFData bsdfData,
+                                        BuiltinData builtinData)
 {
-
-    DirectLighting lighting;
-    ZERO_INITIALIZE(DirectLighting, lighting);
-
-    float3  normalWS = bsdfData.normalWS;
-    float3  lightWS = -lightData.forward; // Lights point backward in Unity
-    float   NdotL = dot(normalWS, lightWS);
-
-    // color and attenuation are outputted  by EvaluateLight:
-    float3  color;
-    float   attenuation = 0;
-    // We pass 1.0f for AOForMicroshadowing as we don't have either specular or ambient occlusion
-    EvaluateLight_Directional(lightLoopContext, posInput, lightData, builtinData, normalWS, lightWS, 1.0f, color, attenuation);
-
-    float intensity = max(0, attenuation * NdotL); // Warning: attenuation can be greater than 1 due to the inverse square attenuation (when position is close to light)
-
-    // Note: We use NdotL here to early out, but in case of clearcoat this is not correct. But we are ok with this
-    UNITY_BRANCH if (intensity > 0.0)
-    {
-        BSDF(viewWS, lightWS, NdotL, posInput.positionWS, preLightData, bsdfData, lighting.diffuse, lighting.specular);
-
-        lighting.diffuse *= intensity * lightData.diffuseDimmer;
-        lighting.specular *= intensity * lightData.specularDimmer;
-    }
-
-    // Save ALU by applying light and cookie colors only once.
-    lighting.diffuse *= color;
-    lighting.specular *= color;
-
-#ifdef DEBUG_DISPLAY
-    if (_DebugLightingMode == DEBUGLIGHTINGMODE_LUX_METER)
-    {
-        lighting.diffuse = color * intensity * lightData.diffuseDimmer;  // Only lighting, not BSDF
-    }
-#endif
-
-    return lighting;
+    return ShadeSurface_Directional(lightLoopContext, posInput, builtinData, preLightData, lightData,
+                                    bsdfData, bsdfData.normalWS, V);
 }
 
 //-----------------------------------------------------------------------------
 // EvaluateBSDF_Punctual (supports spot, point and projector lights)
 //-----------------------------------------------------------------------------
 
-DirectLighting EvaluateBSDF_Punctual(   LightLoopContext lightLoopContext,
-                                        float3 viewWS, PositionInputs posInput,
-                                        PreLightData preLightData, LightData lightData, BSDFData bsdfData, BuiltinData builtinData)
+DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
+                                     float3 V, PositionInputs posInput,
+                                     PreLightData preLightData, LightData lightData, BSDFData bsdfData, BuiltinData builtinData)
 {
-    DirectLighting  lighting;
-    ZERO_INITIALIZE(DirectLighting, lighting);
-
-    float3  lightToSample = posInput.positionWS - lightData.positionRWS;
-    int     lightType = lightData.lightType;
-
-    float3 lightWS;
-    float4 distances; // {d, d^2, 1/d, d_proj}
-    distances.w = dot(lightToSample, lightData.forward);
-
-    if (lightType == GPULIGHTTYPE_PROJECTOR_BOX)
-    {
-        lightWS = -lightData.forward;
-        distances.xyz = 1; // No distance or angle attenuation
-    }
-    else
-    {
-        float3 unL = -lightToSample;
-        float  distSq = dot(unL, unL);
-        float  distRcp = rsqrt(distSq);
-        float  dist = distSq * distRcp;
-
-        lightWS = unL * distRcp;
-        distances.xyz = float3(dist, distSq, distRcp);
-    }
-
-    float3  normalWS = bsdfData.normalWS;
-    float   NdotL = dot(normalWS, lightWS);
-
-    float3 color;
-    float attenuation;
-    EvaluateLight_Punctual(lightLoopContext, posInput, lightData, builtinData, normalWS, lightWS,
-        lightToSample, distances, color, attenuation);
-
-
-    float intensity = max(0, attenuation * NdotL); // Warning: attenuation can be greater than 1 due to the inverse square attenuation (when position is close to light)
-
-    // Note: We use NdotL here to early out, but in case of clearcoat this is not correct. But we are ok with this
-    UNITY_BRANCH if (intensity > 0.0)
-    {
-        // Simulate a sphere light with this hack
-        // Note that it is not correct with our pre-computation of PartLambdaV (mean if we disable the optimization we will not have the
-        // same result) but we don't care as it is a hack anyway
-
-        //NEWLITTODO: Do we want this hack in stacklit ? Yes we have area lights, but cheap and not much maintenance to leave it here.
-        // For now no roughness anyways.
-
-        //bsdfData.coatRoughness = max(bsdfData.coatRoughness, lightData.minRoughness);
-        //bsdfData.roughnessT = max(bsdfData.roughnessT, lightData.minRoughness);
-        //bsdfData.roughnessB = max(bsdfData.roughnessB, lightData.minRoughness);
-
-        BSDF(viewWS, lightWS, NdotL, posInput.positionWS, preLightData, bsdfData, lighting.diffuse, lighting.specular);
-
-        lighting.diffuse *= intensity * lightData.diffuseDimmer;
-        lighting.specular *= intensity * lightData.specularDimmer;
-    }
-
-    // Save ALU by applying light and cookie colors only once.
-    lighting.diffuse *= color;
-    lighting.specular *= color;
-
-#ifdef DEBUG_DISPLAY
-    if (_DebugLightingMode == DEBUGLIGHTINGMODE_LUX_METER)
-    {
-        lighting.diffuse = color * intensity * lightData.diffuseDimmer;      // Only lighting, not BSDF
-    }
-#endif
-
-    return lighting;
+    return ShadeSurface_Punctual(lightLoopContext, posInput, builtinData, preLightData, lightData,
+                                 bsdfData, bsdfData.normalWS, V);
 }
-
 
 //-----------------------------------------------------------------------------
 // AREA LIGHTS

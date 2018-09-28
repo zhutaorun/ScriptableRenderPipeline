@@ -26,6 +26,7 @@ float3 ComputeSunLightDirection(DirectionalLightData lightData, float3 N, float3
 float3 PreEvaluateDirectionalLightTransmission(BSDFData bsdfData, inout DirectionalLightData light,
                                                inout float3 N, inout float NdotL)
 {
+#ifdef MATERIAL_INCLUDE_TRANSMISSION
     if (MaterialSupportsTransmission(bsdfData))
     {
         // We support some kind of transmission.
@@ -55,6 +56,7 @@ float3 PreEvaluateDirectionalLightTransmission(BSDFData bsdfData, inout Directio
             }
         }
     }
+#endif
 
     return 0;
 }
@@ -141,6 +143,7 @@ float3 PreEvaluatePunctualLightTransmission(LightLoopContext lightLoopContext,
                                             inout LightData light, float distFrontFaceToLight,
                                             inout float3 N, float3 L, inout float NdotL)
 {
+#ifdef MATERIAL_INCLUDE_TRANSMISSION
     if (MaterialSupportsTransmission(bsdfData))
     {
         // We support some kind of transmission.
@@ -216,6 +219,7 @@ float3 PreEvaluatePunctualLightTransmission(LightLoopContext lightLoopContext,
             }
         }
     }
+#endif
 
     return 0;
 }
