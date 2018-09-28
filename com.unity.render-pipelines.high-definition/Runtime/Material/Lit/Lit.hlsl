@@ -1501,6 +1501,13 @@ DirectLighting EvaluateBSDF_Rect(   LightLoopContext lightLoopContext,
                                              lightData.rangeAttenuationBias);
 #endif
 
+#ifdef SHADOWS_SHADOWMASK
+	// shadowMaskSelector.x is -1 if there is no shadow mask
+	// Note that we override shadow value (in case we don't have any dynamic shadow)
+	//float shadow = (lightData.shadowMaskSelector.x >= 0.0) ? dot(bakeLightingData.bakeShadowMask, lightData.shadowMaskSelector) : 1.0;
+	//intensity *= shadow;
+#endif
+
     // Terminate if the shaded point is too far away.
     if (intensity == 0.0)
         return lighting;
