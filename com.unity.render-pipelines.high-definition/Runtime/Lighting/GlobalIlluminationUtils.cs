@@ -123,6 +123,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                     // Note: We don't support this type in HDRP, but ini just in case
                     case LightType.Rectangle:
+                    case LightType.Disc:
                         ld.orientation = l.transform.rotation;
                         ld.position = l.transform.position;
                         ld.range = l.range;
@@ -140,7 +141,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         break;
 
                     default:
-                        Debug.Assert(false, "Encountered an unknown LightType.");
+                        Debug.Assert(false, "Encountered an unknown Punctual LightType.");
                         break;
                 }
             }
@@ -184,7 +185,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
             else
             {
-                Debug.Assert(false, "Encountered an unknown LightType.");
+                Debug.Assert(false, "Encountered an unknown area LightType.");
             }
 
             return true;
