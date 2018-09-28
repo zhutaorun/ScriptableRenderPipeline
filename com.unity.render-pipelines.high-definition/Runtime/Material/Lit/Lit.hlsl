@@ -1194,10 +1194,19 @@ void ClampRoughness(inout BSDFData bsdfData, float minRoughness)
     bsdfData.coatRoughness = max(minRoughness, bsdfData.coatRoughness);
 }
 
+float ComputeMicroShadowing(BSDFData bsdfData, float NdotL, float opacity)
+{
+#ifdef LIGHT_LAYERS
+    return ComputeMicroShadowing(bsdfData.ambientOcclusion, NdotL, _MicroShadowOpacity);
+#else
+    // No extra G-Buffer for AO, so 'bsdfData.ambientOcclusion' does not hold a meaningful value.
+    return ComputeMicroShadowing(bsdfData.specularOcclusion, NdotL, _MicroShadowOpacity);
+#endif
+}
+
 //-----------------------------------------------------------------------------
 // EvaluateBSDF_Directional
 //-----------------------------------------------------------------------------
-
 
 DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
                                         float3 V, PositionInputs posInput, PreLightData preLightData,
@@ -1225,8 +1234,8 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
         // We must clamp here, otherwise our disk light hack for smooth surfaces does not work.
         // Explanation: for a perfectly smooth surface, lighting is only reflected if (NdotL = NdotV).
         // This implies that (NdotH = 1).
-        // Due to the floating point arithmetic (see the math above and also GetBSDFAngle()),
-        // we will never arrive at this exact number, so no lighting will be reflected.
+        // Due to the floating point arithmetic (see math in ComputeSunLightDirection() and
+        // GetBSDFAngle()), we will never arrive at this exact number, so no lighting will be reflected.
         // If we increase the roughness somewhat, the trick still works.
         ClampRoughness(bsdfData, lightData.minRoughness);
 
@@ -1235,16 +1244,8 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
 
         if (surfaceReflection)
         {
+            attenuation    *= ComputeMicroShadowing(bsdfData, NdotL, _MicroShadowOpacity);
             float intensity = attenuation * NdotL;
-
-        #ifdef LIGHT_LAYERS
-            float AOForMicroshadowing = bsdfData.ambientOcclusion;
-        #else
-            // No extra G-Buffer for AO, so 'bsdfData.ambientOcclusion' does not hold a meaningful value.
-            float AOForMicroshadowing = bsdfData.specularOcclusion;
-        #endif
-
-            intensity *= ComputeMicroShadowing(NdotL, AOForMicroshadowing, _MicroShadowOpacity);
 
             lighting.diffuse  = diffuseBsdf  * (intensity * lightData.diffuseDimmer);
             lighting.specular = specularBsdf * (intensity * lightData.specularDimmer);
