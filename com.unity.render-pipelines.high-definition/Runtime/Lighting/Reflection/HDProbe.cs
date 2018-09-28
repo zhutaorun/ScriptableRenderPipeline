@@ -118,11 +118,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         public virtual ProbeSettings.ProbeType probeType { get { return ProbeSettings.ProbeType.ReflectionProbe; } }
-        
-        [SerializeField]
-        Texture m_CustomTexture;
-        [SerializeField]
-        Texture m_BakedTexture;
 
         /// <summary>Light layer to use by this probe.</summary>
         public LightLayerEnum lightLayers = LightLayerEnum.LightLayerDefault;

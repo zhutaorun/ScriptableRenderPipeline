@@ -1283,7 +1283,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (probe is PlanarReflectionProbe)
             {
                 var planarProbe = probe as PlanarReflectionProbe;
-                var renderData = planarReflectionProbe.renderData;
+                var renderData = planarProbe.renderData;
                 var fetchIndex = m_ReflectionPlanarProbeCache.FetchSlice(cmd, probe.texture);
                 envIndex = (fetchIndex << 1) | (int)EnvCacheType.Texture2D;
 
@@ -1298,7 +1298,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             else if (probe is HDAdditionalReflectionData)
             {
                 HDAdditionalReflectionData cubeProbe = probe as HDAdditionalReflectionData;
-                envIndex = m_ReflectionProbeCache.FetchSlice(cmd, probe.currentTexture);
+                envIndex = m_ReflectionProbeCache.FetchSlice(cmd, probe.texture);
                 envIndex = envIndex << 1 | (int)EnvCacheType.Cubemap;
                 capturePosition = cubeProbe.capturePosition;
             }
@@ -1816,7 +1816,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             var probe = reflectionProbeCullResults.visiblePlanarReflectionProbes[planarProbeIndex];
 
                             // probe.texture can be null when we are adding a reflection probe in the editor
-                            if (probe.currentTexture == null || envLightCount >= k_MaxEnvLightsOnScreen)
+                            if (probe.texture == null || envLightCount >= k_MaxEnvLightsOnScreen)
                                 continue;
 
                             var lightVolumeType = LightVolumeType.Box;

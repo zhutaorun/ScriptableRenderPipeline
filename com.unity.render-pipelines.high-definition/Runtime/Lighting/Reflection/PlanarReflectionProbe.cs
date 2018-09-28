@@ -120,16 +120,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        public bool useMirrorPlane
-        {
-            get
-            {
-                return mode == ReflectionProbeMode.Realtime
-                    && refreshMode == ReflectionProbeRefreshMode.EveryFrame
-                    && capturePositionMode == CapturePositionMode.MirrorCamera;
-            }
-        }
-
         //for strange reason, current ReflectionSystem needs a proxyExtents two time bigger for planar. To be fixed when refactoring the ReflectionSystem
         public override Vector3 proxyExtents
         {
