@@ -36,19 +36,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Texture customTexture { get { return m_CustomTexture; } }
         public RenderTexture realtimeTexture { get { return m_RealtimeTexture; } }
 
-        public Texture texture
-        {
-            get
-            {
-                switch (mode)
-                {
-                    case ProbeSettings.Mode.Baked: return m_BakedTexture;
-                    case ProbeSettings.Mode.Custom: return m_CustomTexture;
-                    case ProbeSettings.Mode.Realtime: return m_RealtimeTexture;
-                    default: throw new ArgumentOutOfRangeException();
-                }
-            }
-        }
+        public Texture texture { get { return GetTexture(mode); } }
 
         internal ProbeSettings settings
         {
@@ -57,6 +45,31 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 var settings = ProbeSettings.@default;
                 PopulateSettings(ref settings);
                 return settings;
+            }
+        }
+
+        public Texture GetTexture(ProbeSettings.Mode targetMode)
+        {
+            switch (targetMode)
+            {
+                case ProbeSettings.Mode.Baked: return m_BakedTexture;
+                case ProbeSettings.Mode.Custom: return m_CustomTexture;
+                case ProbeSettings.Mode.Realtime: return m_RealtimeTexture;
+                default: throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        public Texture SetTexture(ProbeSettings.Mode targetMode, Texture texture)
+        {
+            if (targetMode == ProbeSettings.Mode.Realtime && !(texture is RenderTexture))
+                throw new ArgumentException("'texture' must be a RenderTexture for the Realtime mode.");
+
+            switch (targetMode)
+            {
+                case ProbeSettings.Mode.Baked: return m_BakedTexture = texture;
+                case ProbeSettings.Mode.Custom: return m_CustomTexture = texture;
+                case ProbeSettings.Mode.Realtime: return m_RealtimeTexture = (RenderTexture)texture;
+                default: throw new ArgumentOutOfRangeException();
             }
         }
 
@@ -175,6 +188,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (isActiveAndEnabled)
                 HDProbeSystem.RegisterProbe(this);
+        }
+
+        internal void SetTexture(Texture target, ProbeSettings.Mode targetMode)
+        {
+            throw new NotImplementedException();
         }
 
         void ISerializationCallbackReceiver.OnBeforeSerialize()

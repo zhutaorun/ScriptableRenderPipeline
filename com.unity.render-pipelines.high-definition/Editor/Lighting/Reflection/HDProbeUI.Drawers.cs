@@ -303,36 +303,39 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 {
                     case ProbeSettings.Mode.Baked:
                         {
-                            if (UnityEditor.Lightmapping.giWorkflowMode != UnityEditor.Lightmapping.GIWorkflowMode.OnDemand)
+                            if (UnityEditor.Lightmapping.giWorkflowMode
+                                != UnityEditor.Lightmapping.GIWorkflowMode.OnDemand)
                             {
-                                EditorGUILayout.HelpBox("Baking of this probe is automatic because this probe's type is 'Baked' and the Lighting window is using 'Auto Baking'. The texture created is stored in the GI cache.", MessageType.Info);
+                                EditorGUILayout.HelpBox("Baking of this probe is automatic because this probe's " +
+                                    "type is 'Baked' and the Lighting window is using 'Auto Baking'. " +
+                                    "The texture created is stored in the GI cache.", MessageType.Info);
                                 break;
                             }
                             if (ButtonWithDropdownList(
-                                _.GetContent("Bake|Bakes Probe's texture, overwriting the existing texture asset (if any)."), k_BakeCustomOptionText,
+                                _.GetContent(
+                                    "Bake|Bakes Probe's texture, overwriting the existing texture asset " +
+                                    "(if any)."
+                                ),
+                                k_BakeCustomOptionText,
                                 data =>
                                 {
                                     var mode = (int)data;
                                     switch ((int)data)
                                     {
                                         case 0:
-                                            HDProbeSystem.RenderAndUpdateRealtimeData
+                                            throw new NotImplementedException();
+                                            // TODO: Create a new custom texture asset
+                                            HDProbeSystem.RenderAndUpdateRenderData(
+                                                d.target, null, ProbeSettings.Mode.Custom
+                                            );
                                             break;
                                     }
-
-                                    if (mode == 0)
-                                    {
-
-                                        if (probe != null)
-                                        {
-                                            EditorReflectionSystem.BakeCustomReflectionProbe(probe, false);
-                                        }
-                                        if (planarProbe != null)
-                                        {
-                                            EditorReflectionSystem.BakeCustomReflectionProbe(planarProbe, false);
-                                        }
-                                    }
                                 }))
+                            {
+                                HDProbeSystem.RenderAndUpdateRenderData(
+                                    d.target, null, ProbeSettings.Mode.Custom
+                                );
+                            }
                             break;
                         }
                     case ProbeSettings.Mode.Custom:

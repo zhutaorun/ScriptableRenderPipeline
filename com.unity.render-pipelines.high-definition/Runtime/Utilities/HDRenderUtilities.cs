@@ -183,6 +183,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             };
         }
 
+        public static Cubemap CreateReflectionProbeTarget(int cubemapSize)
+        {
+            return new Cubemap(cubemapSize, GraphicsFormat.R16G16B16A16_SFloat, TextureCreationFlags.None);
+        }
+
         static Camera NewRenderingCamera()
         {
             var go = new GameObject("__Render Camera");

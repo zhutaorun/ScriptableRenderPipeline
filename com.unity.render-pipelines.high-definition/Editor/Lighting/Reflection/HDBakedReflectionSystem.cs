@@ -87,7 +87,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 var bakedTexture = AssetDatabase.LoadAssetAtPath<Texture>(bakedTexturePath);
                 AssetDatabase.ImportAsset(bakedTexturePath);
                 ImportAssetAt(probe, bakedTexturePath);
-                HDProbeSystem.AssignTexture(probe, bakedTexture, ProbeSettings.Mode.Baked);
+                probe.SetTexture(bakedTexture, ProbeSettings.Mode.Baked);
                 AssignRenderData(probe, bakedTexturePath);
             }
             AssetDatabase.StopAssetEditing();
@@ -243,7 +243,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     var bakedTexture = AssetDatabase.LoadAssetAtPath<Texture>(bakedTexturePath);
                     AssetDatabase.ImportAsset(bakedTexturePath);
                     ImportAssetAt(probe, bakedTexturePath);
-                    HDProbeSystem.AssignTexture(probe, bakedTexture, ProbeSettings.Mode.Baked);
+                    probe.SetTexture(bakedTexture, ProbeSettings.Mode.Baked);
                 }
                 AssetDatabase.StopAssetEditing();
                 for (int i = 0; i < addCount; ++i)
@@ -392,18 +392,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 case ProbeSettings.ProbeType.PlanarProbe:
                     {
                         var planarProbe = (PlanarReflectionProbe)probe;
-                        var positionSettings = ProbeCapturePositionSettings.ComputeFrom(
+                        var positionSettings = ProbeCapturePositionSettings.ComputeFromMirroredReference(
                             probe,
-                            planarProbe.referencePosition, Quaternion.identity
+                            planarProbe.referencePosition
                         );
-                        // Set proper orientation for the reference rotation
-                        var proxyMatrix = Matrix4x4.TRS(
-                            positionSettings.proxyPosition,
-                            positionSettings.proxyRotation,
-                            Vector3.one
-                        );
-                        var mirrorPosition = proxyMatrix.MultiplyPoint(settings.proxySettings.mirrorPositionProxySpace);
-                        positionSettings.referenceRotation = Quaternion.LookRotation(mirrorPosition - positionSettings.referencePosition);
 
                         Matrix4x4 worldToCameraRHSMatrix, projectionMatrix;
                         HDRenderUtilities.Render(

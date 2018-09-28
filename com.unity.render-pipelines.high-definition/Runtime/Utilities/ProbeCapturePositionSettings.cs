@@ -70,6 +70,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 referencePosition = reference.position;
                 referenceRotation = reference.rotation;
             }
+            else
+            {
+                if (probe.probeType == ProbeSettings.ProbeType.PlanarProbe)
+                {
+                    var planar = (PlanarReflectionProbe)probe;
+                    return ComputeFromMirroredReference(planar, planar.referencePosition);
+                }
+            }
 
             return ComputeFrom(probe, referencePosition, referenceRotation);
         }
@@ -88,6 +96,25 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             result.referencePosition = referencePosition;
             result.referenceRotation = referenceRotation;
             return result;
+        }
+
+        public static ProbeCapturePositionSettings ComputeFromMirroredReference(
+            HDProbe probe, Vector3 referencePosition
+        )
+        {
+            var positionSettings = ComputeFrom(
+                probe,
+                referencePosition, Quaternion.identity
+            );
+            // Set proper orientation for the reference rotation
+            var proxyMatrix = Matrix4x4.TRS(
+                positionSettings.proxyPosition,
+                positionSettings.proxyRotation,
+                Vector3.one
+            );
+            var mirrorPosition = proxyMatrix.MultiplyPoint(probe.settings.proxySettings.mirrorPositionProxySpace);
+            positionSettings.referenceRotation = Quaternion.LookRotation(mirrorPosition - positionSettings.referencePosition);
+            return positionSettings;
         }
 
         public Hash128 ComputeHash()

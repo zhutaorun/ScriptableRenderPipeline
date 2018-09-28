@@ -35,8 +35,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             HDProbe probe, Transform viewerTransform, ProbeSettings.Mode targetMode
         )
         {
-            var target = CreateAndSetRenderTargetIfRequired(probe, targetMode);
             var positionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, viewerTransform);
+            var target = CreateAndSetRenderTargetIfRequired(probe, targetMode);
             Matrix4x4 projectionMatrix, worldToCameraRHSMatrix;
             HDRenderUtilities.Render(
                 probe.settings,
@@ -51,35 +51,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 worldToCameraRHS = worldToCameraRHSMatrix
             };
             AssignRenderData(probe, renderData, targetMode);
-        }
-
-        public static void AssignTexture(HDProbe probe, Texture texture, ProbeSettings.Mode targetMode)
-        {
-            switch (probe.settings.type)
-            {
-                case ProbeSettings.ProbeType.ReflectionProbe:
-                    {
-                        var reflectionProbe = probe.GetComponent<ReflectionProbe>();
-                        switch (targetMode)
-                        {
-                            case ProbeSettings.Mode.Baked: reflectionProbe.bakedTexture = texture; break;
-                            case ProbeSettings.Mode.Custom: reflectionProbe.customBakedTexture = texture; break;
-                            case ProbeSettings.Mode.Realtime: reflectionProbe.realtimeTexture = (RenderTexture)texture; break;
-                        }
-                        break;
-                    }
-                case ProbeSettings.ProbeType.PlanarProbe:
-                    {
-                        var planarProbe = (PlanarReflectionProbe)probe;
-                        switch (targetMode)
-                        {
-                            case ProbeSettings.Mode.Baked: planarProbe.bakedTexture = texture; break;
-                            case ProbeSettings.Mode.Custom: planarProbe.customTexture = texture; break;
-                            case ProbeSettings.Mode.Realtime: planarProbe.realtimeTexture = (RenderTexture)texture; break;
-                        }
-                        break;
-                    }
-            }
         }
 
         public static void AssignRenderData(
@@ -100,35 +71,56 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        static Texture GetTexture(HDProbe probe, ProbeSettings.Mode targetMode)
-        {
-            
-        }
-
         static Texture CreateAndSetRenderTargetIfRequired(HDProbe probe, ProbeSettings.Mode targetMode)
         {
             var settings = probe.settings;
-            Texture target = null;
+            Texture target = probe.GetTexture(targetMode);
 
-
-
-            if (probe.realtimeTexture != null)
-                return;
+            if (target != null)
+                return target;
 
             var hd = (HDRenderPipeline)RenderPipelineManager.currentPipeline;
-            switch (settings.type)
+            switch (targetMode)
             {
-                case ProbeSettings.ProbeType.PlanarProbe:
-                    probe.realtimeTexture = HDRenderUtilities.CreatePlanarProbeRenderTarget(
-                        (int)hd.renderPipelineSettings.lightLoopSettings.planarReflectionTextureSize
-                    );
-                    break;
-                case ProbeSettings.ProbeType.ReflectionProbe:
-                    probe.realtimeTexture = HDRenderUtilities.CreateReflectionProbeRenderTarget(
-                        (int)hd.renderPipelineSettings.lightLoopSettings.reflectionCubemapSize
-                    );
-                    break;
+                case ProbeSettings.Mode.Realtime:
+                    {
+                        switch (settings.type)
+                        {
+                            case ProbeSettings.ProbeType.PlanarProbe:
+                                target = HDRenderUtilities.CreatePlanarProbeRenderTarget(
+                                    (int)hd.renderPipelineSettings.lightLoopSettings.planarReflectionTextureSize
+                                );
+                                break;
+                            case ProbeSettings.ProbeType.ReflectionProbe:
+                                target = HDRenderUtilities.CreateReflectionProbeRenderTarget(
+                                    (int)hd.renderPipelineSettings.lightLoopSettings.reflectionCubemapSize
+                                );
+                                break;
+                        }
+                        break;
+                    }
+                case ProbeSettings.Mode.Baked:
+                case ProbeSettings.Mode.Custom:
+                    {
+                        switch (settings.type)
+                        {
+                            case ProbeSettings.ProbeType.PlanarProbe:
+                                target = HDRenderUtilities.CreatePlanarProbeRenderTarget(
+                                    (int)hd.renderPipelineSettings.lightLoopSettings.planarReflectionTextureSize
+                                );
+                                break;
+                            case ProbeSettings.ProbeType.ReflectionProbe:
+                                target = HDRenderUtilities.CreateReflectionProbeTarget(
+                                    (int)hd.renderPipelineSettings.lightLoopSettings.reflectionCubemapSize
+                                );
+                                break;
+                        }
+                        break;
+                    }
             }
+
+            probe.SetTexture(target, targetMode);
+            return target;
         }
     }
 
