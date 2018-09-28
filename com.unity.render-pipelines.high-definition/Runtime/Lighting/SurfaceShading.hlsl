@@ -112,6 +112,7 @@ DirectLighting ShadeSurface_Directional(LightLoopContext lightLoopContext,
             float wrapNdotL = ComputeWrappedDiffuseLighting(NdotL, TRANSMISSION_WRAP_LIGHT);
             float intensity = attenuation * wrapNdotL;
 
+            // We use diffuse lighting for accumulation since it is going to be blurred during the SSS pass.
             // Note: Disney's LdoV term in 'diffuseBsdf' does not hold a meaningful value
             // in the context of transmission, but we keep it unaltered for performance reasons.
             lighting.diffuse  = transmittance * (diffuseBsdf * (intensity * light.diffuseDimmer));
@@ -277,6 +278,7 @@ DirectLighting ShadeSurface_Punctual(LightLoopContext lightLoopContext,
             float wrapNdotL = ComputeWrappedDiffuseLighting(NdotL, TRANSMISSION_WRAP_LIGHT);
             float intensity = attenuation * wrapNdotL;
 
+            // We use diffuse lighting for accumulation since it is going to be blurred during the SSS pass.
             // Note: Disney's LdoV term in 'diffuseBsdf' does not hold a meaningful value
             // in the context of transmission, but we keep it unaltered for performance reasons.
             lighting.diffuse  = transmittance * (diffuseBsdf * (intensity * light.diffuseDimmer));
