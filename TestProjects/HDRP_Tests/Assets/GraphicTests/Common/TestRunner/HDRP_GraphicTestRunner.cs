@@ -7,16 +7,13 @@ using UnityEngine.TestTools.Graphics;
 using UnityEngine.SceneManagement;
 using UnityEngine.Events;
 using System.IO;
-using TestParameters = UnityEngine.TestTools.Graphics.TestParameters;
 
 public class HDRP_GraphicTestRunner
 {
     [PrebuildSetup("SetupGraphicsTestCases")]
-    [UseGraphicsTestCases( TestParameters.ScenePath )]
-    public IEnumerator Run(string scenePath)
+    [UseGraphicsTestCases]
+    public IEnumerator Run(GraphicsTestCase testCase)
     {
-        GraphicsTestCase testCase = UseGraphicsTestCasesAttribute.GetCaseFromScenePath(scenePath);
-
         SceneManager.LoadScene(testCase.ScenePath);
 
         // Arbitrary wait for 5 frames for the scene to load, and other stuff to happen (like Realtime GI to appear ...)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using NUnit.Framework.Internal.Builders;
@@ -8,8 +9,6 @@ using Attribute = System.Attribute;
 
 namespace UnityEngine.TestTools.Graphics
 {
-    public enum TestParameters { GraphicTestCase = 0, ScenePath = 1 }
-
     /// <summary>
     /// Marks a test which takes <c>GraphicsTestCase</c> instances as wanting to have them generated automatically by
     /// the scene/reference-image management feature in the framework.
@@ -20,17 +19,11 @@ namespace UnityEngine.TestTools.Graphics
 
         NUnitTestCaseBuilder _builder = new NUnitTestCaseBuilder();
 
-        TestParameters m_TestParameters = TestParameters.GraphicTestCase;
+        public UseGraphicsTestCasesAttribute(){}
 
-        public UseGraphicsTestCasesAttribute(TestParameters testParameters = TestParameters.GraphicTestCase)
-        {
-            m_TestParameters = testParameters;
-        }
-
-        public UseGraphicsTestCasesAttribute(string referenceImagePath , TestParameters testParameters = TestParameters.GraphicTestCase)
+        public UseGraphicsTestCasesAttribute(string referenceImagePath)
         {
             m_ReferenceImagePath = referenceImagePath;
-            m_TestParameters = testParameters;
         }
 
         /// <summary>
@@ -83,13 +76,13 @@ namespace UnityEngine.TestTools.Graphics
             {
                 foreach (var testCase in provider.GetTestCases())
                 {
-                    TestCaseParameters parms = new TestCaseParameters( new object[]{ (m_TestParameters==TestParameters.ScenePath)? testCase.ScenePath : (object) testCase } )
-                    {
-                        ExpectedResult = new object(),
-                        HasExpectedResult = true,
-                    };
+                    TestCaseData data = new TestCaseData( new object[]{ testCase } );
 
-                    TestMethod test = this._builder.BuildTestMethod(method, suite, parms);
+                    data.SetName(System.IO.Path.GetFileNameWithoutExtension(testCase.ScenePath));
+                    data.ExpectedResult = new Object();
+                    data.HasExpectedResult = true;
+
+                    TestMethod test = this._builder.BuildTestMethod(method, suite, data);
                     if (test.parms != null)
                         test.parms.HasExpectedResult = false;
 
