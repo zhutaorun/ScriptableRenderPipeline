@@ -1187,33 +1187,17 @@ void BSDF(  float3 V, float3 L, float NdotL, float3 positionWS, PreLightData pre
     }
 }
 
+void ClampRoughness(inout BSDFData bsdfData, float minRoughness)
+{
+    bsdfData.roughnessT    = max(minRoughness, bsdfData.roughnessT);
+    bsdfData.roughnessB    = max(minRoughness, bsdfData.roughnessB);
+    bsdfData.coatRoughness = max(minRoughness, bsdfData.coatRoughness);
+}
+
 //-----------------------------------------------------------------------------
 // EvaluateBSDF_Directional
 //-----------------------------------------------------------------------------
 
-float3 ComputeSunLightDirection(DirectionalLightData lightData, inout BSDFData bsdfData,
-                                float3 N, float3 V)
-{
-    float3 L = -lightData.forward;
-    float3 R = reflect(-V, N); // Not always the same as preLightData.iblR
-
-    // Fake a highlight of the sun disk by modifying the light vector.
-    float t = AngleAttenuation(dot(L, R), lightData.angleScale, lightData.angleOffset);
-
-    // This will be quite inaccurate for large disk radii. Would be better to use SLerp().
-    L = NLerp(L, R, t);
-
-    // We must clamp here, otherwise our disk light hack for smooth surfaces does not work.
-    // Explanation: for a perfectly smooth surface, lighting is only reflected if (NdotL = NdotV).
-    // This implies that (NdotH = 1).
-    // Due to the floating point arithmetic (see the math above and also GetBSDFAngle()),
-    // we will never arrive at this exact number, so no lighting will be reflected.
-    // If we increase the roughness somewhat, the trick still works.
-    bsdfData.roughnessT = max(bsdfData.roughnessT, 1.0 / (255 * 255));
-    bsdfData.roughnessB = max(bsdfData.roughnessB, 1.0 / (255 * 255));
-
-    return L;
-}
 
 DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
                                         float3 V, PositionInputs posInput, PreLightData preLightData,
@@ -1224,7 +1208,7 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
     ZERO_INITIALIZE(DirectLighting, lighting);
 
     float3 N     = bsdfData.normalWS;
-    float3 L     = ComputeSunLightDirection(lightData, bsdfData, N, V);
+    float3 L     = ComputeSunLightDirection(lightData, N, V);
     float  NdotL = dot(N, L); // Do not saturate
 
     // Note: We use NdotL here to early out, but in case of clear coat this is not correct. But we are OK with this
@@ -1238,6 +1222,14 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
                               color, attenuation);
     if (attenuation > 0)
     {
+        // We must clamp here, otherwise our disk light hack for smooth surfaces does not work.
+        // Explanation: for a perfectly smooth surface, lighting is only reflected if (NdotL = NdotV).
+        // This implies that (NdotH = 1).
+        // Due to the floating point arithmetic (see the math above and also GetBSDFAngle()),
+        // we will never arrive at this exact number, so no lighting will be reflected.
+        // If we increase the roughness somewhat, the trick still works.
+        ClampRoughness(bsdfData, lightData.minRoughness);
+
         float3 diffuseBsdf, specularBsdf;
         BSDF(V, L, NdotL, posInput.positionWS, preLightData, bsdfData, diffuseBsdf, specularBsdf);
 
@@ -1245,12 +1237,12 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
         {
             float intensity = attenuation * NdotL;
 
-            #ifdef LIGHT_LAYERS
-                float AOForMicroshadowing = bsdfData.ambientOcclusion;
-            #else
-                // No extra G-Buffer for AO, so 'bsdfData.ambientOcclusion' does not hold a meaningful value.
-                float AOForMicroshadowing = bsdfData.specularOcclusion;
-            #endif
+        #ifdef LIGHT_LAYERS
+            float AOForMicroshadowing = bsdfData.ambientOcclusion;
+        #else
+            // No extra G-Buffer for AO, so 'bsdfData.ambientOcclusion' does not hold a meaningful value.
+            float AOForMicroshadowing = bsdfData.specularOcclusion;
+        #endif
 
             intensity *= ComputeMicroShadowing(NdotL, AOForMicroshadowing, _MicroShadowOpacity);
 
@@ -1314,9 +1306,13 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
     float3 color; float attenuation;
     EvaluateLight_Punctual(lightLoopContext, posInput, lightData, builtinData, N, L, NdotL, lightToSample, distances,
                            color, attenuation);
-
     if (attenuation > 0)
     {
+        // Simulate a sphere/disk light with this hack
+        // Note that it is not correct with our pre-computation of PartLambdaV (mean if we disable the optimization we will not have the
+        // same result) but we don't care as it is a hack anyway
+        ClampRoughness(bsdfData, lightData.minRoughness);
+
         float3 diffuseBsdf, specularBsdf;
         BSDF(V, L, NdotL, posInput.positionWS, preLightData, bsdfData, diffuseBsdf, specularBsdf);
 

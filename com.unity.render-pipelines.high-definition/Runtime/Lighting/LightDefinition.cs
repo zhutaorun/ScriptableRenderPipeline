@@ -75,10 +75,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public int     cookieIndex;             // -1 if unused (TODO: 16 bit)
         public int     tileCookie;              // (TODO: use a bitfield)
+        public int     nonLightMappedOnly;      // Used with ShadowMask (TODO: use a bitfield)
+        public float   minRoughness;            // Hack
+
         public float   diffuseDimmer;
         public float   specularDimmer;
-
-        public int     nonLightMappedOnly;      // Used with ShadowMask (TODO: use a bitfield)
     };
 
     [GenerateHLSL(PackingRules.Exact, false)]
@@ -108,19 +109,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public Vector4 shadowMaskSelector;      // Used with ShadowMask feature
 
-        public GPULightType lightType;
-        public float   minRoughness;            // This is use to give a small "area" to punctual light, as if we have a light with a radius.
         public int     cookieIndex;             // -1 if unused
         public int     tileCookie;              // (TODO: use a bitfield)
+        public int     nonLightMappedOnly;      // Used with ShadowMask feature (TODO: use a bitfield)
+        public float   minRoughness;            // This is use to give a small "area" to punctual light, as if we have a light with a radius.
 
         public Vector2 size;                    // Used by area (X = length or width, Y = height) and punctual lights (X = radius^2)
-        public float   range;
         public float   rangeAttenuationScale;
         public float   rangeAttenuationBias;
 
+        public GPULightType lightType;          // TODO: move this up?
+        public float   range;
         public float   diffuseDimmer;
         public float   specularDimmer;
-        public int     nonLightMappedOnly;      // Used with ShadowMask feature (TODO: use a bitfield)
+
     };
 
 

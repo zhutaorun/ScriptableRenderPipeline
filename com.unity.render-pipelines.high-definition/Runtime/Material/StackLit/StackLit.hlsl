@@ -2278,7 +2278,6 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
     // For shadow attenuation (ie receiver bias), always use the geometric normal
     float3 shadowBiasNormal = bsdfData.geomNormalWS;
     float3 transmittance = float3(0.0, 0.0, 0.0);
-    if (HasFlag(bsdfData.materialFeatures, MATERIAL_FEATURE_FLAGS_TRANSMISSION_MODE_THIN_THICKNESS))
     if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_TRANSMISSION_MODE_THIN_THICKNESS))
     {
         // Caution: This function modify N, NdotL and contactShadowIndex

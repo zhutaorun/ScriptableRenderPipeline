@@ -45,6 +45,20 @@ float EvaluateRuntimeSunShadow(LightLoopContext lightLoopContext, PositionInputs
     }
 }
 
+float3 ComputeSunLightDirection(DirectionalLightData lightData, float3 N, float3 V)
+{
+    float3 L = -lightData.forward;
+    float3 R = reflect(-V, N); // Not always the same as preLightData.iblR
+
+    // Fake a highlight of the sun disk by modifying the light vector.
+    float t = AngleAttenuation(dot(L, R), lightData.angleScale, lightData.angleOffset);
+
+    // This will be quite inaccurate for large disk radii. Would be better to use SLerp().
+    L = NLerp(L, R, t);
+
+    return L;
+}
+
 // None of the outputs are premultiplied.
 void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs posInput,
                                DirectionalLightData light, BuiltinData builtinData,
@@ -354,15 +368,15 @@ float3 PreEvaluatePunctualLightTransmission(LightLoopContext lightLoopContext,
         if (NdotL <= 0)
         {
             // And since the light is back-facing, it's active.
+            // Care must be taken to bias in the direction of the light.
+            N = -N;
+
             // We want to evaluate cookies and light attenuation, so we flip NdotL.
             NdotL = -NdotL;
 
             // However, we don't want baked or contact shadows.
             light.contactShadowIndex   = -1;
             light.shadowMaskSelector.x = -1;
-
-            // Care must be taken to bias in the direction of the light.
-            N = -N;
 
             if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_TRANSMISSION_MODE_THIN_THICKNESS))
             {

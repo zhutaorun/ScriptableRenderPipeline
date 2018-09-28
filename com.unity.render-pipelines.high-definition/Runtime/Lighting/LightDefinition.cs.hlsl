@@ -68,9 +68,10 @@ struct DirectionalLightData
     float4 shadowMaskSelector;
     int cookieIndex;
     int tileCookie;
+    int nonLightMappedOnly;
+    float minRoughness;
     float diffuseDimmer;
     float specularDimmer;
-    int nonLightMappedOnly;
 };
 
 // Generated from UnityEngine.Experimental.Rendering.HDPipeline.LightData
@@ -92,17 +93,17 @@ struct LightData
     float3 color;
     int contactShadowIndex;
     float4 shadowMaskSelector;
-    int lightType;
-    float minRoughness;
     int cookieIndex;
     int tileCookie;
+    int nonLightMappedOnly;
+    float minRoughness;
     float2 size;
-    float range;
     float rangeAttenuationScale;
     float rangeAttenuationBias;
+    int lightType;
+    float range;
     float diffuseDimmer;
     float specularDimmer;
-    int nonLightMappedOnly;
 };
 
 // Generated from UnityEngine.Experimental.Rendering.HDPipeline.EnvLightData

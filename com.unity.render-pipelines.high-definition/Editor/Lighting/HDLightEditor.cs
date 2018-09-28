@@ -462,13 +462,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     // Sun disk.
                     EditorGUILayout.Slider(m_AdditionalLightData.sunDiskSize, 0f, 45f, s_Styles.sunDiskSize);
                     EditorGUILayout.Slider(m_AdditionalLightData.sunHaloSize, 0f, 1f, s_Styles.sunHaloSize);
+                    EditorGUILayout.PropertyField(m_AdditionalLightData.maxSmoothness, s_Styles.maxSmoothness);
                     break;
 
                 case LightShape.Point:
                     settings.lightType.enumValueIndex = (int)LightType.Point;
                     m_AdditionalLightData.lightTypeExtent.enumValueIndex = (int)LightTypeExtent.Punctual;
-                    EditorGUILayout.PropertyField(m_AdditionalLightData.maxSmoothness, s_Styles.maxSmoothness);
                     EditorGUILayout.Slider(m_AdditionalLightData.shapeRadius, 0f, 1f, s_Styles.lightRadius);
+                    EditorGUILayout.PropertyField(m_AdditionalLightData.maxSmoothness, s_Styles.maxSmoothness);
                     break;
 
                 case LightShape.Spot:
