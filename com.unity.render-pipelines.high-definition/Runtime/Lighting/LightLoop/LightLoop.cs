@@ -1010,8 +1010,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             // Value of max smoothness is from artists point of view, need to convert from perceptual smoothness to roughness
-            // It must be non-0 for the sun disk highlight hack to work.
-            lightData.minRoughness = Mathf.Max((1.0f - additionalLightData.maxSmoothness) * (1.0f - additionalLightData.maxSmoothness), 1.0f / (255 * 255));
+            lightData.minRoughness = Mathf.Max((1.0f - additionalLightData.maxSmoothness) * (1.0f - additionalLightData.maxSmoothness));
 
             lightData.shadowMaskSelector = Vector4.zero;
 

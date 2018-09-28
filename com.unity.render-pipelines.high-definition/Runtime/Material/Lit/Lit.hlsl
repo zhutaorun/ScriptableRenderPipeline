@@ -1223,8 +1223,8 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
     // Note: We use NdotL here to early out, but in case of clear coat this is not correct. But we are OK with this
     bool surfaceReflection = NdotL > 0;
 
-    // Caution: this function modifies NdotL, contactShadowIndex and shadowMaskSelector.
-    float3 transmittance = PreEvaluateDirectionalLightTransmission(lightData, bsdfData, NdotL);
+    // Caution: this function modifies N, NdotL, contactShadowIndex and shadowMaskSelector.
+    float3 transmittance = PreEvaluateDirectionalLightTransmission(lightData, bsdfData, N, NdotL);
 
     float3 color; float attenuation;
     EvaluateLight_Directional(lightLoopContext, posInput, lightData, builtinData, N, L, NdotL,

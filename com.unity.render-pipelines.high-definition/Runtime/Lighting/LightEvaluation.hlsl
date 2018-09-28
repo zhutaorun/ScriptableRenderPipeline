@@ -320,7 +320,7 @@ void EvaluateLight_EnvIntersection(float3 positionWS, float3 normalWS, EnvLightD
 
 // This function returns transmittance to provide to EvaluateTransmission
 float3 PreEvaluateDirectionalLightTransmission(inout DirectionalLightData light,
-                                               BSDFData bsdfData, inout float NdotL)
+                                               BSDFData bsdfData, inout float3 N, inout float NdotL)
 {
     if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_LIT_TRANSMISSION))
     {
@@ -330,6 +330,9 @@ float3 PreEvaluateDirectionalLightTransmission(inout DirectionalLightData light,
             // And since the light is back-facing, it's active.
             if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_TRANSMISSION_MODE_THIN_THICKNESS))
             {
+                // Care must be taken to bias in the direction of the light.
+                N = -N;
+
                 // We want to evaluate cookies and light attenuation, so we flip NdotL.
                 NdotL = -NdotL;
 
