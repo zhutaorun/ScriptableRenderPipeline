@@ -805,8 +805,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                 EditorGUILayout.PropertyField(m_AdditionalShadowData.contactShadows, s_Styles.contactShadows);
 
-                EditorGUILayout.PropertyField(m_AdditionalShadowData.shadowDimmer,           s_Styles.shadowDimmer);
-                EditorGUILayout.PropertyField(m_AdditionalShadowData.volumetricShadowDimmer, s_Styles.shadowDimmer);
+                EditorGUILayout.Slider(m_AdditionalShadowData.shadowDimmer,           0.0f, 1.0f, s_Styles.shadowDimmer);
+                EditorGUILayout.Slider(m_AdditionalShadowData.volumetricShadowDimmer, 0.0f, 1.0f, s_Styles.volumetricShadowDimmer);
+
 
                 if (settings.lightType.enumValueIndex != (int)LightType.Directional)
                 {
