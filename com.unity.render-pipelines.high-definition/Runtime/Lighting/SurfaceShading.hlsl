@@ -201,9 +201,6 @@ float3 PreEvaluatePunctualLightTransmission(LightLoopContext lightLoopContext,
 
                     transmittance *= expOneThird;
 
-                    // Since this is the only place where we use shadows, we should apply shadow dimmer here.
-                    transmittance = lerp(bsdfData.transmittance, transmittance, light.shadowDimmer);
-
                     // Avoid double shadowing.
                     light.shadowIndex = -1;
                 }
