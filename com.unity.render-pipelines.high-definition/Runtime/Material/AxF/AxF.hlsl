@@ -22,9 +22,6 @@
 #define FLAKES_PERCEPTUAL_ROUGHNESS RoughnessToPerceptualRoughness(FLAKES_ROUGHNESS)
 #define FLAKES_F0 1.0
 
-// No transmission support
-// #define MATERIAL_INCLUDE_TRANSMISSION
-
 // Define this to sample the environment maps/LTC samples for each lobe, instead of a single sample with an average lobe
 #define USE_COOK_TORRANCE_MULTI_LOBES   1
 
@@ -43,9 +40,11 @@ float ComputeMicroShadowing(BSDFData bsdfData, float NdotL)
     return 1; // TODO
 }
 
+// No transmission support
+// #define MATERIAL_INCLUDE_TRANSMISSION
 bool MaterialSupportsTransmission(BSDFData bsdfData)
 {
-    return false; // TODO
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -290,8 +289,6 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
 {
     BSDFData    bsdfData;
     //  ZERO_INITIALIZE(BSDFData, data);
-
-    bsdfData.materialFeatures = 0;
 
     bsdfData.normalWS = surfaceData.normalWS;
     bsdfData.tangentWS = surfaceData.tangentWS;

@@ -69,7 +69,6 @@ struct SurfaceData
 // PackingRules = Exact
 struct BSDFData
 {
-    uint materialFeatures;
     float3 normalWS;
     float3 tangentWS;
     float3 biTangentWS;
