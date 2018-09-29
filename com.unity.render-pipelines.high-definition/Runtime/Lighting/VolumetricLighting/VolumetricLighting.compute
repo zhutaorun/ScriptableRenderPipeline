@@ -242,9 +242,6 @@ VoxelLighting EvaluateVoxelLighting(LightLoopContext context, uint featureFlags,
                 light.shadowDimmer       = light.volumetricShadowDimmer;
                 light.lightDimmer        = light.volumetricLightDimmer;
 
-                // Skip the light if it has been dimmed.
-                if (light.volumetricLightDimmer == 0) continue;
-
                 // Process box lights in a separate loop.
                 if (light.lightType == GPULIGHTTYPE_PROJECTOR_BOX) { break; }
 
@@ -375,9 +372,6 @@ VoxelLighting EvaluateVoxelLighting(LightLoopContext context, uint featureFlags,
                 light.contactShadowIndex = -1;
                 light.shadowDimmer       = light.volumetricShadowDimmer;
                 light.lightDimmer        = light.volumetricLightDimmer;
-
-                // Skip the light if it has been dimmed.
-                if (light.volumetricLightDimmer == 0) continue;
 
                 // Convert the box light from OBB to AABB.
                 // 'light.right' and 'light.up' vectors are pre-scaled on the CPU by (2/w) and (2/h).
