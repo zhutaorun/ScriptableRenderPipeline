@@ -284,23 +284,22 @@ VoxelLighting EvaluateVoxelLighting(LightLoopContext context, uint featureFlags,
 
                 if (sampleLight)
                 {
-                    float lightSqRadius = light.size.x;
-
                     float t, distSq, rcpPdf;
                     ImportanceSamplePunctualLight(rndVal, light.positionRWS,
                                                   ray.originWS, ray.jitterDirWS,
-                                                  tEntr, tExit, lightSqRadius,
+                                                  tEntr, tExit,
                                                   t, distSq, rcpPdf);
-
-                    posInput.positionWS  = GetPointAtDistance(ray, t);
 
                     // 'lightToSample' is not affected by the light radius hack.
                     // Do we want to compensate for it?
-                    // For the light vector, we don't even bother to normalize
-                    // since 'distSq' is modified by the light radius hack.
+                    posInput.positionWS  = GetPointAtDistance(ray, t);
                     float3 lightToSample = posInput.positionWS - light.positionRWS;
-                    float3 L             = -lightToSample;
+                    float3 L             = -lightToSample /* * rsqrt(distSq) */;
+                    float  lightSqRadius = light.size.x;
 
+                    // Apply the sphere light hack to soften the core of the punctual light.
+                    // It is not physically plausible (using max() is more correct, but looks worse).
+                           distSq   += lightSqRadius;
                     float  distRcp   = rsqrt(distSq);
                     float  dist      = distSq * distRcp;
                     float  distProj  = dot(lightToSample, light.forward);

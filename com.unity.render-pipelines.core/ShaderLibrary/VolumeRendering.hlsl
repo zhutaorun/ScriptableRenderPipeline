@@ -127,7 +127,7 @@ void ImportanceSampleHomogeneousMedium(real rndVal, real extinction, real interv
 // Ref: Importance Sampling of Area Lights in Participating Medium.
 void ImportanceSamplePunctualLight(real rndVal, real3 lightPosition,
                                    real3 rayOrigin, real3 rayDirection,
-                                   real tMin, real tMax, real lightSqRadius,
+                                   real tMin, real tMax,
                                    out real t, out real sqDist, out real rcpPdf)
 {
     real3 originToLight         = lightPosition - rayOrigin;
@@ -135,11 +135,8 @@ void ImportanceSamplePunctualLight(real rndVal, real3 lightPosition,
     real  originToLightSqDist   = dot(originToLight, originToLight);
     real  rayToLightSqDist      = abs(originToLightSqDist - originToLightProjDist * originToLightProjDist);
 
-    // Apply the sphere light hack to soften the core of the punctual light.
-    // It is not physically plausible (using max() is more correct, but looks worse).
-    // What this code does is (orthogonally) push the light away from the ray.
-    real sqD  = rayToLightSqDist + lightSqRadius;
-    real rcpD = rsqrt(sqD);
+    real sqD  = rayToLightSqDist;
+    real rcpD = rsqrt(max(sqD, FLT_EPS));
     real d    = sqD * rcpD;
     real a    = tMin - originToLightProjDist;
     real b    = tMax - originToLightProjDist;
