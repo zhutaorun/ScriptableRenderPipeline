@@ -55,15 +55,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public uint    lightLayers;
 
         public float   lightDimmer;
-        public float   shadowDimmer;
         public float   volumetricLightDimmer;   // Replaces 'lightDimer'
-        public float   volumetricShadowDimmer;  // Replaces 'shadowDimmer'
+        public float   angleScale;              // Sun disk highlight
+        public float   angleOffset;             // Sun disk highlight
 
         public Vector3 forward;
-        public float   angleScale;              // Sun disk highlight
+        public int     cookieIndex;             // -1 if unused (TODO: 16 bit)
 
         public Vector3 right;                   // Rescaled by (2 / shapeWidth)
-        public float   angleOffset;             // Sun disk highlight
+        public int     tileCookie;              // (TODO: use a bitfield)
 
         public Vector3 up;                      // Rescaled by (2 / shapeHeight)
         public int     shadowIndex;             // -1 if unused (TODO: 16 bit)
@@ -71,12 +71,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3 color;
         public int     contactShadowIndex;      // -1 if unused (TODO: 16 bit)
 
-        public Vector4 shadowMaskSelector;      // Used with ShadowMask feature
-
-        public int     cookieIndex;             // -1 if unused (TODO: 16 bit)
-        public int     tileCookie;              // (TODO: use a bitfield)
+        public float   shadowDimmer;
+        public float   volumetricShadowDimmer;  // Replaces 'shadowDimmer'
         public int     nonLightMappedOnly;      // Used with ShadowMask (TODO: use a bitfield)
         public float   minRoughness;            // Hack
+
+        public Vector4 shadowMaskSelector;      // Used with ShadowMask feature
 
         public float   diffuseDimmer;
         public float   specularDimmer;
@@ -91,38 +91,37 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public uint    lightLayers;
 
         public float   lightDimmer;
-        public float   shadowDimmer;
         public float   volumetricLightDimmer;   // Replaces 'lightDimer'
-        public float   volumetricShadowDimmer;  // Replaces 'shadowDimmer'
-
-        public Vector3 forward;
         public float   angleScale;              // Spot light
-
-        public Vector3 right;                   // If spot: rescaled by cot(outerHalfAngle); if projector: rescaled by (2 / shapeWidth)
         public float   angleOffset;             // Spot light
 
+        public Vector3 forward;
+        public GPULightType lightType;          // TODO: move this up?
+
+        public Vector3 right;                   // If spot: rescaled by cot(outerHalfAngle); if projector: rescaled by (2 / shapeWidth)
+        public float   range;
+
         public Vector3 up;                      // If spot: rescaled by cot(outerHalfAngle); if projector: rescaled by (2 / shapeHeight)
-        public int     shadowIndex;             // -1 if unused (TODO: 16 bit)
+        public float   rangeAttenuationScale;
 
         public Vector3 color;
-        public int     contactShadowIndex;      // -1 if unused (TODO: 16 bit)
-
-        public Vector4 shadowMaskSelector;      // Used with ShadowMask feature
+        public float   rangeAttenuationBias;
 
         public int     cookieIndex;             // -1 if unused
         public int     tileCookie;              // (TODO: use a bitfield)
+        public int     shadowIndex;             // -1 if unused (TODO: 16 bit)
+        public int     contactShadowIndex;      // -1 if unused (TODO: 16 bit)
+
+        public float   shadowDimmer;
+        public float   volumetricShadowDimmer;  // Replaces 'shadowDimmer'
         public int     nonLightMappedOnly;      // Used with ShadowMask feature (TODO: use a bitfield)
         public float   minRoughness;            // This is use to give a small "area" to punctual light, as if we have a light with a radius.
 
-        public Vector2 size;                    // Used by area (X = length or width, Y = height) and punctual lights (X = radius^2)
-        public float   rangeAttenuationScale;
-        public float   rangeAttenuationBias;
+        public Vector4 shadowMaskSelector;      // Used with ShadowMask feature
 
-        public GPULightType lightType;          // TODO: move this up?
-        public float   range;
+        public Vector2 size;                    // Used by area (X = length or width, Y = height) and punctual lights (X = radius)
         public float   diffuseDimmer;
         public float   specularDimmer;
-
     };
 
 
