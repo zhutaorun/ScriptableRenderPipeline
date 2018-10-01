@@ -21,7 +21,7 @@
 // Helper functions/variable specific to this material
 //-----------------------------------------------------------------------------
 
-float3 GetShadowNormalBias(BSDFData bsdfData)
+float3 GetNormalForShadowBias(BSDFData bsdfData)
 {
     return bsdfData.geomNormalWS;
 }

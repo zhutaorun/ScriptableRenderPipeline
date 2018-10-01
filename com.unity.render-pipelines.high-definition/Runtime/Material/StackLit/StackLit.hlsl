@@ -200,7 +200,7 @@ float GetCoatEta(in BSDFData bsdfData)
     return eta;
 }
 
-float3 GetShadowNormalBias(BSDFData bsdfData)
+float3 GetNormalForShadowBias(BSDFData bsdfData)
 {
     return bsdfData.geomNormalWS;
 }
