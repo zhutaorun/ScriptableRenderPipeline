@@ -62,9 +62,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
     public class LightweightRenderPipelineAsset : RenderPipelineAsset, ISerializationCallbackReceiver
     {
-        static readonly string s_SearchPathProject = "Assets";
-        static readonly string s_SearchPathPackage = "Packages/com.unity.render-pipelines.lightweight";
-
         Shader m_DefaultShader;
 
         // Default values set when a new LightweightRenderPipeline asset is created
@@ -108,15 +105,18 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         // Deprecated settings
         [SerializeField] ShadowQuality m_ShadowType = ShadowQuality.HardShadows;
-        [SerializeField] bool m_LocalShadowsSupported;
-        [SerializeField] ShadowResolution m_LocalShadowsAtlasResolution;
-        [SerializeField] int m_MaxPixelLights;
-        [SerializeField] ShadowResolution m_ShadowAtlasResolution;
+        [SerializeField] bool m_LocalShadowsSupported = false;
+        [SerializeField] ShadowResolution m_LocalShadowsAtlasResolution = ShadowResolution._256;
+        [SerializeField] int m_MaxPixelLights = 0;
+        [SerializeField] ShadowResolution m_ShadowAtlasResolution = ShadowResolution._256;
 
         [SerializeField] LightweightRenderPipelineResources m_ResourcesAsset;
 #if UNITY_EDITOR
         [NonSerialized]
         LightweightRenderPipelineEditorResources m_EditorResourcesAsset;
+
+        static readonly string s_SearchPathProject = "Assets";
+        static readonly string s_SearchPathPackage = "Packages/com.unity.render-pipelines.lightweight";
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1812")]
         internal class CreateLightweightPipelineAsset : EndNameEditAction
