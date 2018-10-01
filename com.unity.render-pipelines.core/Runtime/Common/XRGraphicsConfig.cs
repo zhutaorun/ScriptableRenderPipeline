@@ -18,18 +18,31 @@ namespace UnityEngine.Experimental.Rendering
         public float viewportScale = 1.0f;
         public bool useOcclusionMesh = true;
         public float occlusionMeshScale = 1.0f;
-
+        public bool useSRPOverride = false;
+        
         public void CopyTo(XRGraphicsConfig targetConfig)
         {
-            targetConfig.renderScale = this.renderScale;
-            targetConfig.viewportScale = this.viewportScale;
-            targetConfig.useOcclusionMesh = this.useOcclusionMesh;
-            targetConfig.occlusionMeshScale = this.occlusionMeshScale;
+            if (!useSRPOverride && enabled)
+            {
+                targetConfig.renderScale = XRSettings.eyeTextureResolutionScale;
+                targetConfig.viewportScale = XRSettings.renderViewportScale;
+                targetConfig.useOcclusionMesh = XRSettings.useOcclusionMesh;
+                targetConfig.occlusionMeshScale = XRSettings.occlusionMaskScale;
+                targetConfig.useSRPOverride = this.useSRPOverride;
+            }
+            else
+            {
+                targetConfig.renderScale = this.renderScale;
+                targetConfig.viewportScale = this.viewportScale;
+                targetConfig.useOcclusionMesh = this.useOcclusionMesh;
+                targetConfig.occlusionMeshScale = this.occlusionMeshScale;
+                targetConfig.useSRPOverride = this.useSRPOverride;
+            }
         }
 
         public void SetConfig()
-        { // If XR is enabled, sets XRSettings from our saved config
-            if (!enabled)
+        { // If XR is enabled and overridden from SRP, sets XRSettings from our saved config
+            if (!enabled || !useSRPOverride)
                 return;
 
             XRSettings.eyeTextureResolutionScale = renderScale;
@@ -39,7 +52,7 @@ namespace UnityEngine.Experimental.Rendering
         }
         public void SetViewportScale(float viewportScale)
         { // Only sets viewport- since this is probably the only thing getting updated every frame
-            if (!enabled)
+            if (!enabled || !useSRPOverride)
                 return;
 
             XRSettings.renderViewportScale = viewportScale;
