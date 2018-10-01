@@ -468,7 +468,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 case LightShape.Point:
                     settings.lightType.enumValueIndex = (int)LightType.Point;
                     m_AdditionalLightData.lightTypeExtent.enumValueIndex = (int)LightTypeExtent.Punctual;
-                    EditorGUILayout.Slider(m_AdditionalLightData.shapeRadius, 0f, 1f, s_Styles.lightRadius);
+                    EditorGUILayout.PropertyField(m_AdditionalLightData.shapeRadius, s_Styles.lightRadius);
                     EditorGUILayout.PropertyField(m_AdditionalLightData.maxSmoothness, s_Styles.maxSmoothness);
                     break;
 
@@ -497,7 +497,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                             EditorGUILayout.Slider(m_AdditionalLightData.aspectRatio, 0.05f, 20.0f, s_Styles.aspectRatioPyramid);
                         }
 
-                        EditorGUILayout.Slider(m_AdditionalLightData.shapeRadius, 0f, 1f, s_Styles.lightRadius);
+                        EditorGUILayout.PropertyField(m_AdditionalLightData.shapeRadius, s_Styles.lightRadius);
                         EditorGUILayout.PropertyField(m_AdditionalLightData.maxSmoothness, s_Styles.maxSmoothness);
                     }
 
@@ -552,6 +552,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             if (EditorGUI.EndChangeCheck())
             {
+                m_AdditionalLightData.shapeRadius.floatValue = Mathf.Max(m_AdditionalLightData.shapeRadius.floatValue, 0.01f);
                 m_UpdateAreaLightEmissiveMeshComponents = true;
                 ((Light)target).SetLightDirty(); // Should be apply only to parameter that's affect GI, but make the code cleaner
             }

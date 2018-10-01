@@ -122,25 +122,27 @@ void ImportanceSampleHomogeneousMedium(real rndVal, real extinction, real interv
 }
 
 // Implements equiangular light sampling.
-// Returns the distance from the origin of the ray, the squared (radial) distance from the light,
+// Returns the distance from the origin of the ray, the squared distance from the light,
 // and the reciprocal of the PDF.
 // Ref: Importance Sampling of Area Lights in Participating Medium.
 void ImportanceSamplePunctualLight(real rndVal, real3 lightPosition,
                                    real3 rayOrigin, real3 rayDirection,
-                                   real tMin, real tMax,
-                                   out real t, out real rcpPdf, out real sqDist,
-                                   real minRayToLightSqDist = FLT_EPS)
+                                   real tMin, real tMax, real lightSqRadius,
+                                   out real t, out real sqDist, out real rcpPdf)
 {
     real3 originToLight         = lightPosition - rayOrigin;
     real  originToLightProjDist = dot(originToLight, rayDirection);
     real  originToLightSqDist   = dot(originToLight, originToLight);
-    real  rayToLightSqDist      = originToLightSqDist - originToLightProjDist * originToLightProjDist;
+    real  rayToLightSqDist      = abs(originToLightSqDist - originToLightProjDist * originToLightProjDist);
 
-    real a    = tMin - originToLightProjDist;
-    real b    = tMax - originToLightProjDist;
-    real sqD  = max(rayToLightSqDist, minRayToLightSqDist);
+    // Apply the sphere light hack to soften the core of the punctual light.
+    // It is not physically plausible (using max() is more correct, but looks worse).
+    // What this code does is (orthogonally) push the light away from the ray.
+    real sqD  = rayToLightSqDist + lightSqRadius;
     real rcpD = rsqrt(sqD);
     real d    = sqD * rcpD;
+    real a    = tMin - originToLightProjDist;
+    real b    = tMax - originToLightProjDist;
     real x    = a * rcpD;
     real y    = b * rcpD;
 
@@ -153,8 +155,8 @@ void ImportanceSamplePunctualLight(real rndVal, real3 lightPosition,
     // Same but faster:
     // atan(y) - atan(x) = atan((y - x) / (1 + x * y))
     // tan(atan(x) + z)  = (x * cos(z) + sin(z)) / (cos(z) - x * sin(z))
-    real tanGamma = (y - x) * rcp(1 + x * y);
-    real gamma    = FastATanPos(abs(tanGamma));
+    real tanGamma = abs((y - x) * rcp(1 + x * y));
+    real gamma    = FastATanPos(tanGamma);
     real z        = rndVal * gamma;
     real numer    = x * cos(z) + sin(z);
     real denom    = cos(z) - x * sin(z);
@@ -163,9 +165,9 @@ void ImportanceSamplePunctualLight(real rndVal, real3 lightPosition,
 
     real tRelative = d * tanTheta;
 
-    sqDist   = sqD + tRelative * tRelative;
-    rcpPdf   = gamma * sqDist * rcpD;
-    t        = originToLightProjDist + tRelative;
+    sqDist = sqD + tRelative * tRelative;
+    rcpPdf = gamma * sqDist * rcpD;
+    t      = originToLightProjDist + tRelative;
 }
 
 // Absorption coefficient from Disney: http://blog.selfshadow.com/publications/s2015-shading-course/burley/s2015_pbs_disney_bsdf_notes.pdf
