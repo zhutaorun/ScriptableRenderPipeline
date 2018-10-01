@@ -355,7 +355,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // TODO: For MSAA, we'll need to add a Draw path in order to support MSAA properlye
             // Use RG16 as we only have one deferred directional and one screen space shadow light currently
-            m_ScreenSpaceShadowsBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RG16, sRGB: false, enableRandomWrite: true, name: "ScreenSpaceShadowsBuffer");
+            m_ScreenSpaceShadowsBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.R16, sRGB: false, enableRandomWrite: true, name: "ScreenSpaceShadowsBuffer");
 
             if (settings.supportSSR)
             {
@@ -436,7 +436,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 rendererSupportsReceiveShadows = false,
                 rendererSupportsReflectionProbes = true,
                 rendererSupportsRendererPriority = true,
-                rendererOverridesEnvironmentLighting = true
+                rendererOverridesEnvironmentLighting = true,
+                rendererOverridesFog = true,
+                rendererOverridesOtherLightingSettings = true
             };
 
             Lightmapping.SetDelegate(GlobalIlluminationUtils.hdLightsDelegate);
@@ -476,16 +478,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (!SystemInfo.supportsComputeShaders)
                 return false;
 
-            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Direct3D11 ||
-                SystemInfo.graphicsDeviceType == GraphicsDeviceType.Direct3D12 ||
-                SystemInfo.graphicsDeviceType == GraphicsDeviceType.PlayStation4 ||
-                SystemInfo.graphicsDeviceType == GraphicsDeviceType.XboxOne ||
-                SystemInfo.graphicsDeviceType == GraphicsDeviceType.XboxOneD3D12 ||
-                SystemInfo.graphicsDeviceType == GraphicsDeviceType.Vulkan ||
-                SystemInfo.graphicsDeviceType == (GraphicsDeviceType)22 /*GraphicsDeviceType.Switch*/)
-            {
+// If we are in the editor, we have to take the current target build platform as the graphic device type is always the same
+#if UNITY_EDITOR
+            if (HDUtils.IsSupportedBuildTarget(UnityEditor.EditorUserBuildSettings.activeBuildTarget))
                 return true;
-            }
+#else
+            if (HDUtils.IsSupportedGraphicDevice(SystemInfo.graphicsDeviceType))
+                return true;
+#endif
 
             if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Metal)
             {
@@ -779,13 +779,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             if (!m_ValidAPI)
                 return;
-
-            if (XRGraphicsConfig.enabled)
-            {
-                // FIXME add support for renderscale, viewportscale, etc.
-                renderPipelineSettings.xrConfig.SetConfig();
-            }
-
+            
             base.Render(renderContext, cameras);
             RenderPipeline.BeginFrameRendering(cameras);
 
@@ -1060,9 +1054,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // TODO: Add stereo occlusion mask
                     RenderDepthPrepass(m_CullResults, hdCamera, renderContext, cmd);
 
-                    // If objects velocity if enabled, this will render the rest of objects into the target buffers (in addition to the velocity buffer)
-                    RenderObjectsVelocity(m_CullResults, hdCamera, renderContext, cmd);
-
                     // Now that all depths have been rendered, resolve the depth buffer
                     m_SharedRTManager.ResolveSharedRT(cmd, hdCamera);
 
@@ -1109,6 +1100,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // TODO: In the future we will render object velocity at the same time as depth prepass (we need C++ modification for this)
                     // Once the C++ change is here we will first render all object without motion vector then motion vector object
                     // We can't currently render object velocity after depth prepass because if there is no depth prepass we can have motion vector write that should have been rejected
+
+                    // If objects velocity if enabled, this will render the rest of objects into the target buffers (in addition to the velocity buffer)
+                    RenderObjectsVelocity(m_CullResults, hdCamera, renderContext, cmd);
+
                     RenderCameraVelocity(m_CullResults, hdCamera, renderContext, cmd);
 
                     StopStereoRendering(cmd, renderContext, hdCamera);
@@ -1538,13 +1533,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Combination of both depth prepass + motion vector pass provide the full depth buffer
 
             // In order to avoid rendering objects twice (once in the depth pre-pass and once in the motion vector pass, when the motion vector pass is enabled). We exclude the objects that have motion vectors.
-            bool excludeMotion = hdCamera.frameSettings.enableObjectMotionVectors;
+            // TODO: Currently disable, require a C++ PR
+            bool excludeMotion = false; // hdCamera.frameSettings.enableObjectMotionVectors;
 
             if (hdCamera.frameSettings.enableForwardRenderingOnly)
             {
                 using (new ProfilingSample(cmd, "Depth Prepass (forward)", CustomSamplerId.DepthPrepass.GetSampler()))
                 {
                     HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetPrepassBuffersRTI(hdCamera.frameSettings), m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA));
+
+                    XRUtils.DrawOcclusionMesh(cmd, hdCamera.camera, hdCamera.frameSettings.enableStereo);
 
                     // Full forward: Output normal buffer for both forward and forwardOnly
                     // Exclude object that render velocity (if motion vector are enabled)
@@ -1557,6 +1555,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 using (new ProfilingSample(cmd, m_DbufferManager.enableDecals ? "Depth Prepass (deferred) force by Decals" : "Depth Prepass (deferred)", CustomSamplerId.DepthPrepass.GetSampler()))
                 {
                     HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer());
+                                        
+                    XRUtils.DrawOcclusionMesh(cmd, hdCamera.camera, hdCamera.frameSettings.enableStereo);
 
                     // First deferred material
                     RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthOnlyPassNames, 0, HDRenderQueue.k_RenderQueue_AllOpaque, excludeMotionVector: excludeMotion);
@@ -1572,6 +1572,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 using (new ProfilingSample(cmd, "Depth Prepass (deferred incomplete)", CustomSamplerId.DepthPrepass.GetSampler()))
                 {
                     HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer());
+
+                    XRUtils.DrawOcclusionMesh(cmd, hdCamera.camera, hdCamera.frameSettings.enableStereo);
 
                     // First deferred alpha tested materials. Alpha tested object have always a prepass even if enableDepthPrepassWithDeferredRendering is disabled
                     var renderQueueRange = new RenderQueueRange { min = (int)RenderQueue.AlphaTest, max = (int)RenderQueue.GeometryLast - 1 };
