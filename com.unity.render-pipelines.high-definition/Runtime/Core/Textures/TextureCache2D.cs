@@ -47,7 +47,7 @@ namespace UnityEngine.Experimental.Rendering
                 mismatch |= (m_Cache.format != (textureArray[0] as Texture2D).format);
             }
 
-            for (int texIDx = 1; texIDx < textureArray.Length; ++texIDx)
+            for (int texIDx = 0; texIDx < textureArray.Length; ++texIDx)
             {
                 if (mismatch)
                 {
