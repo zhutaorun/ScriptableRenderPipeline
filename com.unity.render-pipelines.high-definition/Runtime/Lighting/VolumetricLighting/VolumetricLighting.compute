@@ -279,32 +279,26 @@ VoxelLighting EvaluateVoxelLighting(LightLoopContext context, uint featureFlags,
 
                 if (sampleLight)
                 {
-                    // We are unable to adequately sample features larger
-                    // than the half of the length of the integration interval.
-                    // Therefore, we apply this hack to reduce flickering.
-                    // This clamp is quite aggressive, blurring the light to kill all aliasing.
-                    // The number 7 comes from the number of unique temporal samples.
-                    float hackMinDistSq = Sq(dt * rcp(7));
-
                     float t, distSq, rcpPdf;
                     ImportanceSamplePunctualLight(rndVal, light.positionRWS,
                                                   ray.originWS, ray.jitterDirWS,
                                                   tEntr, tExit,
-                                                  t, rcpPdf, distSq,
-                                                  hackMinDistSq);
+                                                  t, rcpPdf, distSq);
 
-                    posInput.positionWS = GetPointAtDistance(ray, t);
+                    posInput.positionWS  = GetPointAtDistance(ray, t);
+                    float3 lightToSample = posInput.positionWS - light.positionRWS;
+                    float3 L             = -lightToSample * distSq;
 
                     // Apply the sphere light hack to soften the core of the punctual light.
+                    // It is not physically plausible (using max() is more correct, but looks worse).
                     float sqRadius = light.size.x;
                     distSq += sqRadius;
 
-                    float  distRcp       = rsqrt(distSq);
-                    float  dist          = distSq * distRcp;
-                    float3 lightToSample = posInput.positionWS - light.positionRWS;
-                    float  distProj      = dot(lightToSample, light.forward);
-                    float4 distances     = float4(dist, distSq, distRcp, distProj);
-                    float3 L             = -lightToSample * distRcp; // Note that (length(lightToSample) != dist)
+                    // 'lightToSample' is not affected by the hack. Do we want to compensate for it?
+                    float  distRcp   = rsqrt(distSq);
+                    float  dist      = distSq * distRcp;
+                    float  distProj  = dot(lightToSample, light.forward);
+                    float4 distances = float4(dist, distSq, distRcp, distProj);
 
                     float3 color; float attenuation;
                     EvaluateLight_Punctual(context, posInput, light, unused,
