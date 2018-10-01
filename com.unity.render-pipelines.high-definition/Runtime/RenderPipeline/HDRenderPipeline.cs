@@ -2134,7 +2134,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 context.command = cmd;
                 context.camera = hdcamera.camera;
                 context.sourceFormat = RenderTextureFormat.ARGBHalf;
-                context.flip = (hdcamera.camera.targetTexture == null) && (!hdcamera.camera.stereoEnabled) && !needOutputToColorBuffer;
+                context.flip = (hdcamera.camera.targetTexture == null) && (!hdcamera.frameSettings.enableStereo) && !needOutputToColorBuffer;
 
                 layer.Render(context);
 
