@@ -5,7 +5,6 @@ namespace UnityEngine.Experimental.Rendering
     [CustomPropertyDrawer(typeof(XRGraphicsConfig))]
     public class XRGraphicsConfigDrawer : PropertyDrawer
     {
-        public AnimBool srpOverride; 
         internal class Styles
         {
             public static GUIContent XRSettingsLabel = new GUIContent("XR Config", "Enable XR in Player Settings, then enable SRP Override of XRSettings. Then the below values will be set to XRSettings by SRP.");
