@@ -5,7 +5,6 @@ namespace UnityEngine.Experimental.Rendering
     [CustomPropertyDrawer(typeof(XRGraphicsConfig))]
     public class XRGraphicsConfigDrawer : PropertyDrawer
     {
-        public AnimBool srpOverride; 
         internal class Styles
         {
             public static GUIContent XRSettingsLabel = new GUIContent("XR Config", "Enable XR in Player Settings, then enable SRP Override of XRSettings. Then the below values will be set to XRSettings by SRP.");
@@ -24,9 +23,9 @@ namespace UnityEngine.Experimental.Rendering
             var drawSRPOverride = property.FindPropertyRelative("useSRPOverride");
 
             EditorGUILayout.LabelField(Styles.XRSettingsLabel, EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(drawSRPOverride, Styles.srpOverrideLabel);
             if (XRGraphicsConfig.tryEnable)
             {
+                EditorGUILayout.PropertyField(drawSRPOverride, Styles.srpOverrideLabel);
                 EditorGUI.BeginDisabledGroup(!drawSRPOverride.boolValue);
                 EditorGUI.indentLevel++;
                 EditorGUILayout.PropertyField(drawUseOcclusionMesh, Styles.useOcclusionMeshLabel);
