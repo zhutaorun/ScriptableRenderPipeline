@@ -290,20 +290,16 @@ VoxelLighting EvaluateVoxelLighting(LightLoopContext context, uint featureFlags,
                                                   tEntr, tExit,
                                                   t, distSq, rcpPdf);
 
-                    // 'lightToSample' is not affected by the light radius hack.
-                    // Do we want to compensate for it?
                     posInput.positionWS  = GetPointAtDistance(ray, t);
                     float3 lightToSample = posInput.positionWS - light.positionRWS;
-                    float3 L             = -lightToSample /* * rsqrt(distSq) */;
-                    float  lightSqRadius = light.size.x;
 
-                    // Apply the sphere light hack to soften the core of the punctual light.
-                    // It is not physically plausible (using max() is more correct, but looks worse).
-                           distSq   += lightSqRadius;
                     float  distRcp   = rsqrt(distSq);
                     float  dist      = distSq * distRcp;
                     float  distProj  = dot(lightToSample, light.forward);
                     float4 distances = float4(dist, distSq, distRcp, distProj);
+                    float3 L         = -lightToSample * distRcp;
+
+                    ModifyDistancesToSimulateFillLight(distances, light.size.x);
 
                     // Pass the light direction as the normal to avoid issues with shadow biasing code.
                     float3 color; float attenuation;

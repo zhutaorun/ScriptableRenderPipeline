@@ -114,7 +114,18 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
 // Punctual Light evaluation helper
 //-----------------------------------------------------------------------------
 
-// Return L vector for punctual light (normalize surface to light), lightToSample (light to surface non normalize) and distances {d, d^2, 1/d, d_proj}
+// distances = {d, d^2, 1/d, d_proj}
+void ModifyDistancesToSimulateFillLight(inout float4 distances, float lightSqRadius)
+{
+    // Apply the sphere light hack to soften the core of the punctual light.
+    // It is not physically plausible (using max() is more correct, but looks worse).
+    // We only modify d^2 and 1/d for performance reasons.
+    distances.y += lightSqRadius;      // Adjust d^2
+    distances.z  = rsqrt(distances.y); // Recompute 1/d
+}
+
+// Return L vector for punctual light (normalize surface to light), lightToSample (light to surface non normalize) and
+// distances = {d, d^2, 1/d, d_proj}
 void GetPunctualLightVectors(float3 positionWS, LightData light, out float3 L, out float3 lightToSample, out float4 distances)
 {
     lightToSample = positionWS - light.positionRWS;
@@ -136,6 +147,8 @@ void GetPunctualLightVectors(float3 positionWS, LightData light, out float3 L, o
 
         L = unL * distRcp;
         distances.xyz = float3(dist, distSq, distRcp);
+
+        ModifyDistancesToSimulateFillLight(distances, light.size.x);
     }
 }
 
