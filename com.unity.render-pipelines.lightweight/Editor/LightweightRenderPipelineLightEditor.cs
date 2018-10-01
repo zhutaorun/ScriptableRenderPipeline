@@ -199,7 +199,7 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
         {
             Light light = target as Light;
 
-            if (!(GraphicsSettings.renderPipelineAsset is LightweightPipelineAsset))
+            if (!(GraphicsSettings.renderPipelineAsset is LightweightRenderPipelineAsset))
                 return;
 
             if( light.type == LightType.Spot )
