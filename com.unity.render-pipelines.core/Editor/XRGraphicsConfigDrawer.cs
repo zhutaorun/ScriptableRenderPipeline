@@ -23,9 +23,9 @@ namespace UnityEngine.Experimental.Rendering
             var drawSRPOverride = property.FindPropertyRelative("useSRPOverride");
 
             EditorGUILayout.LabelField(Styles.XRSettingsLabel, EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(drawSRPOverride, Styles.srpOverrideLabel);
             if (XRGraphicsConfig.tryEnable)
             {
+                EditorGUILayout.PropertyField(drawSRPOverride, Styles.srpOverrideLabel);
                 EditorGUI.BeginDisabledGroup(!drawSRPOverride.boolValue);
                 EditorGUI.indentLevel++;
                 EditorGUILayout.PropertyField(drawUseOcclusionMesh, Styles.useOcclusionMeshLabel);
