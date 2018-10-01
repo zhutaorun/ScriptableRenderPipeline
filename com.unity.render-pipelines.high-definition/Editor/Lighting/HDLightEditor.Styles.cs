@@ -27,7 +27,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public readonly GUIContent lightIntensity = new GUIContent("Intensity", "");
 
             public readonly GUIContent maxSmoothness = new GUIContent("Max Smoothness", "Very low cost way of faking spherical area lighting. This will modify the roughness of the material lit. This is useful when the specular highlight is too small or too sharp.");
-            public readonly GUIContent lightRadius = new GUIContent("Light Radius", "Controls the size of the sphere light. For punctual and spot lights, it only affects volumetric lighting.");
+            public readonly GUIContent lightRadius = new GUIContent("Light Radius", "Can be used to soften the core of the punctual light to create fill lighting.");
             public readonly GUIContent affectDiffuse = new GUIContent("Affect Diffuse", "This will disable diffuse lighting for this light. Doesn't save performance, diffuse lighting is still computed.");
             public readonly GUIContent affectSpecular = new GUIContent("Affect Specular", "This will disable specular lighting for this light. Doesn't save performance, specular lighting is still computed.");
             public readonly GUIContent nonLightmappedOnly = new GUIContent("Non Lightmapped Only", "This will disable the rendering of lightmapped object for shadow map. Only effective with shadow mask feature");
