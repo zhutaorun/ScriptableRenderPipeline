@@ -148,7 +148,8 @@ VoxelLighting EvaluateVoxelLighting(LightLoopContext context, uint featureFlags,
             light.lightDimmer        = light.volumetricLightDimmer;
             light.shadowDimmer       = light.volumetricShadowDimmer;
 
-            context.shadowValue = EvaluateRuntimeSunShadow(context, posInput, light);
+            // Pass the light direction as the normal to avoid issues with shadow biasing code.
+            context.shadowValue = EvaluateRuntimeSunShadow(context, posInput, light, -light.forward);
         }
         else
         {
@@ -165,8 +166,9 @@ VoxelLighting EvaluateVoxelLighting(LightLoopContext context, uint featureFlags,
 
             float3 L = -light.forward;
 
+            // Pass the light direction as the normal to avoid issues with shadow biasing code.
             float3 color; float attenuation;
-            EvaluateLight_Directional(context, posInput, light, unused, 0, L, NdotL,
+            EvaluateLight_Directional(context, posInput, light, unused, L, L, NdotL,
                                       color, attenuation);
 
             // Important:
@@ -300,9 +302,10 @@ VoxelLighting EvaluateVoxelLighting(LightLoopContext context, uint featureFlags,
                     float  distProj  = dot(lightToSample, light.forward);
                     float4 distances = float4(dist, distSq, distRcp, distProj);
 
+                    // Pass the light direction as the normal to avoid issues with shadow biasing code.
                     float3 color; float attenuation;
                     EvaluateLight_Punctual(context, posInput, light, unused,
-                                           0, L, NdotL, lightToSample, distances,
+                                           L, L, NdotL, lightToSample, distances,
                                            color, attenuation);
 
                     // Important:
@@ -392,9 +395,10 @@ VoxelLighting EvaluateVoxelLighting(LightLoopContext context, uint featureFlags,
                     float  distProj      = dot(lightToSample, light.forward);
                     float4 distances     = float4(1, 1, 1, distProj);
 
+                    // Pass the light direction as the normal to avoid issues with shadow biasing code.
                     float3 color; float attenuation;
                     EvaluateLight_Punctual(context, posInput, light, unused,
-                                           0, L, NdotL, lightToSample, distances,
+                                           L, L, NdotL, lightToSample, distances,
                                            color, attenuation);
 
                     // Important:

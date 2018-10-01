@@ -25,7 +25,7 @@ float3 EvaluateCookie_Directional(LightLoopContext lightLoopContext, Directional
 
 // Does not account for precomputed (screen-space or baked) shadows.
 float EvaluateRuntimeSunShadow(LightLoopContext lightLoopContext, PositionInputs posInput,
-                               DirectionalLightData light, float3 shadowBiasNormal = 0)
+                               DirectionalLightData light, float3 shadowBiasNormal)
 {
     // The relationship with NdotL is complicated and is therefore handled outside the function.
     if ((light.lightDimmer > 0) && (light.shadowDimmer > 0))
