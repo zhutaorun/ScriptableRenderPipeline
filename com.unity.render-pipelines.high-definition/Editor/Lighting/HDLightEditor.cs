@@ -500,7 +500,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         EditorGUILayout.PropertyField(m_AdditionalLightData.shapeRadius, s_Styles.lightRadius);
                         EditorGUILayout.PropertyField(m_AdditionalLightData.maxSmoothness, s_Styles.maxSmoothness);
                     }
-
                     break;
 
                 case LightShape.Rectangle:
@@ -808,7 +807,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                 EditorGUILayout.Slider(m_AdditionalShadowData.shadowDimmer,           0.0f, 1.0f, s_Styles.shadowDimmer);
                 EditorGUILayout.Slider(m_AdditionalShadowData.volumetricShadowDimmer, 0.0f, 1.0f, s_Styles.volumetricShadowDimmer);
-
 
                 if (settings.lightType.enumValueIndex != (int)LightType.Directional)
                 {
