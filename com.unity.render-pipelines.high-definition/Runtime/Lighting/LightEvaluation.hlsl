@@ -211,7 +211,7 @@ void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs po
     attenuation *= TransmittanceHomogeneousMedium(_GlobalExtinction, distVol);
 
     // Projector lights always have cookies, so we can perform clipping inside the if().
-    UNITY_BRANCH if (light.cookieIndex >= 0)
+    if (light.cookieIndex >= 0)
     {
         float4 cookie = EvaluateCookie_Punctual(lightLoopContext, light, lightToSample);
 
