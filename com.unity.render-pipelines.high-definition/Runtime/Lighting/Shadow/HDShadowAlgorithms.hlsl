@@ -76,7 +76,8 @@ real4 EvalShadow_WorldToShadow(HDShadowData sd, real3 positionWS, bool perspProj
 real3 EvalShadow_GetTexcoordsAtlas(HDShadowData sd, real2 shadowMapSize, real2 offset, real3 positionWS, out real3 posNDC, bool perspProj)
 {
     real4 posCS = EvalShadow_WorldToShadow(sd, positionWS, perspProj);
-    posNDC = perspProj ? (posCS.xyz / posCS.w) : posCS.xyz;
+    // Avoid (0 / 0 = NaN).
+    posNDC = (perspProj && posCS.w != 0) ? (posCS.xyz / posCS.w) : posCS.xyz;
     // calc TCs
     real3 posTC = real3(posNDC.xy * 0.5 + 0.5, posNDC.z);
     posTC.xy = posTC.xy * shadowMapSize * _ShadowAtlasSize.zw + offset;
@@ -93,7 +94,8 @@ real3 EvalShadow_GetTexcoordsAtlas(HDShadowData sd, real2 shadowMapSize, real2 o
 real2 EvalShadow_GetTexcoordsAtlas(HDShadowData sd, real2 offset, real2 shadowMapSize, real2 shadowMapSizeRcp, real3 positionWS, out real2 closestSampleNDC, bool perspProj)
 {
     real4 posCS = EvalShadow_WorldToShadow(sd, positionWS, perspProj);
-    real2 posNDC = perspProj ? (posCS.xy / posCS.w) : posCS.xy;
+    // Avoid (0 / 0 = NaN).
+    real2 posNDC = (perspProj && posCS.w != 0) ? (posCS.xy / posCS.w) : posCS.xy;
     // calc TCs
     real2 posTC = posNDC * 0.5 + 0.5;
     closestSampleNDC = (floor(posTC * shadowMapSize) + 0.5) * shadowMapSizeRcp * 2.0 - 1.0.xx;
