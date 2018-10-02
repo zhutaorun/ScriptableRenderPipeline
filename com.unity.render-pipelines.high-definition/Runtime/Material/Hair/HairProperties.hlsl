@@ -35,8 +35,8 @@ SAMPLER(sampler_EmissiveColorMap);
 CBUFFER_START(UnityPerMaterial)
 
 float4 _UVMappingMask;
-float4 _UVMappingMaskThread;
-float4 _UVMappingMaskEmissive;
+float4 _UVMappingMaskDetail;
+//float4 _UVMappingMaskEmissive;
 
 float4 _DoubleSidedConstants;
 
@@ -50,6 +50,7 @@ float4 _BaseColorMap_MipInfo;
 float4 _SpecularColor;
 
 float _AlphaCutoff;
+float _AlphaCutoffShadow;
 
 float _EnableSpecularOcclusion;
 
@@ -61,10 +62,10 @@ float _AORemapMax;
 
 float _NormalScale;
 
-float4 _ThreadMap_ST;
-float _ThreadAOScale;
-float _ThreadNormalScale;
-float _ThreadSmoothnessScale;
+float4 _DetailMap_ST;
+float _DetailAlbedoScale;
+float _DetailNormalScale;
+float _DetailSmoothnessScale;
 
 float _Anisotropy;
 
@@ -73,8 +74,8 @@ float _SubsurfaceMask;
 float _Thickness;
 float4 _ThicknessRemap;
 
-float4 _EmissiveColorMap_ST;
-float4 _EmissiveColor;
-float _AlbedoAffectEmissive;
+//float4 _EmissiveColorMap_ST;
+//float4 _EmissiveColor;
+//float _AlbedoAffectEmissive;
 
 CBUFFER_END

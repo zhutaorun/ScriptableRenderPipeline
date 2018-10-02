@@ -16,7 +16,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             //Hair
             public static string hairLabelText = "Hair Options";
-            public static GUIContent alphaCutoffShadowText = new GUIContent("Alpha cutoff for shadow pass", "");
+            public static GUIContent alphaCutoffShadowText = new GUIContent("Alpha cutoff shadow", "Alpha cutoff for shadow pass");
 
             // Primary UV mapping
             public static GUIContent UVBaseMappingText = new GUIContent("Base UV mapping", "");
@@ -472,7 +472,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 EditorGUILayout.HelpBox("No diffusion profile Settings have been assigned to the render pipeline asset.", MessageType.Warning);
                 return;
             }
-
          
             // Enable transmission toggle
             m_MaterialEditor.ShaderProperty(enableTransmission, Styles.transmissionToggleText);
@@ -481,8 +480,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             m_MaterialEditor.ShaderProperty(enableSubsurfaceScattering, Styles.subsurfaceToggleText);
             if (enableSubsurfaceScattering.floatValue == 1.0f)
             {
-                m_MaterialEditor.ShaderProperty(subsurfaceMask, Styles.subsurfaceMaskText);
                 m_MaterialEditor.TexturePropertySingleLine(Styles.subsurfaceMaskMapText, subsurfaceMaskMap);
+                m_MaterialEditor.ShaderProperty(subsurfaceMask, Styles.subsurfaceMaskText);
             }
 
             // The thickness sub-menu is toggled if either the transmission or subsurface are requested
