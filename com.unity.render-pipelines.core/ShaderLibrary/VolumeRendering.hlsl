@@ -125,7 +125,7 @@ void ImportanceSampleHomogeneousMedium(real rndVal, real extinction, real interv
 // Returns the distance from the origin of the ray, the squared distance from the light,
 // and the reciprocal of the PDF.
 // Ref: Importance Sampling of Area Lights in Participating Medium.
-void ImportanceSamplePunctualLight(real rndVal, real3 lightPosition,
+void ImportanceSamplePunctualLight(real rndVal, real3 lightPosition, real lightSqRadius,
                                    real3 rayOrigin, real3 rayDirection,
                                    real tMin, real tMax,
                                    out real t, out real sqDist, out real rcpPdf)
@@ -135,8 +135,8 @@ void ImportanceSamplePunctualLight(real rndVal, real3 lightPosition,
     real  originToLightSqDist   = dot(originToLight, originToLight);
     real  rayToLightSqDist      = abs(originToLightSqDist - originToLightProjDist * originToLightProjDist);
 
-    real sqD  = rayToLightSqDist;
-    real rcpD = rsqrt(max(sqD, FLT_EPS));
+    real sqD  = rayToLightSqDist + lightSqRadius;
+    real rcpD = rsqrt(sqD);
     real d    = sqD * rcpD;
     real a    = tMin - originToLightProjDist;
     real b    = tMax - originToLightProjDist;

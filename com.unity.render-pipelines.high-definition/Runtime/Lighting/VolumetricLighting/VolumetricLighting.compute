@@ -287,8 +287,10 @@ VoxelLighting EvaluateVoxelLighting(LightLoopContext context, uint featureFlags,
 
                 if (sampleLight)
                 {
+                    float lightSqRadius = light.size.x;
+
                     float t, distSq, rcpPdf;
-                    ImportanceSamplePunctualLight(rndVal, light.positionRWS,
+                    ImportanceSamplePunctualLight(rndVal, light.positionRWS, lightSqRadius,
                                                   ray.originWS, ray.jitterDirWS,
                                                   tEntr, tExit,
                                                   t, distSq, rcpPdf);
