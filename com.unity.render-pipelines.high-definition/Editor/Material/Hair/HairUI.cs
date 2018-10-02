@@ -12,7 +12,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // Fields
             //public static GUIContent fabricTypeText = new GUIContent("Fabric Type", "");
             public static string InputsText = "Inputs";
-            public static string emissiveLabelText = "Emissive Inputs";
+            //public static string emissiveLabelText = "Emissive Inputs";
             public static string hairLabelText = "Hair Options";
 
             // Primary UV mapping
@@ -47,13 +47,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static GUIContent anisotropyText = new GUIContent("Anisotropy", "Anisotropy scale factor");
             public static GUIContent anisotropyMapText = new GUIContent("Anisotropy Map (R)", "Anisotropy");
 
-            // Thread map
-            public static string threadText = "Thread Inputs";
-            public static GUIContent UVThreadMappingText = new GUIContent("Thread UV mapping", "");
-            public static GUIContent threadMapText = new GUIContent("Thread Map AO(R) Ny(G) S(B) Nx(A)", "Thread Map");
-            public static GUIContent threadAOScaleText = new GUIContent("Thread AO", "Thread AO Scale factor");
-            public static GUIContent threadNormalScaleText = new GUIContent("Thread NormalScale", "Normal Scale factor");
-            public static GUIContent threadSmoothnessScaleText = new GUIContent("Thread SmoothnessScale", "Smoothness Scale factor");
+            // Detail map
+            public static string detailText = "Detail Inputs";
+            public static GUIContent UVDetailMappingText = new GUIContent("Detail UV mapping", "");
+            public static GUIContent detailMapText = new GUIContent("Detail Map A(R) Ny(G) S(B) Nx(A)", "Detail Map");
+            public static GUIContent detailAlbedoScaleText = new GUIContent("Detail Albedo Scale", "Detail Albedo Scale factor");
+            public static GUIContent detailNormalScaleText = new GUIContent("Detail Normal Scale", "Normal Scale factor");
+            public static GUIContent detailSmoothnessScaleText = new GUIContent("Detail Smoothness Scale", "Smoothness Scale factor");
             public static GUIContent linkDetailsWithBaseText = new GUIContent("Lock to Base Tiling/Offset", "Lock details Tiling/Offset to Base Tiling/Offset");
 
             // Fuzz detail
@@ -78,9 +78,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static GUIContent thicknessRemapText = new GUIContent("Thickness Remap", "Remaps values of the thickness map from [0, 1] to the specified range.");
 
             // Emissive
-            public static GUIContent UVMappingEmissiveText = new GUIContent("Emissive UV mapping", "");
-            public static GUIContent emissiveText = new GUIContent("Emissive Map + Color", "Emissive Map + Color (linear RGB) in nits unit");
-            public static GUIContent albedoAffectEmissiveText = new GUIContent("Albedo Affect Emissive", "Specifies whether or not the emissive color is multiplied by the albedo.");
+            //public static GUIContent UVMappingEmissiveText = new GUIContent("Emissive UV mapping", "");
+            //public static GUIContent emissiveText = new GUIContent("Emissive Map + Color", "Emissive Map + Color (linear RGB) in nits unit");
+            //public static GUIContent albedoAffectEmissiveText = new GUIContent("Albedo Affect Emissive", "Specifies whether or not the emissive color is multiplied by the albedo.");
 
             // Specular occlusion
             // public static GUIContent enableSpecularOcclusionText = new GUIContent("Enable Specular Occlusion from Bent normal", "Require cosine weighted bent normal and cosine weighted ambient occlusion. Specular occlusion for reflection probe");
@@ -165,23 +165,23 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected MaterialProperty thicknessRemap = null;
         protected const string kThicknessRemap = "_ThicknessRemap";
 
-        // UV Thread Set & Mask
-        protected MaterialProperty UVThread = null;
-        protected const string kUVThread = "_UVThread";
-        protected MaterialProperty UVMappingMaskThread = null;
-        protected const string kUVMappingMaskThread = "_UVMappingMaskThread";
+        // UV Detail Set & Mask
+        protected MaterialProperty UVDetail = null;
+        protected const string kUVDetail = "_UVDetail";
+        protected MaterialProperty UVMappingMaskDetail = null;
+        protected const string kUVMappingMaskDetail = "_UVMappingMaskDetail";
         
-        // Thread Map
-        protected MaterialProperty threadMap = null;
-        protected const string kThreadMap = "_ThreadMap";
+        // Detail Map
+        protected MaterialProperty detailMap = null;
+        protected const string kDetailMap = "_DetailMap";
 
-        // Thread adjusting
-        protected MaterialProperty threadAOScale = null;
-        protected const string kThreadAOScale = "_ThreadAOScale";
-        protected MaterialProperty threadNormalScale = null;
-        protected const string kThreadNormalScale = "_ThreadNormalScale";
-        protected MaterialProperty threadSmoothnessScale = null;
-        protected const string kThreadSmoothnessScale = "_ThreadSmoothnessScale";
+        // Detail adjusting
+        protected MaterialProperty detailAlbedoScale = null;
+        protected const string kDetailAlbedoScale = "_DetailAlbedoScale";
+        protected MaterialProperty detailNormalScale = null;
+        protected const string kDetailNormalScale = "_DetailNormalScale";
+        protected MaterialProperty detailSmoothnessScale = null;
+        protected const string kDetailSmoothnessScale = "_DetailSmoothnessScale";
 
         // Fuzz Detail
         //protected MaterialProperty fuzzDetailMap = null;
@@ -203,16 +203,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string kAnisotropyMap = "_AnisotropyMap";
 
         // UV Emissive Set & Mask
-        protected MaterialProperty UVEmissive = null;
-        protected const string kUVEmissive = "_UVEmissive";
-        protected MaterialProperty UVMappingMaskEmissive = null;
-        protected const string kUVMappingMaskEmissive = "_UVMappingMaskEmissive";
+        //protected MaterialProperty UVEmissive = null;
+        //protected const string kUVEmissive = "_UVEmissive";
+        //protected MaterialProperty UVMappingMaskEmissive = null;
+        //protected const string kUVMappingMaskEmissive = "_UVMappingMaskEmissive";
 
         // Emissive
-        protected MaterialProperty emissiveColor = null;
-        protected const string kEmissiveColor = "_EmissiveColor";
-        protected MaterialProperty emissiveColorMap = null;
-        protected const string kEmissiveColorMap = "_EmissiveColorMap";
+        //protected MaterialProperty emissiveColor = null;
+        //protected const string kEmissiveColor = "_EmissiveColor";
+        //protected MaterialProperty emissiveColorMap = null;
+        //protected const string kEmissiveColorMap = "_EmissiveColorMap";
 
         // protected MaterialProperty enableSpecularOcclusion = null;
         // protected const string kEnableSpecularOcclusion = "_EnableSpecularOcclusion";
@@ -270,14 +270,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             thicknessRemap = FindProperty(kThicknessRemap, props);
 
             // Details Set and Mask
-            UVThread = FindProperty(kUVThread, props);
-            UVMappingMaskThread = FindProperty(kUVMappingMaskThread, props);
+            UVDetail = FindProperty(kUVDetail, props);
+            UVMappingMaskDetail = FindProperty(kUVMappingMaskDetail, props);
             
-            // Thread map and remapping
-            threadMap = FindProperty(kThreadMap, props);
-            threadAOScale = FindProperty(kThreadAOScale, props);
-            threadNormalScale = FindProperty(kThreadNormalScale, props);
-            threadSmoothnessScale = FindProperty(kThreadSmoothnessScale, props);
+            // Detail map and remapping
+            detailMap = FindProperty(kDetailMap, props);
+            detailAlbedoScale = FindProperty(kDetailAlbedoScale, props);
+            detailNormalScale = FindProperty(kDetailNormalScale, props);
+            detailSmoothnessScale = FindProperty(kDetailSmoothnessScale, props);
             linkDetailsWithBase = FindProperty(kLinkDetailsWithBase, props);
 
             // Fuzz Detail
@@ -291,12 +291,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             anisotropyMap = FindProperty(kAnisotropyMap, props);
 
             // UV Emissive set & Mask
-            UVEmissive = FindProperty(kUVEmissive, props);
-            UVMappingMaskEmissive = FindProperty(kUVMappingMaskEmissive, props);
+            //UVEmissive = FindProperty(kUVEmissive, props);
+            //UVMappingMaskEmissive = FindProperty(kUVMappingMaskEmissive, props);
 
             // Emissive Data
-            emissiveColor = FindProperty(kEmissiveColor, props);
-            emissiveColorMap = FindProperty(kEmissiveColorMap, props);
+            //emissiveColor = FindProperty(kEmissiveColor, props);
+            //emissiveColorMap = FindProperty(kEmissiveColorMap, props);
 
             // Specular occlusion
             // enableSpecularOcclusion = FindProperty(kEnableSpecularOcclusion, props);
@@ -316,7 +316,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             UV3
         }
 
-        public enum UVThreadMapping
+        public enum UVDetailMapping
         {
             UV0,
             UV1,
@@ -324,13 +324,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             UV3
         }
 
-        public enum UVEmissiveMapping
-        {
-            UV0,
-            UV1,
-            UV2,
-            UV3
-        }
+        //public enum UVEmissiveMapping
+        //{
+        //    UV0,
+        //    UV1,
+        //    UV2,
+        //    UV3
+        //}
 
         protected void BaseUVMappingInputGUI()
         {
@@ -411,17 +411,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         protected void DetailsInput(Material material)
         {
-            using (var header = new HeaderScope(Styles.threadText, (uint)Expendable.Detail, this))
+            using (var header = new HeaderScope(Styles.detailText, (uint)Expendable.Detail, this))
             {
                 if (header.expended)
                 {
-                    m_MaterialEditor.TexturePropertySingleLine(Styles.threadMapText, threadMap);
-                    if (material.GetTexture(kThreadMap))
+                    m_MaterialEditor.TexturePropertySingleLine(Styles.detailMapText, detailMap);
+                    if (material.GetTexture(kDetailMap))
                     {
                         EditorGUI.indentLevel++;
-                        m_MaterialEditor.ShaderProperty(threadAOScale, Styles.threadAOScaleText);
-                        m_MaterialEditor.ShaderProperty(threadNormalScale, Styles.threadNormalScaleText);
-                        m_MaterialEditor.ShaderProperty(threadSmoothnessScale, Styles.threadSmoothnessScaleText);
+                        m_MaterialEditor.ShaderProperty(detailAlbedoScale, Styles.detailAlbedoScaleText);
+                        m_MaterialEditor.ShaderProperty(detailNormalScale, Styles.detailNormalScaleText);
+                        m_MaterialEditor.ShaderProperty(detailSmoothnessScale, Styles.detailSmoothnessScaleText);
                         EditorGUI.indentLevel--;
                     }
 
@@ -432,25 +432,25 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     //    m_MaterialEditor.ShaderProperty(fuzzDetailUVScale, Styles.FuzzDetailUVScale);
                     //}
 
-                    //if (material.GetTexture(kThreadMap) || material.GetTexture(kFuzzDetailMap))
-                    //{
+                    if (material.GetTexture(kDetailMap))
+                    {
                         EditorGUI.indentLevel++;
 
-                        m_MaterialEditor.ShaderProperty(UVThread, Styles.UVThreadMappingText);
+                        m_MaterialEditor.ShaderProperty(UVDetail, Styles.UVDetailMappingText);
 
                         // Setup the UVSet for detail, if planar/triplanar is use for base, it will override the mapping of detail (See shader code)
                         float X, Y, Z, W;
-                        X = ((UVThreadMapping)UVThread.floatValue == UVThreadMapping.UV0) ? 1.0f : 0.0f;
-                        Y = ((UVThreadMapping)UVThread.floatValue == UVThreadMapping.UV1) ? 1.0f : 0.0f;
-                        Z = ((UVThreadMapping)UVThread.floatValue == UVThreadMapping.UV2) ? 1.0f : 0.0f;
-                        W = ((UVThreadMapping)UVThread.floatValue == UVThreadMapping.UV3) ? 1.0f : 0.0f;
-                        UVMappingMaskThread.colorValue = new Color(X, Y, Z, W);
+                        X = ((UVDetailMapping)UVDetail.floatValue == UVDetailMapping.UV0) ? 1.0f : 0.0f;
+                        Y = ((UVDetailMapping)UVDetail.floatValue == UVDetailMapping.UV1) ? 1.0f : 0.0f;
+                        Z = ((UVDetailMapping)UVDetail.floatValue == UVDetailMapping.UV2) ? 1.0f : 0.0f;
+                        W = ((UVDetailMapping)UVDetail.floatValue == UVDetailMapping.UV3) ? 1.0f : 0.0f;
+                        UVMappingMaskDetail.colorValue = new Color(X, Y, Z, W);
 
                         EditorGUI.indentLevel++;
                         m_MaterialEditor.ShaderProperty(linkDetailsWithBase, Styles.linkDetailsWithBaseText);
                         EditorGUI.indentLevel--;
-                        m_MaterialEditor.TextureScaleOffsetProperty(threadMap);
-                    //}
+                        m_MaterialEditor.TextureScaleOffsetProperty(detailMap);
+                    }
                 }
             }
         }
@@ -544,36 +544,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        protected void EmissiveInputGUI(Material material)
-        {
-            using (var header = new HeaderScope(Styles.emissiveLabelText, (uint)Expendable.Emissive, this))
-            {
-                if (header.expended)
-                {
-                    m_MaterialEditor.TexturePropertySingleLine(Styles.emissiveText, emissiveColorMap, emissiveColor);
-
-                    if (material.GetTexture(kEmissiveColorMap))
-                    {
-                        EditorGUI.indentLevel++;
-                        m_MaterialEditor.ShaderProperty(UVEmissive, Styles.UVMappingEmissiveText);
-                        UVBaseMapping uvEmissiveMapping = (UVBaseMapping)UVEmissive.floatValue;
-
-                        float X, Y, Z, W;
-                        X = (uvEmissiveMapping == UVBaseMapping.UV0) ? 1.0f : 0.0f;
-                        Y = (uvEmissiveMapping == UVBaseMapping.UV1) ? 1.0f : 0.0f;
-                        Z = (uvEmissiveMapping == UVBaseMapping.UV2) ? 1.0f : 0.0f;
-                        W = (uvEmissiveMapping == UVBaseMapping.UV3) ? 1.0f : 0.0f;
-
-                        UVMappingMaskEmissive.colorValue = new Color(X, Y, Z, W);
-
-
-                        m_MaterialEditor.TextureScaleOffsetProperty(emissiveColorMap);
-                        EditorGUI.indentLevel--;
-                    }
-                }
-            }
-        }
-
         protected void ShaderAnisoInputGUI(Material material)
         {
             //HAIR: always have anisotropy
@@ -603,7 +573,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             BaseInputGUI(material);
 
             // Emissive GUI
-            EmissiveInputGUI(material);
+            //EmissiveInputGUI(material);
 
             // Details Input
             DetailsInput(material);
@@ -648,15 +618,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // CoreUtils.SetKeyword(material, "_ENABLESPECULAROCCLUSION", material.GetFloat(kEnableSpecularOcclusion) > 0.0f);
 
             CoreUtils.SetKeyword(material, "_ANISOTROPYMAP", material.GetTexture(kAnisotropyMap));
-            CoreUtils.SetKeyword(material, "_THREAD_MAP", material.GetTexture(kThreadMap));
+            CoreUtils.SetKeyword(material, "_THREAD_MAP", material.GetTexture(kDetailMap));
             //CoreUtils.SetKeyword(material, "_FUZZDETAIL_MAP", material.GetTexture(kFuzzDetailMap));
             CoreUtils.SetKeyword(material, "_SUBSURFACE_MASK_MAP", material.GetTexture(kSubsurfaceMaskMap));
             CoreUtils.SetKeyword(material, "_THICKNESSMAP", material.GetTexture(kThicknessMap));
-            CoreUtils.SetKeyword(material, "_EMISSIVE_COLOR_MAP", material.GetTexture(kEmissiveColorMap)); 
+            //CoreUtils.SetKeyword(material, "_EMISSIVE_COLOR_MAP", material.GetTexture(kEmissiveColorMap)); 
 
             // Require and set 
-            bool needUV2 = (UVThreadMapping)material.GetFloat(kUVThread) == UVThreadMapping.UV2 || (UVBaseMapping)material.GetFloat(kUVBase) == UVBaseMapping.UV2 || (UVBaseMapping)material.GetFloat(kUVEmissive) == UVBaseMapping.UV2;
-            bool needUV3 = (UVThreadMapping)material.GetFloat(kUVThread) == UVThreadMapping.UV3 || (UVBaseMapping)material.GetFloat(kUVBase) == UVBaseMapping.UV3 || (UVBaseMapping)material.GetFloat(kUVEmissive) == UVBaseMapping.UV2;
+            bool needUV2 = (UVDetailMapping)material.GetFloat(kUVDetail) == UVDetailMapping.UV2 || (UVBaseMapping)material.GetFloat(kUVBase) == UVBaseMapping.UV2 ;
+            bool needUV3 = (UVDetailMapping)material.GetFloat(kUVDetail) == UVDetailMapping.UV3 || (UVBaseMapping)material.GetFloat(kUVBase) == UVBaseMapping.UV3 ;
 
             if (needUV3)
             {

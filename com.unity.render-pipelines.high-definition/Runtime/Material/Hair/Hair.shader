@@ -41,26 +41,26 @@ Shader "HDRenderPipeline/Hair"
         _SpecularColor("SpecularColor", Color) = (1.0, 1.0, 1.0)
 
         // Thread Data
-        [Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3)] _UVThread("UV Set for thread", Float) = 0
-        [HideInInspector] _UVMappingMaskThread("UVMappingMaskThread", Color) = (1, 0, 0, 0)
-        _ThreadMap("ThreadMap", 2D) = "black" {}
-        _ThreadAOScale("ThreadAOScale", Range(0.0, 1.0)) = 0.5
-        _ThreadNormalScale("ThreadNormalScale", Range(0.0, 2.0)) = 1
-        _ThreadSmoothnessScale("ThreadSmoothnessScale", Range(0.0, 2.0)) = 1
+        [Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3)] _UVDetail("UV Set for Detail map", Float) = 0
+        [HideInInspector] _UVMappingMaskDetail("UVMappingMaskDetail", Color) = (1, 0, 0, 0)
+        _DetailMap("DetailMap", 2D) = "black" {}
+        _DetailAlbedoScale("DetailAlbedoScale", Range(0.0, 1.0)) = 0.5
+        _DetailNormalScale("DetailNormalScale", Range(0.0, 2.0)) = 1
+        _DetailSmoothnessScale("DetailSmoothnessScale", Range(0.0, 2.0)) = 1
 
         // Fuzz Detail
-        _FuzzDetailMap("FuzzDetailMap", 2D) = "white" {}
-        _FuzzDetailScale("_FuzzDetailScale", Range(0.0, 1.0)) = 0.0
-        _FuzzDetailUVScale("_FuzzDetailUVScale", Range(0.01, 1.0)) = 0.25
+        //_FuzzDetailMap("FuzzDetailMap", 2D) = "white" {}
+        //_FuzzDetailScale("_FuzzDetailScale", Range(0.0, 1.0)) = 0.0
+        //_FuzzDetailUVScale("_FuzzDetailUVScale", Range(0.01, 1.0)) = 0.25
 
         [ToggleUI] _LinkDetailsWithBase("LinkDetailsWithBase", Float) = 1.0
 
         // Emissive Data
-        [Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3)] _UVEmissive("UV Set for emissive", Float) = 0
-        [HideInInspector] _UVMappingMaskEmissive("_UVMappingMaskEmissive", Color) = (1, 0, 0, 0)
-        [HDR] _EmissiveColor("EmissiveColor", Color) = (0, 0, 0)
-        _EmissiveColorMap("EmissiveColorMap", 2D) = "white" {}
-        [ToggleUI] _AlbedoAffectEmissive("Albedo Affect Emissive", Float) = 0.0
+        //[Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3)] _UVEmissive("UV Set for emissive", Float) = 0
+        //[HideInInspector] _UVMappingMaskEmissive("_UVMappingMaskEmissive", Color) = (1, 0, 0, 0)
+        //[HDR] _EmissiveColor("EmissiveColor", Color) = (0, 0, 0)
+        //_EmissiveColorMap("EmissiveColorMap", 2D) = "white" {}
+        //[ToggleUI] _AlbedoAffectEmissive("Albedo Affect Emissive", Float) = 0.0
 
         // Anisotropy Data
         _Anisotropy("Anisotropy", Range(-1.0, 1.0)) = 0
@@ -114,7 +114,7 @@ Shader "HDRenderPipeline/Hair"
         [ToggleUI] _EnableFogOnTransparent("Enable Fog", Float) = 1.0
         [ToggleUI] _EnableBlendModePreserveSpecularLighting("Enable Blend Mode Preserve Specular Lighting", Float) = 1.0
 
-        _EmissionColor("Color", Color) = (1, 1, 1)
+        //_EmissionColor("Color", Color) = (1, 1, 1)
 
         // HACK: GI Baking system relies on some properties existing in the shader ("_MainTex", "_Cutoff" and "_Color") for opacity handling, so we need to store our version of those parameters in the hard-coded name the GI baking system recognizes.
         _MainTex("Albedo", 2D) = "white" {}
@@ -149,7 +149,7 @@ Shader "HDRenderPipeline/Hair"
     #pragma shader_feature _THREAD_MAP
     #pragma shader_feature _SUBSURFACE_MASK_MAP
     #pragma shader_feature _THICKNESSMAP
-    #pragma shader_feature _EMISSIVE_COLOR_MAP
+    //#pragma shader_feature _EMISSIVE_COLOR_MAP
 
     // Keyword for transparent
     #pragma shader_feature _SURFACE_TYPE_TRANSPARENT
@@ -236,7 +236,7 @@ Shader "HDRenderPipeline/Hair"
             ENDHLSL
         }
 
-        // Extracts information for lightmapping, GI (emission, albedo, ...)
+        // Extracts information for lightmapping, GI (albedo, ...)
         // This pass it not used during regular rendering.
         Pass
         {
