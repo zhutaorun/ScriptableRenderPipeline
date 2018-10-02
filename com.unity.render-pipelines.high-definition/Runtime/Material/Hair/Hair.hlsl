@@ -267,7 +267,7 @@ LightTransportData GetLightTransportData(SurfaceData surfaceData, BuiltinData bu
 
     // DiffuseColor for lightmapping
     lightTransportData.diffuseColor = bsdfData.diffuseColor;
-    lightTransportData.emissiveColor = builtinData.emissiveColor;
+    //lightTransportData.emissiveColor = builtinData.emissiveColor;
 
     return lightTransportData;
 }

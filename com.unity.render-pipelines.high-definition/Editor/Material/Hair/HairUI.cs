@@ -13,7 +13,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             //public static GUIContent fabricTypeText = new GUIContent("Fabric Type", "");
             public static string InputsText = "Inputs";
             //public static string emissiveLabelText = "Emissive Inputs";
+
+            //Hair
             public static string hairLabelText = "Hair Options";
+            public static GUIContent alphaCutoffShadowText = new GUIContent("Alpha cutoff for shadow pass", "");
 
             // Primary UV mapping
             public static GUIContent UVBaseMappingText = new GUIContent("Base UV mapping", "");
@@ -87,9 +90,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // public static GUIContent specularOcclusionWarning = new GUIContent("Require a cosine weighted bent normal and ambient occlusion maps");
         }
 
-        // Fabric Type
-        //protected MaterialProperty fabricType = null;
-        //protected const string kFabricType = "_FabricType";
+        // Hair
+        protected MaterialProperty alphaCutoffShadow = null;
+        protected const string kAlphaCutoffShadow = "_AlphaCutoffShadow";
 
         // Base UV set & mask
         protected MaterialProperty UVBase = null;
@@ -221,8 +224,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         override protected void FindMaterialProperties(MaterialProperty[] props)
         {
-            // Fabric Type
-            //fabricType = FindProperty(kFabricType, props);           
+            // Hair
+            alphaCutoffShadow = FindProperty(kAlphaCutoffShadow, props);           
 
             // Base UV set & mask
             UVBase = FindProperty(kUVBase, props);
@@ -565,7 +568,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 {
                     //HAIR no fabric type
                     // The generic type of the fabric (either cotton/wool or silk)
-                    //m_MaterialEditor.ShaderProperty(fabricType, Styles.fabricTypeText);
+                    m_MaterialEditor.ShaderProperty(alphaCutoffShadow, Styles.alphaCutoffShadowText);
                 }
             }
 

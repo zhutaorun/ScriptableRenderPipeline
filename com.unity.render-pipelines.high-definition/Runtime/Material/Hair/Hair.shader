@@ -95,6 +95,7 @@ Shader "HDRenderPipeline/Hair"
         [ToggleUI]  _AlphaCutoffEnable("Alpha Cutoff Enable", Float) = 0.0
         _AlphaCutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
         _TransparentSortPriority("_TransparentSortPriority", Float) = 0
+        _AlphaCutoffShadow("Alpha Cutoff Shadow", Range(0.0, 1.0)) = 0.5
 
         // Stencil state
         [HideInInspector] _StencilRef("_StencilRef", Int) = 2 // StencilLightingUsage.RegularLighting  (fixed at compile time)
@@ -146,7 +147,7 @@ Shader "HDRenderPipeline/Hair"
     #pragma shader_feature _ENABLESPECULAROCCLUSION
     #pragma shader_feature _TANGENTMAP
     #pragma shader_feature _ANISOTROPYMAP
-    #pragma shader_feature _THREAD_MAP
+    #pragma shader_feature _DETAIL_MAP
     #pragma shader_feature _SUBSURFACE_MASK_MAP
     #pragma shader_feature _THICKNESSMAP
     //#pragma shader_feature _EMISSIVE_COLOR_MAP
