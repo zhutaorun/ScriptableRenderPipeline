@@ -219,6 +219,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.DrawProcedural(Matrix4x4.identity, GetBlitMaterial(), bilinear ? 2 : 3, MeshTopology.Quads, 4, 1, s_PropertyBlock);
         }
 
+        public static void BlitQuad(CommandBuffer cmd, Texture2DArray source, Vector4 scaleBiasTex, Vector4 scaleBiasRT, int mipLevelTex, int sliceIndex, bool bilinear)
+        {
+            s_PropertyBlock.SetTexture(HDShaderIDs._BlitTextureArray, source);
+            s_PropertyBlock.SetVector(HDShaderIDs._BlitScaleBias, scaleBiasTex);
+            s_PropertyBlock.SetVector(HDShaderIDs._BlitScaleBiasRt, scaleBiasRT);
+            s_PropertyBlock.SetFloat(HDShaderIDs._BlitMipLevel, mipLevelTex);
+            s_PropertyBlock.SetFloat(HDShaderIDs._BlitTextureSlice, sliceIndex);
+            cmd.DrawProcedural(Matrix4x4.identity, GetBlitMaterial(), bilinear ? 4 : 5, MeshTopology.Quads, 4, 1, s_PropertyBlock);
+        }
+
         public static void BlitTexture(CommandBuffer cmd, RTHandleSystem.RTHandle source, RTHandleSystem.RTHandle destination, Vector4 scaleBias, float mipLevel, bool bilinear)
         {
             s_PropertyBlock.SetTexture(HDShaderIDs._BlitTexture, source);

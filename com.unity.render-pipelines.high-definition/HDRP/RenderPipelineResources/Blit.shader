@@ -8,11 +8,13 @@ Shader "Hidden/HDRenderPipeline/Blit"
         #include "../ShaderVariables.hlsl"
 
         TEXTURE2D(_BlitTexture);
+        TEXTURE2D_ARRAY(_BlitTextureArray);
         SamplerState sampler_PointClamp;
         SamplerState sampler_LinearClamp;
         uniform float4 _BlitScaleBias;
         uniform float4 _BlitScaleBiasRt;
         uniform float _BlitMipLevel;
+        uniform float _BlitTextureSlice;
 
         struct Attributes
         {
@@ -50,6 +52,16 @@ Shader "Hidden/HDRenderPipeline/Blit"
         float4 FragBilinear(Varyings input) : SV_Target
         {
             return SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_LinearClamp, input.texcoord, _BlitMipLevel);
+        }
+
+        float4 FragBilinearTexArray(Varyings input) : SV_Target
+        {
+            return SAMPLE_TEXTURE2D_ARRAY_LOD(_BlitTextureArray, sampler_LinearClamp, input.texcoord, _BlitTextureSlice, _BlitMipLevel);
+        }
+
+        float4 FragNearestTexArray(Varyings input) : SV_Target
+        {
+            return SAMPLE_TEXTURE2D_ARRAY_LOD(_BlitTextureArray, sampler_PointClamp, input.texcoord, _BlitTextureSlice, _BlitMipLevel);
         }
 
     ENDHLSL
@@ -99,6 +111,26 @@ Shader "Hidden/HDRenderPipeline/Blit"
             HLSLPROGRAM
                 #pragma vertex VertQuad
                 #pragma fragment FragBilinear
+            ENDHLSL
+        }
+        // 4: Bilinear Texture Array Quad
+        Pass
+        {
+            ZWrite Off ZTest Always Blend Off Cull Off
+
+            HLSLPROGRAM
+                #pragma vertex VertQuad
+                #pragma fragment FragBilinearTexArray
+            ENDHLSL
+        }
+        // 5: Nearest Texture Array Quad
+        Pass
+        {
+            ZWrite Off ZTest Always Blend Off Cull Off
+
+            HLSLPROGRAM
+                #pragma vertex VertQuad
+                #pragma fragment FragNearestTexArray
             ENDHLSL
         }
 

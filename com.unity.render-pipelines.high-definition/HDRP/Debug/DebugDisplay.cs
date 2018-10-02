@@ -787,6 +787,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (DebugNeedsExposure())
                 list.Add(new DebugUI.FloatField { displayName = "Debug Exposure", getter = () => lightingDebugSettings.debugExposure, setter = value => lightingDebugSettings.debugExposure = value });
 
+            list.Add(new DebugUI.BoolField { displayName = "Display Light Cookie Atlas", getter = () => lightingDebugSettings.lightCookieDebug, setter = value => lightingDebugSettings.lightCookieDebug = value, onValueChanged = RefreshLightingDebug });
+
             m_DebugLightingItems = list.ToArray();
             var panel = DebugManager.instance.GetPanel(k_PanelLighting, true);
             panel.children.Add(m_DebugLightingItems);
