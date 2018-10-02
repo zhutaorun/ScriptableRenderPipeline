@@ -302,7 +302,7 @@ VoxelLighting EvaluateVoxelLighting(LightLoopContext context, uint featureFlags,
                     float4 distances = float4(dist, distSq, distRcp, distProj);
                     float3 L         = -lightToSample * distRcp;
 
-                    ModifyDistancesToSimulateFillLight(distances, light.size.x);
+                    ModifyDistancesForFillLighting(distances, light.size.x);
 
                     // Pass the light direction as the normal to avoid issues with shadow biasing code.
                     float3 color; float attenuation;

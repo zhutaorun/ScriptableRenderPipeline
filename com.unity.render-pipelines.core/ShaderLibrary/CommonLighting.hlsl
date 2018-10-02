@@ -118,7 +118,8 @@ real PunctualLightAttenuation(real4 distances, real rangeAttenuationScale, real 
     real distProj = distances.w;
     real cosFwd   = distProj * distRcp;
 
-    real attenuation = min(distRcp, 1.0 / PUNCTUAL_LIGHT_THRESHOLD);
+    // ModifyDistancesToSimulateFillLight() handles distance clamping for us.
+    real attenuation = distRcp;
     attenuation *= DistanceWindowing(distSq, rangeAttenuationScale, rangeAttenuationBias);
     attenuation *= AngleAttenuation(cosFwd, lightAngleScale, lightAngleOffset);
 

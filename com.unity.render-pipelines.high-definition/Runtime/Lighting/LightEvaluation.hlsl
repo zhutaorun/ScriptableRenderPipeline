@@ -115,7 +115,7 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
 //-----------------------------------------------------------------------------
 
 // distances = {d, d^2, 1/d, d_proj}
-void ModifyDistancesToSimulateFillLight(inout float4 distances, float lightSqRadius)
+void ModifyDistancesForFillLighting(inout float4 distances, float lightSqRadius)
 {
     // Apply the sphere light hack to soften the core of the punctual light.
     // It is not physically plausible (using max() is more correct, but looks worse).
@@ -148,7 +148,7 @@ void GetPunctualLightVectors(float3 positionWS, LightData light, out float3 L, o
         L = unL * distRcp;
         distances.xyz = float3(dist, distSq, distRcp);
 
-        ModifyDistancesToSimulateFillLight(distances, light.size.x);
+        ModifyDistancesForFillLighting(distances, light.size.x);
     }
 }
 
