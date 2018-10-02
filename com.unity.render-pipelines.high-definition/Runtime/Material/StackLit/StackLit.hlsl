@@ -2226,7 +2226,7 @@ void BSDF(float3 inV, float3 inL, float inNdotL, float3 positionWS, PreLightData
 
 
     // TODO: config option + diffuse GGX
-    float3 diffuseTerm = Lambert() * max(0, NdotL[DNLV_BASE_IDX]);
+    float3 diffuseTerm = Lambert() * max(0, inNdotL);
 
 #ifdef VLAYERED_DIFFUSE_ENERGY_HACKED_TERM
     // TODOENERGYDIFFUSE: Energy when vlayered.
