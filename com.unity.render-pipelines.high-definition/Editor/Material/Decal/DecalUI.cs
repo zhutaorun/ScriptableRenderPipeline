@@ -14,7 +14,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             Input = 1 << 0
         }
         static Expendable state = Expendable.Input;
-        protected override uint expendedState { get => (uint)state; set => state = (Expendable)value; }
+        protected override uint expendedState { get { return (uint)state; } set { state = (Expendable)value; } }
 
         protected static class Styles
         {

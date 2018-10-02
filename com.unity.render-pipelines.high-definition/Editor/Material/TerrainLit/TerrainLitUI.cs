@@ -10,7 +10,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     class TerrainLitGUI : LitGUI, ITerrainLayerCustomUI
     {
         static Expendable state = 0;
-        protected override uint expendedState { get => (uint)state; set => state = (Expendable)value; }
+        protected override uint expendedState { get { return (uint)state; } set { state = (Expendable)value; } }
 
         private class StylesLayer
         {

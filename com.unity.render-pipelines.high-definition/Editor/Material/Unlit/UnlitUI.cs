@@ -7,7 +7,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     class UnlitGUI : BaseUnlitGUI
     {
         static Expendable state = Expendable.Base | Expendable.Input | Expendable.Transparency;
-        protected override uint expendedState { get => (uint)state; set => state = (Expendable)value; }
+        protected override uint expendedState { get { return (uint)state; } set { state = (Expendable)value; } }
 
         protected static class Styles
         {
