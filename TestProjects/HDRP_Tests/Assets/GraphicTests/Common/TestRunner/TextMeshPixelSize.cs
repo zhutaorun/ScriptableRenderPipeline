@@ -11,9 +11,9 @@ public class TextMeshPixelSize : MonoBehaviour
 
 	[SerializeField] HDRP_TestSettings testSettings;
 	[SerializeField] new Camera camera;
-	
+
 	[HideInInspector, SerializeField] TextMesh textMesh;
-	
+
 	[SerializeField] bool pixelPerfect = false;
 	void Update()
 	{
@@ -28,7 +28,7 @@ public class TextMeshPixelSize : MonoBehaviour
 		if (textMesh == null) return;
 
 		float ratio = 1f * testSettings.ImageComparisonSettings.TargetWidth / testSettings.ImageComparisonSettings.TargetHeight;
-		
+
 		Vector3 pos = camera.transform.InverseTransformPoint( transform.position );
 
 		float zDistance = pos.z;
@@ -52,7 +52,7 @@ public class TextMeshPixelSize : MonoBehaviour
 
 			CorrectPosition();
 		}
-		
+
 		size = ( pixelSize + 2f ) * cameraPixelSize;
 
 		textMesh.characterSize = size;
@@ -60,12 +60,12 @@ public class TextMeshPixelSize : MonoBehaviour
 		textMesh.richText = false;
 	}
 
-#endif
-
 	public void CorrectPosition()
 	{
+
+
 		Vector3 pos = camera.transform.InverseTransformPoint( transform.position );
-		
+
 		float zDistance = pos.z;
 		if (zDistance < 0f ) return;
 
@@ -86,4 +86,6 @@ public class TextMeshPixelSize : MonoBehaviour
 		pos = camera.transform.TransformPoint(pos);
 		transform.position = pos;
 	}
+
+#endif
 }
