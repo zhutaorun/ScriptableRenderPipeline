@@ -1288,24 +1288,30 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             // when we have a group of multiple cameras rendering into the same render target, for every camera but the last of the group, we need to output the result into
                             // the camera color buffer so that the next camera can accumulate over it.
                             RenderPostProcess(hdCamera, cmd, postProcessLayer, !lastCameraFromGroup);
+                            StopStereoRendering(cmd, renderContext, hdCamera);
                         }
                         else
                         {
                             using (new ProfilingSample(cmd, "Blit to final RT", CustomSamplerId.BlitToFinalRT.GetSampler()))
                             {
-                                // This Blit will flip the screen on anything other than openGL
-                                if (srcFrameSettings.enableStereo && (XRGraphicsConfig.eyeTextureDesc.vrUsage == VRTextureUsage.TwoEyes))
-                                {
-                                    cmd.BlitFullscreenTriangle(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget); // If double-wide, only blit once (not once per-eye)
+                                if (srcFrameSettings.enableStereo && (XRGraphicsConfig.eyeTextureDesc.dimension == TextureDimension.Tex2D))
+                                {   // If double-wide, only blit once (not once per-eye)
+#if UNITY_2019_1_OR_NEWER // a fix for stereo y-flip landed in 2019.1
+                                    StopStereoRendering(cmd, renderContext, hdCamera);
+                                    HDUtils.BlitCameraTexture(cmd, hdCamera, m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget);
+#else
+                                    cmd.BlitFullscreenTriangle(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget); 
+                                    StopStereoRendering(cmd, renderContext, hdCamera);
+#endif
                                 }
                                 else
                                 {
                                     HDUtils.BlitCameraTexture(cmd, hdCamera, m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget);
+                                    StopStereoRendering(cmd, renderContext, hdCamera);
                                 }
                             }
                         }
 
-                        StopStereoRendering(cmd, renderContext, hdCamera);
                         // Pushes to XR headset and/or display mirror
                         if (hdCamera.frameSettings.enableStereo)
                             renderContext.StereoEndRender(hdCamera.camera);
@@ -2148,7 +2154,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 context.command = cmd;
                 context.camera = hdcamera.camera;
                 context.sourceFormat = RenderTextureFormat.ARGBHalf;
-                context.flip = (hdcamera.camera.targetTexture == null) && (!hdcamera.camera.stereoEnabled) && !needOutputToColorBuffer;
+                context.flip = (hdcamera.camera.targetTexture == null) && !needOutputToColorBuffer;
+#if !UNITY_2019_1_OR_NEWER // 2019.1 included fix for stereo yflip
+                context.flip = context.flip && !hdcamera.frameSettings.enableStereo;
+#endif
 
                 layer.Render(context);
 
