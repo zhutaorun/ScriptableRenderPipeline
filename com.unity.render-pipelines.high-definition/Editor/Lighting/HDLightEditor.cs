@@ -153,6 +153,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         HDShadowInitParameters                m_HDShadowInitParameters;
         Dictionary<HDShadowQuality, Action>   m_ShadowAlgorithmUIs;
 
+        //we need this to determine if we not attempt to render it two time the same frame
+        //This is needed as we have tried to work outside of Gizmo scope with Handle only for SRP
+        int lastRenderedHandleFrame = 0; 
+
         protected override void OnEnable()
         {
             base.OnEnable();
@@ -294,10 +298,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected override void OnSceneGUI()
         {
             Light light = (Light)target;
-            if (!Selection.Contains(light.gameObject))
+            if (!Selection.Contains(light.gameObject) || lastRenderedHandleFrame == Time.frameCount)
             {
                 return;
             }
+            lastRenderedHandleFrame = Time.frameCount;
 
             m_SerializedAdditionalLightData.Update();
 
@@ -856,7 +861,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         // Internal utilities
         void ApplyAdditionalComponentsVisibility(bool hide)
         {
-            // UX team decided thta we should always show component in inspector.
+            // UX team decided that we should always show component in inspector.
             // However already authored scene save this settings, so force the component to be visible
             // var flags = hide ? HideFlags.HideInInspector : HideFlags.None;
             var flags = HideFlags.None;
@@ -909,7 +914,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         break;
                 }
             }
-
         }
 
         [DrawGizmo(GizmoType.Selected | GizmoType.Active)]
@@ -943,8 +947,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     }
                 }
             }
-
+            Handles.zTest = CompareFunction.Always;
             Gizmos.color = previousColor;
+            
+            if (Selection.Contains(light.gameObject))
+            {
+                ((HDLightEditor)Editor.CreateEditor(light)).OnSceneGUI();
+            }
         }
     }
 }
