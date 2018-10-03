@@ -5,7 +5,7 @@
     "unity": "2018.3",
     "displayName": "Shader Graph",
     "dependencies": {
-        "com.unity.render-pipelines.core": "4.0.0-preview"
+		"com.unity.render-pipelines.core": "4.1.0-preview"
     },
 	"samples" :[
 		{

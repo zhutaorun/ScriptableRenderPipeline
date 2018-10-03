@@ -341,10 +341,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_SSSBufferManager.InitSSSBuffers(m_GbufferManager, m_Asset.renderPipelineSettings);
             m_SharedRTManager.InitSharedBuffers(m_GbufferManager, m_Asset.renderPipelineSettings, m_Asset.renderPipelineResources);
-            
+
             m_CameraColorBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: false, name: "CameraColor");
             m_CameraSssDiffuseLightingBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, enableRandomWrite: true, name: "CameraSSSDiffuseLighting");
-            m_CameraColorBufferMipChain = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: true, autoGenerateMips: false, name: "CameraColorBufferMipChain"); 
+            m_CameraColorBufferMipChain = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: true, autoGenerateMips: false, name: "CameraColorBufferMipChain");
 
             if (settings.supportSSAO)
             {
@@ -355,7 +355,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // TODO: For MSAA, we'll need to add a Draw path in order to support MSAA properlye
             // Use RG16 as we only have one deferred directional and one screen space shadow light currently
-            m_ScreenSpaceShadowsBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RG16, sRGB: false, enableRandomWrite: true, name: "ScreenSpaceShadowsBuffer");
+            m_ScreenSpaceShadowsBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.R16, sRGB: false, enableRandomWrite: true, name: "ScreenSpaceShadowsBuffer");
 
             if (settings.supportSSR)
             {
@@ -436,7 +436,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 rendererSupportsReceiveShadows = false,
                 rendererSupportsReflectionProbes = true,
                 rendererSupportsRendererPriority = true,
-                rendererOverridesEnvironmentLighting = true
+                rendererOverridesEnvironmentLighting = true,
+                rendererOverridesFog = true,
+                rendererOverridesOtherLightingSettings = true
             };
 
             Lightmapping.SetDelegate(GlobalIlluminationUtils.hdLightsDelegate);
@@ -476,16 +478,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (!SystemInfo.supportsComputeShaders)
                 return false;
 
-            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Direct3D11 ||
-                SystemInfo.graphicsDeviceType == GraphicsDeviceType.Direct3D12 ||
-                SystemInfo.graphicsDeviceType == GraphicsDeviceType.PlayStation4 ||
-                SystemInfo.graphicsDeviceType == GraphicsDeviceType.XboxOne ||
-                SystemInfo.graphicsDeviceType == GraphicsDeviceType.XboxOneD3D12 ||
-                SystemInfo.graphicsDeviceType == GraphicsDeviceType.Vulkan ||
-                SystemInfo.graphicsDeviceType == (GraphicsDeviceType)22 /*GraphicsDeviceType.Switch*/)
-            {
+// If we are in the editor, we have to take the current target build platform as the graphic device type is always the same
+#if UNITY_EDITOR
+            if (HDUtils.IsSupportedBuildTarget(UnityEditor.EditorUserBuildSettings.activeBuildTarget))
                 return true;
-            }
+#else
+            if (HDUtils.IsSupportedGraphicDevice(SystemInfo.graphicsDeviceType))
+                return true;
+#endif
 
             if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Metal)
             {
@@ -643,7 +643,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 // Set up UnityPerView CBuffer.
                 hdCamera.SetupGlobalParams(cmd, m_Time, m_LastTime, m_FrameCount);
-                
+
                 cmd.SetGlobalVector(HDShaderIDs._IndirectLightingMultiplier, new Vector4(VolumeManager.instance.stack.GetComponent<IndirectLightingController>().indirectDiffuseIntensity, 0, 0, 0));
 
                 PushGlobalRTHandle(
@@ -780,12 +780,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (!m_ValidAPI)
                 return;
 
-            if (XRGraphicsConfig.enabled)
-            {
-                // FIXME add support for renderscale, viewportscale, etc.
-                renderPipelineSettings.xrConfig.SetConfig();
-            }
-
             base.Render(renderContext, cameras);
             RenderPipeline.BeginFrameRendering(cameras);
 
@@ -826,12 +820,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             // TODO: Render only visible probes
-            var probeTypeToRender = ReflectionProbeType.ReflectionProbe;
-            // Caution: Enumerable.Any generate 32B of garbage at each frame here !
-            var isPlanarReflection = cameras.Any(c => c.cameraType == CameraType.Reflection);
-            if (isPlanarReflection)
-                probeTypeToRender |= ReflectionProbeType.PlanarReflection;
-            ReflectionSystem.RenderAllRealtimeProbes(probeTypeToRender);
+            var isAnyCamerasAReflectionCamera = false;
+            for (int i = 0; i < cameras.Length && !isAnyCamerasAReflectionCamera; ++i)
+                isAnyCamerasAReflectionCamera |= cameras[i].cameraType == CameraType.Reflection;
+            if(!isAnyCamerasAReflectionCamera)  //only pass here when rendering normal camera (prevent infinite loop)
+            {
+                ReflectionSystem.RenderAllRealtimeProbes();
+            }
 
             // We first update the state of asset frame settings as they can be use by various camera
             // but we keep the dirty state to correctly reset other camera that use RenderingPath.Default.
@@ -871,7 +866,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 if (additionalCameraData)
                 {
                     additionalCameraData.UpdateDirtyFrameSettings(assetFrameSettingsIsDirty, m_Asset.GetFrameSettings());
-                    srcFrameSettings = additionalCameraData.GetFrameSettings();
+                    if (camera.cameraType != CameraType.Reflection)
+                    {
+                        srcFrameSettings = additionalCameraData.GetFrameSettings().Override(m_Asset.GetFrameSettings());
+                    }
+                    else 
+                    {
+                        //reflection camera use different framesettings as base for their override
+                        //handled in ReflectionSystemInternal
+                        srcFrameSettings = additionalCameraData.GetFrameSettings();
+                    }
                 }
                 else
                 {
@@ -1152,10 +1156,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                         StopStereoRendering(cmd, renderContext, hdCamera);
 
+#if UNITY_2019_1_OR_NEWER
+                        GraphicsFence buildGPULightListsCompleteFence = new GraphicsFence();
+#else
                         GPUFence buildGPULightListsCompleteFence = new GPUFence();
+#endif
                         if (hdCamera.frameSettings.enableAsyncCompute)
                         {
+#if UNITY_2019_1_OR_NEWER
+                            GraphicsFence startFence = cmd.CreateAsyncGraphicsFence();
+#else
                             GPUFence startFence = cmd.CreateGPUFence();
+#endif
                             renderContext.ExecuteCommandBuffer(cmd);
                             cmd.Clear();
 
@@ -1169,7 +1181,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                             // Overwrite camera properties set during the shadow pass with the original camera properties.
                             renderContext.SetupCameraProperties(camera, hdCamera.frameSettings.enableStereo);
-                            hdCamera.SetupGlobalParams(cmd, m_Time, m_LastTime, m_FrameCount);                            
+                            hdCamera.SetupGlobalParams(cmd, m_Time, m_LastTime, m_FrameCount);
                         }
 
                         using (new ProfilingSample(cmd, "Screen space shadows", CustomSamplerId.ScreenSpaceShadows.GetSampler()))
@@ -1182,12 +1194,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 HDUtils.SetRenderTarget(cmd, hdCamera, m_ScreenSpaceShadowsBuffer, ClearFlag.Color, CoreUtils.clearColorAllBlack);
                             }
 
-                            // In some cases when loading a project for the first time in the editor, the internal resource is destroyed.
-                            // When used as render target, the C++ code will re-create the resource automatically. Since here it's used directly as an UAV, we need to check manually
-                            if (!m_ScreenSpaceShadowsBuffer.rt.IsCreated())
-                                m_ScreenSpaceShadowsBuffer.rt.Create();
+                            HDUtils.CheckRTCreated(m_ScreenSpaceShadowsBuffer);
 
-                            m_LightLoop.RenderScreenSpaceShadows(hdCamera, m_ScreenSpaceShadowsBuffer, hdCamera.frameSettings.enableMSAA ? m_SharedRTManager.GetDepthValuesTexture() : m_SharedRTManager.GetDepthTexture(), cmd);
+                            int firstMipOffsetY = m_SharedRTManager.GetDepthBufferMipChainInfo().mipLevelOffsets[1].y;
+                            m_LightLoop.RenderScreenSpaceShadows(hdCamera, m_ScreenSpaceShadowsBuffer, hdCamera.frameSettings.enableMSAA ? m_SharedRTManager.GetDepthValuesTexture() : m_SharedRTManager.GetDepthTexture(), firstMipOffsetY, cmd);
 
                             PushFullScreenDebugTexture(hdCamera, cmd, m_ScreenSpaceShadowsBuffer, FullScreenDebugMode.ContactShadows);
                             StopStereoRendering(cmd, renderContext, hdCamera);
@@ -1219,8 +1229,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         // The pass requires the volume properties, the light list and the shadows, and can run async.
                         m_VolumetricLightingSystem.VolumetricLightingPass(hdCamera, cmd, m_FrameCount);
 
-						SetMicroShadowingSettings(cmd);                        
-						
+						SetMicroShadowingSettings(cmd);
+
 						// Might float this higher if we enable stereo w/ deferred
                         StartStereoRendering(cmd, renderContext, hdCamera);
 
@@ -1348,9 +1358,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     m_DebugScreenSpaceTracingData.SetData(m_DebugScreenSpaceTracingDataArray);
                 }
 
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
                 UnityEditor.Handles.DrawGizmos(camera);
-            #endif
+#endif
 
             } // For each camera
         }
@@ -1548,6 +1558,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetPrepassBuffersRTI(hdCamera.frameSettings), m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA));
 
+                    XRUtils.DrawOcclusionMesh(cmd, hdCamera.camera, hdCamera.frameSettings.enableStereo);
+
                     // Full forward: Output normal buffer for both forward and forwardOnly
                     // Exclude object that render velocity (if motion vector are enabled)
                     RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthOnlyAndDepthForwardOnlyPassNames, 0, HDRenderQueue.k_RenderQueue_AllOpaque, excludeMotionVector : excludeMotion);
@@ -1559,6 +1571,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 using (new ProfilingSample(cmd, m_DbufferManager.enableDecals ? "Depth Prepass (deferred) force by Decals" : "Depth Prepass (deferred)", CustomSamplerId.DepthPrepass.GetSampler()))
                 {
                     HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer());
+
+                    XRUtils.DrawOcclusionMesh(cmd, hdCamera.camera, hdCamera.frameSettings.enableStereo);
 
                     // First deferred material
                     RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthOnlyPassNames, 0, HDRenderQueue.k_RenderQueue_AllOpaque, excludeMotionVector: excludeMotion);
@@ -1574,6 +1588,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 using (new ProfilingSample(cmd, "Depth Prepass (deferred incomplete)", CustomSamplerId.DepthPrepass.GetSampler()))
                 {
                     HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer());
+
+                    XRUtils.DrawOcclusionMesh(cmd, hdCamera.camera, hdCamera.frameSettings.enableStereo);
 
                     // First deferred alpha tested materials. Alpha tested object have always a prepass even if enableDepthPrepassWithDeferredRendering is disabled
                     var renderQueueRange = new RenderQueueRange { min = (int)RenderQueue.AlphaTest, max = (int)RenderQueue.GeometryLast - 1 };
@@ -1702,19 +1718,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     using (new ProfilingSample(cmd, "Render SSAO", CustomSamplerId.RenderSSAO.GetSampler()))
                     {
-                        if(hdCamera.frameSettings.enableMSAA)
-                        {
-                            // In case we are in an MSAA frame, we need to feed both min and max depth of the pixel so that we compute ao values for both depths and resolve the AO afterwards
-                            postProcessLayer.BakeMSVOMap(cmd, camera, m_MultiAmbientOcclusionBuffer, m_SharedRTManager.GetDepthValuesTexture(), true, true);
-                        }
-                        else
-                        {
-                            postProcessLayer.BakeMSVOMap(cmd, camera, m_AmbientOcclusionBuffer, m_SharedRTManager.GetDepthTexture(), true, false);
-                        }
+                        // In case we are in an MSAA frame, we need to feed both min and max depth of the pixel so that we compute ao values for both depths and resolve the AO afterwards
+                        var aoTarget = hdCamera.frameSettings.enableMSAA ? m_MultiAmbientOcclusionBuffer : m_AmbientOcclusionBuffer;
+                        var depthTexture = hdCamera.frameSettings.enableMSAA ? m_SharedRTManager.GetDepthValuesTexture() : m_SharedRTManager.GetDepthTexture();
 
-                        cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, m_AmbientOcclusionBuffer);
-                        cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, new Vector4(settings.color.value.r, settings.color.value.g, settings.color.value.b, settings.directLightingStrength.value));
-                        PushFullScreenDebugTexture(hdCamera, cmd, m_AmbientOcclusionBuffer, FullScreenDebugMode.SSAO);
+                        HDUtils.CheckRTCreated(aoTarget.rt);
+                        postProcessLayer.BakeMSVOMap(cmd, camera, aoTarget, depthTexture, true, hdCamera.frameSettings.enableMSAA);
                     }
 
                     if (hdCamera.frameSettings.enableMSAA)
@@ -1727,6 +1736,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             cmd.DrawProcedural(Matrix4x4.identity, m_AOResolveMaterial, 0, MeshTopology.Triangles, 3, 1, m_AOPropertyBlock);
                         }
                     }
+
+                    cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, m_AmbientOcclusionBuffer);
+                    cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, new Vector4(settings.color.value.r, settings.color.value.g, settings.color.value.b, settings.directLightingStrength.value));
+                    PushFullScreenDebugTexture(hdCamera, cmd, m_AmbientOcclusionBuffer, FullScreenDebugMode.SSAO);
+
                     return;
                 }
             }
@@ -1789,7 +1803,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // The RenderForward pass will render the appropriate pass depends on the engine settings. In case of forward only rendering, both "Forward" pass and "ForwardOnly" pass
             // material will be render for both transparent and opaque. In case of deferred, both path are used for transparent but only "ForwardOnly" is use for opaque.
             // (Thus why "Forward" and "ForwardOnly" are exclusive, else they will render two times"
-            
+
             if (m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled())
             {
                 m_ForwardPassProfileName = k_ForwardPassDebugName[(int)pass];
