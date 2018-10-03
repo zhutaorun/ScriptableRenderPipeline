@@ -2667,6 +2667,34 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
             }
 
+            using (new ProfilingSample(cmd, "Display Cookie Atlas", CustomSamplerId.DisplayCookies.GetSampler()))
+            {
+                if (lightingDebug.lightCookieDebug)
+                {
+                    cmd.SetViewport(new Rect(x, y, overlaySize, overlaySize));
+                    Texture2DArray texCache = m_CookieTexArray.GetTexCache() as Texture2DArray;
+                    //Figure out the maximum power of 2 to display the full texture array in a square grid.
+                    int numXSlices = Mathf.CeilToInt(Mathf.Sqrt((float)texCache.depth)); 
+                    float atlasScale = 1 / (float)numXSlices;
+                    float atlasOffset = atlasScale;
+                    Vector4 scaleBiasRT = new Vector4(atlasScale, atlasScale, 0, 0);
+                    for (int i = 0; i < numXSlices; i++)
+                    {
+                        for (int j = 0; j < numXSlices; j++)
+                        {
+                            int sliceIndex = i * numXSlices + j;
+                            scaleBiasRT.z = j * atlasOffset;
+                            scaleBiasRT.w = i * atlasOffset;
+                            if (sliceIndex < texCache.depth)
+                            {
+                                HDUtils.BlitQuad(cmd, texCache, new Vector4(1, 1, 0, 0), scaleBiasRT, 0, sliceIndex, true);
+                            }
+                        }
+                    }   
+                    HDUtils.NextOverlayCoord(ref x, ref y, overlaySize, overlaySize, hdCamera.actualWidth);
+                }
+            }
+
             using (new ProfilingSample(cmd, "Display Shadows", CustomSamplerId.TPDisplayShadows.GetSampler()))
             {
                 if (lightingDebug.shadowDebugMode == ShadowMapDebugMode.VisualizeShadowMap)
