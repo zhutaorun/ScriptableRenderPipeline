@@ -18,7 +18,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         static readonly MigrationDescription<Version, HDAdditionalReflectionData> k_MigrationDescription
-            = new MigrationDescription<Version, HDAdditionalReflectionData>(
+            = MigrationDescription.New(
                 MigrationStep.New(Version.UseInfluenceVolume, (HDAdditionalReflectionData target) =>
                 {
                     target.influenceVolume.boxSize = target.reflectionProbe.size;
@@ -44,7 +44,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         [SerializeField, FormerlySerializedAs("version")]
         int m_Version;
-        Version IVersionable<Version>.Version { get => (Version)m_Version; set => m_Version = (int)value; }
+        Version IVersionable<Version>.version { get => (Version)m_Version; set => m_Version = (int)value; }
 
         #region Deprecated Fields
 #pragma warning disable 649 //never assigned
