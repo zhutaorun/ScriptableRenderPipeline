@@ -53,8 +53,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         internal override HDProbe GetTarget(Object editorTarget)
         {
-            HDReflectionProbeEditor e = s_ReflectionProbeEditors[(ReflectionProbe)editorTarget];
-            return (HDProbe)e.m_AdditionalDataSerializedObject.targetObjects.First(a => ((HDAdditionalReflectionData)a).reflectionProbe == editorTarget);
+            var reflectionProbe = editorTarget as ReflectionProbe;
+            if (reflectionProbe == null)
+                throw new System.ArgumentException("'editorTarget' must be a component of type 'ReflectionProbe'.");
+
+            var hdProbe = reflectionProbe.GetComponent<HDAdditionalReflectionData>()
+                ?? reflectionProbe.gameObject.AddComponent<HDAdditionalReflectionData>();
+
+            return hdProbe;
         }
 
         protected override void Draw(HDProbeUI s, SerializedHDProbe serialized, Editor owner)
