@@ -2226,22 +2226,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             PushGlobalParams(hdCamera, cmd);
         }
 
-        public GPUFence BuildGPULightListsAsyncBegin(HDCamera hdCamera, ScriptableRenderContext renderContext, RenderTargetIdentifier cameraDepthBufferRT, RenderTargetIdentifier stencilTextureRT, GPUFence startFence, bool skyEnabled)
+        public GraphicsFence BuildGPULightListsAsyncBegin(HDCamera hdCamera, ScriptableRenderContext renderContext, RenderTargetIdentifier cameraDepthBufferRT, RenderTargetIdentifier stencilTextureRT, GraphicsFence startFence, bool skyEnabled)
         {
             var cmd = CommandBufferPool.Get("Build light list");
-            cmd.WaitOnGPUFence(startFence);
+            cmd.WaitOnAsyncGraphicsFence(startFence);
 
             BuildGPULightListsCommon(hdCamera, cmd, cameraDepthBufferRT, stencilTextureRT, skyEnabled);
-            GPUFence completeFence = cmd.CreateGPUFence();
+            GraphicsFence completeFence = cmd.CreateAsyncGraphicsFence();
             renderContext.ExecuteCommandBufferAsync(cmd, ComputeQueueType.Background);
             CommandBufferPool.Release(cmd);
 
             return completeFence;
         }
 
-        public void BuildGPULightListAsyncEnd(HDCamera hdCamera, CommandBuffer cmd, GPUFence doneFence)
+        public void BuildGPULightListAsyncEnd(HDCamera hdCamera, CommandBuffer cmd, GraphicsFence doneFence)
         {
-            cmd.WaitOnGPUFence(doneFence);
+            cmd.WaitOnAsyncGraphicsFence(doneFence);
             PushGlobalParams(hdCamera, cmd);
         }
 

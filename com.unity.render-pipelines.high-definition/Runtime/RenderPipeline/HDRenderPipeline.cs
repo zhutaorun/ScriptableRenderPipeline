@@ -1161,10 +1161,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                         StopStereoRendering(cmd, renderContext, hdCamera);
 
-                        GPUFence buildGPULightListsCompleteFence = new GPUFence();
+                        GraphicsFence buildGPULightListsCompleteFence = new GraphicsFence();
                         if (hdCamera.frameSettings.enableAsyncCompute)
                         {
-                            GPUFence startFence = cmd.CreateGPUFence();
+                            GraphicsFence startFence = cmd.CreateAsyncGraphicsFence();
                             renderContext.ExecuteCommandBuffer(cmd);
                             cmd.Clear();
 
