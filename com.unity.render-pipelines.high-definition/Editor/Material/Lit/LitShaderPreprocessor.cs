@@ -18,12 +18,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             //bool isForwardPass = snippet.passName == "Forward";
             bool isDepthOnlyPass = snippet.passName == "DepthOnly";
             bool isTransparentForwardPass = snippet.passName == "TransparentDepthPostpass" || snippet.passName == "TransparentBackface" || snippet.passName == "TransparentDepthPrepass";
+            bool isForwardPass = snippet.passName == "Forward";
+            bool isTransparent = inputData.shaderKeywordSet.IsEnabled(m_Transparent);
 
             // When using forward only, we never need GBuffer pass (only Forward)
-            if (hdrpAsset.renderPipelineSettings.supportOnlyForward && isGBufferPass)
+            if (hdrpAsset.renderPipelineSettings.litShaderMode == LitShaderMode.Forward && isGBufferPass)
                 return true;
 
-            if (inputData.shaderKeywordSet.IsEnabled(m_Transparent))
+            if (hdrpAsset.renderPipelineSettings.litShaderMode == LitShaderMode.Deferred && isForwardPass && !isTransparent)
+                return true;
+
+            if (isTransparent)
             {
                 // If transparent, we never need GBuffer pass.
                 if (isGBufferPass)

@@ -50,7 +50,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_MSAASupported = settings.supportMSAA;
             m_MSAASamples = m_MSAASupported ? settings.msaaSampleCount : MSAASamples.None;
             m_VelocitySupport = settings.supportMotionVectors;
-            m_ReuseGBufferMemory = !settings.supportOnlyForward;
+            m_ReuseGBufferMemory = litShaderMode != LitShaderMode.Forward;
 
             // Create the depth/stencil buffer
             m_CameraDepthStencilBuffer = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.Depth32, colorFormat: RenderTextureFormat.Depth, filterMode: FilterMode.Point, name: "CameraDepthStencil");

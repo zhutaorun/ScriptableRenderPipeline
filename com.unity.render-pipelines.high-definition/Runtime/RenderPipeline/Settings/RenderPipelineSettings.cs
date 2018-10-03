@@ -15,11 +15,26 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     // HDRenderPipelineAsset contains a "Default" FrameSettings that can be referenced by any camera with RenderPath.Defaut or when the camera doesn't have HDAdditionalData like the camera of the Editor.
     // It also contains a DefaultActiveFrameSettings
 
+    enum LitShaderMode
+    {
+        Deferred,
+        Forward,
+        Both
+    }
+
     // RenderPipelineSettings represents settings that are immutable at runtime.
     // There is a dedicated RenderPipelineSettings for each platform
     [Serializable]
     public class RenderPipelineSettings
     {
+        [HideInInspector]
+        const int currentVersion = 1;
+        // Currently m_Version is not used and produce a warning, remove these pragmas at the next version incrementation
+#pragma warning disable 414
+        [SerializeField]
+        int m_Version = currentVersion;
+#pragma warning restore 414
+
         // Lighting
         public bool supportShadowMask = true;
         public bool supportSSR = false;
@@ -30,7 +45,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public bool supportVolumetrics = true;
         public bool increaseResolutionOfVolumetrics = false;
         public bool supportLightLayers = false;
-        public bool supportOnlyForward = false;
+        public LitShaderMode litShaderMode = LitShaderMode.Deferred;
 
         // Engine
         [FormerlySerializedAs("supportDBuffer")]

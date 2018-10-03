@@ -39,7 +39,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             m_MSAASupport = settings.supportMSAA;
 
-            if (settings.supportOnlyForward)
+            if (settings.litShaderMode == LitShaderMode.Forward)
             {
                 // In case of full forward we must allocate the render target for forward SSS (or reuse one already existing)
                 // TODO: Provide a way to reuse a render target
