@@ -144,7 +144,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public float aspectRatio = 1.0f;
 
         // Only for Punctual/Sphere/Disc
-        public float shapeRadius = 0.01f;
+        public float shapeRadius = 0.0f;
 
         // Only for Spot/Point - use to cheaply fake specular spherical area light
         // It is not 1 to make sure the highlight does not disappear.
@@ -258,7 +258,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     case LightType.Directional:
                         Vector4 cullingSphere;
                         float   nearPlaneOffset = QualitySettings.shadowNearPlaneOffset;
-                        
+
                         HDShadowUtils.ExtractDirectionalLightData(visibleLight, viewportSize, (uint)requestIndex, shadowSettings.cascadeShadowSplitCount, shadowSettings.cascadeShadowSplits, nearPlaneOffset, cullResults, lightIndex, out shadowRequest.view, out invViewProjection, out shadowRequest.projection, out shadowRequest.deviceProjection, out shadowRequest.splitData);
 
                         cullingSphere = shadowRequest.splitData.cullingSphere;

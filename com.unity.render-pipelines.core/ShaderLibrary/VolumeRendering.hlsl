@@ -136,7 +136,7 @@ void ImportanceSamplePunctualLight(real rndVal, real3 lightPosition, real lightS
     real  rayToLightSqDist      = originToLightSqDist - originToLightProjDist * originToLightProjDist;
 
     // Virtually offset the light to modify the PDF distribution.
-    real sqD  = rayToLightSqDist + lightSqRadius;
+    real sqD  = max(rayToLightSqDist + lightSqRadius, FLT_EPS);
     real rcpD = rsqrt(sqD);
     real d    = sqD * rcpD;
     real a    = tMin - originToLightProjDist;

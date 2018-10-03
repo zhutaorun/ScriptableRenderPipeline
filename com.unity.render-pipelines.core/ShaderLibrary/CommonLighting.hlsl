@@ -88,8 +88,7 @@ real SmoothDistanceWindowing(real distSquare, real rangeAttenuationScale, real r
 // Return physically based quadratic attenuation + influence limit to reach 0 at attenuationRadius
 real SmoothWindowedDistanceAttenuation(real distSquare, real distRcp, real rangeAttenuationScale, real rangeAttenuationBias)
 {
-    // ModifyDistancesToSimulateFillLight() handles distance clamping for us.
-    real attenuation = distRcp;
+    real attenuation = min(distRcp, 1.0 / PUNCTUAL_LIGHT_THRESHOLD);
     attenuation *= DistanceWindowing(distSquare, rangeAttenuationScale, rangeAttenuationBias);
 
     // Effectively results in (distRcp)^2 * SmoothDistanceWindowing(...).
@@ -118,8 +117,7 @@ real PunctualLightAttenuation(real4 distances, real rangeAttenuationScale, real 
     real distProj = distances.w;
     real cosFwd   = distProj * distRcp;
 
-    // ModifyDistancesToSimulateFillLight() handles distance clamping for us.
-    real attenuation = distRcp;
+    real attenuation = min(distRcp, 1.0 / PUNCTUAL_LIGHT_THRESHOLD);
     attenuation *= DistanceWindowing(distSq, rangeAttenuationScale, rangeAttenuationBias);
     attenuation *= AngleAttenuation(cosFwd, lightAngleScale, lightAngleOffset);
 

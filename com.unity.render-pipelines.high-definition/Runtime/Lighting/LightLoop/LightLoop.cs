@@ -1027,10 +1027,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (lightData.lightType != GPULightType.Directional && lightData.lightType != GPULightType.ProjectorBox)
             {
                 // Store the squared radius of the light to simulate a fill light.
-                // Also important in order to not divide by 0.
-                // The slider already clamps, but we clamp again to ensure there is no possibility of a NaN.
-                float radius = Mathf.Max(additionalLightData.shapeRadius, 0.01f);
-                lightData.size = new Vector2(radius * radius, 0);
+                lightData.size = new Vector2(additionalLightData.shapeRadius * additionalLightData.shapeRadius, 0);
             }
 
             if (lightData.lightType == GPULightType.Rectangle || lightData.lightType == GPULightType.Line)
