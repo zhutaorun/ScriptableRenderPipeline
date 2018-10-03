@@ -60,7 +60,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // TODO: change this sort (and maybe the list) by something that don't create garbage
             // Note: it is very important to keep the added order for shadow maps that are the same size (for punctual lights)
             // and because of that we can't use List.Sort because it messes up the list even with a good custom comparator
-            //var sortedRequests = shadowRequests.OrderBy(s => s.atlasViewport.height).ThenBy(s => s.atlasViewport.width);
 
             // Perform a deep copy.
             int n = (shadowRequests != null) ? shadowRequests.Count : 0;
