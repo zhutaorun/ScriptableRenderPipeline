@@ -293,10 +293,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         protected override void OnSceneGUI()
         {
+            Light light = (Light)target;
+            if (!Selection.Contains(light.gameObject))
+            {
+                return;
+            }
+
             m_SerializedAdditionalLightData.Update();
 
             HDAdditionalLightData src = (HDAdditionalLightData)m_SerializedAdditionalLightData.targetObject;
-            Light light = (Light)target;
 
             Color wireframeColorAbove = light.enabled ? LightEditor.kGizmoLight : LightEditor.kGizmoDisabledLight;
             Color handleColorAbove = CoreLightEditorUtilities.GetLightHandleColor(wireframeColorAbove);
