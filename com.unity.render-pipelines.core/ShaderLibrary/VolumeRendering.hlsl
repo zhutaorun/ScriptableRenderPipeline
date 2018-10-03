@@ -133,8 +133,9 @@ void ImportanceSamplePunctualLight(real rndVal, real3 lightPosition, real lightS
     real3 originToLight         = lightPosition - rayOrigin;
     real  originToLightProjDist = dot(originToLight, rayDirection);
     real  originToLightSqDist   = dot(originToLight, originToLight);
-    real  rayToLightSqDist      = abs(originToLightSqDist - originToLightProjDist * originToLightProjDist);
+    real  rayToLightSqDist      = originToLightSqDist - originToLightProjDist * originToLightProjDist;
 
+    // Virtually offset the light to modify the PDF distribution.
     real sqD  = rayToLightSqDist + lightSqRadius;
     real rcpD = rsqrt(sqD);
     real d    = sqD * rcpD;
@@ -163,8 +164,11 @@ void ImportanceSamplePunctualLight(real rndVal, real3 lightPosition, real lightS
     real tRelative = d * tanTheta;
 
     sqDist = sqD + tRelative * tRelative;
-    rcpPdf = gamma * sqDist * rcpD;
+    rcpPdf = gamma * rcpD * sqDist;
     t      = originToLightProjDist + tRelative;
+
+    // Remove the virtual light offset to obtain the real geometric distance.
+    sqDist = max(sqDist - lightSqRadius, FLT_EPS);
 }
 
 // Absorption coefficient from Disney: http://blog.selfshadow.com/publications/s2015-shading-course/burley/s2015_pbs_disney_bsdf_notes.pdf
