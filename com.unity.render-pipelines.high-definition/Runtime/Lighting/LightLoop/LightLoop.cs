@@ -1549,6 +1549,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_CurrentShadowSortedSunLightIndex = -1;
                 m_DominantLightIndex = -1;
                 m_DominantLightValue = 0;
+                m_DebugSelectedLightShadowIndex = -1;
 
                 var stereoEnabled = m_FrameSettings.enableStereo;
 
@@ -1716,7 +1717,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 shadowIndex = additionalLightData.UpdateShadowRequest(camera, m_ShadowInitParameters, m_ShadowManager, light, cullResults, lightIndex, out shadowRequestCount);
 
 #if UNITY_EDITOR
-                                if (debugDisplaySettings.lightingDebugSettings.shadowDebugUseSelection && UnityEditor.Selection.activeGameObject == lightComponent.gameObject)
+                                if ((debugDisplaySettings.lightingDebugSettings.shadowDebugUseSelection
+                                        || debugDisplaySettings.lightingDebugSettings.shadowDebugMode == ShadowMapDebugMode.SingleShadow)
+                                    && UnityEditor.Selection.activeGameObject == lightComponent.gameObject)
                                 {
                                     m_DebugSelectedLightShadowIndex = shadowIndex;
                                     m_DebugSelectedLightShadowCount = shadowRequestCount;
@@ -1952,6 +1955,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             m_enableBakeShadowMask = m_enableBakeShadowMask && hdCamera.frameSettings.enableShadowMask;
+
+            // We push this parameter here because we know that normal/deferred shadows are not yet rendered
+            if (debugDisplaySettings.lightingDebugSettings.shadowDebugMode == ShadowMapDebugMode.SingleShadow)
+            {
+                int shadowIndex = (int)debugDisplaySettings.lightingDebugSettings.shadowMapIndex;
+
+                if (debugDisplaySettings.lightingDebugSettings.shadowDebugUseSelection)
+                    shadowIndex = m_DebugSelectedLightShadowIndex;
+                cmd.SetGlobalInt(HDShaderIDs._DebugSingleShadowIndex, shadowIndex);
+            }
 
             return m_enableBakeShadowMask;
         }
@@ -2256,22 +2269,42 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             PushGlobalParams(hdCamera, cmd);
         }
 
+#if UNITY_2019_1_OR_NEWER
+        public GraphicsFence BuildGPULightListsAsyncBegin(HDCamera hdCamera, ScriptableRenderContext renderContext, RenderTargetIdentifier cameraDepthBufferRT, RenderTargetIdentifier stencilTextureRT, GraphicsFence startFence, bool skyEnabled)
+#else
         public GPUFence BuildGPULightListsAsyncBegin(HDCamera hdCamera, ScriptableRenderContext renderContext, RenderTargetIdentifier cameraDepthBufferRT, RenderTargetIdentifier stencilTextureRT, GPUFence startFence, bool skyEnabled)
+#endif
         {
             var cmd = CommandBufferPool.Get("Build light list");
+#if UNITY_2019_1_OR_NEWER
+            cmd.WaitOnAsyncGraphicsFence(startFence);
+#else
             cmd.WaitOnGPUFence(startFence);
+#endif
 
             BuildGPULightListsCommon(hdCamera, cmd, cameraDepthBufferRT, stencilTextureRT, skyEnabled);
+#if UNITY_2019_1_OR_NEWER
+            GraphicsFence completeFence = cmd.CreateAsyncGraphicsFence();
+#else
             GPUFence completeFence = cmd.CreateGPUFence();
+#endif
             renderContext.ExecuteCommandBufferAsync(cmd, ComputeQueueType.Background);
             CommandBufferPool.Release(cmd);
 
             return completeFence;
         }
 
+#if UNITY_2019_1_OR_NEWER
+        public void BuildGPULightListAsyncEnd(HDCamera hdCamera, CommandBuffer cmd, GraphicsFence doneFence)
+#else
         public void BuildGPULightListAsyncEnd(HDCamera hdCamera, CommandBuffer cmd, GPUFence doneFence)
+#endif
         {
+#if UNITY_2019_1_OR_NEWER
+            cmd.WaitOnAsyncGraphicsFence(doneFence);
+#else
             cmd.WaitOnGPUFence(doneFence);
+#endif
             PushGlobalParams(hdCamera, cmd);
         }
 
@@ -2366,10 +2399,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public bool outputSplitLighting;
         }
 
-        public void RenderScreenSpaceShadows(HDCamera hdCamera, RTHandleSystem.RTHandle deferredShadowRT, RenderTargetIdentifier depthTexture, CommandBuffer cmd)
+        public void RenderScreenSpaceShadows(HDCamera hdCamera, RTHandleSystem.RTHandle deferredShadowRT, RenderTargetIdentifier depthTexture, int firstMipOffsetY, CommandBuffer cmd)
         {
-            bool sunLightShadow = m_CurrentSunLight != null && m_CurrentSunLight.GetComponent<AdditionalShadowData>() != null && m_CurrentShadowSortedSunLightIndex >= 0;
-            if(sunLightShadow)
+            AdditionalShadowData sunShadowData = m_CurrentSunLight != null ? m_CurrentSunLight.GetComponent<AdditionalShadowData>() : null;
+            bool sunLightShadow =  sunShadowData != null && m_CurrentShadowSortedSunLightIndex >= 0;
+            if (sunLightShadow)
             {
                 cmd.SetGlobalInt(HDShaderIDs._DirectionalShadowIndex, m_CurrentShadowSortedSunLightIndex);
             }
@@ -2379,9 +2413,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             // if there is no need to compute contact shadows, we just quit
-            if (!m_EnableContactShadow)
+            bool needsContactShadows = (m_CurrentSunLight != null && sunShadowData != null && sunShadowData.contactShadows) || m_DominantLightIndex != -1;
+            if (!m_EnableContactShadow || !needsContactShadows)
             {
-                cmd.SetGlobalTexture(HDShaderIDs._DeferredShadowTexture, RuntimeUtilities.whiteTexture);
+                cmd.SetGlobalTexture(HDShaderIDs._DeferredShadowTexture, RuntimeUtilities.blackTexture);
                 return;
             }
 
@@ -2412,9 +2447,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 float contactShadowRange = Mathf.Clamp(m_ContactShadows.fadeDistance, 0.0f, m_ContactShadows.maxDistance);
                 float contactShadowFadeEnd = m_ContactShadows.maxDistance;
-                float contactShadowOneOverFadeRange = 1.0f / (contactShadowRange);
+                float contactShadowOneOverFadeRange = 1.0f / Math.Max(1e-6f, contactShadowRange);
                 Vector4 contactShadowParams = new Vector4(m_ContactShadows.length, m_ContactShadows.distanceScaleFactor, contactShadowFadeEnd, contactShadowOneOverFadeRange);
-                Vector4 contactShadowParams2 = new Vector4(m_ContactShadows.opacity, 0.0f, 0.0f, 0.0f);
+                var postProcessLayer = hdCamera.camera.GetComponent<PostProcessLayer>();
+                bool taaEnabled = hdCamera.camera.cameraType == CameraType.Game &&
+                                  HDUtils.IsTemporalAntialiasingActive(postProcessLayer);
+                float timeVaryingNoise = taaEnabled ? 1.0f : 0.0f;
+                Vector4 contactShadowParams2 = new Vector4(m_ContactShadows.opacity, timeVaryingNoise, firstMipOffsetY, 0.0f);
                 cmd.SetComputeVectorParam(screenSpaceShadowComputeShader, HDShaderIDs._ContactShadowParamsParameters, contactShadowParams);
                 cmd.SetComputeVectorParam(screenSpaceShadowComputeShader, HDShaderIDs._ContactShadowParamsParameters2, contactShadowParams2);
                 cmd.SetComputeIntParam(screenSpaceShadowComputeShader, HDShaderIDs._DirectionalContactShadowSampleCount, m_ContactShadows.sampleCount);
@@ -2661,7 +2700,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     int shadowRequestCount = 1;
 
 #if UNITY_EDITOR
-                    if (lightingDebug.shadowDebugUseSelection)
+                    if (lightingDebug.shadowDebugUseSelection && m_DebugSelectedLightShadowIndex != -1)
                     {
                         startShadowIndex = m_DebugSelectedLightShadowIndex;
                         shadowRequestCount = m_DebugSelectedLightShadowCount;
