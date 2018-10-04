@@ -24,8 +24,6 @@
 
 TEXTURE2D(_InputTexture);
 TEXTURE2D(_InputHistoryTexture);
-TEXTURE2D(_VelocityTexture);
-TEXTURE2D(_DepthTexture);
 
 RW_TEXTURE2D(float4, _OutputHistoryTexture);
 RW_TEXTURE2D(float4, _OutputTexture);
@@ -76,11 +74,11 @@ float3 ClipToAABB(float3 color, float3 minimum, float3 maximum)
 
 float2 GetClosestFragment(PositionInputs posInputs)
 {
-    float center  = LOAD_TEXTURE2D(_DepthTexture, posInputs.positionSS).r;
-    float nw = LOAD_TEXTURE2D(_DepthTexture, posInputs.positionSS + int2(-1, -1)).r;
-    float ne = LOAD_TEXTURE2D(_DepthTexture, posInputs.positionSS + int2( 1, -1)).r;
-    float sw = LOAD_TEXTURE2D(_DepthTexture, posInputs.positionSS + int2(-1,  1)).r;
-    float se = LOAD_TEXTURE2D(_DepthTexture, posInputs.positionSS + int2( 1,  1)).r;
+    float center  = LOAD_TEXTURE2D(_CameraDepthTexture, posInputs.positionSS).r;
+    float nw = LOAD_TEXTURE2D(_CameraDepthTexture, posInputs.positionSS + int2(-1, -1)).r;
+    float ne = LOAD_TEXTURE2D(_CameraDepthTexture, posInputs.positionSS + int2( 1, -1)).r;
+    float sw = LOAD_TEXTURE2D(_CameraDepthTexture, posInputs.positionSS + int2(-1,  1)).r;
+    float se = LOAD_TEXTURE2D(_CameraDepthTexture, posInputs.positionSS + int2( 1,  1)).r;
 
     float4 neighborhood = float4(nw, ne, sw, se);
 
@@ -108,7 +106,7 @@ void MAIN(uint2 dispatchThreadId : SV_DispatchThreadID)
     #endif
 
     float2 velocity;
-    DecodeVelocity(LOAD_TEXTURE2D(_VelocityTexture, closest), velocity);
+    DecodeVelocity(LOAD_TEXTURE2D(_CameraMotionVectorsTexture, closest), velocity);
     float velocityLength = length(velocity);
 
     float2 uv = posInputs.positionNDC - jitter;

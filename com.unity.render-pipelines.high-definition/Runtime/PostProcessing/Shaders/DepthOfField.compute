@@ -7,7 +7,6 @@
 #pragma kernel KComputeCoC
 
 TEXTURE2D(_InputTexture);
-TEXTURE2D(_DepthTexture);
 
 RW_TEXTURE2D(float, _CoCTexture);
 

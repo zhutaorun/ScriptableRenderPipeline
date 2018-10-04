@@ -185,7 +185,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalTexture(HDShaderIDs._ExposureTexture, GetExposureTexture(camera));
         }
 
-        public void Render(CommandBuffer cmd, HDCamera camera, BlueNoise blueNoise, RTHandle colorBuffer, RTHandle lightingBuffer, RTHandle depthBuffer, RTHandle velocityBuffer)
+        public void Render(CommandBuffer cmd, HDCamera camera, BlueNoise blueNoise, RTHandle colorBuffer, RTHandle lightingBuffer)
         {
             using (new ProfilingSample(cmd, "Post-processing", CustomSamplerId.PostProcessing.GetSampler()))
             {
@@ -211,7 +211,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     using (new ProfilingSample(cmd, "Temporal Anti-aliasing", CustomSamplerId.TemporalAntialiasing.GetSampler()))
                     {
                         var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
-                        DoTemporalAntialiasing(cmd, camera, source, destination, depthBuffer, velocityBuffer);
+                        DoTemporalAntialiasing(cmd, camera, source, destination);
                         if (source != colorBuffer) m_Pool.Recycle(source);
                         source = destination;
                     }
@@ -224,7 +224,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     using (new ProfilingSample(cmd, "Depth of Field", CustomSamplerId.DepthOfField.GetSampler()))
                     {
                         var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
-                        DoDepthOfField(cmd, camera, source, destination, depthBuffer, taaEnabled ? velocityBuffer : null);
+                        DoDepthOfField(cmd, camera, source, destination, taaEnabled);
                         if (source != colorBuffer) m_Pool.Recycle(source);
                         source = destination;
                     }
@@ -478,7 +478,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         #region Temporal Anti-aliasing
 
-        void DoTemporalAntialiasing(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, RTHandle depthBuffer, RTHandle velocityBuffer)
+        void DoTemporalAntialiasing(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination)
         {
             var cs = m_Resources.shaders.temporalAntialiasingCS;
             var kernel = cs.FindKernel(camera.camera.orthographic ? "KTAA_Ortho" : "KTAA_Persp");
@@ -496,8 +496,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetComputeVectorParam(cs, HDShaderIDs._ScreenToTargetScaleHistory, historyScale);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputHistoryTexture, prevHistory);
-            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DepthTexture, depthBuffer);
-            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._VelocityTexture, velocityBuffer);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputHistoryTexture, nextHistory);
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, destination);
             cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 7) / 8, (camera.actualHeight + 7) / 8, 1);
@@ -534,7 +532,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         #region Depth Of Field
 
         // TODO: Reference list
-        void DoDepthOfField(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, RTHandle depthBuffer, RTHandle velocityBuffer)
+        void DoDepthOfField(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, bool taaEnabled)
         {
             cmd.Blit(source, destination);
         }
