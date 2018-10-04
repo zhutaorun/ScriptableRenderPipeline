@@ -77,7 +77,7 @@ float3 GetDirectionalShadowClosestSample( ShadowContext shadowContext, real3 pos
 
 // example of overriding punctual lights
 #ifdef  SHADOW_DISPATCH_USE_CUSTOM_PUNCTUAL
-float GetPunctualShadowAttenuation( ShadowContext shadowContext, float3 positionWS, float3 normalWS, int shadowDataIndex, float3 L, float L_dist )
+float GetPunctualShadowAttenuation( ShadowContext shadowContext, float3 positionWS, float3 normalWS, int shadowDataIndex, float lod, float3 L, float L_dist )
 {
 #ifdef SHADOW_DISPATCH_USE_SEPARATE_PUNC_ALGOS
     // example for choosing different algos for point and spot lights
@@ -106,12 +106,22 @@ float GetPunctualShadowAttenuation( ShadowContext shadowContext, float3 position
     //SamplerComparisonState  compSamp = shadowContext.compSamplers[SHADOW_DISPATCH_PUNC_SMP];
     SamplerState  compSamp = shadowContext.samplers[SHADOW_DISPATCH_PUNC_SMP];
     uint                    algo     = SHADOW_DISPATCH_PUNC_ALG;
-    return EvalShadow_PunctualDepth( shadowContext, algo, tex, compSamp, positionWS, normalWS, shadowDataIndex, L, L_dist );
+    return EvalShadow_PunctualDepth( shadowContext, algo, tex, compSamp, positionWS, normalWS, shadowDataIndex, lod, L, L_dist );
 #endif
 }
+float GetPunctualShadowAttenuation( ShadowContext shadowContext, float3 positionWS, float3 normalWS, int shadowDataIndex, float3 L, float L_dist )
+{
+    return GetPunctualShadowAttenuation(shadowContext, positionWS, normalWS, shadowDataIndex, 0.0, L, L_dist);
+}
+
 float GetPunctualShadowAttenuation( ShadowContext shadowContext, float3 positionWS, float3 normalWS, int shadowDataIndex, float3 L, float L_dist, float2 positionSS )
 {
-    return GetPunctualShadowAttenuation( shadowContext, positionWS, normalWS, shadowDataIndex, L, L_dist );
+    return GetPunctualShadowAttenuation( shadowContext, positionWS, normalWS, shadowDataIndex, 0.0, L, L_dist );   
+}
+
+float GetPunctualShadowAttenuation( ShadowContext shadowContext, float3 positionWS, float3 normalWS, int shadowDataIndex, float lod, float3 L, float L_dist, float2 positionSS )
+{
+    return GetPunctualShadowAttenuation( shadowContext, positionWS, normalWS, shadowDataIndex, lod, L, L_dist );
 }
 
 float3 GetPunctualShadowClosestSample( ShadowContext shadowContext, real3 positionWS, int index, real3 L )
