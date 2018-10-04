@@ -58,18 +58,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
             description.Migrate(instance);
             Assert.AreEqual(MigrableComponent.Version.Five, instance.version);
             Assert.AreEqual(4, instance.intValue);
-            Assert.AreEqual(2.0f, instance.floatValue);
+            Assert.AreEqual(3.0f, instance.floatValue);
 
             description.Migrate(instance);
             Assert.AreEqual(MigrableComponent.Version.Five, instance.version);
             Assert.AreEqual(4, instance.intValue);
-            Assert.AreEqual(2.0f, instance.floatValue);
+            Assert.AreEqual(3.0f, instance.floatValue);
 
             instance.version = MigrableComponent.Version.Four;
             description.Migrate(instance);
             Assert.AreEqual(MigrableComponent.Version.Five, instance.version);
             Assert.AreEqual(6, instance.intValue);
-            Assert.AreEqual(2.0f, instance.floatValue);
+            Assert.AreEqual(3.0f, instance.floatValue);
         }
     }
 }
