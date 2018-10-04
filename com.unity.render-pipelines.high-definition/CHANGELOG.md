@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Use samplerunity_ShadowMask instead of samplerunity_samplerLightmap for shadow mask
 - Allow to resize reflection probe gizmo's size
 - Improve quality of screen space shadow
+- Remove FullscreenPassthrough path on camera user should use additionalCameraData.ExecuteCustomRender event instead
 
 ## [4.0.0-preview] - 2018-09-28
 
