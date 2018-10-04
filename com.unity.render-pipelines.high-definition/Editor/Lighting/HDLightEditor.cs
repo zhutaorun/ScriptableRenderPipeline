@@ -413,6 +413,38 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                             break;
                     }
                     break;
+                case LightTypeExtent.Rectangle:
+                case LightTypeExtent.Line:
+                    bool withYAxis = src.lightTypeExtent == LightTypeExtent.Rectangle;
+                    using (new Handles.DrawingScope(Matrix4x4.TRS(light.transform.position, light.transform.rotation, Vector3.one)))
+                    {
+                        Vector2 widthHeight = new Vector4(light.areaSize.x, withYAxis ? light.areaSize.y : 0f);
+                        float range = light.range;
+                        EditorGUI.BeginChangeCheck();
+                        Handles.zTest = UnityEngine.Rendering.CompareFunction.Greater;
+                        Handles.color = wireframeColorBehind;
+                        CoreLightEditorUtilities.DrawAreaLightWireframe(widthHeight);
+                        range = Handles.RadiusHandle(Quaternion.identity, Vector3.zero, range); //also draw handles
+                        Handles.zTest = UnityEngine.Rendering.CompareFunction.LessEqual;
+                        Handles.color = wireframeColorAbove;
+                        CoreLightEditorUtilities.DrawAreaLightWireframe(widthHeight);
+                        range = Handles.RadiusHandle(Quaternion.identity, Vector3.zero, range); //also draw handles
+                        Handles.zTest = UnityEngine.Rendering.CompareFunction.Greater;
+                        Handles.color = handleColorBehind;
+                        widthHeight = CoreLightEditorUtilities.DrawAreaLightHandle(widthHeight, withYAxis);
+                        Handles.zTest = UnityEngine.Rendering.CompareFunction.LessEqual;
+                        Handles.color = handleColorAbove;
+                        widthHeight = CoreLightEditorUtilities.DrawAreaLightHandle(widthHeight, withYAxis);
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            Undo.RecordObjects(new UnityEngine.Object[] { target, src }, withYAxis ? "Adjust Area Rectangle Light" : "Adjust Area Line Light");
+                            light.areaSize = withYAxis ? widthHeight : new Vector2(widthHeight.x, light.areaSize.y);
+                            light.range = range;
+                        }
+
+                        // Handles.color reseted at end of scope
+                    }
+                    break;
             }
         }
 
