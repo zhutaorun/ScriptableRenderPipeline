@@ -1294,21 +1294,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         {
                             using (new ProfilingSample(cmd, "Blit to final RT", CustomSamplerId.BlitToFinalRT.GetSampler()))
                             {
-                                if (srcFrameSettings.enableStereo && (XRGraphicsConfig.eyeTextureDesc.dimension == TextureDimension.Tex2D))
-                                {   // If double-wide, only blit once (not once per-eye)
-#if UNITY_2019_1_OR_NEWER // a fix for stereo y-flip landed in 2019.1
-                                    StopStereoRendering(cmd, renderContext, hdCamera);
-                                    HDUtils.BlitCameraTexture(cmd, hdCamera, m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget);
-#else
-                                    cmd.BlitFullscreenTriangle(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget); 
-                                    StopStereoRendering(cmd, renderContext, hdCamera);
-#endif
-                                }
+                                // This Blit will flip the screen on anything other than openGL
+#if !UNITY_2019_1_OR_NEWER // Y-flip was corrected in 2019_1. Prior to this we used the postprocess copy shader instead.
+                                if (srcFrameSettings.enableStereo && (XRGraphicsConfig.eyeTextureDesc.dimension == TextureDimension.Tex2D))                                    
+                                    cmd.BlitFullscreenTriangle(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget); // If double-wide, only blit once (not once per-eye)
                                 else
-                                {
+#endif
                                     HDUtils.BlitCameraTexture(cmd, hdCamera, m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget);
-                                    StopStereoRendering(cmd, renderContext, hdCamera);
-                                }
                             }
                         }
 
@@ -2155,8 +2147,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 context.camera = hdcamera.camera;
                 context.sourceFormat = RenderTextureFormat.ARGBHalf;
                 context.flip = (hdcamera.camera.targetTexture == null) && !needOutputToColorBuffer;
-#if !UNITY_2019_1_OR_NEWER // 2019.1 included fix for stereo yflip
-                context.flip = context.flip && !hdcamera.frameSettings.enableStereo;
+#if !UNITY_2019_1_OR_NEWER
+                context.flip = context.flip && (!hdcamera.camera.stereoEnabled); // stereo yflip was fixed in 2019.1
 #endif
 
                 layer.Render(context);
