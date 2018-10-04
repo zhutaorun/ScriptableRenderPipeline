@@ -36,6 +36,7 @@ float3 PreEvaluateDirectionalLightTransmission(BSDFData bsdfData, inout Directio
             if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_TRANSMISSION_MODE_THIN_THICKNESS))
             {
                 // Care must be taken to bias in the direction of the light.
+                // TODO: change the sign of the bias: faster & uses fewer VGPRs.
                 N = -N;
 
                 // We want to evaluate cookies and light attenuation, so we flip NdotL.
@@ -151,6 +152,7 @@ float3 PreEvaluatePunctualLightTransmission(LightLoopContext lightLoopContext,
         {
             // And since the light is back-facing, it's active.
             // Care must be taken to bias in the direction of the light.
+            // TODO: change the sign of the bias: faster & uses fewer VGPRs.
             N = -N;
 
             // We want to evaluate cookies and light attenuation, so we flip NdotL.
@@ -160,7 +162,7 @@ float3 PreEvaluatePunctualLightTransmission(LightLoopContext lightLoopContext,
             light.contactShadowIndex   = -1;
             light.shadowMaskSelector.x = -1;
 
-            if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_TRANSMISSION_MODE_THIN_THICKNESS))
+            if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_TRANSMISSION_MODE_THIN_THICKNESS) || (light.shadowIndex < 0))
             {
                 // We use the precomputed value (based on "baked" thickness).
                 return bsdfData.transmittance;
@@ -169,41 +171,38 @@ float3 PreEvaluatePunctualLightTransmission(LightLoopContext lightLoopContext,
             {
                 float3 transmittance = bsdfData.transmittance;
 
-                if (light.shadowIndex >= 0)
-                {
-                    // We can compute thickness from shadow.
-                    // Compute the distance from the light to the back face of the object along the light direction.
-                    // TODO: SHADOW BIAS.
-                    float distBackFaceToLight = GetPunctualShadowClosestDistance(lightLoopContext.shadowContext, s_linear_clamp_sampler,
-                                                                                 posInput.positionWS, light.shadowIndex, L, light.positionRWS,
-                                                                                 light.lightType == GPULIGHTTYPE_POINT);
+                // We can compute thickness from shadow.
+                // Compute the distance from the light to the back face of the object along the light direction.
+                // TODO: SHADOW BIAS.
+                float distBackFaceToLight = GetPunctualShadowClosestDistance(lightLoopContext.shadowContext, s_linear_clamp_sampler,
+                                                                             posInput.positionWS, light.shadowIndex, L, light.positionRWS,
+                                                                             light.lightType == GPULIGHTTYPE_POINT);
 
-                    // Our subsurface scattering models use the semi-infinite planar slab assumption.
-                    // Therefore, we need to find the thickness along the normal.
-                    // Warning: based on the artist's input, dependence on the NdotL has been disabled.
-                    float thicknessInUnits       = (distFrontFaceToLight - distBackFaceToLight) /* * -NdotL */;
-                    float thicknessInMeters      = thicknessInUnits * _WorldScales[bsdfData.diffusionProfile].x;
-                    float thicknessInMillimeters = thicknessInMeters * MILLIMETERS_PER_METER;
+                // Our subsurface scattering models use the semi-infinite planar slab assumption.
+                // Therefore, we need to find the thickness along the normal.
+                // Warning: based on the artist's input, dependence on the NdotL has been disabled.
+                float thicknessInUnits       = (distFrontFaceToLight - distBackFaceToLight) /* * -NdotL */;
+                float thicknessInMeters      = thicknessInUnits * _WorldScales[bsdfData.diffusionProfile].x;
+                float thicknessInMillimeters = thicknessInMeters * MILLIMETERS_PER_METER;
 
-                    // We need to make sure it's not less than the baked thickness to minimize light leaking.
-                    float thicknessDelta = max(0, thicknessInMillimeters - bsdfData.thickness);
+                // We need to make sure it's not less than the baked thickness to minimize light leaking.
+                float thicknessDelta = max(0, thicknessInMillimeters - bsdfData.thickness);
 
-                    float3 S = _ShapeParams[bsdfData.diffusionProfile].rgb;
+                float3 S = _ShapeParams[bsdfData.diffusionProfile].rgb;
 
-                    // Approximate the decrease of transmittance by e^(-1/3 * dt * S).
-                #if 0
-                    float3 expOneThird = exp(((-1.0 / 3.0) * thicknessDelta) * S);
-                #else
-                    // Help the compiler. S is premultiplied by ((-1.0 / 3.0) * LOG2_E) on the CPU.
-                    float3 p = thicknessDelta * S;
-                    float3 expOneThird = exp2(p);
-                #endif
+                // Approximate the decrease of transmittance by e^(-1/3 * dt * S).
+            #if 0
+                float3 expOneThird = exp(((-1.0 / 3.0) * thicknessDelta) * S);
+            #else
+                // Help the compiler. S is premultiplied by ((-1.0 / 3.0) * LOG2_E) on the CPU.
+                float3 p = thicknessDelta * S;
+                float3 expOneThird = exp2(p);
+            #endif
 
-                    transmittance *= expOneThird;
+                transmittance *= expOneThird;
 
-                    // Avoid double shadowing.
-                    light.shadowIndex = -1;
-                }
+                // Avoid double shadowing. TODO: is there a faster option?
+                light.shadowIndex = -1;
 
                 // Note: we do not modify the distance to the light, or the light angle for the back face.
                 // This is a performance-saving optimization which makes sense as long as the thickness is small.
