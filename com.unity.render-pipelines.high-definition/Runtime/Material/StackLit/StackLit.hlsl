@@ -2226,7 +2226,7 @@ void BSDF(float3 inV, float3 inL, float inNdotL, float3 positionWS, PreLightData
 
 
     // TODO: config option + diffuse GGX
-    float3 diffuseTerm = Lambert() * max(0, inNdotL);
+    float3 diffuseTerm = Lambert() * max(0, NdotL[DNLV_BASE_IDX]);
 
 #ifdef VLAYERED_DIFFUSE_ENERGY_HACKED_TERM
     // TODOENERGYDIFFUSE: Energy when vlayered.
@@ -2277,6 +2277,23 @@ void EvaluateBSDF_GetNormalUnclampedNdotV(BSDFData bsdfData, PreLightData preLig
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialEvaluation.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/SurfaceShading.hlsl"
 
+float3 EvaluateTransmission(BSDFData bsdfData, float3 transmittance, float NdotL, float NdotV, float LdotV, float attenuation)
+{
+    // Apply wrapped lighting to better handle thin objects at grazing angles.
+    float wrappedNdotL = ComputeWrappedDiffuseLighting(-NdotL, TRANSMISSION_WRAP_LIGHT);
+
+    // Apply BSDF-specific diffuse transmission to attenuation. See also: [SSS-NOTE-TRSM]
+    // We don't multiply by 'bsdfData.diffuseColor' here. It's done only once in PostEvaluateBSDF().
+#ifdef USE_DIFFUSE_LAMBERT_BRDF
+    attenuation *= Lambert();
+#else
+    attenuation *= DisneyDiffuse(NdotV, max(0, -NdotL), LdotV, bsdfData.perceptualRoughness);
+#endif
+
+    float intensity = attenuation * wrappedNdotL;
+    return intensity * transmittance;
+}
+
 //-----------------------------------------------------------------------------
 // EvaluateBSDF_Directional
 //-----------------------------------------------------------------------------
@@ -2286,12 +2303,76 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
                                         DirectionalLightData lightData, BSDFData bsdfData,
                                         BuiltinData builtinData)
 {
+    DirectLighting lighting;
+    ZERO_INITIALIZE(DirectLighting, lighting);
+
+    float3 L = -lightData.forward;
     float3 N;
     float unclampedNdotV;
     EvaluateBSDF_GetNormalUnclampedNdotV(bsdfData, preLightData, V, N, unclampedNdotV);
+    float NdotL = dot(N, L);
 
-    return ShadeSurface_Directional(lightLoopContext, posInput, builtinData, preLightData, lightData,
-                                    bsdfData, N, V);
+    float3 transmittance = float3(0.0, 0.0, 0.0);
+    if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_TRANSMISSION_MODE_THIN_THICKNESS))
+    {
+        float3 a = 0; float b = 0;
+        // Caution: This function modify N and contactShadowIndex
+        transmittance = PreEvaluateDirectionalLightTransmission(bsdfData, lightData, a, b); // contactShadowIndex is only modify for the code of this function
+    }
+
+    // color and attenuation are outputted  by EvaluateLight:
+    float3 color;
+    float attenuation;
+    EvaluateLight_Directional(lightLoopContext, posInput, lightData, builtinData, N, L, 1,
+                              color, attenuation);
+
+    float intensity = max(0, attenuation); // Warning: attenuation can be greater than 1 due to the inverse square attenuation (when position is close to light)
+
+    // Note: the NdotL term is now applied in the BSDF() eval itself to account for different normals.
+    UNITY_BRANCH if (intensity > 0.0)
+    {
+        BSDF(V, L, NdotL, posInput.positionWS, preLightData, bsdfData, lighting.diffuse, lighting.specular);
+
+        lighting.diffuse  *= intensity * lightData.diffuseDimmer;
+        lighting.specular *= intensity * lightData.specularDimmer;
+    }
+
+    // The mixed thickness mode is not supported by directional lights due to poor quality and high performance impact.
+    if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_TRANSMISSION_MODE_THIN_THICKNESS))
+    {
+        float  NdotV = ClampNdotV(unclampedNdotV);
+        float  LdotV = dot(L, V);
+        // We use diffuse lighting for accumulation since it is going to be blurred during the SSS pass.
+
+        // TODOENERGYDIFFUSE:
+        //
+        // With coat, will need a diffuse energy term here. eg preLightData.diffuseEnergyTransmitted, from something like e_T0i,
+        // but we would need to balance it with the term used from e_Ti0 == preLightData.diffuseEnergy, as
+        // the term as computed with VLAYERED_DIFFUSE_ENERGY_HACKED_TERM, assumes that all light that is not (Fresnel) reflected
+        // at the bottom interface thus corresponds to diffuse light.
+        // If we use the same term, we could just apply it in the end to diffuse light since coat can't produce diffuse lighting,
+        // so diffuse lighting from the base interface should all have the term applied. (Then, we would need to make sure the
+        // energy term is separate from diffuseFGD.) But the terms are not the same:
+        //
+        // Even without energy conservation, preLightData.diffuseEnergyTransmitted should still != preLightData.diffuseEnergy
+        // as although statistics T12 == T21 for the interface, the stack has terms e_T0i != e_Ti0
+        lighting.diffuse += EvaluateTransmission(bsdfData, transmittance, NdotL, NdotV, LdotV, attenuation * lightData.diffuseDimmer);
+    }
+
+    // Save ALU by applying light and cookie colors only once.
+    lighting.diffuse  *= color;
+    lighting.specular *= color;
+
+#ifdef DEBUG_DISPLAY
+    if (_DebugLightingMode == DEBUGLIGHTINGMODE_LUX_METER)
+    {
+        // Only lighting, not BSDF
+        intensity = max(0, attenuation * NdotL);
+        lighting.diffuse = color * intensity * lightData.diffuseDimmer;
+    }
+#endif
+
+    return lighting;
 }
 
 //-----------------------------------------------------------------------------
@@ -2302,12 +2383,79 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
                                      float3 V, PositionInputs posInput,
                                      PreLightData preLightData, LightData lightData, BSDFData bsdfData, BuiltinData builtinData)
 {
-    float3 N;
-    float unclampedNdotV;
-    EvaluateBSDF_GetNormalUnclampedNdotV(bsdfData, preLightData, V, N, unclampedNdotV);
+    DirectLighting lighting;
+    ZERO_INITIALIZE(DirectLighting, lighting);
 
-    return ShadeSurface_Punctual(lightLoopContext, posInput, builtinData, preLightData, lightData,
-                                 bsdfData, N, V);
+    float3 L;
+    float3 lightToSample;
+    float4 distances; // {d, d^2, 1/d, d_proj}
+    GetPunctualLightVectors(posInput.positionWS, lightData, L, lightToSample, distances);
+
+    float3 N; float unclampedNdotV;
+    EvaluateBSDF_GetNormalUnclampedNdotV(bsdfData, preLightData, V, N, unclampedNdotV);
+    float  NdotL = dot(N, L);
+
+    float3 transmittance = float3(0.0, 0.0, 0.0);
+    if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_TRANSMISSION))
+    {
+        float3 a = 0; float b = 0;
+        // Caution: This function modify N and lightData.contactShadowIndex
+        transmittance = PreEvaluatePunctualLightTransmission(lightLoopContext, posInput, bsdfData,
+                                                             lightData, distances.x, a, L, b);
+    }
+
+    float3 color;
+    float attenuation;
+
+    EvaluateLight_Punctual(lightLoopContext, posInput, lightData, builtinData, N, L, 1, lightToSample, distances,
+                           color, attenuation);
+
+
+    float intensity = max(0, attenuation); // Warning: attenuation can be greater than 1 due to the inverse square attenuation (when position is close to light)
+
+    // Note: the NdotL term is now applied in the BSDF() eval itself to account for different normals.
+    UNITY_BRANCH if (intensity > 0.0)
+    {
+        // Simulate a sphere light with this hack
+        // Note that it is not correct with our pre-computation of PartLambdaV (mean if we disable the optimization we will not have the
+        // same result) but we don't care as it is a hack anyway
+
+        //NEWLITTODO: Do we want this hack in stacklit ? Yes we have area lights, but cheap and not much maintenance to leave it here.
+        // For now no roughness anyways.
+
+        //bsdfData.coatRoughness = max(bsdfData.coatRoughness, lightData.minRoughness);
+        //bsdfData.roughnessT = max(bsdfData.roughnessT, lightData.minRoughness);
+        //bsdfData.roughnessB = max(bsdfData.roughnessB, lightData.minRoughness);
+
+        BSDF(V, L, NdotL, posInput.positionWS, preLightData, bsdfData, lighting.diffuse, lighting.specular);
+
+        lighting.diffuse  *= intensity * lightData.diffuseDimmer;
+        lighting.specular *= intensity * lightData.specularDimmer;
+    }
+
+    if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_TRANSMISSION))
+    {
+        float  NdotV = ClampNdotV(unclampedNdotV);
+        float  LdotV = dot(L, V);
+        // We use diffuse lighting for accumulation since it is going to be blurred during the SSS pass.
+        // TODOENERGYDIFFUSE
+        lighting.diffuse += EvaluateTransmission(bsdfData, transmittance, NdotL, NdotV, LdotV, attenuation * lightData.diffuseDimmer);
+    }
+
+    // Save ALU by applying light and cookie colors only once.
+    lighting.diffuse  *= color;
+    lighting.specular *= color;
+
+#ifdef DEBUG_DISPLAY
+    if (_DebugLightingMode == DEBUGLIGHTINGMODE_LUX_METER)
+    {
+        // Only lighting, not BSDF
+        intensity = max(0, attenuation * NdotL);
+        lighting.diffuse = color * intensity * lightData.diffuseDimmer;
+    }
+#endif
+
+    return lighting;
 }
 
 // NEWLITTODO: For a refence rendering option for area light, like STACK_LIT_DISPLAY_REFERENCE_AREA option in eg EvaluateBSDF_<area light type> :
