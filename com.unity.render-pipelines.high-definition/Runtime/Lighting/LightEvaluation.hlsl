@@ -107,6 +107,11 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
         shadow = lerp(shadowMask, shadow, light.shadowDimmer);
     }
 
+#ifdef DEBUG_DISPLAY
+    if (_DebugShadowMapMode == SHADOWMAPDEBUGMODE_SINGLE_SHADOW && light.shadowIndex == _DebugSingleShadowIndex)
+        debugShadowAttenuation = shadow;
+#endif
+
     attenuation *= shadow;
 }
 
@@ -248,6 +253,11 @@ void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs po
 
         shadow = lerp(shadowMask, shadow, light.shadowDimmer);
     }
+
+#ifdef DEBUG_DISPLAY
+    if (_DebugShadowMapMode == SHADOWMAPDEBUGMODE_SINGLE_SHADOW && light.shadowIndex == _DebugSingleShadowIndex)
+        debugShadowAttenuation = step(FLT_EPS, attenuation) * shadow;
+#endif
 
     attenuation *= shadow;
 }
