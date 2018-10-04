@@ -37,7 +37,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }),
                 MigrationStep.New(Version.MergeEditors, (HDAdditionalReflectionData target) =>
                 {
-                    target.infiniteProjection = !target.reflectionProbe.boxProjection;
+                    target.m_ProbeSettings.proxySettings.useInfluenceVolumeAsProxyVolume
+                        = target.reflectionProbe.boxProjection;
                     target.reflectionProbe.boxProjection = false;
                 })
             );

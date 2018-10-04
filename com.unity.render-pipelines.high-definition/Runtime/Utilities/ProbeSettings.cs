@@ -49,13 +49,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public static readonly Lighting @default = new Lighting
             {
                 multiplier = 1.0f,
-                weight = 1.0f
+                weight = 1.0f,
+                lightLayer = LightLayerEnum.LightLayerDefault
             };
 
             /// <summary>A multiplier applied to the radiance of the probe.</summary>
             public float multiplier;
             /// <summary>A weight applied to the influence of the probe.</summary>
             public float weight;
+            public LightLayerEnum lightLayer;
         }
 
         /// <summary>Settings of this probe in the current proxy.</summary>

@@ -110,6 +110,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
+        public Vector3 extents
+        {
+            get
+            {
+                switch (shape)
+                {
+                    default:
+                    case InfluenceShape.Box:
+                        return boxSize * 0.5f;
+                    case InfluenceShape.Sphere:
+                        return sphereRadius * Vector3.one;
+                }
+            }
+        }
+
         /// <summary>Offset of this influence volume to the component handling him.</summary>
         public Vector3 offset
         {
@@ -260,19 +275,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return probeTransform.TransformPoint(offset);
         }
 
-        internal Vector3 extends
+        internal Matrix4x4 GetInfluenceToWorld(Transform probeTransform)
         {
-            get
-            {
-                switch (shape)
-                {
-                    default:
-                    case InfluenceShape.Box:
-                        return boxSize * 0.5f;
-                    case InfluenceShape.Sphere:
-                        return sphereRadius * Vector3.one;
-                }
-            }
+            var tr = probeTransform;
+            var influencePosition = GetWorldPosition(tr);
+            return Matrix4x4.TRS(influencePosition, tr.rotation, Vector3.one);
         }
 
         internal EnvShapeType envShape

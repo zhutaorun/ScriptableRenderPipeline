@@ -1310,11 +1310,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var envLightData = new EnvLightData();
 
             InfluenceVolume influence = probe.influenceVolume;
-            envLightData.lightLayers = probe.GetLightLayers();
+            envLightData.lightLayers = probe.lightLayersAsUInt;
             envLightData.influenceShapeType = influence.envShape;
             envLightData.weight = probe.weight;
             envLightData.multiplier = probe.multiplier * m_indirectLightingController.indirectSpecularIntensity;
-            envLightData.influenceExtents = influence.extends;
+            envLightData.influenceExtents = influence.extents;
             envLightData.blendNormalDistancePositive = influence.boxBlendNormalDistancePositive;
             envLightData.blendNormalDistanceNegative = influence.boxBlendNormalDistanceNegative;
             envLightData.blendDistancePositive = influence.boxBlendDistancePositive;
@@ -1333,7 +1333,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Proxy data
             var proxyToWorld = probe.proxyToWorld;
             envLightData.proxyExtents = probe.proxyExtents;
-            envLightData.minProjectionDistance = probe.infiniteProjection ? 65504f : 0;
+            envLightData.minProjectionDistance = probe.isProjectionInfinite ? 65504f : 0;
             envLightData.proxyRight = proxyToWorld.GetColumn(0).normalized;
             envLightData.proxyUp = proxyToWorld.GetColumn(1).normalized;
             envLightData.proxyForward = proxyToWorld.GetColumn(2).normalized;

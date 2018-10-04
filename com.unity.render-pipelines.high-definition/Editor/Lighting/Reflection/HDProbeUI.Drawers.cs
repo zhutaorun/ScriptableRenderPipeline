@@ -85,7 +85,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (d.target.proxyVolume == null)
             {
                 EditorGUI.BeginChangeCheck();
-                d.infiniteProjection.boolValue = !EditorGUILayout.Toggle(useInfiniteProjectionContent, !d.infiniteProjection.boolValue);
+                d.useInfluenceAsProxyVolume.boolValue = !EditorGUILayout.Toggle(useInfiniteProjectionContent, !d.useInfluenceAsProxyVolume.boolValue);
                 if(EditorGUI.EndChangeCheck())
                 {
                     d.Apply();
@@ -106,7 +106,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             else
             {
                 EditorGUILayout.HelpBox(
-                        d.infiniteProjection.boolValue ? noProxyInfiniteHelpBoxText : noProxyHelpBoxText,
+                        d.useInfluenceAsProxyVolume.boolValue ? noProxyInfiniteHelpBoxText : noProxyHelpBoxText,
                         MessageType.Info,
                         true
                         );

@@ -72,7 +72,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
             else
             {
-                if (probe.probeType == ProbeSettings.ProbeType.PlanarProbe)
+                if (probe.type == ProbeSettings.ProbeType.PlanarProbe)
                 {
                     var planar = (PlanarReflectionProbe)probe;
                     return ComputeFromMirroredReference(planar, planar.referencePosition);
