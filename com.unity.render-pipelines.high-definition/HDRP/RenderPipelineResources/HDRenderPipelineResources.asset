@@ -76,7 +76,6 @@ MonoBehaviour:
   exposureCS: {fileID: 7200000, guid: 976d7bce54fae534fb9ec67e9c18570c, type: 3}
   uberPostCS: {fileID: 7200000, guid: f1bf52f7c71bffd4f91e6cd90d12a4f7, type: 3}
   lutBuilder3DCS: {fileID: 7200000, guid: 37f2b1b0ecd6f1c439e4c1b4f2fdb524, type: 3}
-  fxaaCS: {fileID: 7200000, guid: b63d19684179eec45aa0c246226a3b67, type: 3}
   taaCS: {fileID: 7200000, guid: 457b902d2d5b3d9489afae9117c867c1, type: 3}
   finalPassPS: {fileID: 4800000, guid: 5ac9ef0c50282754b93c7692488e7ee7, type: 3}
   filmGrainTextures:

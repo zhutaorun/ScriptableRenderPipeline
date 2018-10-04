@@ -10,7 +10,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public MinFloatParameter shutterSpeed = new MinFloatParameter(1f / 200f, 0f);
 
         [Header("Lens")]
-        public MinFloatParameter aperture = new MinFloatParameter(16f, 0.7f);
+        public MinFloatParameter aperture = new MinFloatParameter(16f, 1f);
         public MinFloatParameter focalLength = new MinFloatParameter(50f, 1f);
 
         public bool IsActive()

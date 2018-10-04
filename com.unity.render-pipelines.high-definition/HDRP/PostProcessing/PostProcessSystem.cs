@@ -11,14 +11,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     // lighting/surface effect like SSR/AO
     public sealed class PostProcessSystem
     {
+        const RenderTextureFormat k_ColorFormat = RenderTextureFormat.RGB111110Float;
+
         RenderPipelineResources m_Resources;
         bool m_ResetHistory;
         Material m_FinalPassMaterial;
 
         // Exposure data
         const int k_ExposureCurvePrecision = 128;
-        Color[] m_ExposureCurveColorArray = new Color[k_ExposureCurvePrecision];
-        int[] m_ExposureVariants = new int[4];
+        readonly Color[] m_ExposureCurveColorArray = new Color[k_ExposureCurvePrecision];
+        readonly int[] m_ExposureVariants = new int[4];
 
         Texture2D m_ExposureCurveTexture;
         RTHandle m_EmptyExposureTexture; // RGHalf
@@ -48,13 +50,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         FilmGrain m_FilmGrain;
 
         // Misc (re-usable)
-        // TODO: Do a small "recycling" utility, this is becoming annoying and hard to maintain
-        RTHandle[] m_TempFullSizePingPong = new RTHandle[2]; // R11G11B10F
-        int m_CurrentTemporaryPingPong;
-
-        RTHandle m_HalfResTexture;  // R11G11B10F
         RTHandle m_TempTexture1024; // RGHalf
         RTHandle m_TempTexture32;   // RGHalf
+
+        TargetPool m_Pool;
 
         // Uber feature map to workaround the lack of multi_compile in compute shaders
         readonly Dictionary<int, string> m_UberPostFeatureMap = new Dictionary<int, string>();
@@ -105,22 +104,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Graphics.Blit(tempTex, m_EmptyExposureTexture);
             CoreUtils.Destroy(tempTex);
 
-            // Ping pong targets
-            for (int i = 0; i < 2; i++)
-            {
-                m_TempFullSizePingPong[i] = RTHandles.Alloc(
-                    Vector2.one, depthBufferBits: DepthBits.None,
-                    filterMode: FilterMode.Bilinear, colorFormat: RenderTextureFormat.RGB111110Float,
-                    enableRandomWrite: true, name: "Post-processing PingPong Target " + i
-                );
-            }
+            // Initialize our target pool to ease RT management
+            m_Pool = new TargetPool();
 
             // Misc targets
-            m_HalfResTexture = RTHandles.Alloc(
-                new Vector2(0.5f, 0.5f), colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false,
-                enableRandomWrite: true, name: "Post-processing Half-res Temp"
-            );
-
             m_TempTexture1024 = RTHandles.Alloc(
                 1024, 1024, colorFormat: RenderTextureFormat.RGHalf, sRGB: false,
                 enableRandomWrite: true, name: "Average Luminance Temp 1024"
@@ -136,10 +123,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void Cleanup()
         {
+            m_Pool.Cleanup();
+
             RTHandles.Release(m_EmptyExposureTexture);
-            RTHandles.Release(m_TempFullSizePingPong[0]);
-            RTHandles.Release(m_TempFullSizePingPong[1]);
-            RTHandles.Release(m_HalfResTexture);
             RTHandles.Release(m_TempTexture1024);
             RTHandles.Release(m_TempTexture32);
             CoreUtils.Destroy(m_ExposureCurveTexture);
@@ -147,9 +133,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RTHandles.Release(m_InternalLogLut);
 
             m_EmptyExposureTexture      = null;
-            m_TempFullSizePingPong[0]   = null;
-            m_TempFullSizePingPong[1]   = null;
-            m_HalfResTexture            = null;
             m_TempTexture1024           = null;
             m_TempTexture32             = null;
             m_ExposureCurveTexture      = null;
@@ -180,7 +163,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_SplitToning               = stack.GetComponent<SplitToning>();
             m_LiftGammaGain             = stack.GetComponent<LiftGammaGain>();
             m_ShadowsMidtonesHighlights = stack.GetComponent<ShadowsMidtonesHighlights>();
-            m_FilmGrain                     = stack.GetComponent<FilmGrain>();
+            m_FilmGrain                 = stack.GetComponent<FilmGrain>();
 
             // Check if motion vectors are needed, if so we need to enable a flag on the camera so
             // that Unity properly generate motion vectors (internal engine dependency)
@@ -227,21 +210,25 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     using (new ProfilingSample(cmd, "Temporal Anti-aliasing", CustomSamplerId.TemporalAntialiasing.GetSampler()))
                     {
-                        DoTemporalAntialiasing(cmd, camera, source, PingPongTarget(), depthBuffer, velocityBuffer);
-                        source = GetLastPingPongTarget();
+                        var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
+                        DoTemporalAntialiasing(cmd, camera, source, destination, depthBuffer, velocityBuffer);
+                        if (source != colorBuffer) m_Pool.Recycle(source);
+                        source = destination;
                     }
                 }
 
                 // Depth of Field is done right after TAA as it's easier to just re-project the CoC
                 // map rather than having to deal with all the implications of doing it before TAA
-                //if (m_DepthOfField.mode.value != DepthOfFieldMode.Off)
-                //{
-                //    using (new ProfilingSample(cmd, "Depth of Field", CustomSamplerId.DepthOfField.GetSampler()))
-                //    {
-                //        DoDepthOfField(cmd, camera, source, PingPongTarget(), depthBuffer, taaEnabled ? velocityBuffer : null);
-                //        source = GetLastPingPongTarget();
-                //    }
-                //}
+                if (m_DepthOfField.mode.value != DepthOfFieldMode.Off)
+                {
+                    using (new ProfilingSample(cmd, "Depth of Field", CustomSamplerId.DepthOfField.GetSampler()))
+                    {
+                        var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
+                        DoDepthOfField(cmd, camera, source, destination, depthBuffer, taaEnabled ? velocityBuffer : null);
+                        if (source != colorBuffer) m_Pool.Recycle(source);
+                        source = destination;
+                    }
+                }
 
                 // Motion blur after depth of field for aesthetic reasons (better to see motion
                 // blurred bokeh rather than out of focus motion blur)
@@ -270,11 +257,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     DoVignette(cmd, cs, kernel, featureFlags);
 
                     // Run
+                    var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
                     cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
-                    cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, PingPongTarget());
+                    cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, destination);
                     cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 7) / 8, (camera.actualHeight + 7) / 8, 1);
 
-                    source = GetLastPingPongTarget();
+                    if (source != colorBuffer) m_Pool.Recycle(source);
+                    source = destination;
                 }
 
                 // TODO: User effects go here
@@ -284,21 +273,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 using (new ProfilingSample(cmd, "Final Pass", CustomSamplerId.FinalPost.GetSampler()))
                 {
                     DoFinalPass(cmd, camera, blueNoise, source, colorBuffer);
+                    if (source != colorBuffer) m_Pool.Recycle(source);
                 }
             }
 
             m_ResetHistory = false;
-        }
-
-        RTHandle PingPongTarget()
-        {
-            m_CurrentTemporaryPingPong = (m_CurrentTemporaryPingPong + 1) % 2;
-            return m_TempFullSizePingPong[m_CurrentTemporaryPingPong];
-        }
-
-        RTHandle GetLastPingPongTarget()
-        {
-            return m_TempFullSizePingPong[m_CurrentTemporaryPingPong];
         }
 
         void PushUberFeature(UberPostFeatureFlags flags)
@@ -554,8 +533,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         #region Depth Of Field
 
+        // TODO: Reference list
         void DoDepthOfField(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, RTHandle depthBuffer, RTHandle velocityBuffer)
         {
+            cmd.Blit(source, destination);
         }
 
         #endregion
@@ -929,6 +910,92 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             HDUtils.DrawFullScreen(cmd, camera, m_FinalPassMaterial, destination, shaderPassId: pass);
+        }
+
+        #endregion
+
+        #region Render Target Management Utilities
+
+        // Quick utility class to manage temporary render targets for post-processing and keep the
+        // code readable.
+        class TargetPool
+        {
+            readonly Dictionary<int, Stack<RTHandle>> m_Targets;
+            int m_Tracker;
+
+            public TargetPool()
+            {
+                m_Targets = new Dictionary<int, Stack<RTHandle>>();
+                m_Tracker = 0;
+            }
+
+            public void Cleanup()
+            {
+                foreach (var kvp in m_Targets)
+                {
+                    var stack = kvp.Value;
+
+                    if (stack == null)
+                        continue;
+
+                    while (stack.Count > 0)
+                        RTHandles.Release(stack.Pop());
+                }
+
+                m_Targets.Clear();
+            }
+
+            public RTHandle Get(Vector2 scaleFactor, RenderTextureFormat format, bool mipmap = false)
+            {
+                var hashCode = ComputeHashCode(scaleFactor.x, scaleFactor.y, (int)format, mipmap);
+
+                Stack<RTHandle> stack;
+                if (m_Targets.TryGetValue(hashCode, out stack) && stack.Count > 0)
+                    return stack.Pop();
+
+                var rt = RTHandles.Alloc(
+                    scaleFactor, depthBufferBits: DepthBits.None, sRGB: false,
+                    filterMode: FilterMode.Point, colorFormat: format, useMipMap: mipmap,
+                    enableRandomWrite: true, name: "Post-processing Target Pool " + m_Tracker
+                );
+
+                m_Tracker++;
+                return rt;
+            }
+
+            public void Recycle(RTHandle rt)
+            {
+                Assert.IsNotNull(rt);
+                var hashCode = ComputeHashCode(rt.scaleFactor.x, rt.scaleFactor.y, (int)rt.rt.format, rt.rt.useMipMap);
+
+                Stack<RTHandle> stack;
+                if (!m_Targets.TryGetValue(hashCode, out stack))
+                {
+                    stack = new Stack<RTHandle>();
+                    m_Targets.Add(hashCode, stack);
+                }
+
+                stack.Push(rt);
+            }
+
+            int ComputeHashCode(float scaleX, float scaleY, int format, bool mipmap)
+            {
+                int hashCode = 17;
+
+                unchecked
+                {
+                    unsafe
+                    {
+                        hashCode = hashCode * 23 + *((int*)&scaleX);
+                        hashCode = hashCode * 23 + *((int*)&scaleY);
+                    }
+
+                    hashCode = hashCode * 23 + format;
+                    hashCode = hashCode * 23 + (mipmap ? 1 : 0);
+                }
+
+                return hashCode;
+            }
         }
 
         #endregion
