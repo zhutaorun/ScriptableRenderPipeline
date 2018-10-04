@@ -205,6 +205,10 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
                     CoreLightEditorUtilities.DrawSpotlightWireFrameWithZTest(light);
                 }
             }
+            else
+            {
+                base.OnSceneGUI();
+            }
         }
     }
 }

@@ -207,7 +207,7 @@ namespace UnityEditor.Experimental.Rendering
             Handles.DrawLine(Vector3.zero, rangeRight);
             Handles.DrawLine(Vector3.zero, rangeLeft);
 
-            Handles.DrawWireDisc(Vector3.forward * height, Vector3.forward, radius);
+            Handles.DrawWireDisc(rangeCenter, Vector3.forward, radius);
         }
 
 
@@ -642,7 +642,7 @@ namespace UnityEditor.Experimental.Rendering
             Handles.DrawLine(e3, e4);
             Handles.DrawLine(e4, e1);
         }
-        
+
         public static Vector4 DrawPyramidFrustumHandle(Vector4 aspectFovMaxRangeMinRange, bool useNearPlane, float minAspect = 0.05f, float maxAspect = 20f, float minFov = 1f)
         {
             float aspect = aspectFovMaxRangeMinRange.x;
