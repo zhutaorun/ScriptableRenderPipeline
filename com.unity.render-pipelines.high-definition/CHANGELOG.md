@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - Added occlusion mesh to depth prepass for VR (VR still disabled for now)
+- Added a debug mode to display only one shadow at once
 
 ### Fixed
 - Fixed a normal bias issue with Stacklit (Was causing light leaking)
@@ -16,7 +17,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed issue where XRGraphicsConfig values set in the asset inspector GUI weren't propagating correctly (VR still disabled for now)
 - Fixed issue with tangent that was using SurfaceGradient instead of regular normal decoding
 - Fixed wrong error message display when switching to unsupported target like IOS
+- Fixed an issue with ambient occlusion texture sometimes not being created properly causing broken rendering
 - Shadow near plane is no longer limited at 0.1
+- Fixed an issue where sometime the lookup texture used for GGX convolution was broken, causing broken rendering
 
 ### Changed
 - Use samplerunity_ShadowMask instead of samplerunity_samplerLightmap for shadow mask

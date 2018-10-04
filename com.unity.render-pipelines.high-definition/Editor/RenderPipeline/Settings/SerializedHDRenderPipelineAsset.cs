@@ -11,6 +11,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public SerializedProperty allowShaderVariantStripping;
         public SerializedRenderPipelineSettings renderPipelineSettings;
         public SerializedFrameSettings defaultFrameSettings;
+        public SerializedFrameSettings defaultBakedOrCustomReflectionFrameSettings;
+        public SerializedFrameSettings defaultRealtimeReflectionFrameSettings;
 
         public SerializedHDRenderPipelineAsset(SerializedObject serializedObject)
         {
@@ -22,6 +24,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             renderPipelineSettings = new SerializedRenderPipelineSettings(serializedObject.Find((HDRenderPipelineAsset a) => a.renderPipelineSettings));
             defaultFrameSettings = new SerializedFrameSettings(serializedObject.FindProperty("m_FrameSettings"));
+            defaultBakedOrCustomReflectionFrameSettings = new SerializedFrameSettings(serializedObject.FindProperty("m_BakedOrCustomReflectionFrameSettings"));
+            defaultRealtimeReflectionFrameSettings = new SerializedFrameSettings(serializedObject.FindProperty("m_RealtimeReflectionFrameSettings"));
         }
 
         public void Update()

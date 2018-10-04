@@ -143,6 +143,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             DensityVolumes = 16
         };
 
+        internal const int k_MaxCacheSize = 2000000000; //2 GigaByte
         public const int k_MaxDirectionalLightsOnScreen = 4;
         public const int k_MaxPunctualLightsOnScreen    = 512;
         public const int k_MaxAreaLightsOnScreen        = 64;
@@ -423,15 +424,31 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             GlobalLightLoopSettings gLightLoopSettings = hdAsset.GetRenderPipelineSettings().lightLoopSettings;
             m_CookieTexArray = new TextureCache2D("Cookie");
-            m_CookieTexArray.AllocTextureArray(gLightLoopSettings.cookieTexArraySize, (int)gLightLoopSettings.cookieSize, (int)gLightLoopSettings.cookieSize, TextureFormat.RGBA32, true);
+            int coockieSize = gLightLoopSettings.cookieTexArraySize;
+            int coockieResolution = (int)gLightLoopSettings.cookieSize;
+            if (TextureCache2D.GetApproxCacheSizeInByte(coockieSize, coockieResolution) > k_MaxCacheSize)
+                coockieSize = TextureCache2D.GetMaxCacheSizeForWeightInByte(k_MaxCacheSize, coockieResolution);
+            m_CookieTexArray.AllocTextureArray(coockieSize, coockieResolution, coockieResolution, TextureFormat.RGBA32, true);
             m_CubeCookieTexArray = new TextureCacheCubemap("Cookie");
-            m_CubeCookieTexArray.AllocTextureArray(gLightLoopSettings.cubeCookieTexArraySize, (int)gLightLoopSettings.pointCookieSize, TextureFormat.RGBA32, true, m_CubeToPanoMaterial);
+            int coockieCubeSize = gLightLoopSettings.cubeCookieTexArraySize;
+            int coockieCubeResolution = (int)gLightLoopSettings.pointCookieSize;
+            if (TextureCacheCubemap.GetApproxCacheSizeInByte(coockieCubeSize, coockieCubeResolution) > k_MaxCacheSize)
+                coockieCubeSize = TextureCacheCubemap.GetMaxCacheSizeForWeightInByte(k_MaxCacheSize, coockieCubeResolution);
+            m_CubeCookieTexArray.AllocTextureArray(coockieCubeSize, coockieCubeResolution, TextureFormat.RGBA32, true, m_CubeToPanoMaterial);
 
             TextureFormat probeCacheFormat = gLightLoopSettings.reflectionCacheCompressed ? TextureFormat.BC6H : TextureFormat.RGBAHalf;
-            m_ReflectionProbeCache = new ReflectionProbeCache(hdAsset, iblFilterGGX, gLightLoopSettings.reflectionProbeCacheSize, (int)gLightLoopSettings.reflectionCubemapSize, probeCacheFormat, true);
+            int reflectionCubeSize = gLightLoopSettings.reflectionProbeCacheSize;
+            int reflectionCubeResolution = (int)gLightLoopSettings.reflectionCubemapSize;
+            if (ReflectionProbeCache.GetApproxCacheSizeInByte(reflectionCubeSize, reflectionCubeResolution) > k_MaxCacheSize)
+                reflectionCubeSize = ReflectionProbeCache.GetMaxCacheSizeForWeightInByte(k_MaxCacheSize, reflectionCubeResolution);
+            m_ReflectionProbeCache = new ReflectionProbeCache(hdAsset, iblFilterGGX, reflectionCubeSize, reflectionCubeResolution, probeCacheFormat, true);
 
             TextureFormat planarProbeCacheFormat = gLightLoopSettings.planarReflectionCacheCompressed ? TextureFormat.BC6H : TextureFormat.RGBAHalf;
-            m_ReflectionPlanarProbeCache = new PlanarReflectionProbeCache(hdAsset, iblFilterGGX, gLightLoopSettings.planarReflectionProbeCacheSize, (int)gLightLoopSettings.planarReflectionTextureSize, planarProbeCacheFormat, true);
+            int reflectionPlanarSize = gLightLoopSettings.planarReflectionProbeCacheSize;
+            int reflectionPlanarResolution = (int)gLightLoopSettings.planarReflectionTextureSize;
+            if (ReflectionProbeCache.GetApproxCacheSizeInByte(reflectionPlanarSize, reflectionPlanarResolution) > k_MaxCacheSize)
+                reflectionPlanarSize = ReflectionProbeCache.GetMaxCacheSizeForWeightInByte(k_MaxCacheSize, reflectionPlanarResolution);
+            m_ReflectionPlanarProbeCache = new PlanarReflectionProbeCache(hdAsset, iblFilterGGX, reflectionPlanarSize, reflectionPlanarResolution, planarProbeCacheFormat, true);
 
             s_GenAABBKernel = buildScreenAABBShader.FindKernel("ScreenBoundsAABB");
             s_GenAABBKernel_Oblique = buildScreenAABBShader.FindKernel("ScreenBoundsAABB_Oblique");
@@ -1531,6 +1548,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_CurrentShadowSortedSunLightIndex = -1;
                 m_DominantLightIndex = -1;
                 m_DominantLightValue = 0;
+                m_DebugSelectedLightShadowIndex = -1;
 
                 var stereoEnabled = m_FrameSettings.enableStereo;
 
@@ -1698,7 +1716,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 shadowIndex = additionalLightData.UpdateShadowRequest(camera, m_ShadowInitParameters, m_ShadowManager, light, cullResults, lightIndex, out shadowRequestCount);
 
 #if UNITY_EDITOR
-                                if (debugDisplaySettings.lightingDebugSettings.shadowDebugUseSelection && UnityEditor.Selection.activeGameObject == lightComponent.gameObject)
+                                if ((debugDisplaySettings.lightingDebugSettings.shadowDebugUseSelection
+                                        || debugDisplaySettings.lightingDebugSettings.shadowDebugMode == ShadowMapDebugMode.SingleShadow)
+                                    && UnityEditor.Selection.activeGameObject == lightComponent.gameObject)
                                 {
                                     m_DebugSelectedLightShadowIndex = shadowIndex;
                                     m_DebugSelectedLightShadowCount = shadowRequestCount;
@@ -1934,6 +1954,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             m_enableBakeShadowMask = m_enableBakeShadowMask && hdCamera.frameSettings.enableShadowMask;
+
+            // We push this parameter here because we know that normal/deferred shadows are not yet rendered
+            if (debugDisplaySettings.lightingDebugSettings.shadowDebugMode == ShadowMapDebugMode.SingleShadow)
+            {
+                int shadowIndex = (int)debugDisplaySettings.lightingDebugSettings.shadowMapIndex;
+
+                if (debugDisplaySettings.lightingDebugSettings.shadowDebugUseSelection)
+                    shadowIndex = m_DebugSelectedLightShadowIndex;
+                cmd.SetGlobalInt(HDShaderIDs._DebugSingleShadowIndex, shadowIndex);
+            }
 
             return m_enableBakeShadowMask;
         }
@@ -2238,22 +2268,42 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             PushGlobalParams(hdCamera, cmd);
         }
 
+#if UNITY_2019_1_OR_NEWER
+        public GraphicsFence BuildGPULightListsAsyncBegin(HDCamera hdCamera, ScriptableRenderContext renderContext, RenderTargetIdentifier cameraDepthBufferRT, RenderTargetIdentifier stencilTextureRT, GraphicsFence startFence, bool skyEnabled)
+#else
         public GPUFence BuildGPULightListsAsyncBegin(HDCamera hdCamera, ScriptableRenderContext renderContext, RenderTargetIdentifier cameraDepthBufferRT, RenderTargetIdentifier stencilTextureRT, GPUFence startFence, bool skyEnabled)
+#endif
         {
             var cmd = CommandBufferPool.Get("Build light list");
+#if UNITY_2019_1_OR_NEWER
+            cmd.WaitOnAsyncGraphicsFence(startFence);
+#else
             cmd.WaitOnGPUFence(startFence);
+#endif
 
             BuildGPULightListsCommon(hdCamera, cmd, cameraDepthBufferRT, stencilTextureRT, skyEnabled);
+#if UNITY_2019_1_OR_NEWER
+            GraphicsFence completeFence = cmd.CreateAsyncGraphicsFence();
+#else
             GPUFence completeFence = cmd.CreateGPUFence();
+#endif
             renderContext.ExecuteCommandBufferAsync(cmd, ComputeQueueType.Background);
             CommandBufferPool.Release(cmd);
 
             return completeFence;
         }
 
+#if UNITY_2019_1_OR_NEWER
+        public void BuildGPULightListAsyncEnd(HDCamera hdCamera, CommandBuffer cmd, GraphicsFence doneFence)
+#else
         public void BuildGPULightListAsyncEnd(HDCamera hdCamera, CommandBuffer cmd, GPUFence doneFence)
+#endif
         {
+#if UNITY_2019_1_OR_NEWER
+            cmd.WaitOnAsyncGraphicsFence(doneFence);
+#else
             cmd.WaitOnGPUFence(doneFence);
+#endif
             PushGlobalParams(hdCamera, cmd);
         }
 
@@ -2649,7 +2699,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     int shadowRequestCount = 1;
 
 #if UNITY_EDITOR
-                    if (lightingDebug.shadowDebugUseSelection)
+                    if (lightingDebug.shadowDebugUseSelection && m_DebugSelectedLightShadowIndex != -1)
                     {
                         startShadowIndex = m_DebugSelectedLightShadowIndex;
                         shadowRequestCount = m_DebugSelectedLightShadowCount;
