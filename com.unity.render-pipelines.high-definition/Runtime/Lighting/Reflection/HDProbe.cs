@@ -2,7 +2,7 @@ using System;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
-    public abstract partial class HDProbe
+    public abstract partial class HDProbe : MonoBehaviour, ISerializationCallbackReceiver
     {
         // Serialized Data
         [SerializeField]
@@ -87,42 +87,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public FrameSettings frameSettings => m_ProbeSettings.camera.frameSettings;
         internal Vector3 influenceExtents => influenceVolume.extents;
         internal Matrix4x4 proxyToWorld
-        {
-            get
-            {
-                return proxyVolume != null
-                    ? Matrix4x4.TRS(proxyVolume.transform.position, proxyVolume.transform.rotation, Vector3.one)
-                    : influenceToWorld;
-            }
-        }
-        public virtual Vector3 proxyExtents
-        {
-            get
-            {
-                return proxyVolume != null
-                    ? proxyVolume.proxyVolume.extents
-                    : influenceExtents;
-            }
-        }
-        internal virtual Vector3 capturePosition
-        {
-            get
-            {
-                return transform.position; //at the moment capture position is at probe position
-            }
-        }
+            => proxyVolume != null ? proxyVolume.transform.localToWorldMatrix : influenceToWorld;
+        public Vector3 proxyExtents
+            => proxyVolume != null ? proxyVolume.proxyVolume.extents : influenceExtents;
 
         internal ProbeSettings settings
         {
             get
             {
                 var settings = m_ProbeSettings;
+                // Special case here, we reference a component that is a wrapper
+                // So we need to update with the actual value for the proxyVolume
                 settings.linkedProxy = m_ProxyVolume?.proxyVolume;
                 PopulateSettings(ref settings);
                 return settings;
             }
         }
 
+        // API
+        public virtual void PrepareCulling() { }
+
+        // Life cycle methods
         internal virtual void Awake()
         {
             if (influenceVolume == null)
@@ -132,13 +117,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         internal virtual void OnEnable()
         {
+            PrepareCulling();
             HDProbeSystem.RegisterProbe(this);
         }
-
-        internal virtual void OnDisable()
-        {
-            HDProbeSystem.UnregisterProbe(this);
-        }
+        internal virtual void OnDisable() => HDProbeSystem.UnregisterProbe(this);
 
         internal virtual void OnValidate()
         {
@@ -148,6 +130,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 HDProbeSystem.RegisterProbe(this);
         }
 
+        // Private API
+        internal virtual void UpdatedInfluenceVolumeShape(Vector3 size, Vector3 offset) { }
         protected virtual void PopulateSettings(ref ProbeSettings settings) { }
 
         protected void ComputeTransformRelativeToInfluence(out Vector3 position, out Quaternion rotation)
@@ -182,15 +166,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        void ISerializationCallbackReceiver.OnBeforeSerialize()
-        {
-        }
+        void ISerializationCallbackReceiver.OnBeforeSerialize() { }
+        void ISerializationCallbackReceiver.OnAfterDeserialize() => influenceVolume.Init(this);
 
-        void ISerializationCallbackReceiver.OnAfterDeserialize()
-        {
-            influenceVolume.Init(this);
-        }
-
-        internal virtual void UpdatedInfluenceVolumeShape(Vector3 size, Vector3 offset) { }
     }
 }

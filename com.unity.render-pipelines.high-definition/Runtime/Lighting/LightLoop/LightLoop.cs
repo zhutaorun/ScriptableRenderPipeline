@@ -1280,9 +1280,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // 31 bits index, 1 bit cache type
             var envIndex = -1;
-            if (probe is PlanarReflectionProbe)
+            var planarProbe = probe as PlanarReflectionProbe;
+            var cubeProbe = probe as HDAdditionalReflectionData;
+            if (planarProbe != null)
             {
-                var planarProbe = probe as PlanarReflectionProbe;
                 var renderData = planarProbe.renderData;
                 var fetchIndex = m_ReflectionPlanarProbeCache.FetchSlice(cmd, probe.texture);
                 envIndex = (fetchIndex << 1) | (int)EnvCacheType.Texture2D;
@@ -1295,12 +1296,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 var vp = gpuProj * gpuView * Matrix4x4.Translate(capturePosition);
                 m_Env2DCaptureVP[fetchIndex] = vp;
             }
-            else if (probe is HDAdditionalReflectionData)
+            else if (cubeProbe != null)
             {
-                HDAdditionalReflectionData cubeProbe = probe as HDAdditionalReflectionData;
                 envIndex = m_ReflectionProbeCache.FetchSlice(cmd, probe.texture);
                 envIndex = envIndex << 1 | (int)EnvCacheType.Cubemap;
-                capturePosition = cubeProbe.capturePosition;
+                var renderData = cubeProbe.renderData;
+                capturePosition = renderData.capturePosition;
             }
             // -1 means that the texture is not ready yet (ie not convolved/compressed yet)
             if (envIndex == -1)

@@ -112,24 +112,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             set { m_CaptureMirrorPlaneLocalNormal = value; }
         }
         public Vector3 captureMirrorPlaneNormal { get { return transform.TransformDirection(m_CaptureMirrorPlaneLocalNormal); } }
-        internal override Vector3 capturePosition
-        {
-            get
-            {
-                return transform.TransformPoint(captureLocalPosition);
-            }
-        }
-
-        //for strange reason, current ReflectionSystem needs a proxyExtents two time bigger for planar. To be fixed when refactoring the ReflectionSystem
-        public override Vector3 proxyExtents
-        {
-            get
-            {
-                return proxyVolume != null
-                    ? proxyVolume.proxyVolume.extents
-                    : influenceVolume.boxSize;
-            }
-        }
 
         protected override void PopulateSettings(ref ProbeSettings settings)
         {
