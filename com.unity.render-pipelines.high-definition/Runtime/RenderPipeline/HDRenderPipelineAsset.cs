@@ -38,6 +38,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Not serialized, not visible, the settings effectively used
         FrameSettings m_FrameSettingsRuntime = new FrameSettings();
 
+        [SerializeField]
+        FrameSettings m_BakedOrCustomReflectionFrameSettings = new FrameSettings();
+
+        [SerializeField]
+        FrameSettings m_RealtimeReflectionFrameSettings = new FrameSettings();
+        
         bool m_frameSettingsIsDirty = true;
         public bool frameSettingsIsDirty
         {
@@ -47,6 +53,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public FrameSettings GetFrameSettings()
         {
             return m_FrameSettingsRuntime;
+        }
+        
+        public FrameSettings GetBakedOrCustomReflectionFrameSettings()
+        {
+            return m_BakedOrCustomReflectionFrameSettings;
+        }
+
+        public FrameSettings GetRealtimeReflectionFrameSettings()
+        {
+            return m_RealtimeReflectionFrameSettings;
         }
 
         // See comment in FrameSettings.UpdateDirtyFrameSettings()
@@ -156,20 +172,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return m_RenderPipelineResources.materials.defaultDiffuseMat;
         }
 
+        #if UNITY_EDITOR
+        // call to GetAutodeskInteractiveShaderXXX are only from within editor
         public override Shader GetAutodeskInteractiveShader()
         {
-            return m_RenderPipelineResources.shaderGraphs.autodeskInteractiveSG;
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(HDUtils.GetHDRenderPipelinePath() + "Runtime/RenderPipelineResources/ShaderGraph/AutodeskInteractive.ShaderGraph");
         }
 
         public override Shader GetAutodeskInteractiveTransparentShader()
         {
-            return m_RenderPipelineResources.shaderGraphs.autodeskInteractiveTransparentSG;
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(HDUtils.GetHDRenderPipelinePath() + "Runtime/RenderPipelineResources/ShaderGraph/AutodeskInteractiveTransparent.ShaderGraph");
         }
 
         public override Shader GetAutodeskInteractiveMaskedShader()
         {
-            return m_RenderPipelineResources.shaderGraphs.autodeskInteractiveMaskedSG;
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(HDUtils.GetHDRenderPipelinePath() + "Runtime/RenderPipelineResources/ShaderGraph/AutodeskInteractiveMasked.ShaderGraph");
         }
+        #endif
 
         // Note: This function is HD specific
         public Material GetDefaultDecalMaterial()

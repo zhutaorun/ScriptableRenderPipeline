@@ -38,11 +38,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector4      textureWidthScaling; // (2.0, 0.5) for SinglePassDoubleWide (stereo) and (1.0, 1.0) otherwise
         public uint         numEyes; // 2+ when rendering stereo, 1 otherwise
 
+        public bool         colorPyramidIsValid;
+
         Matrix4x4[] viewProjStereo;
         Matrix4x4[] invViewStereo;
         Matrix4x4[] invProjStereo;
         Matrix4x4[] invViewProjStereo;
-
+        Vector4[] worldSpaceCameraPosStereo;
 
         // Non oblique projection matrix (RHS)
         public Matrix4x4 nonObliqueProjMatrix
@@ -186,9 +188,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             invProjStereo = new Matrix4x4[2];
             invViewProjStereo = new Matrix4x4[2];
 
+            worldSpaceCameraPosStereo = new Vector4[2];
+
             postprocessRenderContext = new PostProcessRenderContext();
 
             m_AdditionalCameraData = null; // Init in Update
+
+            colorPyramidIsValid = false;
 
             Reset();
         }
@@ -234,7 +240,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (m_frameSettings.enableStereo)
             {
-                textureWidthScaling = new Vector4(2.0f, 0.5f, 0.0f, 0.0f); 
+                textureWidthScaling = new Vector4(2.0f, 0.5f, 0.0f, 0.0f);
                 for (uint eyeIndex = 0; eyeIndex < 2; eyeIndex++)
                 {
                     // For VR, TAA proj matrices don't need to be jittered
@@ -273,7 +279,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_ActualWidth = xrDesc.width;
                 m_ActualHeight = xrDesc.height;
 
-                ConfigureStereoMatrices();
             }
 
             if (ShaderConfig.s_CameraRelativeRendering != 0)
@@ -309,15 +314,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             projMatrix = gpuProj;
             nonJitteredProjMatrix = gpuNonJitteredProj;
             cameraPos = pos;
-
-            if (!m_frameSettings.enableStereo)
-            {
-                // TODO VR: Current solution for compute shaders grabs matrices from
-                // stereo matrices even when not rendering stereo in order to reduce shader variants.
-                // After native fix for compute shader keywords is completed, qualify this with stereoEnabled.
-                viewMatrixStereo[0] = viewMatrix;
-                projMatrixStereo[0] = projMatrix;
-            }
+            
+            ConfigureStereoMatrices();
 
             if (ShaderConfig.s_CameraRelativeRendering != 0)
             {
@@ -485,34 +483,65 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void ConfigureStereoMatrices()
         {
-            for (uint eyeIndex = 0; eyeIndex < 2; eyeIndex++)
+            if (frameSettings.enableStereo)
             {
-                viewMatrixStereo[eyeIndex] = camera.GetStereoViewMatrix((Camera.StereoscopicEye)eyeIndex);
-
-                projMatrixStereo[eyeIndex] = camera.GetStereoProjectionMatrix((Camera.StereoscopicEye)eyeIndex);
-                projMatrixStereo[eyeIndex] = GL.GetGPUProjectionMatrix(projMatrixStereo[eyeIndex], true);
-            }
-
-            if (ShaderConfig.s_CameraRelativeRendering != 0)
-            {
-                var leftTranslation = viewMatrixStereo[0].GetColumn(3);
-                var rightTranslation = viewMatrixStereo[1].GetColumn(3);
-                var centerTranslation = (leftTranslation + rightTranslation) / 2;
-                var centerOffset = -centerTranslation;
-                centerOffset.w = 0;
-
-                // TODO: Grabbing the CenterEye transform would be preferable, but XRNode.CenterEye
-                // doesn't always seem to be valid.
-
                 for (uint eyeIndex = 0; eyeIndex < 2; eyeIndex++)
                 {
-                    var translation = viewMatrixStereo[eyeIndex].GetColumn(3);
-                    translation += centerOffset;
-                    viewMatrixStereo[eyeIndex].SetColumn(3, translation);
+                    viewMatrixStereo[eyeIndex] = camera.GetStereoViewMatrix((Camera.StereoscopicEye)eyeIndex);
+                    invViewStereo[eyeIndex] = viewMatrixStereo[eyeIndex].inverse;
+
+                    worldSpaceCameraPosStereo[eyeIndex] = viewMatrixStereo[eyeIndex].GetColumn(3);
+
+                    projMatrixStereo[eyeIndex] = camera.GetStereoProjectionMatrix((Camera.StereoscopicEye)eyeIndex);
+                    projMatrixStereo[eyeIndex] = GL.GetGPUProjectionMatrix(projMatrixStereo[eyeIndex], true);
+                    invProjStereo[eyeIndex] = projMatrixStereo[eyeIndex].inverse;
+
+                    viewProjStereo[eyeIndex] = GetViewProjMatrixStereo(eyeIndex);
+                    invViewProjStereo[eyeIndex] = viewProjStereo[eyeIndex].inverse;
                 }
 
-                centerEyeTranslationOffset = centerOffset;
+                if (ShaderConfig.s_CameraRelativeRendering != 0)
+                {
+                    var leftTranslation = viewMatrixStereo[0].GetColumn(3);
+                    var rightTranslation = viewMatrixStereo[1].GetColumn(3);
+                    var centerTranslation = (leftTranslation + rightTranslation) / 2;
+                    var centerOffset = -centerTranslation;
+                    centerOffset.w = 0;
+
+                    // TODO: Grabbing the CenterEye transform would be preferable, but XRNode.CenterEye
+                    // doesn't always seem to be valid.
+
+                    for (uint eyeIndex = 0; eyeIndex < 2; eyeIndex++)
+                    {
+                        var translation = viewMatrixStereo[eyeIndex].GetColumn(3);
+                        translation += centerOffset;
+                        viewMatrixStereo[eyeIndex].SetColumn(3, translation);
+                        worldSpaceCameraPosStereo[eyeIndex] = viewMatrixStereo[eyeIndex].GetColumn(3);
+                    }
+
+                    centerEyeTranslationOffset = centerOffset;
+
+                }
+
             }
+            else
+            {
+                // TODO VR: Current solution for compute shaders grabs matrices from
+                // stereo matrices even when not rendering stereo in order to reduce shader variants.
+                // After native fix for compute shader keywords is completed, qualify this with stereoEnabled.
+                viewMatrixStereo[0] = viewMatrix;
+                invViewStereo[0] = viewMatrix.inverse;
+
+                projMatrixStereo[0] = projMatrix;
+                invProjStereo[0] = projMatrix.inverse;
+
+                viewProjStereo[0] = viewProjMatrix;
+                invViewProjStereo[0] = viewProjMatrix.inverse;
+
+                worldSpaceCameraPosStereo[0] = worldSpaceCameraPos;
+            }
+
+
 
             // TODO: Fetch the single cull matrix stuff
         }
@@ -641,26 +670,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void SetupGlobalStereoParams(CommandBuffer cmd)
         {
-            for (uint eyeIndex = 0; eyeIndex < 2; eyeIndex++)
-            {
-                var proj = projMatrixStereo[eyeIndex];
-                invProjStereo[eyeIndex] = proj.inverse;
-
-                var view = viewMatrixStereo[eyeIndex];
-                invViewStereo[eyeIndex] = view.inverse;
-
-                viewProjStereo[eyeIndex] = proj * view;
-                invViewProjStereo[eyeIndex] = viewProjStereo[eyeIndex].inverse;
-            }
 
             // corresponds to UnityPerPassStereo
             // TODO: Migrate the other stereo matrices to HDRP-managed UnityPerPassStereo?
             cmd.SetGlobalMatrixArray(HDShaderIDs._ViewMatrixStereo, viewMatrixStereo);
+            cmd.SetGlobalMatrixArray(HDShaderIDs._ProjMatrixStereo, projMatrixStereo);
             cmd.SetGlobalMatrixArray(HDShaderIDs._ViewProjMatrixStereo, viewProjStereo);
             cmd.SetGlobalMatrixArray(HDShaderIDs._InvViewMatrixStereo, invViewStereo);
             cmd.SetGlobalMatrixArray(HDShaderIDs._InvProjMatrixStereo, invProjStereo);
             cmd.SetGlobalMatrixArray(HDShaderIDs._InvViewProjMatrixStereo, invViewProjStereo);
             cmd.SetGlobalMatrixArray(HDShaderIDs._PrevViewProjMatrixStereo, prevViewProjMatrixStereo);
+            cmd.SetGlobalVectorArray(HDShaderIDs._WorldSpaceCameraPosStereo, worldSpaceCameraPosStereo);
             cmd.SetGlobalVector(HDShaderIDs._TextureWidthScaling, textureWidthScaling);
         }
 

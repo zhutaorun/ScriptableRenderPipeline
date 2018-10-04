@@ -135,6 +135,13 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                     input.texcoord.y = 1.0 * _ScreenToTargetScale.y - input.texcoord.y;
                 }
 
+                // Note: If the single shadow debug mode is enabled, we don't render other full screen debug modes
+                // and the value of _FullScreenDebugMode is forced to 0
+                if (_DebugShadowMapMode == SHADOWMAPDEBUGMODE_SINGLE_SHADOW)
+                {
+                    float4 color = SAMPLE_TEXTURE2D(_DebugFullScreenTexture, s_point_clamp_sampler, input.texcoord);
+                    return color;
+                }
                 // SSAO
                 if (_FullScreenDebugMode == FULLSCREENDEBUGMODE_SSAO)
                 {
@@ -215,7 +222,7 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
 
                     return float4(color + d.xxx, 1.0);
                 }
-                if (_FullScreenDebugMode == FULLSCREENDEBUGMODE_SCREEN_SPACE_SHADOWS)
+                if (_FullScreenDebugMode == FULLSCREENDEBUGMODE_CONTACT_SHADOWS)
                 {
                     float4 color = SAMPLE_TEXTURE2D(_DebugFullScreenTexture, s_point_clamp_sampler, input.texcoord);
                     return float4(color.rrr, 0.0);

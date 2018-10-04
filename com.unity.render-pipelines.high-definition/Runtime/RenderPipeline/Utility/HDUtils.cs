@@ -373,10 +373,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Vector2Int[] mipLevelSizes;
             public Vector2Int[] mipLevelOffsets;
 
+            private bool        m_OffsetBufferWillNeedUpdate;
+
             public void Allocate()
             {
                 mipLevelOffsets = new Vector2Int[15];
                 mipLevelSizes   = new Vector2Int[15];
+                m_OffsetBufferWillNeedUpdate = true;
             }
 
             // We pack all MIP levels into the top MIP level to avoid the Pow2 MIP chain restriction.
@@ -425,6 +428,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 } while ((mipSize.x > 1) || (mipSize.y > 1));
 
                 mipLevelCount = mipLevel + 1;
+                m_OffsetBufferWillNeedUpdate = true;
+            }
+
+            public ComputeBuffer GetOffsetBufferData(ComputeBuffer mipLevelOffsetsBuffer)
+            {
+
+                if (m_OffsetBufferWillNeedUpdate)
+                {
+                    mipLevelOffsetsBuffer.SetData(mipLevelOffsets);
+                    m_OffsetBufferWillNeedUpdate = false;
+                }
+
+                return mipLevelOffsetsBuffer;
             }
         }
 
@@ -432,5 +448,41 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             return (x + y - 1) / y;
         }
+
+        // Note: If you add new platform in this function, think about adding support in IsSupportedBuildTarget() function below
+        public static bool IsSupportedGraphicDevice(GraphicsDeviceType graphicDevice)
+        {
+            return (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Direct3D11 ||
+                    SystemInfo.graphicsDeviceType == GraphicsDeviceType.Direct3D12 ||
+                    SystemInfo.graphicsDeviceType == GraphicsDeviceType.PlayStation4 ||
+                    SystemInfo.graphicsDeviceType == GraphicsDeviceType.XboxOne ||
+                    SystemInfo.graphicsDeviceType == GraphicsDeviceType.XboxOneD3D12 ||
+                    SystemInfo.graphicsDeviceType == GraphicsDeviceType.Vulkan ||
+                    SystemInfo.graphicsDeviceType == (GraphicsDeviceType)22 /*GraphicsDeviceType.Switch*/);
+        }
+
+        public static void CheckRTCreated(RenderTexture rt)
+        {
+            // In some cases when loading a project for the first time in the editor, the internal resource is destroyed.
+            // When used as render target, the C++ code will re-create the resource automatically. Since here it's used directly as an UAV, we need to check manually
+            if (!rt.IsCreated())
+                rt.Create();
+        }
+
+#if UNITY_EDITOR
+        // This function can't be in HDEditorUtils because we need it in HDRenderPipeline.cs (and HDEditorUtils is in an editor asmdef)
+        public static bool IsSupportedBuildTarget(UnityEditor.BuildTarget buildTarget)
+        {
+            return (buildTarget == UnityEditor.BuildTarget.StandaloneWindows ||
+                    buildTarget == UnityEditor.BuildTarget.StandaloneWindows64 ||
+                    buildTarget == UnityEditor.BuildTarget.StandaloneLinux64 ||
+                    buildTarget == UnityEditor.BuildTarget.StandaloneLinuxUniversal ||
+                    buildTarget == UnityEditor.BuildTarget.StandaloneOSX ||
+                    buildTarget == UnityEditor.BuildTarget.WSAPlayer ||
+                    buildTarget == UnityEditor.BuildTarget.XboxOne ||
+                    buildTarget == UnityEditor.BuildTarget.PS4 ||
+                    buildTarget == UnityEditor.BuildTarget.Switch);
+        }
+#endif
     }
 }

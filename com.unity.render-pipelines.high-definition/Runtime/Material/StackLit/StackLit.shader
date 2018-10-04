@@ -284,8 +284,8 @@ Shader "HDRenderPipeline/StackLit"
         _Color("Color", Color) = (1,1,1,1)
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 
-        // this will let collapsable element of material be persistant
-        [HideInInspector] _EditorExpendedAreas("_EditorExpendedAreas", Float) = 0
+        // This is required by motion vector pass to be able to disable the pass by default
+        [HideInInspector] _EnableMotionVectorForVertexAnimation("EnableMotionVectorForVertexAnimation", Float) = 0.0
     }
 
     HLSLINCLUDE
@@ -328,6 +328,9 @@ Shader "HDRenderPipeline/StackLit"
 
 
     #pragma shader_feature _STACKLIT_DEBUG
+
+    // enable dithering LOD crossfade
+    #pragma multi_compile _ LOD_FADE_CROSSFADE
 
     //enable GPU instancing support
     #pragma multi_compile_instancing
@@ -574,10 +577,6 @@ Shader "HDRenderPipeline/StackLit"
             #pragma multi_compile _ SHADOWS_SHADOWMASK
             // Setup DECALS_OFF so the shader stripper can remove variants
             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
-
-            // TODO: remove this once new shadow system works
-            // Only for dev/test purpose, allow to switch dynamically between HD and Core shadow system
-            // #pragma multi_compile _ USE_CORE_SHADOW_SYSTEM
             
             // Supported shadow modes per light type
             #pragma multi_compile PUNCTUAL_SHADOW_LOW PUNCTUAL_SHADOW_MEDIUM PUNCTUAL_SHADOW_HIGH
