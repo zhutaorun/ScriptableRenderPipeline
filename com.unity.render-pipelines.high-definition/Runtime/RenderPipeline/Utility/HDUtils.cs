@@ -341,11 +341,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return "Packages/com.unity.render-pipelines.high-definition/";
         }
 
-        public static string GetPostProcessingPath()
-        {
-            return "Packages/com.unity.postprocessing/";
-        }
-
         public static string GetCorePath()
         {
             return "Packages/com.unity.render-pipelines.core/";
