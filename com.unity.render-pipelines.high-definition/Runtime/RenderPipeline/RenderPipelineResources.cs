@@ -252,11 +252,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 decalNormalBufferPS = Load<Shader>(HDRenderPipelinePath + "Material/Decal/DecalNormalBuffer.shader"),
 
                 // Ambient occlusion
-                aoDownsample1CS = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/AODownsample1.compute"),
-                aoDownsample2CS = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/AODownsample2.compute"),
-                aoRenderCS = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/AORender.compute"),
-                aoUpsampleCS = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/AOUpsample.compute"),
-                aoResolvePS = Load<Shader>(HDRenderPipelinePath + "RenderPipeline/RenderPass/MSAA/AOResolve.shader"),
+                aoDownsample1CS = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/ScreenSpaceLighting/AmbientOcclusionDownsample1.compute"),
+                aoDownsample2CS = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/ScreenSpaceLighting/AmbientOcclusionDownsample2.compute"),
+                aoRenderCS = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/ScreenSpaceLighting/AmbientOcclusionRender.compute"),
+                aoUpsampleCS = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/ScreenSpaceLighting/AmbientOcclusionUpsample.compute"),
+                aoResolvePS = Load<Shader>(HDRenderPipelinePath + "RenderPipeline/RenderPass/MSAA/AmbientOcclusionResolve.shader"),
 
                 // MSAA
                 depthValuesPS = Load<Shader>(HDRenderPipelinePath + "RenderPipeline/RenderPass/MSAA/DepthValues.shader"),
