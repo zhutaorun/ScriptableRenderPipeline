@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed wrong error message display when switching to unsupported target like IOS
 - Fixed an issue with ambient occlusion texture sometimes not being created properly causing broken rendering
 - Shadow near plane is no longer limited at 0.1
+- Fixed stereo y-flip for 2019.1 vs. older versions
 
 ### Changed
 - Use samplerunity_ShadowMask instead of samplerunity_samplerLightmap for shadow mask
