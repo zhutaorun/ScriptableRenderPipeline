@@ -712,6 +712,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     EditorGUI.indentLevel--;
                 }
                 EditorGUI.indentLevel--;
+
+                ShadowRegistry registry = UnityEngine.Experimental.Rendering.AdditionalShadowDataEditor.GetRegistry();
+                if (m_AdditionalShadowDatas.Length == 1)
+                {
+                    registry.Draw(m_AdditionalShadowDatas[0].gameObject.GetComponent<Light>());
+                }
             }
         }
 

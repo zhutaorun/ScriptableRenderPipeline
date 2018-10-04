@@ -142,6 +142,7 @@ namespace UnityEngine.Experimental.Rendering
         UnityEditor.SerializedProperty m_ShadowCascadeBorders;
 
         public static void SetRegistry(ShadowRegistry registry) { m_ShadowRegistry = registry; }
+        public static ShadowRegistry GetRegistry() { return m_ShadowRegistry; }
 
         void OnEnable()
         {
