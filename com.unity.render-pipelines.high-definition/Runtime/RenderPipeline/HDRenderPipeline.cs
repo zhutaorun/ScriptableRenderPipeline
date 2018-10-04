@@ -889,15 +889,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // This is the main command buffer used for the frame.
                 var cmd = CommandBufferPool.Get("");
 
-                // Specific pass to simply display the content of the camera buffer if users have fill it themselves (like video player)
-                if (additionalCameraData && additionalCameraData.renderingPath == HDAdditionalCameraData.RenderingPath.FullscreenPassthrough)
-                {
-                    renderContext.ExecuteCommandBuffer(cmd);
-                    CommandBufferPool.Release(cmd);
-                    renderContext.Submit();
-                    continue;
-                }
-
                 // Don't render reflection in Preview, it prevent them to display
                 if (camera.cameraType != CameraType.Reflection && camera.cameraType != CameraType.Preview
                     // Planar probes rendering is not currently supported for orthographic camera

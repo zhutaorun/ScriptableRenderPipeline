@@ -26,12 +26,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Default is the default rendering path define by the HDRendeRPipelineAsset FrameSettings.
         // Custom allow users to define the FrameSettigns for this path
         // Then enum can contain either preset of FrameSettings or hard coded path
-        // FullscreenPassthrough below is a hard coded path (a path that can't be implemented only with FrameSettings)
         public enum RenderingPath
         {
             UseGraphicsSettings,
             Custom,  // Fine grained
-            FullscreenPassthrough  // Hard coded path
         };
 
         public enum ClearColorMode
