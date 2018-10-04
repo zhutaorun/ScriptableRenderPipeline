@@ -1,8 +1,6 @@
 #ifndef UNITY_PHYSICAL_CAMERA_INCLUDED
 #define UNITY_PHYSICAL_CAMERA_INCLUDED
 
-#include "HDRP/ShaderVariables.hlsl"
-
 // References:
 // "Moving Frostbite to PBR" (Sébastien Lagarde & Charles de Rousiers)
 //   https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
@@ -51,13 +49,13 @@ float ComputeISO(float aperture, float shutterSpeed, float targetEV100)
     return ((aperture * aperture) * 100.0) / (shutterSpeed * pow(2.0, targetEV100));
 }
 
-float ComputeLuminanceAdaptation(float previousLuminance, float currentLuminance, float speedDarkToLight, float speedLightToDark)
+float ComputeLuminanceAdaptation(float previousLuminance, float currentLuminance, float speedDarkToLight, float speedLightToDark, float deltaTime)
 {
     float delta = currentLuminance - previousLuminance;
     float speed = delta > 0.0 ? speedDarkToLight : speedLightToDark;
     
     // Exponential decay
-    return previousLuminance + delta * (1.0 - exp2(-unity_DeltaTime.x * speed));
+    return previousLuminance + delta * (1.0 - exp2(-deltaTime * speed));
 }
 
 #endif // UNITY_PHYSICAL_CAMERA_INCLUDED

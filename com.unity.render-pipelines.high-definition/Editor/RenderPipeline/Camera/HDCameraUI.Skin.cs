@@ -29,6 +29,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static readonly GUIContent renderingPathContent = CoreEditorUtils.GetContent("Rendering Path");
 
+        static readonly GUIContent antialiasingContent = CoreEditorUtils.GetContent("Anti-aliasing|The anti-aliasing method to use.");
+        static readonly GUIContent ditheringContent = CoreEditorUtils.GetContent("Dithering|Should we apply 8-bit dithering to the final render?");
+
         static readonly GUIContent apertureContent = CoreEditorUtils.GetContent("Aperture");
         static readonly GUIContent shutterSpeedContent = CoreEditorUtils.GetContent("Shutter Speed (1 / x)");
         static readonly GUIContent isoContent = CoreEditorUtils.GetContent("ISO");
@@ -52,5 +55,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             new GUIContent("None (Main Display)"),
         };
 
+        static readonly GUIContent[] antialiasingModeNames =
+        {
+            new GUIContent("No Anti-aliasing"),
+            new GUIContent("Fast Approximate Anti-aliasing (FXAA)"),
+            new GUIContent("Temporal Anti-aliasing (TAA)")
+        };
     }
 }

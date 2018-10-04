@@ -25,7 +25,7 @@
 #pragma kernel KMainInvert MAIN=KMainInvert INVERT
 #pragma kernel KMainBlendout MAIN=KMainBlendout BLEND_WITH_HIGHER_RESOLUTION
 
-#include "CoreRP/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 
 TEXTURE2D(_LoResDB);
 TEXTURE2D(_HiResDB);

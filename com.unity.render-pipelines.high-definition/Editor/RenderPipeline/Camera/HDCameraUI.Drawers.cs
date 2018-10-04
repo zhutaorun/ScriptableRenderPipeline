@@ -43,6 +43,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 CED.space,
                 CED.Action(Drawer_CameraWarnings),
                 CED.Action(Drawer_FieldRenderingPath),
+                CED.Action(Drawer_Antialiasing),
+                CED.Action(Drawer_Dithering),
                 CED.space
                 );
 
@@ -174,6 +176,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static void Drawer_FieldRenderingPath(HDCameraUI s, SerializedHDCamera p, Editor owner)
         {
             EditorGUILayout.PropertyField(p.renderingPath, renderingPathContent);
+        }
+
+        static void Drawer_Antialiasing(HDCameraUI s, SerializedHDCamera p, Editor owner)
+        {
+            p.antialiasing.intValue = EditorGUILayout.Popup(antialiasingContent, p.antialiasing.intValue, antialiasingModeNames);
+        }
+
+        static void Drawer_Dithering(HDCameraUI s, SerializedHDCamera p, Editor owner)
+        {
+            EditorGUILayout.PropertyField(p.dithering, ditheringContent);
         }
 
         static void Drawer_FieldRenderTarget(HDCameraUI s, SerializedHDCamera p, Editor owner)

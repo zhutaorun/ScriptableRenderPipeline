@@ -273,7 +273,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         void PushDownsampleCommands(CommandBuffer cmd, HDCamera camera, RTHandle depthMap)
         {
             // 1st downsampling pass.
-            var cs = m_Resources.aoDownsample1;
+            var cs = m_Resources.shaders.aoDownsample1CS;
             int kernel = cs.FindKernel("KMain");
 
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._LinearZ, m_LinearDepthTex);
@@ -286,7 +286,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.DispatchCompute(cs, kernel, m_Widths[(int)MipLevel.L4], m_Heights[(int)MipLevel.L4], 1);
 
             // 2nd downsampling pass.
-            cs = m_Resources.aoDownsample2;
+            cs = m_Resources.shaders.aoDownsample2CS;
             kernel = cs.FindKernel("KMain");
 
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS4x, m_LowDepth2Tex);
@@ -363,7 +363,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_SampleWeightTable[i] /= totalWeight;
 
             // Set the arguments for the render kernel.
-            var cs = m_Resources.aoRender;
+            var cs = m_Resources.shaders.aoRenderCS;
             int kernel = cs.FindKernel("KMainInterleaved");
 
             cmd.SetComputeFloatParams(cs, HDShaderIDs._InvThicknessTable, m_InvThicknessTable);
@@ -387,7 +387,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void PushUpsampleCommands(CommandBuffer cmd, Vector4 viewport, RTHandle lowResDepth, RTHandle interleavedAO, RTHandle highResDepth, RTHandle highResAO, RTHandle dest, AmbientOcclusion settings, Vector3 lowResDepthSize, Vector2 highResDepthSize)
         {
-            var cs = m_Resources.aoUpsample;
+            var cs = m_Resources.shaders.aoUpsampleCS;
             int kernel = cs.FindKernel(highResAO == null ? "KMainInvert" : "KMainBlendout");
 
             float stepSize = 1920f / lowResDepthSize.x;

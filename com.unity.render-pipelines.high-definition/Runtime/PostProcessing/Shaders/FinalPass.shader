@@ -8,9 +8,9 @@ Shader "Hidden/HDRenderPipeline/FinalPass"
         #pragma multi_compile _ FXAA
         #pragma multi_compile _ GRAIN
         
-        #include "CoreRP/ShaderLibrary/Common.hlsl"
-        #include "CoreRP/ShaderLibrary/Color.hlsl"
-        #include "HDRP/ShaderVariables.hlsl"
+        #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+        #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
+        #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 
         #define FXAA_HDR_MAPUNMAP   1
         #define FXAA_SPAN_MAX       (8.0)

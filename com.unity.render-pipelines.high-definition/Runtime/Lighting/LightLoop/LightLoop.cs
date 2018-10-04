@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine.Experimental.Rendering.HDPipeline.Internal;
 using UnityEngine.Rendering;
-using UnityEngine.Rendering.PostProcessing;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -2398,7 +2396,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             bool needsContactShadows = (m_CurrentSunLight != null && sunShadowData != null && sunShadowData.contactShadows) || m_DominantLightIndex != -1;
             if (!m_EnableContactShadow || !needsContactShadows)
             {
-                cmd.SetGlobalTexture(HDShaderIDs._DeferredShadowTexture, RuntimeUtilities.blackTexture);
+                cmd.SetGlobalTexture(HDShaderIDs._DeferredShadowTexture, Texture2D.blackTexture);
                 return;
             }
 
@@ -2431,9 +2429,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 float contactShadowFadeEnd = m_ContactShadows.maxDistance;
                 float contactShadowOneOverFadeRange = 1.0f / Math.Max(1e-6f, contactShadowRange);
                 Vector4 contactShadowParams = new Vector4(m_ContactShadows.length, m_ContactShadows.distanceScaleFactor, contactShadowFadeEnd, contactShadowOneOverFadeRange);
-                var postProcessLayer = hdCamera.camera.GetComponent<PostProcessLayer>();
-                bool taaEnabled = hdCamera.camera.cameraType == CameraType.Game &&
-                                  HDUtils.IsTemporalAntialiasingActive(postProcessLayer);
+                bool taaEnabled = hdCamera.camera.cameraType == CameraType.Game && hdCamera.antialiasing == HDAdditionalCameraData.AntialiasingMode.TemporalAntialiasing;
                 float timeVaryingNoise = taaEnabled ? 1.0f : 0.0f;
                 Vector4 contactShadowParams2 = new Vector4(m_ContactShadows.opacity, timeVaryingNoise, firstMipOffsetY, 0.0f);
                 cmd.SetComputeVectorParam(screenSpaceShadowComputeShader, HDShaderIDs._ContactShadowParamsParameters, contactShadowParams);

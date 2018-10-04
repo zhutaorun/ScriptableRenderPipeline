@@ -66,6 +66,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Misc
         VolumeUpdate,
 
+        // Post-processing
+        Exposure,
+        TemporalAntialiasing,
+        DepthOfField,
+        MotionBlur,
+        ColorGradingLUTBuilder,
+        UberPost,
+        FinalPost,
+
         Max
     }
 

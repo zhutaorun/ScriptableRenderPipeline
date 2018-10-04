@@ -1,4 +1,5 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Macros.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/PhysicalCamera.hlsl"
 
 //-----------------------------------------------------------------------------
 // LightLoop
@@ -71,6 +72,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
     context.sampleReflection = 0;
     context.shadowContext = InitShadowContext();
     context.contactShadow = InitContactShadow(posInput);
+    context.exposure = ConvertEV100ToExposure(LOAD_TEXTURE2D(_ExposureTexture, int2(0, 0)).x);
 
     // First of all we compute the shadow value of the directional light to reduce the VGPR pressure
     if (featureFlags & LIGHTFEATUREFLAGS_DIRECTIONAL)

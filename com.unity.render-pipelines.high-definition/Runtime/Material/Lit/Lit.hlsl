@@ -2089,7 +2089,7 @@ void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
     // Apply the albedo to the direct diffuse lighting (only once). The indirect (baked)
     // diffuse lighting has already multiply the albedo in ModifyBakedDiffuseLighting().
     // Note: In deferred bakeDiffuseLighting also contain emissive and in this case emissiveColor is 0
-    diffuseLighting = modifiedDiffuseColor * lighting.direct.diffuse + builtinData.bakeDiffuseLighting + builtinData.emissiveColor;
+    diffuseLighting = (modifiedDiffuseColor * lighting.direct.diffuse + builtinData.bakeDiffuseLighting) * lightLoopContext.exposure + builtinData.emissiveColor;
 
     // If refraction is enable we use the transmittanceMask to lerp between current diffuse lighting and refraction value
     // Physically speaking, transmittanceMask should be 1, but for artistic reasons, we let the value vary
@@ -2101,7 +2101,7 @@ void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
     diffuseLighting = lerp(diffuseLighting, lighting.indirect.specularTransmitted, bsdfData.transmittanceMask);
 #endif
 
-    specularLighting = lighting.direct.specular + lighting.indirect.specularReflected;
+    specularLighting = (lighting.direct.specular + lighting.indirect.specularReflected) * lightLoopContext.exposure;
     // Rescale the GGX to account for the multiple scattering.
     specularLighting *= 1.0 + bsdfData.fresnel0 * preLightData.energyCompensation;
 

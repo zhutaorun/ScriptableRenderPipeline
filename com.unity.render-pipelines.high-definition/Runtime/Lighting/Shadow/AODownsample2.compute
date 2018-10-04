@@ -24,7 +24,7 @@
 
 #pragma kernel KMain
 
-#include "CoreRP/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 
 TEXTURE2D(_DS4x);
 

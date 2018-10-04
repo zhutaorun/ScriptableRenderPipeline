@@ -61,7 +61,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public PostProcessSystem(HDRenderPipelineAsset hdAsset)
         {
             m_Resources = hdAsset.renderPipelineResources;
-            m_FinalPassMaterial = CoreUtils.CreateEngineMaterial(m_Resources.finalPassPS);
+            m_FinalPassMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.finalPassPS);
 
             // Feature maps
             // Must be kept in sync with variants defined in UberPost.compute
@@ -239,7 +239,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     // Feature flags are passed to all effects and it's their responsibility to check
                     // if they are used or not so they can set default values if needed
-                    var cs = m_Resources.uberPostCS;
+                    var cs = m_Resources.shaders.uberPostCS;
                     var featureFlags = GetUberFeatureFlags();
                     int kernel = GetUberKernel(cs, featureFlags);
 
@@ -332,7 +332,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void DoFixedExposure(CommandBuffer cmd, HDCamera camera)
         {
-            var cs = m_Resources.exposureCS;
+            var cs = m_Resources.shaders.exposureCS;
             
             RTHandle prevExposure, nextExposure;
             GrabExposureHistoryTextures(camera, out prevExposure, out nextExposure);
@@ -414,7 +414,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // TODO: Handle light buffer as a source for average luminance
         void DoDynamicExposure(CommandBuffer cmd, HDCamera camera, RTHandle colorBuffer, RTHandle lightingBuffer)
         {
-            var cs = m_Resources.exposureCS;
+            var cs = m_Resources.shaders.exposureCS;
 
             RTHandle prevExposure, nextExposure;
             GrabExposureHistoryTextures(camera, out prevExposure, out nextExposure);
@@ -480,7 +480,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void DoTemporalAntialiasing(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination, RTHandle depthBuffer, RTHandle velocityBuffer)
         {
-            var cs = m_Resources.taaCS;
+            var cs = m_Resources.shaders.temporalAntialiasingCS;
             var kernel = cs.FindKernel(camera.camera.orthographic ? "KTAA_Ortho" : "KTAA_Persp");
 
             RTHandle prevHistory, nextHistory;
@@ -521,7 +521,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void CopyTemporalAntialiasingHistory(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle history)
         {
-            var cs = m_Resources.taaCS;
+            var cs = m_Resources.shaders.temporalAntialiasingCS;
             var kernel = cs.FindKernel("KCopyHistory");
 
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
@@ -674,7 +674,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ComputeSplitToning(out splitShadows, out splitHighlights);
 
             // Setup lut builder compute & grab the kernel we need
-            var builderCS = m_Resources.lutBuilder3DCS;
+            var builderCS = m_Resources.shaders.lutBuilder3DCS;
             string kernelName;
 
             switch (m_Tonemapping.mode.value)
@@ -873,7 +873,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 var texture = m_FilmGrain.texture.value;
 
                 if (m_FilmGrain.type.value != FilmGrainLookup.Custom)
-                    texture = m_Resources.filmGrainTextures[(int)m_FilmGrain.type.value];
+                    texture = m_Resources.textures.filmGrainTex[(int)m_FilmGrain.type.value];
 
                 if (texture != null) // Fail safe if the resources asset breaks :/
                 {

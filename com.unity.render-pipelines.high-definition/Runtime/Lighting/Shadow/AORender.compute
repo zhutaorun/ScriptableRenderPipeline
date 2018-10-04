@@ -24,7 +24,7 @@
 
 #pragma kernel KMainInterleaved MAIN=KMainInterleaved INTERLEAVE_RESULT
 
-#include "CoreRP/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 
 #ifndef INTERLEAVE_RESULT
 #define WIDE_SAMPLING 1

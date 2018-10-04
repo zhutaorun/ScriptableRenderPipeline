@@ -1,6 +1,6 @@
-#include "CoreRP/ShaderLibrary/ACES.hlsl"
-#include "CoreRP/ShaderLibrary/Common.hlsl"
-#include "CoreRP/ShaderLibrary/Color.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/ACES.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
 
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 

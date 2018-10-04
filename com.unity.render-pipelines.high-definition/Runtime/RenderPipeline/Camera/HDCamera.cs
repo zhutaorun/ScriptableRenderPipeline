@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
-using UnityEngine.Rendering.PostProcessing;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -19,7 +18,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Frustum   frustum;
         public Vector4[] frustumPlaneEquations;
         public Camera    camera;
-        public uint      taaFrameIndex;
+        public Vector4   taaJitter;
+        public int       taaFrameIndex;
         public Vector2   taaFrameRotation;
         public Vector4   zBufferParams;
         public Vector4   unity_OrthoParams;
@@ -29,8 +29,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Transform volumeAnchor;
 
         public VolumetricLightingSystem.VBufferParameters[] vBufferParams; // Double-buffered
-
-        public PostProcessRenderContext postprocessRenderContext;
 
         public Matrix4x4[]  viewMatrixStereo;
         public Matrix4x4[]  projMatrixStereo;
@@ -163,6 +161,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
+        public HDAdditionalCameraData.AntialiasingMode antialiasing
+        {
+            get
+            {
+                return m_AdditionalCameraData != null
+                    ? m_AdditionalCameraData.antialiasing
+                    : HDAdditionalCameraData.AntialiasingMode.None;
+            }
+        }
+
+        public bool dithering
+        {
+            get { return m_AdditionalCameraData != null && m_AdditionalCameraData.dithering; }
+        }
+
         static Dictionary<Camera, HDCamera> s_Cameras = new Dictionary<Camera, HDCamera>();
         static List<Camera> s_Cleanup = new List<Camera>(); // Recycled to reduce GC pressure
 
@@ -190,8 +203,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             worldSpaceCameraPosStereo = new Vector4[2];
 
-            postprocessRenderContext = new PostProcessRenderContext();
-
             m_AdditionalCameraData = null; // Init in Update
 
             colorPyramidIsValid = false;
@@ -201,7 +212,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         // Pass all the systems that may want to update per-camera data here.
         // That way you will never update an HDCamera and forget to update the dependent system.
-        public void Update(FrameSettings currentFrameSettings, PostProcessLayer postProcessLayer, VolumetricLightingSystem vlSys, MSAASamples msaaSamples)
+        public void Update(FrameSettings currentFrameSettings, VolumetricLightingSystem vlSys, MSAASamples msaaSamples)
         {
             // store a shortcut on HDAdditionalCameraData (done here and not in the constructor as
             // we don't create HDCamera at every frame and user can change the HDAdditionalData later (Like when they create a new scene).
@@ -215,13 +226,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // If TAA is enabled projMatrix will hold a jittered projection matrix. The original,
             // non-jittered projection matrix can be accessed via nonJitteredProjMatrix.
-            bool taaEnabled = camera.cameraType == CameraType.Game &&
-                HDUtils.IsTemporalAntialiasingActive(postProcessLayer) &&
-                m_frameSettings.enablePostprocess;
+            bool taaEnabled = m_frameSettings.enablePostprocess
+                && antialiasing == HDAdditionalCameraData.AntialiasingMode.TemporalAntialiasing
+                && camera.cameraType == CameraType.Game;
+
+            if (!taaEnabled)
+            {
+                taaFrameIndex = 0;
+                taaJitter = Vector4.zero;
+            }
 
             var nonJitteredCameraProj = camera.projectionMatrix;
             var cameraProj = taaEnabled
-                ? postProcessLayer.temporalAntialiasing.GetJitteredProjectionMatrix(camera)
+                ? GetJitteredProjectionMatrix()
                 : nonJitteredCameraProj;
 
             // The actual projection matrix used in shaders is actually massaged a bit to work across all platforms
@@ -306,7 +323,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 isFirstFrame = false;
             }
 
-            taaFrameIndex = taaEnabled ? (uint)postProcessLayer.temporalAntialiasing.sampleIndex : 0;
             taaFrameRotation = new Vector2(Mathf.Sin(taaFrameIndex * (0.5f * Mathf.PI)),
                     Mathf.Cos(taaFrameIndex * (0.5f * Mathf.PI)));
 
@@ -479,6 +495,77 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 frustumPlaneEquations[i] = new Vector4(frustum.planes[i].normal.x, frustum.planes[i].normal.y, frustum.planes[i].normal.z, frustum.planes[i].distance);
             }
+        }
+
+        Matrix4x4 GetJitteredProjectionMatrix()
+        {
+            // The variance between 0 and the actual halton sequence values reveals noticeable
+            // instability in Unity's shadow maps, so we avoid index 0.
+            float jitterX = HaltonSequence.Get((taaFrameIndex & 1023) + 1, 2) - 0.5f;
+            float jitterY = HaltonSequence.Get((taaFrameIndex & 1023) + 1, 3) - 0.5f;
+            taaJitter = new Vector4(jitterX, jitterY, jitterX / camera.pixelWidth, jitterY / camera.pixelHeight);
+
+            const int kMaxSampleCount = 256;
+            if (++taaFrameIndex >= kMaxSampleCount)
+                taaFrameIndex = 0;
+
+            Matrix4x4 proj;
+
+            if (camera.orthographic)
+            {
+                float vertical = camera.orthographicSize;
+                float horizontal = vertical * camera.aspect;
+                
+                var offset = taaJitter;
+                offset.x *= horizontal / (0.5f * camera.pixelWidth);
+                offset.y *= vertical / (0.5f * camera.pixelHeight);
+
+                float left = offset.x - horizontal;
+                float right = offset.x + horizontal;
+                float top = offset.y + vertical;
+                float bottom = offset.y - vertical;
+
+                proj = Matrix4x4.Ortho(left, right, bottom, top, camera.nearClipPlane, camera.farClipPlane);
+            }
+            else
+            {
+                float vertical = Mathf.Tan(0.5f * Mathf.Deg2Rad * camera.fieldOfView);
+                float horizontal = vertical * camera.aspect;
+                float near = camera.nearClipPlane;
+                float far = camera.farClipPlane;
+                
+                var offset = taaJitter;
+                offset.x *= horizontal / (0.5f * camera.pixelWidth);
+                offset.y *= vertical / (0.5f * camera.pixelHeight);
+
+                float left = (offset.x - horizontal) * near;
+                float right = (offset.x + horizontal) * near;
+                float top = (offset.y + vertical) * near;
+                float bottom = (offset.y - vertical) * near;
+
+                proj = new Matrix4x4();
+                proj[0, 0] = (2f * near) / (right - left);
+                proj[0, 1] = 0f;
+                proj[0, 2] = (right + left) / (right - left);
+                proj[0, 3] = 0f;
+
+                proj[1, 0] = 0f;
+                proj[1, 1] = (2f * near) / (top - bottom);
+                proj[1, 2] = (top + bottom) / (top - bottom);
+                proj[1, 3] = 0f;
+
+                proj[2, 0] = 0f;
+                proj[2, 1] = 0f;
+                proj[2, 2] = -(far + near) / (far - near);
+                proj[2, 3] = -(2f * far * near) / (far - near);
+
+                proj[3, 0] = 0f;
+                proj[3, 1] = 0f;
+                proj[3, 2] = -1f;
+                proj[3, 3] = 0f;
+            }
+
+            return proj;
         }
 
         void ConfigureStereoMatrices()

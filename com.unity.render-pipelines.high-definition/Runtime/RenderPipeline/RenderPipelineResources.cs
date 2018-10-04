@@ -96,10 +96,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Decal
             public Shader decalNormalBufferPS;
 
+            // Ambient occlusion
+            public ComputeShader aoDownsample1CS;
+            public ComputeShader aoDownsample2CS;
+            public ComputeShader aoRenderCS;
+            public ComputeShader aoUpsampleCS;
+            public Shader aoResolvePS;
+
             // MSAA Shaders
             public Shader depthValuesPS;
-            public Shader aoResolvePS;
             public Shader colorResolvePS;
+
+            // Post-processing
+            public ComputeShader exposureCS;
+            public ComputeShader uberPostCS;
+            public ComputeShader lutBuilder3DCS;
+            public ComputeShader temporalAntialiasingCS;
+            public Shader finalPassPS;
         }
 
         [Serializable]
@@ -117,6 +130,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             // Debug
             public Texture2D debugFontTex;
+
+            // Pre-baked noise
+            public Texture2D[] blueNoise64Tex;
+
+            // Post-processing
+            public Texture2D[] filmGrainTex;
         }
 
         [Serializable]
@@ -231,11 +250,24 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 // Decal
                 decalNormalBufferPS = Load<Shader>(HDRenderPipelinePath + "Material/Decal/DecalNormalBuffer.shader"),
-                
+
+                // Ambient occlusion
+                aoDownsample1CS = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/AODownsample1.compute"),
+                aoDownsample2CS = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/AODownsample2.compute"),
+                aoRenderCS = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/AORender.compute"),
+                aoUpsampleCS = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/AOUpsample.compute"),
+                aoResolvePS = Load<Shader>(HDRenderPipelinePath + "RenderPipeline/RenderPass/MSAA/AOResolve.shader"),
+
                 // MSAA
                 depthValuesPS = Load<Shader>(HDRenderPipelinePath + "RenderPipeline/RenderPass/MSAA/DepthValues.shader"),
-                aoResolvePS = Load<Shader>(HDRenderPipelinePath + "RenderPipeline/RenderPass/MSAA/AOResolve.shader"),
                 colorResolvePS = Load<Shader>(HDRenderPipelinePath + "RenderPipeline/RenderPass/MSAA/ColorResolve.shader"),
+
+                // Post-processing
+                exposureCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/Exposure.compute"),
+                uberPostCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/UberPost.compute"),
+                lutBuilder3DCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/LutBuilder3D.compute"),
+                temporalAntialiasingCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/TAA.compute"),
+                finalPassPS = Load<Shader>(HDRenderPipelinePath + "PostProcessing/Shaders/FinalPass.shader")
             };
 
             // Materials
@@ -253,12 +285,33 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 // Debug
                 debugFontTex = Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/DebugFont.tga"),
+
+                filmGrainTex = new[]
+                {
+                    // These need to stay in this specific order!
+                    Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/FilmGrain/Thin01.png"),
+                    Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/FilmGrain/Thin02.png"),
+                    Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/FilmGrain/Medium01.png"),
+                    Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/FilmGrain/Medium02.png"),
+                    Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/FilmGrain/Medium03.png"),
+                    Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/FilmGrain/Medium04.png"),
+                    Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/FilmGrain/Medium05.png"),
+                    Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/FilmGrain/Medium06.png"),
+                    Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/FilmGrain/Large01.png"),
+                    Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/FilmGrain/Large02.png")
+                },
+
+                blueNoise64Tex = new Texture2D[64]
             };
 
             // ShaderGraphs
             shaderGraphs = new ShaderGraphResources
             {
             };
+
+            // Fill-in blue noise textures
+            for (int i = 0; i < 64; i++)
+                textures.blueNoise64Tex[i] = Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/BlueNoise64/LDR_LLL1_" + i + ".png");
         }
 #endif
     }
