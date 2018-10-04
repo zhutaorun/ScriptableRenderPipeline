@@ -23,6 +23,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static string GetBakedTextureDirectory(SceneManagement.Scene scene)
         {
             var scenePath = scene.path;
+            if (string.IsNullOrEmpty(scenePath))
+                return string.Empty;
+
             var cacheDirectoryName = Path.GetFileNameWithoutExtension(scenePath);
             var cacheDirectory = Path.Combine(Path.GetDirectoryName(scenePath), cacheDirectoryName);
             return cacheDirectory;

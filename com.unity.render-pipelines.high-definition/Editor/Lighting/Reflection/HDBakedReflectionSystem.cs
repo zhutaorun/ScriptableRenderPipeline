@@ -54,6 +54,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public override bool BakeAllReflectionProbes()
         {
+            if (!AreAllOpenedSceneSaved())
+                return false;
+
             DeleteUnusedCubemapAssets();
             var bakedProbes = HDProbeSystem.bakedProbes;
 
@@ -65,6 +68,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             IScriptableBakedReflectionSystemStageNotifier handle
         )
         {
+            if (!AreAllOpenedSceneSaved())
+                return;
+
             var hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
             if (hdPipeline == null)
             {
@@ -73,6 +79,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 handle.ExitStage((int)BakingStages.ReflectionProbes);
                 return;
             }
+
 
             var ambientProbeHash = sceneStateHash.ambientProbeHash;
             var sceneObjectsHash = sceneStateHash.sceneObjectsHash;
@@ -461,7 +468,24 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        private string GetGICacheFileForHDProbe(Hash128 hash)
+        static bool AreAllOpenedSceneSaved()
+        {
+            for (int i = 0, c = SceneManager.sceneCount; i < c; ++i)
+            {
+                if (string.IsNullOrEmpty(SceneManager.GetSceneAt(i).path))
+                    return false;
+            }
+            return true;
+        }
+
+        static string GetGICacheFolderFor(Hash128 hash)
+        {
+            var cacheFolder = GetGICachePath();
+            var hashFolder = Path.Combine(cacheFolder, hash.ToString().Substring(0, 2));
+            return hashFolder;
+        }
+
+        string GetGICacheFileForHDProbe(Hash128 hash)
         {
             var hashFolder = GetGICacheFolderFor(hash);
             return Path.Combine(hashFolder, string.Format("HDProbe-{0}.exr", hash));
@@ -503,12 +527,5 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 .GetGetMethod(true)
             )
         ).Compile();
-
-        public static string GetGICacheFolderFor(Hash128 hash)
-        {
-            var cacheFolder = GetGICachePath();
-            var hashFolder = Path.Combine(cacheFolder, hash.ToString().Substring(0, 2));
-            return hashFolder;
-        }
     }
 }
