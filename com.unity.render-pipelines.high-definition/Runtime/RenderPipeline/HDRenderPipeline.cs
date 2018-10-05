@@ -1064,9 +1064,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // TODO: Add stereo occlusion mask
                     RenderDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
 
-                    // If objects velocity if enabled, this will render the rest of objects into the target buffers (in addition to the velocity buffer)
-                    RenderObjectsVelocity(cullingResults, hdCamera, renderContext, cmd);
-
                     // Now that all depths have been rendered, resolve the depth buffer
                     m_SharedRTManager.ResolveSharedRT(cmd, hdCamera);
 
@@ -1113,6 +1110,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // TODO: In the future we will render object velocity at the same time as depth prepass (we need C++ modification for this)
                     // Once the C++ change is here we will first render all object without motion vector then motion vector object
                     // We can't currently render object velocity after depth prepass because if there is no depth prepass we can have motion vector write that should have been rejected
+                    // If objects velocity if enabled, this will render the rest of objects into the target buffers (in addition to the velocity buffer)	
+                    RenderObjectsVelocity(cullingResults, hdCamera, renderContext, cmd);
                     RenderCameraVelocity(cullingResults, hdCamera, renderContext, cmd);
 
                     StopStereoRendering(cmd, renderContext, hdCamera);
@@ -1579,7 +1578,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     XRUtils.DrawOcclusionMesh(cmd, hdCamera.camera, hdCamera.frameSettings.enableStereo);
 
                     // Full forward: Output normal buffer for both forward and forwardOnly
-                    RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthOnlyAndDepthForwardOnlyPassNames, PerObjectData.MotionVectors, HDRenderQueue.k_RenderQueue_AllOpaque, excludeMotionVector : excludeMotion);
+                    // Exclude object that render velocity (if motion vector are enabled)
+                    RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthOnlyAndDepthForwardOnlyPassNames, 0, HDRenderQueue.k_RenderQueue_AllOpaque, excludeMotionVector : excludeMotion);
                 }
             }
             // If we enable DBuffer, we need a full depth prepass
@@ -1610,7 +1610,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                     // First deferred alpha tested materials. Alpha tested object have always a prepass even if enableDepthPrepassWithDeferredRendering is disabled
                     var renderQueueRange = new RenderQueueRange { lowerBound = (int)RenderQueue.AlphaTest, upperBound = (int)RenderQueue.GeometryLast - 1 };
-                    RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthOnlyPassNames, 0, renderQueueRange);
+                    RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthOnlyPassNames, 0, renderQueueRange, excludeMotionVector: excludeMotion);
 
                     HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetPrepassBuffersRTI(hdCamera.frameSettings), m_SharedRTManager.GetDepthStencilBuffer());
 
