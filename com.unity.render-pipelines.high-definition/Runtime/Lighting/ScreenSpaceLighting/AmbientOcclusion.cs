@@ -107,7 +107,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 m_MultiAmbientOcclusionTex = RTHandles.Alloc(Vector2.one,
                     filterMode: FilterMode.Bilinear,
-                    colorFormat: RenderTextureFormat.R16,
+                    colorFormat: RenderTextureFormat.RG16,
                     sRGB: false,
                     enableRandomWrite: true,
                     name: "Ambient Occlusion MSAA"
