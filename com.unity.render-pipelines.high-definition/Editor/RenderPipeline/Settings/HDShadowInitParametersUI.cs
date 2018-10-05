@@ -9,18 +9,23 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
     class HDShadowInitParametersUI : BaseUI<SerializedHDShadowInitParameters>
     {
-        public static readonly CED.IDrawer SectionAtlas = CED.Action(Drawer_FieldHDShadows);
+        public static readonly CED.IDrawer Inspector = CED.FoldoutGroup(
+            "Shadows",
+            (s, d, o) => s.isSectionExpendedShadowSettings,
+            FoldoutOption.None,
+            CED.Action(Drawer_FieldHDShadows)
+            );
+
+        AnimatedValues.AnimBool isSectionExpendedShadowSettings { get { return m_AnimBools[0]; } }
 
         public HDShadowInitParametersUI()
-            : base(0)
+            : base(1)
         {
+            isSectionExpendedShadowSettings.value = true;
         }
 
         static void Drawer_FieldHDShadows(HDShadowInitParametersUI s, SerializedHDShadowInitParameters d, Editor o)
         {
-            EditorGUILayout.LabelField(_.GetContent("HD Shadow"), EditorStyles.boldLabel);
-            
-            ++EditorGUI.indentLevel;
             EditorGUILayout.LabelField(_.GetContent("Shadow Atlas"), EditorStyles.boldLabel);
             ++EditorGUI.indentLevel;
             EditorGUILayout.PropertyField(d.shadowAtlasWidth, _.GetContent("Atlas Width"));
@@ -44,7 +49,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             ++EditorGUI.indentLevel;
             EditorGUILayout.PropertyField(d.punctualShadowQuality, _.GetContent("Punctual Shadow Quality"));
             EditorGUILayout.PropertyField(d.directionalShadowQuality, _.GetContent("Directional Shadow Quality"));
-            --EditorGUI.indentLevel;
 
             // Clamp negative values
             d.shadowAtlasHeight.intValue = Mathf.Max(0, d.shadowAtlasHeight.intValue);

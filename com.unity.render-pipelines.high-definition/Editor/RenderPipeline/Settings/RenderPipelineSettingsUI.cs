@@ -1,3 +1,4 @@
+using UnityEditor.AnimatedValues;
 using UnityEngine.Events;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
@@ -10,42 +11,44 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static RenderPipelineSettingsUI()
         {
             Inspector = CED.Group(
-                    SectionPrimarySettings,
-                    CED.space,
                     CED.Select(
                         (s, d, o) => s.lightLoopSettings,
                         (s, d, o) => d.lightLoopSettings,
                         GlobalLightLoopSettingsUI.Inspector
                         ),
-                    CED.space,
                     CED.Select(
                         (s, d, o) => s.hdShadowInitParams,
                         (s, d, o) => d.hdShadowInitParams,
-                        HDShadowInitParametersUI.SectionAtlas
+                        HDShadowInitParametersUI.Inspector
                     ),
-                    CED.space,
                     CED.Select(
                         (s, d, o) => s.decalSettings,
                         (s, d, o) => d.decalSettings,
                         GlobalDecalSettingsUI.Inspector
                         )
-
                     );
         }
 
         public static readonly CED.IDrawer Inspector;
 
-        public static readonly CED.IDrawer SectionPrimarySettings = CED.Group(
-                CED.Action(Drawer_SectionPrimarySettings)
-                );
+        public static readonly CED.IDrawer SupportedSettings = CED.FoldoutGroup(
+            "Render Pipeline Supported Features",
+            (s, d, o) => s.isSectionExpandedSupportedSettings,
+            FoldoutOption.None,
+            CED.Action(Drawer_SectionPrimarySettings)
+            );
 
         GlobalLightLoopSettingsUI lightLoopSettings = new GlobalLightLoopSettingsUI();
         GlobalDecalSettingsUI decalSettings = new GlobalDecalSettingsUI();
         HDShadowInitParametersUI hdShadowInitParams = new HDShadowInitParametersUI();
 
+
+        public AnimBool isSectionExpandedSupportedSettings { get { return m_AnimBools[0]; } }
+
         public RenderPipelineSettingsUI()
-            : base(0)
+            : base(1)
         {
+            isSectionExpandedSupportedSettings.value = true;
         }
 
         public override void Reset(SerializedRenderPipelineSettings data, UnityAction repaint)
@@ -66,9 +69,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static void Drawer_SectionPrimarySettings(RenderPipelineSettingsUI s, SerializedRenderPipelineSettings d, Editor o)
         {
-            EditorGUILayout.LabelField(_.GetContent("Render Pipeline Settings"), EditorStyles.boldLabel);
-            ++EditorGUI.indentLevel;
-
             // Lighting
             EditorGUILayout.PropertyField(d.supportShadowMask, _.GetContent("Support Shadow Mask|Enable memory (Extra Gbuffer in deferred) and shader variant for shadow mask."));
             EditorGUILayout.PropertyField(d.supportSSR, _.GetContent("Support SSR|Enable memory use by SSR effect."));
@@ -101,7 +101,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             EditorGUILayout.PropertyField(d.supportRuntimeDebugDisplay, _.GetContent("Support runtime debug display|Remove all debug display shader variant only in the player. Allow faster build."));
             EditorGUILayout.PropertyField(d.supportDitheringCrossFade, _.GetContent("Support dithering cross fade|Remove all dithering cross fade shader variant only in the player. Allow faster build."));
 
-            --EditorGUI.indentLevel;
         }
     }
 }

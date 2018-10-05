@@ -25,10 +25,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 CED.Select(
                     (s, d, o) => s.renderPipelineSettings,
                     (s, d, o) => d.renderPipelineSettings,
-                    RenderPipelineSettingsUI.Inspector
+                    RenderPipelineSettingsUI.SupportedSettings
                     ),
-                CED.space,
-                FrameSettingsSection
+                FrameSettingsSection,
+                CED.Select(
+                    (s, d, o) => s.renderPipelineSettings,
+                    (s, d, o) => d.renderPipelineSettings,
+                    RenderPipelineSettingsUI.Inspector
+                    )
             );
         }
 
@@ -37,7 +41,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public static readonly CED.IDrawer SectionPrimarySettings = CED.Action(Drawer_SectionPrimarySettings);
         
         public static readonly CED.IDrawer FrameSettingsSection = CED.Group(
-            CED.Action(Drawer_TitleDefaultFrameSettings),
+            CED.Action((s,d,o) => {
+                EditorGUILayout.BeginVertical("box");
+                Drawer_TitleDefaultFrameSettings(s, d, o);
+                }),
             CED.FadeGroup(
                 (s, d, o, i) => s.isSectionExpandedCamera,
                 FadeOption.None,
@@ -64,7 +71,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     (s, d, o) => d.defaultRealtimeReflectionFrameSettings,
                     FrameSettingsUI.Inspector(withOverride: false)
                     )
-                )
+                ),
+            CED.Action((s, d, o) => EditorGUILayout.EndVertical())
             );
 
         public FrameSettingsUI defaultFrameSettings = new FrameSettingsUI();
