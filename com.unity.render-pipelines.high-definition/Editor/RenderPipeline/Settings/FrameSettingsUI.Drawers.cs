@@ -38,8 +38,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 CED.space
                 );
         }
-
-
+        
         public static CED.IDrawer SectionRenderingSettings(bool withOverride)
         {
             return CED.FoldoutGroup(
@@ -93,7 +92,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static void Drawer_SectionRenderingPasses(FrameSettingsUI s, SerializedFrameSettings p, Editor owner, bool withOverride)
         {
-            //disable temporarily as FrameSettings are nort supported for Baked probe at the moment
+            //disable temporarily as FrameSettings are not supported for Baked probe at the moment
             using (new EditorGUI.DisabledScope((owner is HDProbeEditor) && (owner as HDProbeEditor).GetTarget(owner.target).mode != ReflectionProbeMode.Realtime || (owner is HDRenderPipelineEditor) && HDRenderPipelineUI.selectedFrameSettings == HDRenderPipelineUI.SelectedFrameSettings.BakedOrCustomReflection))
             {
                 RenderPipelineSettings hdrpSettings = (GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset).renderPipelineSettings;
@@ -102,7 +101,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 area.Add(p.enableTransparentPrepass, transparentPrepassContent, () => p.overridesTransparentPrepass, a => p.overridesTransparentPrepass = a, defaultValue: defaultFrameSettings.enableTransparentPrepass);
                 area.Add(p.enableTransparentPostpass, transparentPostpassContent, () => p.overridesTransparentPostpass, a => p.overridesTransparentPostpass = a, defaultValue: defaultFrameSettings.enableTransparentPostpass);
                 area.Add(p.enableMotionVectors, motionVectorContent, () => p.overridesMotionVectors, a => p.overridesMotionVectors = a, () => hdrpSettings.supportMotionVectors, defaultValue: defaultFrameSettings.enableMotionVectors);
-                area.Add(p.enableObjectMotionVectors, objectMotionVectorsContent, () => p.overridesObjectMotionVectors, a => p.overridesObjectMotionVectors = a, () => hdrpSettings.supportMotionVectors, defaultValue: defaultFrameSettings.enableObjectMotionVectors, indent: 1);
+                area.Add(p.enableObjectMotionVectors, objectMotionVectorsContent, () => p.overridesObjectMotionVectors, a => p.overridesObjectMotionVectors = a, () => hdrpSettings.supportMotionVectors && p.enableMotionVectors.boolValue, defaultValue: defaultFrameSettings.enableObjectMotionVectors, indent: 1);
                 area.Add(p.enableDecals, decalsContent, () => p.overridesDecals, a => p.overridesDecals = a, () => hdrpSettings.supportDecals, defaultValue: defaultFrameSettings.enableDecals);
                 area.Add(p.enableRoughRefraction, roughRefractionContent, () => p.overridesRoughRefraction, a => p.overridesRoughRefraction = a, defaultValue: defaultFrameSettings.enableRoughRefraction);
                 area.Add(p.enableDistortion, distortionContent, () => p.overridesDistortion, a => p.overridesDistortion = a, defaultValue: defaultFrameSettings.enableDistortion);
@@ -113,25 +112,25 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static void Drawer_SectionRenderingSettings(FrameSettingsUI s, SerializedFrameSettings p, Editor owner, bool withOverride)
         {
-            //disable temporarily as FrameSettings are nort supported for Baked probe at the moment
+            //disable temporarily as FrameSettings are not supported for Baked probe at the moment
             using (new EditorGUI.DisabledScope((owner is HDProbeEditor) && (owner as HDProbeEditor).GetTarget(owner.target).mode != ReflectionProbeMode.Realtime || (owner is HDRenderPipelineEditor) && HDRenderPipelineUI.selectedFrameSettings == HDRenderPipelineUI.SelectedFrameSettings.BakedOrCustomReflection))
             {
                 RenderPipelineSettings hdrpSettings = (GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset).renderPipelineSettings;
                 FrameSettings defaultFrameSettings = GetDefaultFrameSettingsFor(owner);
                 OverridableSettingsArea area = new OverridableSettingsArea(6);
-                area.Add(p.enableForwardRenderingOnly, forwardRenderingOnlyContent, () => p.overridesForwardRenderingOnly, a => p.overridesForwardRenderingOnly = a, () => !GL.wireframe && !hdrpSettings.supportOnlyForward, defaultValue: defaultFrameSettings.enableForwardRenderingOnly);
-                area.Add(p.enableDepthPrepassWithDeferredRendering, depthPrepassWithDeferredRenderingContent, () => p.overridesDepthPrepassWithDeferredRendering, a => p.overridesDepthPrepassWithDeferredRendering = a, () => !defaultFrameSettings.enableForwardRenderingOnly && !p.overridesForwardRenderingOnly || p.overridesForwardRenderingOnly && !p.enableForwardRenderingOnly.boolValue, defaultValue: defaultFrameSettings.enableDepthPrepassWithDeferredRendering);
+                area.Add(p.enableForwardRenderingOnly, forwardRenderingOnlyContent, () => p.overridesForwardRenderingOnly, a => p.overridesForwardRenderingOnly = a, () => !GL.wireframe && !hdrpSettings.supportOnlyForward, defaultValue: defaultFrameSettings.enableForwardRenderingOnly || hdrpSettings.supportOnlyForward);
+                area.Add(p.enableMSAA, msaaContent, () => p.overridesMSAA, a => p.overridesMSAA = a, () => hdrpSettings.supportMSAA && (p.enableForwardRenderingOnly.boolValue || (GL.wireframe || hdrpSettings.supportOnlyForward) && (defaultFrameSettings.enableForwardRenderingOnly || hdrpSettings.supportOnlyForward)), defaultValue: defaultFrameSettings.enableMSAA && hdrpSettings.supportMSAA && !GL.wireframe && !hdrpSettings.supportOnlyForward && p.enableForwardRenderingOnly.boolValue, indent: 1);
+                area.Add(p.enableDepthPrepassWithDeferredRendering, depthPrepassWithDeferredRenderingContent, () => p.overridesDepthPrepassWithDeferredRendering, a => p.overridesDepthPrepassWithDeferredRendering = a, () => (!defaultFrameSettings.enableForwardRenderingOnly && !p.overridesForwardRenderingOnly || p.overridesForwardRenderingOnly && !p.enableForwardRenderingOnly.boolValue) && !hdrpSettings.supportOnlyForward, defaultValue: defaultFrameSettings.enableDepthPrepassWithDeferredRendering && !hdrpSettings.supportOnlyForward && !p.enableForwardRenderingOnly.boolValue);
                 area.Add(p.enableAsyncCompute, asyncComputeContent, () => p.overridesAsyncCompute, a => p.overridesAsyncCompute = a, () => SystemInfo.supportsAsyncCompute, defaultValue: defaultFrameSettings.enableAsyncCompute);
                 area.Add(p.enableOpaqueObjects, opaqueObjectsContent, () => p.overridesOpaqueObjects, a => p.overridesOpaqueObjects = a, defaultValue: defaultFrameSettings.enableOpaqueObjects);
                 area.Add(p.enableTransparentObjects, transparentObjectsContent, () => p.overridesTransparentObjects, a => p.overridesTransparentObjects = a, defaultValue: defaultFrameSettings.enableTransparentObjects);
-                area.Add(p.enableMSAA, msaaContent, () => p.overridesMSAA, a => p.overridesMSAA = a, () => hdrpSettings.supportMSAA, defaultValue: defaultFrameSettings.enableMSAA);
                 area.Draw(withOverride);
             }
         }
         
         static void Drawer_SectionLightingSettings(FrameSettingsUI s, SerializedFrameSettings p, Editor owner, bool withOverride)
         {
-            //disable temporarily as FrameSettings are nort supported for Baked probe at the moment
+            //disable temporarily as FrameSettings are not supported for Baked probe at the moment
             using (new EditorGUI.DisabledScope((owner is HDProbeEditor) && (owner as HDProbeEditor).GetTarget(owner.target).mode != ReflectionProbeMode.Realtime || (owner is HDRenderPipelineEditor) && HDRenderPipelineUI.selectedFrameSettings == HDRenderPipelineUI.SelectedFrameSettings.BakedOrCustomReflection))
             {
                 RenderPipelineSettings hdrpSettings = (GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset).renderPipelineSettings;
