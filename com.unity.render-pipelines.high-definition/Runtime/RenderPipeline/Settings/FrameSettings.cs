@@ -37,7 +37,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         AsyncCompute = 1 << 23,
         OpaqueObjects = 1 << 24,
         TransparentObjects = 1 << 25,
-        ProbeReflection = 1 << 26,
+        RealtimePlanarReflection = 1 << 26,
 
         //stereo settings
         Stereo = 1 << 27,
@@ -77,7 +77,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {FrameSettingsOverrides.AsyncCompute, (a, b) => { a.enableAsyncCompute = b.enableAsyncCompute; } },
             {FrameSettingsOverrides.OpaqueObjects, (a, b) => { a.enableOpaqueObjects = b.enableOpaqueObjects; } },
             {FrameSettingsOverrides.TransparentObjects, (a, b) => { a.enableTransparentObjects = b.enableTransparentObjects; } },
-            {FrameSettingsOverrides.ProbeReflection, (a, b) => { a.enableProbeReflection = b.enableProbeReflection; } },
+            {FrameSettingsOverrides.RealtimePlanarReflection, (a, b) => { a.enableRealtimePlanarReflection = b.enableRealtimePlanarReflection; } },
             {FrameSettingsOverrides.Stereo, (a, b) => { a.enableStereo = b.enableStereo; } },
             {FrameSettingsOverrides.XrGraphicSettings, (a, b) => { a.xrGraphicsConfig = b.xrGraphicsConfig; } },
         };
@@ -123,7 +123,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public bool enableOpaqueObjects = true;
         public bool enableTransparentObjects = true;
-        public bool enableProbeReflection = true;
+        public bool enableRealtimePlanarReflection = true;
 
         public bool enableMSAA = false;
 
@@ -173,7 +173,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             frameSettings.enableOpaqueObjects = this.enableOpaqueObjects;
             frameSettings.enableTransparentObjects = this.enableTransparentObjects;
-            frameSettings.enableProbeReflection = this.enableProbeReflection;            
+            frameSettings.enableRealtimePlanarReflection = this.enableRealtimePlanarReflection;            
 
             frameSettings.enableAsyncCompute = this.enableAsyncCompute;
 
@@ -274,7 +274,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             aggregate.enableOpaqueObjects = srcFrameSettings.enableOpaqueObjects;
             aggregate.enableTransparentObjects = srcFrameSettings.enableTransparentObjects;
-            aggregate.enableProbeReflection = srcFrameSettings.enableProbeReflection;       
+            aggregate.enableRealtimePlanarReflection = srcFrameSettings.enableRealtimePlanarReflection;       
 
             aggregate.enableMSAA = srcFrameSettings.enableMSAA && renderPipelineSettings.supportMSAA;
 
@@ -375,7 +375,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         new DebugUI.BoolField { displayName = "Enable Async Compute", getter = () => frameSettings.enableAsyncCompute, setter = value => frameSettings.enableAsyncCompute = value },
                         new DebugUI.BoolField { displayName = "Enable Opaque Objects", getter = () => frameSettings.enableOpaqueObjects, setter = value => frameSettings.enableOpaqueObjects = value },
                         new DebugUI.BoolField { displayName = "Enable Transparent Objects", getter = () => frameSettings.enableTransparentObjects, setter = value => frameSettings.enableTransparentObjects = value },
-                        new DebugUI.BoolField { displayName = "Enable Probe Reflection", getter = () => frameSettings.enableProbeReflection, setter = value => frameSettings.enableProbeReflection = value },                        
+                        new DebugUI.BoolField { displayName = "Enable Realtime Planar Reflection", getter = () => frameSettings.enableRealtimePlanarReflection, setter = value => frameSettings.enableRealtimePlanarReflection = value },                        
                         new DebugUI.BoolField { displayName = "Enable MSAA", getter = () => frameSettings.enableMSAA, setter = value => frameSettings.enableMSAA = value },
                     }
                 },
