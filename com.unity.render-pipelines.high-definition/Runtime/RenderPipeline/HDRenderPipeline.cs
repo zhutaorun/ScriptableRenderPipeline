@@ -1282,9 +1282,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             using (new ProfilingSample(cmd, "Blit to final RT", CustomSamplerId.BlitToFinalRT.GetSampler()))
                             {
                                 // This Blit will flip the screen on anything other than openGL
-                                if (srcFrameSettings.enableStereo && (XRGraphicsConfig.eyeTextureDesc.vrUsage == VRTextureUsage.TwoEyes))
+                                if (srcFrameSettings.enableStereo && (XRGraphicsConfig.eyeTextureDesc.dimension == TextureDimension.Tex2D))
                                 {
-                                    cmd.BlitFullscreenTriangle(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget); // If double-wide, only blit once (not once per-eye)
+#if UNITY_2019_1_OR_NEWER
+                                    Material finalDoubleWideBlit = GetBlitMaterial();
+                                    finalDoubleWideBlit.SetTexture(HDShaderIDs._BlitTexture, m_CameraColorBuffer);
+                                    finalDoubleWideBlit.SetFloat(HDShaderIDs._BlitMipLevel, 0.0f);
+                                    finalDoubleWideBlit.SetVector(HDShaderIDs._BlitScaleBiasRt, new Vector4(1.0f, 1.0f, 0.0f, 0.0f));
+                                    finalDoubleWideBlit.SetVector(HDShaderIDs._BlitScaleBias, new Vector4(1.0f, 1.0f, 0.0f, 0.0f));
+                                    cmd.Blit(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget, finalDoubleWideBlit);
+#else
+                                    cmd.BlitFullscreenTriangle(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget); // Prior to 2019.1's y-flip fixes, we didn't need a flip in the shader
+#endif
                                 }
                                 else
                                 {
