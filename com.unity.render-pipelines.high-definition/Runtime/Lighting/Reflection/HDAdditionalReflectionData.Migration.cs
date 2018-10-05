@@ -13,7 +13,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             MergeEditors
         }
 
-        static readonly MigrationDescription<Version, HDAdditionalReflectionData> k_MigrationDescription
+        static readonly MigrationDescription<Version, HDAdditionalReflectionData> k_Migration
             = MigrationDescription.New(
                 MigrationStep.New(Version.UseInfluenceVolume, (HDAdditionalReflectionData target) =>
                 {
@@ -40,8 +40,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             );
 
         [SerializeField, FormerlySerializedAs("version")]
-        int m_Version;
-        Version IVersionable<Version>.version { get => (Version)m_Version; set => m_Version = (int)value; }
+        int m_ReflectionProbeVersion;
+        Version IVersionable<Version>.version { get => (Version)m_ReflectionProbeVersion; set => m_ReflectionProbeVersion = (int)value; }
 
         #region Deprecated Fields
 #pragma warning disable 649 //never assigned

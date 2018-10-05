@@ -11,7 +11,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         PlanarReflectionProbe[] m_Probes;
 
         public int visiblePlanarReflectionProbeCount { get; private set; }
-        public PlanarReflectionProbe[] visiblePlanarReflectionProbes { get { return m_VisiblePlanarReflectionProbes; } }
+        public PlanarReflectionProbe[] visiblePlanarReflectionProbes => m_VisiblePlanarReflectionProbes;
 
         internal ReflectionProbeCullResults(ReflectionSystemParameters parameters)
         {

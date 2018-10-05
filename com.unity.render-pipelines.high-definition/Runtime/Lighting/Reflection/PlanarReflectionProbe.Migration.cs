@@ -13,8 +13,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         [SerializeField, FormerlySerializedAs("version")]
-        int m_Version;
-        Version IVersionable<Version>.version { get => (Version)m_Version; set => m_Version = (int)value; }
+        int m_PlanarProbeVersion;
+        Version IVersionable<Version>.version { get => (Version)m_PlanarProbeVersion; set => m_PlanarProbeVersion = (int)value; }
 
         static readonly MigrationDescription<Version, PlanarReflectionProbe> k_Migration = MigrationDescription.New(
             MigrationStep.New(Version.ProbeSettings, (PlanarReflectionProbe p) =>

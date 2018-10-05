@@ -57,10 +57,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         internal override void Awake()
         {
             base.Awake();
-
-            //launch migration at creation too as m_Version could not have an
-            //existance in older version
-            k_MigrationDescription.Migrate(this);
+            k_Migration.Migrate(this);
         }
     }
 }

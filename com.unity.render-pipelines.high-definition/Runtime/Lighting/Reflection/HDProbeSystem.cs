@@ -7,12 +7,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
         static HDProbeSystemInternal s_Instance = new HDProbeSystemInternal();
 
-        public static IList<HDProbe> realtimeViewDependentProbes { get { return s_Instance.realtimeViewDependentProbes; } }
-        public static IList<HDProbe> realtimeViewIndependentProbes { get { return s_Instance.realtimeViewIndependentProbes; } }
-        public static IList<HDProbe> bakedProbes { get { return s_Instance.bakedProbes; } }
+        public static IList<HDProbe> realtimeViewDependentProbes => s_Instance.realtimeViewDependentProbes;
+        public static IList<HDProbe> realtimeViewIndependentProbes => s_Instance.realtimeViewIndependentProbes;
+        public static IList<HDProbe> bakedProbes => s_Instance.bakedProbes;
 
         public static void RegisterProbe(HDProbe probe) => s_Instance.RegisterProbe(probe);
-
         public static void UnregisterProbe(HDProbe probe) => s_Instance.UnregisterProbe(probe);
 
         public static void RenderAndUpdateRenderData(
@@ -66,7 +65,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         public static void PrepareCull(Camera camera, ReflectionProbeCullResults results)
-        { s_Instance.PrepareCull(camera, results); }
+            => s_Instance.PrepareCull(camera, results);
 
         static Texture CreateAndSetRenderTargetIfRequired(HDProbe probe, ProbeSettings.Mode targetMode)
         {

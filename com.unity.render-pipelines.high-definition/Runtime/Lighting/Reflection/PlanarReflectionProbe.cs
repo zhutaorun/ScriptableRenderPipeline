@@ -53,6 +53,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         /// <summary>The value of the capture field of view.</summary>
         public float fieldOfViewOverride { get => m_FieldOfViewOverride; set => m_FieldOfViewOverride = value; }
 
+        public void OnBeforeSerialize() { }
+
+        public void OnAfterDeserialize()
+        {
+            Assert.IsNotNull(influenceVolume, "influenceVolume must have an instance at this point. See HDProbe.Awake()");
+            // Keep this for a migration that has been done on HDRP/staging
+        }
+
+        internal override void Awake()
+        {
+            base.Awake();
+            k_Migration.Migrate(this);
+        }
+
         protected override void PopulateSettings(ref ProbeSettings settings)
         {
             base.PopulateSettings(ref settings);
@@ -61,14 +75,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 out settings.proxySettings.mirrorPositionProxySpace,
                 out settings.proxySettings.mirrorRotationProxySpace
             );
-        }
-
-        public void OnBeforeSerialize() { }
-
-        public void OnAfterDeserialize()
-        {
-            Assert.IsNotNull(influenceVolume, "influenceVolume must have an instance at this point. See HDProbe.Awake()");
-            // Keep this for a migration that has been done on HDRP/staging
         }
     }
 }
