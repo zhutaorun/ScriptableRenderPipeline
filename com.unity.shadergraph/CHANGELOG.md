@@ -4,7 +4,9 @@ All notable changes to this package are documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [4.0.0-preview] - 2019-09-21
+## [4.1.0-preview] - 2018-09-28
+
+## [4.0.0-preview] - 2018-09-28
 ### Added
 - Shader Graph now supports the High Definition Render Pipeline with both PBR and Unlit Master nodes. Shaders built with Shader Graph work with both the Lightweight and HD render pipelines.
 - You can now modify vertex position via the Position slot on the PBR and Unlit Master nodes. By default, the input to this node is object space position. Custom inputs to this slot should specify the absolute local position of a given vertex. Certain nodes (such as Procedural Shapes) are not viable in the vertex shader. Such nodes are incompatible with this slot.
@@ -26,6 +28,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added definitions used by new HD Lit Master node.
 - Added a popup control for a string list.
 - Added conversion type (position/direction) to TransformNode.
+- In your preview for nodes that are not master nodes, pixels now display as pink if they are not finite.
 
 ### Changed
 - The settings for master nodes now live in a small window that you can toggle on and off. Here, you can change various rendering settings for your shader.
@@ -75,3 +78,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - SpaceMaterialSlot now reads correct slot.
 - Slider node control now functions correctly.
 - Shader Graphs no longer display an error message intended for Sub Graphs when you delete properties.
+- The Shader Graph and Sub Shader Graph file extensions are no longer case-sensitive.
+- The dynamic value slot type now uses the correct decimal separator during HLSL generation.
+- Fixed an issue where Show Generated Code could fail when external editor was not set.
+- In the High Definition Render Pipeline, Shader Graph now supports 4-channel UVs.

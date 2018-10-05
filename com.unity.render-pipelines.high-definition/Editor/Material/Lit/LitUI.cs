@@ -2,11 +2,15 @@ using System;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    public class LitGUI : BaseLitGUI
+    class LitGUI : BaseLitGUI
     {
+        static Expendable state = Expendable.Base | Expendable.Input | Expendable.VertexAnimation | Expendable.Detail | Expendable.Emissive | Expendable.Transparency | Expendable.Tesselation;
+        protected override uint expendedState { get { return (uint)state; } set { state = (Expendable)value; } }
+
         protected static class Styles
         {
             public static string InputsText = "Inputs";

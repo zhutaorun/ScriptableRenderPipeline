@@ -337,12 +337,6 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
         [ToggleUI] _LinkDetailsWithBase2("LinkDetailsWithBase2", Float) = 1.0
         [ToggleUI] _LinkDetailsWithBase3("LinkDetailsWithBase3", Float) = 1.0
 
-        [HideInInspector] _ShowMaterialReferences("_ShowMaterialReferences", Float) = 0
-        [HideInInspector] _ShowLayer0("_ShowLayer0", Float) = 0
-        [HideInInspector] _ShowLayer1("_ShowLayer1", Float) = 0
-        [HideInInspector] _ShowLayer2("_ShowLayer2", Float) = 0
-        [HideInInspector] _ShowLayer3("_ShowLayer3", Float) = 0
-
         // Tessellation specific
         [Enum(None, 0, Phong, 1)] _TessellationMode("Tessellation mode", Float) = 0
         _TessellationFactor("Tessellation Factor", Range(0.0, 64.0)) = 4.0
@@ -362,9 +356,6 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 
         [ToggleUI] _SupportDecals("Support Decals", Float) = 1.0
-
-        // this will let collapsable element of material be persistant
-        [HideInInspector] _EditorExpendedAreas("_EditorExpendedAreas", Float) = 0
     }
 
     HLSLINCLUDE
@@ -449,7 +440,7 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
     // enable dithering LOD crossfade
     #pragma multi_compile _ LOD_FADE_CROSSFADE
 
-    // enable GPU instancing
+    //enable GPU instancing support
     #pragma multi_compile_instancing
     #pragma instancing_options renderinglayer
 
@@ -755,10 +746,6 @@ Shader "HDRenderPipeline/LayeredLitTessellation"
             #pragma multi_compile _ SHADOWS_SHADOWMASK
             // Setup DECALS_OFF so the shader stripper can remove variants
             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
-            
-            // TODO: remove this once new shadow system works
-            // Only for dev/test purpose, allow to switch dynamically between HD and Core shadow system
-            // #pragma multi_compile _ USE_CORE_SHADOW_SYSTEM
 
             // Supported shadow modes per light type
             #pragma multi_compile PUNCTUAL_SHADOW_LOW PUNCTUAL_SHADOW_MEDIUM PUNCTUAL_SHADOW_HIGH
