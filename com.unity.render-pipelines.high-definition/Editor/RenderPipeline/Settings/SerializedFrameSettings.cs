@@ -38,6 +38,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public SerializedProperty enableOpaqueObjects;
         public SerializedProperty enableTransparentObjects;
+        public SerializedProperty enableProbeReflection;        
 
         public SerializedProperty enableMSAA;
 
@@ -310,6 +311,19 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     overrides.intValue &= ~(int)FrameSettingsOverrides.TransparentObjects;
             }
         }
+
+        public bool overridesProbeReflection
+        {
+            get { return (overrides.intValue & (int)FrameSettingsOverrides.ProbeReflection) > 0; }
+            set
+            {
+                if (value)
+                    overrides.intValue |= (int)FrameSettingsOverrides.ProbeReflection;
+                else
+                    overrides.intValue &= ~(int)FrameSettingsOverrides.ProbeReflection;
+            }
+        }        
+
         public bool overridesStereo
         {
             get { return (overrides.intValue & (int)FrameSettingsOverrides.Stereo) > 0; }
@@ -375,6 +389,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             enableAsyncCompute = root.Find((FrameSettings d) => d.enableAsyncCompute);
             enableOpaqueObjects = root.Find((FrameSettings d) => d.enableOpaqueObjects);
             enableTransparentObjects = root.Find((FrameSettings d) => d.enableTransparentObjects);
+            enableProbeReflection = root.Find((FrameSettings d) => d.enableProbeReflection);
             enableMSAA = root.Find((FrameSettings d) => d.enableMSAA);
             enableShadowMask = root.Find((FrameSettings d) => d.enableShadowMask);
             overrides = root.Find((FrameSettings d) => d.overrides);

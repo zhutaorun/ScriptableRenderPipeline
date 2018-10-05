@@ -211,6 +211,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public HDRenderPipeline(HDRenderPipelineAsset asset)
         {
+            m_Asset = asset;
+
             DebugManager.instance.RefreshEditor();
 
             m_ValidAPI = true;
@@ -221,8 +223,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 return;
             }
-
-            m_Asset = asset;
 
             // Upgrade the resources (re-import every references in RenderPipelineResources) if the resource version mismatches
             // It's done here because we know every HDRP assets have been imported before
@@ -415,8 +415,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // HD use specific GraphicsSettings
             GraphicsSettings.lightsUseLinearIntensity = true;
             GraphicsSettings.lightsUseColorTemperature = true;
-            // HD should always use the new batcher - TODO once fix are backport in 2018.2/staging
-            //GraphicsSettings.useScriptableRenderPipelineBatching = true;
+            GraphicsSettings.useScriptableRenderPipelineBatching = m_Asset.enableSRPBatcher;
 
             SupportedRenderingFeatures.active = new SupportedRenderingFeatures()
             {
@@ -516,6 +515,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Shader.globalRenderPipeline = "";
 
             SupportedRenderingFeatures.active = new SupportedRenderingFeatures();
+
+            // Reset srp batcher state just in case
+            GraphicsSettings.useScriptableRenderPipelineBatching = false;
 
             Lightmapping.ResetDelegate();
         }
