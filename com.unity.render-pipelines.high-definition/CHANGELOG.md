@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Remove all the debug mode from SSR that are obsolete now
 - Expose frameSettings and Capture settings for reflection and planar probe
 - Update UI for reflection probe, planar probe, camera and HDRP Asset
+- Read/write XRGraphicsConfig replaced with read-only XRGraphics to improve consistency of XR behavior between legacy and SRP
 
 ## [4.0.0-preview] - 2018-09-28
 

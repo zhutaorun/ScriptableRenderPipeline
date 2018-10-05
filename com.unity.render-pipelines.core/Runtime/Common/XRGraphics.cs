@@ -11,7 +11,7 @@ using XRSettings = UnityEngine.VR.VRSettings;
 namespace UnityEngine.Experimental.Rendering
 {
     [Serializable]
-    public class XRGraphicsConfig
+    public class XRGraphics
     { // XRGConfig stores the desired XR settings for a given SRP asset.
 
         public float renderScale = 1.0f;
@@ -19,33 +19,23 @@ namespace UnityEngine.Experimental.Rendering
         public bool useOcclusionMesh = true;
         public float occlusionMeshScale = 1.0f;
 
-        public void CopyTo(XRGraphicsConfig targetConfig)
+        public void CopyTo(XRGraphics targetConfig)
         {
             targetConfig.renderScale = this.renderScale;
             targetConfig.viewportScale = this.viewportScale;
             targetConfig.useOcclusionMesh = this.useOcclusionMesh;
             targetConfig.occlusionMeshScale = this.occlusionMeshScale;
         }
-
-        public void SetConfig()
-        { // If XR is enabled, sets XRSettings from our saved config
+        
+        public void Update() 
+        { // If XR is enabled, only update the values that might change dynamically
             if (!enabled)
                 return;
-
-            XRSettings.eyeTextureResolutionScale = renderScale;
-            XRSettings.renderViewportScale = viewportScale;
-            XRSettings.useOcclusionMesh = useOcclusionMesh;
-            XRSettings.occlusionMaskScale = occlusionMeshScale;
-        }
-        public void SetViewportScale(float viewportScale)
-        { // Only sets viewport- since this is probably the only thing getting updated every frame
-            if (!enabled)
-                return;
-
-            XRSettings.renderViewportScale = viewportScale;
+            renderScale = XRSettings.eyeTextureResolutionScale; // Technically this is expensive to change dynamically, but some users rely on it
+            viewportScale = XRSettings.renderViewportScale; 
         }
 
-        public static readonly XRGraphicsConfig s_DefaultXRConfig = new XRGraphicsConfig
+        public static readonly XRGraphics s_DefaultXRConfig = new XRGraphics
         {
             renderScale = 1.0f,
             viewportScale = 1.0f,
@@ -53,9 +43,9 @@ namespace UnityEngine.Experimental.Rendering
             occlusionMeshScale = 1.0f,
         };
 
-        public static XRGraphicsConfig GetActualXRSettings()
+        public static XRGraphics GetXRSettings()
         {
-            XRGraphicsConfig getXRSettings = new XRGraphicsConfig();
+            XRGraphics getXRSettings = new XRGraphics();
 
             if (!enabled)
             {
@@ -89,7 +79,7 @@ namespace UnityEngine.Experimental.Rendering
         }
 
 #if UNITY_EDITOR
-        // FIXME: We should probably have StereoREnderingPath defined in UnityEngine.XR, not UnityEditor...
+        // FIXME: We should probably have StereoRenderingPath defined in UnityEngine.XR, not UnityEditor...
         public static StereoRenderingPath stereoRenderingMode
         {
             get

@@ -8,7 +8,7 @@ namespace UnityEngine.Experimental.Rendering
         {   // This method expects XRGraphicsConfig.SetConfig() to have been called prior to it.
             // Then, engine code will check if occlusion mesh rendering is enabled, and apply occlusion mesh scale.
 #if UNITY_2019_1_OR_NEWER
-            if ((!XRGraphicsConfig.enabled) || (!camera.stereoEnabled) || (!stereoEnabled))
+            if ((!XRGraphics.enabled) || (!camera.stereoEnabled) || (!stereoEnabled))
                 return;
             UnityEngine.RectInt normalizedCamViewport = new UnityEngine.RectInt(0, 0, camera.pixelWidth, camera.pixelHeight);
             cmd.DrawOcclusionMesh(normalizedCamViewport);
