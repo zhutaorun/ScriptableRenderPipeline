@@ -51,7 +51,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 CED.Select(
                     (s, d, o) => s.defaultFrameSettings,
                     (s, d, o) => d.defaultFrameSettings,
-                    FrameSettingsUI.Inspector(withOverride: false)
+                    FrameSettingsUI.InspectorInnerbox(withOverride: false)
                     )
                 ),
             CED.FadeGroup(
@@ -60,7 +60,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 CED.Select(
                     (s, d, o) => s.defaultCubeReflectionFrameSettings,
                     (s, d, o) => d.defaultBakedOrCustomReflectionFrameSettings,
-                    FrameSettingsUI.Inspector(withOverride: false)
+                    FrameSettingsUI.InspectorInnerbox(withOverride: false)
                     )
                 ),
             CED.FadeGroup(
@@ -69,7 +69,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 CED.Select(
                     (s, d, o) => s.defaultPlanarReflectionFrameSettings,
                     (s, d, o) => d.defaultRealtimeReflectionFrameSettings,
-                    FrameSettingsUI.Inspector(withOverride: false)
+                    FrameSettingsUI.InspectorInnerbox(withOverride: false)
                     )
                 ),
             CED.Action((s, d, o) => EditorGUILayout.EndVertical())

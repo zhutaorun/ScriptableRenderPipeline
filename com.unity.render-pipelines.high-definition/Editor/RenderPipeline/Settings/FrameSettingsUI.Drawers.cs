@@ -13,6 +13,20 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         internal static CED.IDrawer Inspector(bool withOverride = true, bool withXR = true)
         {
             return CED.Group(
+                CED.Action((s, d, o) =>
+                {
+                    EditorGUILayout.BeginVertical("box");
+                    EditorGUILayout.LabelField(FrameSettingsUI.frameSettingsHeaderContent, EditorStyles.boldLabel);
+                }),
+                InspectorInnerbox(withOverride, withXR),
+                CED.Action((s, d, o) => EditorGUILayout.EndVertical())
+                );
+        }
+
+        //separated to add enum popup on default frame settings
+        internal static CED.IDrawer InspectorInnerbox(bool withOverride = true, bool withXR = true)
+        {
+            return CED.Group(
                 SectionRenderingPasses(withOverride),
                 SectionRenderingSettings(withOverride),
                 CED.FadeGroup(

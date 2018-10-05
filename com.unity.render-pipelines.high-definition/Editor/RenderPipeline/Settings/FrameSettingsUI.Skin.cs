@@ -38,5 +38,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static readonly GUIContent volumetricContent = CoreEditorUtils.GetContent("Volumetric");
         static readonly GUIContent reprojectionForVolumetricsContent = CoreEditorUtils.GetContent("Reprojection For Volumetrics");
         static readonly GUIContent lightLayerContent = CoreEditorUtils.GetContent("LightLayers");
+
+        static readonly GUIContent frameSettingsHeaderContent = CoreEditorUtils.GetContent("Frame Settings Override|Default FrameSettings are defined in HDRenderPipelineAsset.");
     }
 }
