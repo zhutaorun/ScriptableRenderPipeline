@@ -33,7 +33,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return CED.FoldoutGroup(
                 renderingPassesHeaderContent,
                 (s, p, o) => s.isSectionExpandedRenderingPasses,
-                FoldoutOption.Indent,
+                FoldoutOption.Indent | FoldoutOption.Boxed,
                 CED.LabelWidth(200, CED.Action((s, p, o) => Drawer_SectionRenderingPasses(s, p, o, withOverride))),
                 CED.space
                 );
@@ -44,7 +44,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return CED.FoldoutGroup(
                 renderingSettingsHeaderContent,
                 (s, p, o) => s.isSectionExpandedRenderingSettings,
-                FoldoutOption.Indent,
+                FoldoutOption.Indent | FoldoutOption.Boxed,
                 CED.LabelWidth(300, CED.Action((s, p, o) => Drawer_SectionRenderingSettings(s, p, o, withOverride))),
                 CED.space
                 );
@@ -58,7 +58,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 CED.FoldoutGroup(
                     xrSettingsHeaderContent,
                     (s, p, o) => s.isSectionExpandedXRSettings,
-                    FoldoutOption.Indent,
+                    FoldoutOption.Indent | FoldoutOption.Boxed,
                     CED.LabelWidth(200, CED.Action((s, p, o) => Drawer_FieldStereoEnabled(s, p, o, withOverride))),
                     CED.space));
         }
@@ -68,7 +68,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return CED.FoldoutGroup(
                 lightSettingsHeaderContent,
                 (s, p, o) => s.isSectionExpandedLightingSettings,
-                FoldoutOption.Indent,
+                FoldoutOption.Indent | FoldoutOption.Boxed,
                 CED.LabelWidth(250, CED.Action((s, p, o) => Drawer_SectionLightingSettings(s, p, o, withOverride))),
                 CED.space);
         }

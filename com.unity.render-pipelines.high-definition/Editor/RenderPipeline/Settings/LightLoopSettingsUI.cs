@@ -22,7 +22,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return CED.FoldoutGroup(
                     lightLoopSettingsHeaderContent,
                     (s, p, o) => s.isSectionExpandedLightLoopSettings,
-                    FoldoutOption.Indent,
+                    FoldoutOption.Indent | FoldoutOption.Boxed,
                     CED.LabelWidth(250, CED.Action((s, p, o) => Drawer_SectionLightLoopSettings(s, p, o, withOverride))),
                     CED.space
                 );
