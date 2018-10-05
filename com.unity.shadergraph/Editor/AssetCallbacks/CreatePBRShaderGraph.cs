@@ -16,6 +16,7 @@ namespace UnityEditor.ShaderGraph
         {
             var graph = new MaterialGraph();
             graph.AddNode(new PBRMasterNode());
+            graph.path = "Shader Graphs";
             File.WriteAllText(pathName, EditorJsonUtility.ToJson(graph));
             AssetDatabase.Refresh();
         }
