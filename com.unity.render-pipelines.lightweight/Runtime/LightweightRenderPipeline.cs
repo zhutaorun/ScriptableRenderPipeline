@@ -70,7 +70,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             public float cascade2Split { get; private set; }
             public Vector3 cascade4Split { get; private set; }
             public bool supportsSoftShadows { get; private set; }
-            public XRGraphicsConfig savedXRGraphicsConfig { get; private set; }
+            public XRGraphics getXRSettings { get; private set;  }
             public bool supportsDynamicBatching { get; private set; }
             public bool mixedLightingSupported { get; private set; }
 
@@ -109,11 +109,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 cache.supportsDynamicBatching = asset.supportsDynamicBatching;
                 cache.mixedLightingSupported = asset.supportsMixedLighting;
 
-                cache.savedXRGraphicsConfig = asset.savedXRGraphicsConfig;
-                cache.savedXRGraphicsConfig.renderScale = cache.renderScale;
-                cache.savedXRGraphicsConfig.viewportScale = 1.0f; // Placeholder until viewportScale is all hooked up
-                // Apply any changes to XRGConfig prior to this point
-                cache.savedXRGraphicsConfig.SetConfig();
+                cache.getXRSettings = asset.getXRSettings;
+                cache.getXRSettings.Update();
 
                 return cache;
             }
@@ -287,7 +284,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             // If XR is enabled, use XR renderScale.
             // Discard variations lesser than kRenderScaleThreshold.
             // Scale is only enabled for gameview.
-            float usedRenderScale = XRGraphicsConfig.enabled ? settings.savedXRGraphicsConfig.renderScale : settings.renderScale;
+            float usedRenderScale = XRGraphics.enabled ? settings.getXRSettings.renderScale : settings.renderScale;
             cameraData.renderScale = (Mathf.Abs(1.0f - usedRenderScale) < kRenderScaleThreshold) ? 1.0f : usedRenderScale;
             cameraData.renderScale = (camera.cameraType == CameraType.Game) ? cameraData.renderScale : 1.0f;
 

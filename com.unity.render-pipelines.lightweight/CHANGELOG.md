@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Added occlusion mesh rendering/hookup for VR
 
+### Changed
+Read/write XRGraphicsConfig -> Read-only XRGraphics interface to XRSettings. 
+
 ## [4.0.0-preview] - 2018-09-28
 ### Added
 - When you have enabled Gizmos, they now appear correctly in the Game view.
