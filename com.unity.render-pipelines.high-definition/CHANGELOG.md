@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added a debug mode to display only one shadow at once
 - Added controls for the highlight created by directional lights
 - Added a light radius setting to punctual lights to soften light attenuation and simulate fill lighting
-- Added minRoughness parameter to all non-area lights (was previously only available for certain light types)
+- Added a 'minRoughness' parameter to all non-area lights (was previously only available for certain light types)
 - Added separate volumetric light/shadow dimmers
 - Added per-pixel jitter to volumetrics to reduce aliasing artifacts
 - Added a SurfaceShading.hlsl file, which implements material-agnostic shading functionality in an efficient manner
