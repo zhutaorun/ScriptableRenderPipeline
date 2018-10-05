@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Use samplerunity_ShadowMask instead of samplerunity_samplerLightmap for shadow mask
 - Allow to resize reflection probe gizmo's size
 - Improve quality of screen space shadow
+- Remove support of projection model for ScreenSpaceLighting (SSR always use HiZ and refraction always Proxy)
+- Remove all the debug mode from SSR that are obsolete now
 
 ## [4.0.0-preview] - 2018-09-28
 
@@ -77,7 +79,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Avoid multiple depth buffer copies when decals are present
 - Refactor code related to the RT handle system (No more normal buffer manager)
 - Remove deferred directional shadow and move evaluation before lightloop
-- Add a function GetShadowNormalBias() that material need to implement to return the normal used for normal shadow biasing
+- Add a function GetNormalForShadowBias() that material need to implement to return the normal used for normal shadow biasing
 - Remove Jimenez Subsurface scattering code (This code was disabled by default, now remove to ease maintenance)
 - Change Decal API, decal contribution is now done in Material. Require update of material using decal
 - Move a lot of files from CoreRP to HDRP/CoreRP. All moved files weren't used by Ligthweight pipeline. Long term they could move back to CoreRP after CoreRP become out of preview
