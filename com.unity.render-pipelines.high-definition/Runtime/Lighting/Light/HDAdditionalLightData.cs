@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.Experimental.Rendering;
@@ -64,7 +63,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     //@TODO: We should continuously move these values
     // into the engine when we can see them being generally useful
     [RequireComponent(typeof(Light))]
-    [ExecuteInEditMode]
+    [ExecuteAlways]
     public class HDAdditionalLightData : MonoBehaviour, ISerializationCallbackReceiver
     {
         // 3. Added ShadowNearPlane to HDRP additional light data, we don't use Light.shadowNearPlane anymore
@@ -143,8 +142,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Only for pyramid projector
         public float aspectRatio = 1.0f;
 
-        // Only for Sphere/Disc
-        public float shapeRadius;
+        // Only for Punctual/Sphere/Disc
+        public float shapeRadius = 0.0f;
 
         // Only for Spot/Point - use to cheaply fake specular spherical area light
         // It is not 1 to make sure the highlight does not disappear.
@@ -218,7 +217,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Create shadow requests array using the light type
             if (shadowRequests == null || shadowRequests.Length != GetShadowRequestCount(shadowSettings))
-                shadowRequests = Enumerable.Range(0, GetShadowRequestCount(shadowSettings)).Select(i => new HDShadowRequest()).ToArray();
+            {
+                int count      = GetShadowRequestCount(shadowSettings);
+                shadowRequests = new HDShadowRequest[count];
+
+                for (int i = 0; i < count; i++)
+                {
+                    shadowRequests[i] = new HDShadowRequest();
+                }
+            }
 
             // If the shadow is too far away, we don't render it
             if (m_Light.type != LightType.Directional && Vector3.Distance(cameraPos, transform.position) >= m_ShadowData.shadowFadeDistance)
@@ -245,7 +252,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 var         shadowRequest = shadowRequests[requestIndex];
                 Matrix4x4   invViewProjection = Matrix4x4.identity;
-                
+
                 // Write per light type matrices, splitDatas and culling parameters
                 switch (m_Light.type)
                 {
@@ -258,7 +265,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     case LightType.Directional:
                         Vector4 cullingSphere;
                         float   nearPlaneOffset = QualitySettings.shadowNearPlaneOffset;
-                        
+
                         HDShadowUtils.ExtractDirectionalLightData(visibleLight, viewportSize, (uint)requestIndex, shadowSettings.cascadeShadowSplitCount, shadowSettings.cascadeShadowSplits, nearPlaneOffset, cullResults, lightIndex, out shadowRequest.view, out invViewProjection, out shadowRequest.projection, out shadowRequest.deviceProjection, out shadowRequest.splitData);
 
                         cullingSphere = shadowRequest.splitData.cullingSphere;
@@ -282,11 +289,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 SetCommonShadowRequestSettings(shadowRequest, cameraPos, invViewProjection, viewportSize, lightIndex);
 
                 int shadowRequestIndex = manager.AddShadowRequest(shadowRequest);
-                
+
                 // Store the first shadow request id to return it
                 if (firstShadowRequestIndex == -1)
                     firstShadowRequestIndex = shadowRequestIndex;
-                
+
                 shadowRequestCount++;
             }
 
