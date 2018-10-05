@@ -121,7 +121,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static void Drawer_SectionReflection(GlobalLightLoopSettingsUI s, SerializedGlobalLightLoopSettings d, Editor o)
         {
             EditorGUILayout.PropertyField(d.reflectionCacheCompressed, _.GetContent("Compress Reflection Probe Cache"));
-            EditorGUILayout.PropertyField(d.reflectionCubemapSize, _.GetContent("Reflection Cubemap Size"));
+            EditorGUILayout.PropertyField(d.reflectionCubemapSize, _.GetContent("Cubemap Size"));
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(d.reflectionProbeCacheSize, _.GetContent("Probe Cache Size"));
             if (EditorGUI.EndChangeCheck())
@@ -168,8 +168,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static void Drawer_SectionSky(GlobalLightLoopSettingsUI s, SerializedGlobalLightLoopSettings d, Editor o)
         {
-            EditorGUILayout.PropertyField(d.skyReflectionSize, _.GetContent("Sky Reflection Size"));
-            EditorGUILayout.PropertyField(d.skyLightingOverrideLayerMask, _.GetContent("Sky Lighting Override Mask|This layer mask will define in which layers the sky system will look for sky settings volumes for lighting override"));
+            EditorGUILayout.PropertyField(d.skyReflectionSize, _.GetContent("Reflection Size"));
+            EditorGUILayout.PropertyField(d.skyLightingOverrideLayerMask, _.GetContent("Lighting Override Mask|This layer mask will define in which layers the sky system will look for sky settings volumes for lighting override"));
             if (d.skyLightingOverrideLayerMask.intValue == -1)
             {
                 EditorGUILayout.HelpBox("Be careful, Sky Lighting Override Mask is set to Everything. This is most likely a mistake as it serves no purpose.", MessageType.Warning);
