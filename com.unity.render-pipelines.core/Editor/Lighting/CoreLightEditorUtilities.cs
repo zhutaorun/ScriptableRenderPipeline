@@ -15,13 +15,13 @@ namespace UnityEditor.Experimental.Rendering
             var defZTest = Handles.zTest;
 
             // Default Color for outer cone will be Yellow if nothing has been provided.
-            Color outerColor = GetLightAboveObjectWireframeColor(drawColorOuter ?? Color.yellow);
+            Color outerColor = GetLightAboveObjectWireframeColor(drawColorOuter ?? spotlight.color);
 
             // The default z-test outer color will be 20% opacity of the outer color
             Color outerColorZTest = GetLightBehindObjectWireframeColor(outerColor);
 
             // Default Color for inner cone will be Yellow-ish if nothing has been provided.
-            Color innerColor = GetLightAboveObjectWireframeColor(drawColorInner ?? new Color32(255, 100, 100, 150));
+            Color innerColor = GetLightInnerConeColor(drawColorInner ?? spotlight.color);
 
             // The default z-test outer color will be 20% opacity of the inner color
             Color innerColorZTest = GetLightBehindObjectWireframeColor(innerColor);
@@ -553,6 +553,13 @@ namespace UnityEditor.Experimental.Rendering
         {
             Color color = wireframeColor;
             color.a = Mathf.Clamp01(color.a * 2);
+            return (QualitySettings.activeColorSpace == ColorSpace.Linear) ? color.linear : color;
+        }
+
+        public static Color GetLightInnerConeColor(Color wireframeColor)
+        {
+            Color color = wireframeColor;
+            color.a = 0.4f;
             return (QualitySettings.activeColorSpace == ColorSpace.Linear) ? color.linear : color;
         }
 
