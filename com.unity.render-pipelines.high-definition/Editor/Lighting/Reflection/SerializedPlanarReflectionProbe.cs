@@ -7,10 +7,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     internal class SerializedPlanarReflectionProbe : SerializedHDProbe
     {
-        internal SerializedProperty captureLocalPosition;
-        internal SerializedProperty capturePositionMode;
-        internal SerializedProperty captureMirrorPlaneLocalPosition;
-        internal SerializedProperty captureMirrorPlaneLocalNormal;
         internal SerializedProperty customTexture;
 
         internal SerializedProperty overrideFieldOfView;
@@ -22,12 +18,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         internal SerializedPlanarReflectionProbe(SerializedObject serializedObject) : base(serializedObject)
         {
-            captureLocalPosition = serializedObject.Find((PlanarReflectionProbe p) => p.captureLocalPosition);
-            nearClip = serializedObject.Find((PlanarReflectionProbe p) => p.captureNearPlane);
-            farClip = serializedObject.Find((PlanarReflectionProbe p) => p.captureFarPlane);
-            capturePositionMode = serializedObject.Find((PlanarReflectionProbe p) => p.capturePositionMode);
-            captureMirrorPlaneLocalPosition = serializedObject.Find((PlanarReflectionProbe p) => p.captureMirrorPlaneLocalPosition);
-            captureMirrorPlaneLocalNormal = serializedObject.Find((PlanarReflectionProbe p) => p.captureMirrorPlaneLocalNormal);
             customTexture = serializedObject.Find((PlanarReflectionProbe p) => p.customTexture);
 
             overrideFieldOfView = serializedObject.Find((PlanarReflectionProbe p) => p.overrideFieldOfView);
@@ -37,16 +27,5 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             influenceVolume.editorSimplifiedModeBlendNormalDistance.floatValue = 0;
         }
-
-
-        internal override void Update()
-        {
-            base.Update();
-
-            //temporarily force value until other mode are supported
-            //mode.enumValueIndex = (int)ReflectionProbeMode.Realtime;
-            capturePositionMode.enumValueIndex = (int)PlanarReflectionProbe.CapturePositionMode.MirrorCamera;
-        }
-
     }
 }

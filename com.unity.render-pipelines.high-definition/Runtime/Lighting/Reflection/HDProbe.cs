@@ -2,7 +2,7 @@ using System;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
-    public abstract partial class HDProbe : MonoBehaviour, ISerializationCallbackReceiver
+    public abstract partial class HDProbe : MonoBehaviour
     {
         // Serialized Data
         [SerializeField]
@@ -91,6 +91,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3 proxyExtents
             => proxyVolume != null ? proxyVolume.proxyVolume.extents : influenceExtents;
 
+        public BoundingSphere boundingSphere => influenceVolume.GetBoundingSphereAt(transform);
+        public Bounds bounds => influenceVolume.GetBoundsAt(transform);
+
         internal ProbeSettings settings
         {
             get
@@ -105,15 +108,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         // API
+        /// <summary>
+        /// Prepare the probe for culling.
+        /// You should call this method when you update the <see cref="influenceVolume"/> parameters during runtime.
+        /// </summary>
         public virtual void PrepareCulling() { }
 
         // Life cycle methods
-        internal virtual void Awake()
-        {
-            if (influenceVolume == null)
-                influenceVolume = new InfluenceVolume();
-            influenceVolume.Init(this);
-        }
+        internal virtual void Awake() => k_Migration.Migrate(this);
 
         internal virtual void OnEnable()
         {
@@ -131,7 +133,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         // Private API
-        internal virtual void UpdatedInfluenceVolumeShape(Vector3 size, Vector3 offset) { }
         protected virtual void PopulateSettings(ref ProbeSettings settings) { }
 
         protected void ComputeTransformRelativeToInfluence(out Vector3 position, out Quaternion rotation)
@@ -165,9 +166,5 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 rotation = rotationPS;
             }
         }
-
-        void ISerializationCallbackReceiver.OnBeforeSerialize() { }
-        void ISerializationCallbackReceiver.OnAfterDeserialize() => influenceVolume.Init(this);
-
     }
 }

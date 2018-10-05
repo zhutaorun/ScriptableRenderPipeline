@@ -1,12 +1,10 @@
-using UnityEngine.Serialization;
-using UnityEngine.Rendering;
-using UnityEngine.Assertions;
 using System;
+using UnityEngine.Assertions;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     [ExecuteInEditMode]
-    public class PlanarReflectionProbe : HDProbe, ISerializationCallbackReceiver
+    public partial class PlanarReflectionProbe : HDProbe, ISerializationCallbackReceiver
     {
         [Serializable]
         public struct RenderData
@@ -15,29 +13,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Matrix4x4 projectionMatrix;
         }
 
-        const int currentVersion = 2;
-
-        [SerializeField, FormerlySerializedAs("version")]
-        int m_Version;
-
-        public enum CapturePositionMode
-        {
-            Static,
-            MirrorCamera,
-        }
-
-        [SerializeField]
-        Vector3 m_CaptureLocalPosition;
-        [SerializeField]
-        float m_CaptureNearPlane = 1;
-        [SerializeField]
-        float m_CaptureFarPlane = 1000;
-        [SerializeField]
-        CapturePositionMode m_CapturePositionMode = CapturePositionMode.Static;
-        [SerializeField]
-        Vector3 m_CaptureMirrorPlaneLocalPosition;
-        [SerializeField]
-        Vector3 m_CaptureMirrorPlaneLocalNormal = Vector3.up;
+        // Serialized data
         [SerializeField]
         bool m_OverrideFieldOfView = false;
         [SerializeField]
@@ -52,66 +28,30 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RenderData m_CustomRenderData;
         RenderData m_RealtimeRenderData;
 
-        public override ProbeSettings.ProbeType probeType { get { return ProbeSettings.ProbeType.PlanarProbe; } }
-
-        public RenderData bakedRenderData { get { return m_BakedRenderData; } internal set { m_BakedRenderData = value; } }
-        public RenderData customRenderData { get { return m_CustomRenderData; } internal set { m_CustomRenderData = value; } }
-        public RenderData realtimeRenderData { get { return m_RealtimeRenderData; } internal set { m_RealtimeRenderData = value; } }
-        public RenderData renderData
+        public RenderData bakedRenderData { get => m_BakedRenderData; internal set => m_BakedRenderData = value; }
+        public RenderData customRenderData { get => m_CustomRenderData; internal set => m_CustomRenderData = value; }
+        public RenderData realtimeRenderData { get => m_RealtimeRenderData; internal set => m_RealtimeRenderData = value; }
+        public RenderData renderData => GetRenderData(mode);
+        public RenderData GetRenderData(ProbeSettings.Mode targetMode)
         {
-            get
+            switch (mode)
             {
-                switch (mode)
-                {
-                    default:
-                    case ProbeSettings.Mode.Baked:
-                        return bakedRenderData;
-                    case ProbeSettings.Mode.Custom:
-                        return customRenderData;
-                    case ProbeSettings.Mode.Realtime:
-                        return realtimeRenderData;
-                }
+                case ProbeSettings.Mode.Baked: return bakedRenderData;
+                case ProbeSettings.Mode.Custom: return customRenderData;
+                case ProbeSettings.Mode.Realtime: return realtimeRenderData;
+                default: throw new ArgumentOutOfRangeException();
             }
         }
 
-        public Vector3 localReferencePosition { get { return m_LocalReferencePosition; } }
-        public Vector3 referencePosition { get { return transform.TransformPoint(m_LocalReferencePosition); } }
+        /// <summary>Reference position to mirror to find the capture point. (local space)</summary>
+        public Vector3 localReferencePosition => m_LocalReferencePosition;
+        /// <summary>Reference position to mirror to find the capture point. (world space)</summary>
+        public Vector3 referencePosition => transform.TransformPoint(m_LocalReferencePosition);
 
-        public bool overrideFieldOfView { get { return m_OverrideFieldOfView; } }
-        public float fieldOfViewOverride { get { return m_FieldOfViewOverride; } }
-
-        public BoundingSphere boundingSphere { get { return influenceVolume.GetBoundingSphereAt(transform); } }
-
-        public Bounds bounds { get { return influenceVolume.GetBoundsAt(transform); } }
-        public Vector3 captureLocalPosition { get { return m_CaptureLocalPosition; } set { m_CaptureLocalPosition = value; } }
-        public Matrix4x4 influenceToWorld
-        {
-            get
-            {
-                var tr = transform;
-                var influencePosition = influenceVolume.GetWorldPosition(tr);
-                return Matrix4x4.TRS(
-                    influencePosition,
-                    tr.rotation,
-                    Vector3.one
-                    );
-            }
-        }
-        public float captureNearPlane { get { return m_CaptureNearPlane; } }
-        public float captureFarPlane { get { return m_CaptureFarPlane; } }
-        public CapturePositionMode capturePositionMode { get { return m_CapturePositionMode; } }
-        public Vector3 captureMirrorPlaneLocalPosition
-        {
-            get { return m_CaptureMirrorPlaneLocalPosition; }
-            set { m_CaptureMirrorPlaneLocalPosition = value; }
-        }
-        public Vector3 captureMirrorPlanePosition { get { return transform.TransformPoint(m_CaptureMirrorPlaneLocalPosition); } }
-        public Vector3 captureMirrorPlaneLocalNormal
-        {
-            get { return m_CaptureMirrorPlaneLocalNormal; }
-            set { m_CaptureMirrorPlaneLocalNormal = value; }
-        }
-        public Vector3 captureMirrorPlaneNormal { get { return transform.TransformDirection(m_CaptureMirrorPlaneLocalNormal); } }
+        /// <summary>True if the capture field of view is overridden.</summary>
+        public bool overrideFieldOfView { get => m_OverrideFieldOfView; set => m_OverrideFieldOfView = value; }
+        /// <summary>The value of the capture field of view.</summary>
+        public float fieldOfViewOverride { get => m_FieldOfViewOverride; set => m_FieldOfViewOverride = value; }
 
         protected override void PopulateSettings(ref ProbeSettings settings)
         {
@@ -123,25 +63,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             );
         }
 
-        public void OnBeforeSerialize()
-        {
-        }
+        public void OnBeforeSerialize() { }
 
         public void OnAfterDeserialize()
         {
             Assert.IsNotNull(influenceVolume, "influenceVolume must have an instance at this point. See HDProbe.Awake()");
-            if (m_Version != currentVersion)
-            {
-                // Add here data migration code
-                if(m_Version < 2)
-                {
-                    influenceVolume.MigrateOffsetSphere();
-                }
-                m_Version = currentVersion;
-            }
-
-            influenceVolume.boxBlendNormalDistanceNegative = Vector3.zero;
-            influenceVolume.boxBlendNormalDistancePositive = Vector3.zero;
+            // Keep this for a migration that has been done on HDRP/staging
         }
     }
 }

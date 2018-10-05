@@ -24,21 +24,5 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             HDProbeUI.DrawGizmos(d, gizmoType);
         }
-
-        static void DrawGizmos_CaptureMirror(PlanarReflectionProbe d)
-        {
-            var c = Gizmos.color;
-            var m = Gizmos.matrix;
-            Gizmos.matrix = Matrix4x4.TRS(
-                    d.captureMirrorPlanePosition,
-                    Quaternion.LookRotation(d.captureMirrorPlaneNormal, Vector3.up),
-                    Vector3.one);
-            Gizmos.color = k_GizmoMirrorPlaneCamera;
-
-            Gizmos.DrawCube(Vector3.zero, new Vector3(1, 1, 0));
-
-            Gizmos.matrix = m;
-            Gizmos.color = c;
-        }
     }
 }

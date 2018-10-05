@@ -11,15 +11,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static IList<HDProbe> realtimeViewIndependentProbes { get { return s_Instance.realtimeViewIndependentProbes; } }
         public static IList<HDProbe> bakedProbes { get { return s_Instance.bakedProbes; } }
 
-        public static void RegisterProbe(HDProbe probe)
-        {
-            s_Instance.RegisterProbe(probe);
-        }
+        public static void RegisterProbe(HDProbe probe) => s_Instance.RegisterProbe(probe);
 
-        public static void UnregisterProbe(HDProbe probe)
-        {
-            s_Instance.UnregisterProbe(probe);
-        }
+        public static void UnregisterProbe(HDProbe probe) => s_Instance.UnregisterProbe(probe);
 
         public static void RenderAndUpdateRenderData(
             IEnumerable<HDProbe> probes,

@@ -30,9 +30,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             m_SerializedHDProbe = new SerializedPlanarReflectionProbe(serializedObject);
             base.OnEnable();
-
-            PlanarReflectionProbe probe = (PlanarReflectionProbe)target;
-            probe.influenceVolume.Init(probe);
         }
 
         protected override void OnSceneGUI()

@@ -14,13 +14,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         static readonly MigrationDescription<Version, HDProbe> k_Migration = MigrationDescription.New(
             MigrationStep.New(Version.ProbeSettings, (HDProbe p) =>
             {
-                p.m_ProbeSettings.proxySettings.useInfluenceVolumeAsProxyVolume = !p.m_LegacyInfiniteProjection;
-                p.m_ProbeSettings.influence = p.m_LegacyInfluenceVolume;
-                p.m_ProbeSettings.camera.frameSettings = p.m_LegacyFrameSettings;
-                p.m_ProbeSettings.lighting.multiplier = p.m_LegacyMultiplier;
-                p.m_ProbeSettings.lighting.weight = p.m_LegacyWeight;
-                p.m_ProbeSettings.lighting.lightLayer = p.m_LegacyLightLayers;
-                p.m_ProbeSettings.mode = p.m_LegacyMode;
+#pragma warning disable 618
+                p.m_ProbeSettings.proxySettings.useInfluenceVolumeAsProxyVolume = !p.m_ObsoleteInfiniteProjection;
+                p.m_ProbeSettings.influence = p.m_ObsoleteInfluenceVolume;
+                p.m_ProbeSettings.camera.frameSettings = p.m_ObsoleteFrameSettings;
+                p.m_ProbeSettings.lighting.multiplier = p.m_ObsoleteMultiplier;
+                p.m_ProbeSettings.lighting.weight = p.m_ObsoleteWeight;
+                p.m_ProbeSettings.lighting.lightLayer = p.m_ObsoleteLightLayers;
+                p.m_ProbeSettings.mode = p.m_ObsoleteMode;
+#pragma warning restore 618
             })
         );
 
@@ -29,25 +31,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Version IVersionable<Version>.version { get => m_Version; set => m_Version = value; }
 
         // Legacy fields for HDProbe
-        [SerializeField, FormerlySerializedAs("m_InfiniteProjection")]
-        bool m_LegacyInfiniteProjection = true;
+        [SerializeField, FormerlySerializedAs("m_InfiniteProjection"), Obsolete("For Data Migration")]
+        bool m_ObsoleteInfiniteProjection = true;
 
-        [SerializeField, FormerlySerializedAs("m_InfluenceVolume")]
-        InfluenceVolume m_LegacyInfluenceVolume;
+        [SerializeField, FormerlySerializedAs("m_InfluenceVolume"), Obsolete("For Data Migration")]
+        InfluenceVolume m_ObsoleteInfluenceVolume;
 
-        [SerializeField, FormerlySerializedAs("m_FrameSettings")]
-        FrameSettings m_LegacyFrameSettings = null;
+        [SerializeField, FormerlySerializedAs("m_FrameSettings"), Obsolete("For Data Migration")]
+        FrameSettings m_ObsoleteFrameSettings = null;
 
-        [SerializeField, FormerlySerializedAs("m_Multiplier"), FormerlySerializedAs("dimmer"), FormerlySerializedAs("m_Dimmer"), FormerlySerializedAs("multiplier")]
-        float m_LegacyMultiplier = 1.0f;
+        [SerializeField, FormerlySerializedAs("m_Multiplier"), FormerlySerializedAs("dimmer")]
+        [FormerlySerializedAs("m_Dimmer"), FormerlySerializedAs("multiplier"), Obsolete("For Data Migration")]
+        float m_ObsoleteMultiplier = 1.0f;
         [SerializeField, FormerlySerializedAs("m_Weight"), FormerlySerializedAs("weight")]
+        [Obsolete("For Data Migration")]
         [Range(0.0f, 1.0f)]
-        float m_LegacyWeight = 1.0f;
+        float m_ObsoleteWeight = 1.0f;
 
-        [SerializeField, FormerlySerializedAs("m_Mode")]
-        ProbeSettings.Mode m_LegacyMode = ProbeSettings.Mode.Baked;
+        [SerializeField, FormerlySerializedAs("m_Mode"), Obsolete("For Data Migration")]
+        ProbeSettings.Mode m_ObsoleteMode = ProbeSettings.Mode.Baked;
 
-        [SerializeField, FormerlySerializedAs("lightLayer")]
-        LightLayerEnum m_LegacyLightLayers = LightLayerEnum.LightLayerDefault;
+        [SerializeField, FormerlySerializedAs("lightLayer"), Obsolete("For Data Migration")]
+        LightLayerEnum m_ObsoleteLightLayers = LightLayerEnum.LightLayerDefault;
     }
 }

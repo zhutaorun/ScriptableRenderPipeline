@@ -20,10 +20,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        internal override void UpdatedInfluenceVolumeShape(Vector3 size, Vector3 offset)
+        public override void PrepareCulling()
         {
-            reflectionProbe.size = size;
-            reflectionProbe.center = transform.rotation * offset;
+            base.PrepareCulling();
+            var influence = settings.influence;
+            var cubeProbe = reflectionProbe;
+            switch (influence.shape)
+            {
+                case InfluenceShape.Box:
+                    cubeProbe.size = influence.boxSize;
+                    cubeProbe.center = transform.rotation * influence.offset;
+                    break;
+                case InfluenceShape.Sphere:
+                    cubeProbe.size = Vector3.one * (2 * influence.sphereRadius);
+                    cubeProbe.center = transform.rotation * influence.offset;
+                    break;
+            }
         }
     }
 }

@@ -7,7 +7,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         internal SerializedObject serializedObject;
         
         internal SerializedProperty proxyVolumeReference;
-        internal SerializedProperty useInfluenceAsProxyVolume;
+        internal SerializedProperty useInfluenceVolumeAsProxyVolume;
 
         internal SerializedInfluenceVolume influenceVolume;
 
@@ -34,7 +34,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             proxyVolumeReference = serializedObject.Find((HDProbe p) => p.proxyVolume);
             influenceVolume = new SerializedInfluenceVolume(serializedObject.Find((HDProbe p) => p.influenceVolume));
-            useInfluenceAsProxyVolume = serializedObject.Find((HDProbe p) => p.useInfluenceAsProxyVolume);
+            useInfluenceVolumeAsProxyVolume = serializedObject.Find((HDProbe p) => p.useInfluenceVolumeAsProxyVolume);
 
             frameSettings = new SerializedFrameSettings(serializedObject.Find((HDProbe p) => p.frameSettings));
 

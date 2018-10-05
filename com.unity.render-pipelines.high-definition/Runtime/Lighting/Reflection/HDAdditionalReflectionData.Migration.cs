@@ -8,13 +8,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         enum Version
         {
             First,
-            Second,
-            HDProbeChild,
+            HDProbeChild = 2,
             UseInfluenceVolume,
-            MergeEditors,
-            // Add new version here and they will automatically be the Current one
-            Max,
-            Current = Max - 1
+            MergeEditors
         }
 
         static readonly MigrationDescription<Version, HDAdditionalReflectionData> k_MigrationDescription
