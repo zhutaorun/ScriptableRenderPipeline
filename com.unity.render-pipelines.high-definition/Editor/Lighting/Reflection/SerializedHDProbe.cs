@@ -33,16 +33,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             this.serializedObject = serializedObject;
 
             proxyVolumeReference = serializedObject.Find((HDProbe p) => p.proxyVolume);
-            influenceVolume = new SerializedInfluenceVolume(serializedObject.Find((HDProbe p) => p.influenceVolume));
-            useInfluenceVolumeAsProxyVolume = serializedObject.Find((HDProbe p) => p.useInfluenceVolumeAsProxyVolume);
+            influenceVolume = new SerializedInfluenceVolume(serializedObject.FindProperty("m_ProbeSettings.influence"));
+            useInfluenceVolumeAsProxyVolume = serializedObject.FindProperty("m_ProbeSettings.proxySettings.useInfluenceVolumeAsProxyVolume");
 
-            frameSettings = new SerializedFrameSettings(serializedObject.Find((HDProbe p) => p.frameSettings));
+            frameSettings = new SerializedFrameSettings(serializedObject.FindProperty("m_ProbeSettings.camera.frameSettings"));
 
-            lightLayers = serializedObject.Find((HDProbe p) => p.lightLayers);
-            weight = serializedObject.Find((HDProbe p) => p.weight);
-            multiplier = serializedObject.Find((HDProbe p) => p.multiplier);
+            lightLayers = serializedObject.FindProperty("m_ProbeSettings.lighting.lightLayer");
+            weight = serializedObject.FindProperty("m_ProbeSettings.lighting.weight");
+            multiplier = serializedObject.FindProperty("m_ProbeSettings.lighting.multiplier");
 
-            mode = serializedObject.Find((HDProbe p) => p.mode);
+            mode = serializedObject.FindProperty("m_ProbeSettings.mode");
         }
 
         internal virtual void Update()

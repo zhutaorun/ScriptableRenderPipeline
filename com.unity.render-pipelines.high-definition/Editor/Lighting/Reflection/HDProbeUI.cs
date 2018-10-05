@@ -76,6 +76,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public override void Update()
         {
+
             for (var i = 0; i < k_ReflectionProbeModeCount; i++)
                 m_AnimBools[i].target = i == data.mode.intValue;
             
