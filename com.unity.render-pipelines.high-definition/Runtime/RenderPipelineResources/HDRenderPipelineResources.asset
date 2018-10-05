@@ -91,15 +91,15 @@ MonoBehaviour:
     shadowClearPS: {fileID: 4800000, guid: e3cab24f27741f44d8af1e94d006267c, type: 3}
     shadowBlurMomentsCS: {fileID: 7200000, guid: fb36979473602464fa32deacb9630c08,
       type: 3}
-    debugShadowMapPS: {fileID: 4800000, guid: ee25e539f5594f44085e0a9000c15d9b, type: 3}
+    debugShadowMapPS: {fileID: 4800000, guid: 93d40cc9a6e13994f86f576a624efa18, type: 3}
     debugHDShadowMapPS: {fileID: 4800000, guid: 93d40cc9a6e13994f86f576a624efa18,
       type: 3}
     decalNormalBufferPS: {fileID: 4800000, guid: fd532bf1795188c4daaa66ea798b8b0a,
       type: 3}
-    aoDownsample1CS: {fileID: 7200000, guid: f2242c3977ff794419fa0a2a3a08a1d5, type: 3}
-    aoDownsample2CS: {fileID: 7200000, guid: 6a156e43d9869584ea70507ef5bb054a, type: 3}
-    aoRenderCS: {fileID: 7200000, guid: bdc1a70dcf8706247be8c321b8f9cdac, type: 3}
-    aoUpsampleCS: {fileID: 7200000, guid: 52d2cfce57d98ca4b93049a7a6686ec6, type: 3}
+    aoDownsample1CS: {fileID: 7200000, guid: 8a771b3139fdbca41a4767875d014786, type: 3}
+    aoDownsample2CS: {fileID: 7200000, guid: 5e0aed0bae0158a4982d1f0778df6eb6, type: 3}
+    aoRenderCS: {fileID: 7200000, guid: 55105671506217840b5ee1b9b936b81d, type: 3}
+    aoUpsampleCS: {fileID: 7200000, guid: 40714a7e6a527c54b8c62860676d6084, type: 3}
     aoResolvePS: {fileID: 4800000, guid: 0fcef9ef067b4cd44a62bd6ac0166384, type: 3}
     depthValuesPS: {fileID: 4800000, guid: 6e6a4a3dbb788234594aa74f2d6aeb6f, type: 3}
     colorResolvePS: {fileID: 4800000, guid: dd7047092f3c82b40b3a07868f9c4de2, type: 3}

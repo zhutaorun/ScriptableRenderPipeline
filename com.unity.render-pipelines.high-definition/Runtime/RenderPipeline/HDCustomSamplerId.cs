@@ -10,6 +10,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         HTileForSSS,
         Forward,
         RenderSSAO,
+        ResolveSSAO,
         RenderShadows,
         ScreenSpaceShadows,
         BuildLightList,

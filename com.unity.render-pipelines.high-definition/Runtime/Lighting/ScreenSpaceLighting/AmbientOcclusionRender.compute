@@ -22,12 +22,25 @@
 #pragma warning(disable : 3568)
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
-#pragma kernel KMainInterleaved MAIN=KMainInterleaved INTERLEAVE_RESULT
+#pragma kernel KMainInterleaved             MAIN=KMainInterleaved           INTERLEAVE_RESULT
+#pragma kernel KMainInterleaved_MSAA        MAIN=KMainInterleaved_MSAA      INTERLEAVE_RESULT   MSAA
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 
 #ifndef INTERLEAVE_RESULT
-#define WIDE_SAMPLING 1
+    #define WIDE_SAMPLING 1
+#endif
+
+#if WIDE_SAMPLING
+    // 32x32 cache size:  the 16x16 in the center forms the area of focus with the 8-pixel perimeter used for wide gathering.
+    #define TILE_DIM 32
+    #define THREAD_COUNT_X 16
+    #define THREAD_COUNT_Y 16
+#else
+    // 16x16 cache size:  the 8x8 in the center forms the area of focus with the 4-pixel perimeter used for gathering.
+    #define TILE_DIM 16
+    #define THREAD_COUNT_X 8
+    #define THREAD_COUNT_Y 8
 #endif
 
 #ifdef INTERLEAVE_RESULT
@@ -36,7 +49,15 @@ TEXTURE2D_ARRAY(_Depth);
 TEXTURE2D(_Depth);
 #endif
 
+#if MSAA
+RW_TEXTURE2D(float2, _Occlusion);
+
+groupshared float2 gs_depthSamples[TILE_DIM * TILE_DIM];
+#else
 RW_TEXTURE2D(float, _Occlusion);
+
+groupshared float gs_depthSamples[TILE_DIM * TILE_DIM];
+#endif
 
 SAMPLER(sampler_Depth);
 
@@ -47,23 +68,66 @@ CBUFFER_START(cb0)
     float2 _AdditionalParams;
 CBUFFER_END
 
-#define _RejectFadeoff _AdditionalParams.x
-#define _Intensity _AdditionalParams.y
+#define _RejectFadeoff  _AdditionalParams.x
+#define _Intensity      _AdditionalParams.y
 
+#ifdef MSAA
+float2 TestSamplePair(float frontDepth, float2 invRange, uint base, int offset)
+{
+    // "Disocclusion" measures the penetration distance of the depth sample within the sphere.
+    // Disocclusion < 0 (full occlusion) -> the sample fell in front of the sphere
+    // Disocclusion > 1 (no occlusion) -> the sample fell behind the sphere
+    float2 disocclusion1 = gs_depthSamples[base + offset] * invRange - frontDepth;
+    float2 disocclusion2 = gs_depthSamples[base - offset] * invRange - frontDepth;
+
+    float2 pseudoDisocclusion1 = saturate(_RejectFadeoff * disocclusion1);
+    float2 pseudoDisocclusion2 = saturate(_RejectFadeoff * disocclusion2);
+
+    return saturate(
+        clamp(disocclusion1, pseudoDisocclusion2, 1.0) +
+        clamp(disocclusion2, pseudoDisocclusion1, 1.0) -
+        pseudoDisocclusion1 * pseudoDisocclusion2
+    );
+}
+
+float2 TestSamples(uint centerIdx, uint x, uint y, float2 invDepth, float invThickness)
+{
 #if WIDE_SAMPLING
-// 32x32 cache size:  the 16x16 in the center forms the area of focus with the 8-pixel perimeter used for wide gathering.
-#define TILE_DIM 32
-#define THREAD_COUNT_X 16
-#define THREAD_COUNT_Y 16
-#else
-// 16x16 cache size:  the 8x8 in the center forms the area of focus with the 4-pixel perimeter used for gathering.
-#define TILE_DIM 16
-#define THREAD_COUNT_X 8
-#define THREAD_COUNT_Y 8
+    x <<= 1;
+    y <<= 1;
 #endif
 
-groupshared float gs_depthSamples[TILE_DIM * TILE_DIM];
+    float2 invRange = invThickness * invDepth;
+    float frontDepth = invThickness - 0.5;
 
+    if (y == 0)
+    {
+        // Axial
+        return 0.5 * (
+            TestSamplePair(frontDepth, invRange, centerIdx, x) +
+            TestSamplePair(frontDepth, invRange, centerIdx, x * TILE_DIM)
+        );
+    }
+    else if (x == y)
+    {
+        // Diagonal
+        return 0.5 * (
+            TestSamplePair(frontDepth, invRange, centerIdx, x * TILE_DIM - x) +
+            TestSamplePair(frontDepth, invRange, centerIdx, x * TILE_DIM + x)
+        );
+    }
+    else
+    {
+        // L-Shaped
+        return 0.25 * (
+            TestSamplePair(frontDepth, invRange, centerIdx, y * TILE_DIM + x) +
+            TestSamplePair(frontDepth, invRange, centerIdx, y * TILE_DIM - x) +
+            TestSamplePair(frontDepth, invRange, centerIdx, x * TILE_DIM + y) +
+            TestSamplePair(frontDepth, invRange, centerIdx, x * TILE_DIM - y)
+        );
+    }
+}
+#else
 float TestSamplePair(float frontDepth, float invRange, uint base, int offset)
 {
     // "Disocclusion" measures the penetration distance of the depth sample within the sphere.
@@ -78,7 +142,8 @@ float TestSamplePair(float frontDepth, float invRange, uint base, int offset)
     return saturate(
         clamp(disocclusion1, pseudoDisocclusion2, 1.0) +
         clamp(disocclusion2, pseudoDisocclusion1, 1.0) -
-        pseudoDisocclusion1 * pseudoDisocclusion2);
+        pseudoDisocclusion1 * pseudoDisocclusion2
+    );
 }
 
 float TestSamples(uint centerIdx, uint x, uint y, float invDepth, float invThickness)
@@ -118,6 +183,7 @@ float TestSamples(uint centerIdx, uint x, uint y, float invDepth, float invThick
         );
     }
 }
+#endif
 
 [numthreads(THREAD_COUNT_X, THREAD_COUNT_Y, 1)]
 void MAIN(uint2 GTid : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID)
@@ -129,17 +195,32 @@ void MAIN(uint2 GTid : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID)
 #endif
 
     // Fetch four depths and store them in LDS
-#ifdef INTERLEAVE_RESULT
-    float4 depths = GATHER_TEXTURE2D_ARRAY(_Depth, sampler_Depth, QuadCenterUV, DTid.z);
+#ifdef MSAA
+    #ifdef INTERLEAVE_RESULT
+        float4 depths0 = GATHER_RED_TEXTURE2D(_Depth, sampler_Depth, float3(QuadCenterUV, DTid.z));
+        float4 depths1 = GATHER_GREEN_TEXTURE2D(_Depth, sampler_Depth, float3(QuadCenterUV, DTid.z));
+    #else
+        float4 depths0 = GATHER_RED_TEXTURE2D(_Depth, sampler_Depth, QuadCenterUV);
+        float4 depths1 = GATHER_GREEN_TEXTURE2D(_Depth, sampler_Depth, QuadCenterUV);
+    #endif
+        int destIdx = GTid.x * 2 + GTid.y * 2 * TILE_DIM;
+        gs_depthSamples[destIdx               ] = float2(depths0.w, depths1.w);
+        gs_depthSamples[destIdx + 1           ] = float2(depths0.z, depths1.z);
+        gs_depthSamples[destIdx + TILE_DIM    ] = float2(depths0.x, depths1.x);
+        gs_depthSamples[destIdx + TILE_DIM + 1] = float2(depths0.y, depths1.y);
 #else
-    float4 depths = GATHER_TEXTURE2D(_Depth, sampler_Depth, QuadCenterUV);
-#endif
+    #ifdef INTERLEAVE_RESULT
+        float4 depths = GATHER_TEXTURE2D_ARRAY(_Depth, sampler_Depth, QuadCenterUV, DTid.z);
+    #else
+        float4 depths = GATHER_TEXTURE2D(_Depth, sampler_Depth, QuadCenterUV);
+    #endif
 
-    int destIdx = GTid.x * 2 + GTid.y * 2 * TILE_DIM;
-    gs_depthSamples[destIdx] = depths.w;
-    gs_depthSamples[destIdx + 1] = depths.z;
-    gs_depthSamples[destIdx + TILE_DIM] = depths.x;
-    gs_depthSamples[destIdx + TILE_DIM + 1] = depths.y;
+        int destIdx = GTid.x * 2 + GTid.y * 2 * TILE_DIM;
+        gs_depthSamples[destIdx               ] = depths.w;
+        gs_depthSamples[destIdx + 1           ] = depths.z;
+        gs_depthSamples[destIdx + TILE_DIM    ] = depths.x;
+        gs_depthSamples[destIdx + TILE_DIM + 1] = depths.y;
+#endif
 
     GroupMemoryBarrierWithGroupSync();
 
@@ -149,9 +230,13 @@ void MAIN(uint2 GTid : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID)
     uint thisIdx = GTid.x + GTid.y * TILE_DIM + 4 * TILE_DIM + 4;
 #endif
 
+#ifdef MSAA
+    const float2 invThisDepth = 1.0 / gs_depthSamples[thisIdx];
+    float2 ao = 0.0;
+#else
     const float invThisDepth = 1.0 / gs_depthSamples[thisIdx];
-
     float ao = 0.0;
+#endif
 
 //#define SAMPLE_EXHAUSTIVELY
 

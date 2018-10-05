@@ -8,8 +8,8 @@ Shader "Hidden/HDRenderPipeline/AOResolve"
         #pragma enable_d3d11_debug_symbols
 
         // Target multivalues textures
-        Texture2D<float4> _DepthValuesTexture;
-        Texture2D<float2> _MultiAOTexture;
+        TEXTURE2D(_DepthValuesTexture);
+        TEXTURE2D(_MultiAmbientOcclusionTexture);
 
         struct Attributes
         {
@@ -42,7 +42,7 @@ Shader "Hidden/HDRenderPipeline/AOResolve"
             float lerpVal = saturate((depthValues.z - depthValues.y) / (depthValues.x - depthValues.y));
 
             // Fetch the AO values
-            float2 aoValues = LOAD_TEXTURE2D(_MultiAOTexture, pixelCoords);
+            float2 aoValues = LOAD_TEXTURE2D(_MultiAmbientOcclusionTexture, pixelCoords).xy;
 
             // Lerp between Both
             return lerp(aoValues.x, aoValues.y, lerpVal);

@@ -22,8 +22,10 @@
 #pragma warning(disable : 3568)
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
-#pragma kernel KMainInvert MAIN=KMainInvert INVERT
-#pragma kernel KMainBlendout MAIN=KMainBlendout BLEND_WITH_HIGHER_RESOLUTION
+#pragma kernel KMainInvert              MAIN=KMainInvert                INVERT
+#pragma kernel KMainBlendout            MAIN=KMainBlendout              BLEND_WITH_HIGHER_RESOLUTION
+#pragma kernel KMainInvert_MSAA         MAIN=KMainInvert_MSAA           MSAA INVERT
+#pragma kernel KMainBlendout_MSAA       MAIN=KMainBlendout_MSAA         MSAA BLEND_WITH_HIGHER_RESOLUTION
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 
@@ -35,17 +37,24 @@ SAMPLER(sampler_LoResDB);
 SAMPLER(sampler_HiResDB);
 SAMPLER(sampler_LoResAO1);
 
-#ifdef COMBINE_LOWER_RESOLUTIONS
-TEXTURE2D(_LoResAO2);
-SAMPLER(sampler_LoResAO2);
-#endif
-
 #ifdef BLEND_WITH_HIGHER_RESOLUTION
 TEXTURE2D(_HiResAO);
 SAMPLER(sampler_HiResAO);
 #endif
 
+#if MSAA
+RW_TEXTURE2D(float2, _AoResult);
+
+groupshared float2 gs_depthCache[256];
+groupshared float2 gs_aoCache1[256];
+groupshared float2 gs_aoCache2[256];
+#else
 RW_TEXTURE2D(float, _AoResult);
+
+groupshared float gs_depthCache[256];
+groupshared float gs_aoCache1[256];
+groupshared float gs_aoCache2[256];
+#endif
 
 CBUFFER_START(cb0)
     float4 _InvLowResolution;
@@ -58,28 +67,37 @@ CBUFFER_END
 #define _BlurTolerance       _AdditionalParams.z
 #define _UpsampleTolerance   _AdditionalParams.w
 
-groupshared float gs_depthCache[256];
-groupshared float gs_aoCache1[256];
-groupshared float gs_aoCache2[256];
-
 void PrefetchData(uint index, float2 uv)
 {
+#ifdef MSAA
+    float4 AO1_0 = GATHER_RED_TEXTURE2D(_LoResAO1, sampler_LoResAO1, uv);
+    float4 AO1_1 = GATHER_GREEN_TEXTURE2D(_LoResAO1, sampler_LoResAO1, uv);
+
+    gs_aoCache1[index     ] = float2(AO1_0.w, AO1_1.w);
+    gs_aoCache1[index +  1] = float2(AO1_0.z, AO1_1.z);
+    gs_aoCache1[index + 16] = float2(AO1_0.x, AO1_1.x);
+    gs_aoCache1[index + 17] = float2(AO1_0.y, AO1_1.y);
+
+    float4 ID_0 = 1.0 / GATHER_RED_TEXTURE2D(_LoResDB, sampler_LoResDB, uv);
+    float4 ID_1 = 1.0 / GATHER_GREEN_TEXTURE2D(_LoResDB, sampler_LoResDB, uv);
+    gs_depthCache[index     ] = float2(ID_0.w, ID_1.w);
+    gs_depthCache[index +  1] = float2(ID_0.z, ID_1.z);
+    gs_depthCache[index + 16] = float2(ID_0.x, ID_1.x);
+    gs_depthCache[index + 17] = float2(ID_0.y, ID_1.y);
+#else
     float4 AO1 = GATHER_TEXTURE2D(_LoResAO1, sampler_LoResAO1, uv);
 
-#ifdef COMBINE_LOWER_RESOLUTIONS
-    AO1 = min(AO1, GATHER_TEXTURE2D(_LoResAO2, sampler_LoResAO2, uv));
-#endif
-
-    gs_aoCache1[index] = AO1.w;
-    gs_aoCache1[index + 1] = AO1.z;
+    gs_aoCache1[index     ] = AO1.w;
+    gs_aoCache1[index +  1] = AO1.z;
     gs_aoCache1[index + 16] = AO1.x;
     gs_aoCache1[index + 17] = AO1.y;
 
     float4 ID = 1.0 / GATHER_TEXTURE2D(_LoResDB, sampler_LoResDB, uv);
-    gs_depthCache[index] = ID.w;
-    gs_depthCache[index + 1] = ID.z;
+    gs_depthCache[index     ] = ID.w;
+    gs_depthCache[index +  1] = ID.z;
     gs_depthCache[index + 16] = ID.x;
     gs_depthCache[index + 17] = ID.y;
+#endif
 }
 
 float SmartBlur(float a, float b, float c, float d, float e, bool Left, bool Middle, bool Right)
@@ -99,7 +117,54 @@ bool CompareDeltas(float d1, float d2, float l1, float l2)
 
 void BlurHorizontally(uint leftMostIndex)
 {
-    float a0 = gs_aoCache1[leftMostIndex];
+#ifdef MSAA 
+    float2 a0 = gs_aoCache1[leftMostIndex    ];
+    float2 a1 = gs_aoCache1[leftMostIndex + 1];
+    float2 a2 = gs_aoCache1[leftMostIndex + 2];
+    float2 a3 = gs_aoCache1[leftMostIndex + 3];
+    float2 a4 = gs_aoCache1[leftMostIndex + 4];
+    float2 a5 = gs_aoCache1[leftMostIndex + 5];
+    float2 a6 = gs_aoCache1[leftMostIndex + 6];
+
+    float2 d0 = gs_depthCache[leftMostIndex    ];
+    float2 d1 = gs_depthCache[leftMostIndex + 1];
+    float2 d2 = gs_depthCache[leftMostIndex + 2];
+    float2 d3 = gs_depthCache[leftMostIndex + 3];
+    float2 d4 = gs_depthCache[leftMostIndex + 4];
+    float2 d5 = gs_depthCache[leftMostIndex + 5];
+    float2 d6 = gs_depthCache[leftMostIndex + 6];
+
+    float2 d01 = d1 - d0;
+    float2 d12 = d2 - d1;
+    float2 d23 = d3 - d2;
+    float2 d34 = d4 - d3;
+    float2 d45 = d5 - d4;
+    float2 d56 = d6 - d5;
+
+    float2 l01 = d01 * d01 + _StepSize;
+    float2 l12 = d12 * d12 + _StepSize;
+    float2 l23 = d23 * d23 + _StepSize;
+    float2 l34 = d34 * d34 + _StepSize;
+    float2 l45 = d45 * d45 + _StepSize;
+    float2 l56 = d56 * d56 + _StepSize;
+
+    bool c02_0 = CompareDeltas(d01.x, d12.x, l01.x, l12.x);
+    bool c13_0 = CompareDeltas(d12.x, d23.x, l12.x, l23.x);
+    bool c24_0 = CompareDeltas(d23.x, d34.x, l23.x, l34.x);
+    bool c35_0 = CompareDeltas(d34.x, d45.x, l34.x, l45.x);
+    bool c46_0 = CompareDeltas(d45.x, d56.x, l45.x, l56.x);
+
+    bool c02_1 = CompareDeltas(d01.y, d12.y, l01.y, l12.y);
+    bool c13_1 = CompareDeltas(d12.y, d23.y, l12.y, l23.y);
+    bool c24_1 = CompareDeltas(d23.y, d34.y, l23.y, l34.y);
+    bool c35_1 = CompareDeltas(d34.y, d45.y, l34.y, l45.y);
+    bool c46_1 = CompareDeltas(d45.y, d56.y, l45.y, l56.y);
+
+    gs_aoCache2[leftMostIndex    ] = float2(SmartBlur(a0.x.x, a1.x, a2.x, a3.x, a4.x, c02_0, c13_0, c24_0), SmartBlur(a0.y, a1.y, a2.y, a3.y, a4.y, c02_1, c13_1, c24_1));
+    gs_aoCache2[leftMostIndex + 1] = float2(SmartBlur(a1.x, a2.x, a3.x, a4.x, a5.x, c13_0, c24_0, c35_0), SmartBlur(a1.y, a2.y, a3.y, a4.y, a5.y, c13_1, c24_1, c35_1));
+    gs_aoCache2[leftMostIndex + 2] = float2(SmartBlur(a2.x, a3.x, a4.x, a5.x, a6.x, c24_0, c35_0, c46_0), SmartBlur(a2.y, a3.y, a4.y, a5.y, a6.y, c24_1, c35_1, c46_1));
+#else
+    float a0 = gs_aoCache1[leftMostIndex    ];
     float a1 = gs_aoCache1[leftMostIndex + 1];
     float a2 = gs_aoCache1[leftMostIndex + 2];
     float a3 = gs_aoCache1[leftMostIndex + 3];
@@ -107,7 +172,7 @@ void BlurHorizontally(uint leftMostIndex)
     float a5 = gs_aoCache1[leftMostIndex + 5];
     float a6 = gs_aoCache1[leftMostIndex + 6];
 
-    float d0 = gs_depthCache[leftMostIndex];
+    float d0 = gs_depthCache[leftMostIndex    ];
     float d1 = gs_depthCache[leftMostIndex + 1];
     float d2 = gs_depthCache[leftMostIndex + 2];
     float d3 = gs_depthCache[leftMostIndex + 3];
@@ -135,13 +200,57 @@ void BlurHorizontally(uint leftMostIndex)
     bool c35 = CompareDeltas(d34, d45, l34, l45);
     bool c46 = CompareDeltas(d45, d56, l45, l56);
 
-    gs_aoCache2[leftMostIndex] = SmartBlur(a0, a1, a2, a3, a4, c02, c13, c24);
+    gs_aoCache2[leftMostIndex    ] = SmartBlur(a0, a1, a2, a3, a4, c02, c13, c24);
     gs_aoCache2[leftMostIndex + 1] = SmartBlur(a1, a2, a3, a4, a5, c13, c24, c35);
     gs_aoCache2[leftMostIndex + 2] = SmartBlur(a2, a3, a4, a5, a6, c24, c35, c46);
+#endif
 }
 
 void BlurVertically(uint topMostIndex)
 {
+#ifdef MSAA
+    float2 a0 = gs_aoCache2[topMostIndex     ];
+    float2 a1 = gs_aoCache2[topMostIndex + 16];
+    float2 a2 = gs_aoCache2[topMostIndex + 32];
+    float2 a3 = gs_aoCache2[topMostIndex + 48];
+    float2 a4 = gs_aoCache2[topMostIndex + 64];
+    float2 a5 = gs_aoCache2[topMostIndex + 80];
+
+    float2 d0 = gs_depthCache[topMostIndex +  2];
+    float2 d1 = gs_depthCache[topMostIndex + 18];
+    float2 d2 = gs_depthCache[topMostIndex + 34];
+    float2 d3 = gs_depthCache[topMostIndex + 50];
+    float2 d4 = gs_depthCache[topMostIndex + 66];
+    float2 d5 = gs_depthCache[topMostIndex + 82];
+
+    float2 d01 = d1 - d0;
+    float2 d12 = d2 - d1;
+    float2 d23 = d3 - d2;
+    float2 d34 = d4 - d3;
+    float2 d45 = d5 - d4;
+
+    float2 l01 = d01 * d01 + _StepSize;
+    float2 l12 = d12 * d12 + _StepSize;
+    float2 l23 = d23 * d23 + _StepSize;
+    float2 l34 = d34 * d34 + _StepSize;
+    float2 l45 = d45 * d45 + _StepSize;
+
+    bool c02_0 = CompareDeltas(d01.x, d12.x, l01.x, l12.x);
+    bool c13_0 = CompareDeltas(d12.x, d23.x, l12.x, l23.x);
+    bool c24_0 = CompareDeltas(d23.x, d34.x, l23.x, l34.x);
+    bool c35_0 = CompareDeltas(d34.x, d45.x, l34.x, l45.x);
+
+    bool c02_1 = CompareDeltas(d01.y, d12.y, l01.y, l12.y);
+    bool c13_1 = CompareDeltas(d12.y, d23.y, l12.y, l23.y);
+    bool c24_1 = CompareDeltas(d23.y, d34.y, l23.y, l34.y);
+    bool c35_1 = CompareDeltas(d34.y, d45.y, l34.y, l45.y);
+
+    float2 aoResult1 = float2(SmartBlur(a0.x, a1.x, a2.x, a3.x, a4.x, c02_0, c13_0, c24_0), SmartBlur(a0.y, a1.y, a2.y, a3.y, a4.y, c02_1, c13_1, c24_1));
+    float2 aoResult2 = float2(SmartBlur(a1.x, a2.x, a3.x, a4.x, a5.x, c13_0, c24_0, c35_0), SmartBlur(a1.y, a2.y, a3.y, a4.y, a5.y, c13_1, c24_1, c35_1));
+
+    gs_aoCache1[topMostIndex     ] = aoResult1;
+    gs_aoCache1[topMostIndex + 16] = aoResult2;
+#else
     float a0 = gs_aoCache2[topMostIndex];
     float a1 = gs_aoCache2[topMostIndex + 16];
     float a2 = gs_aoCache2[topMostIndex + 32];
@@ -149,7 +258,7 @@ void BlurVertically(uint topMostIndex)
     float a4 = gs_aoCache2[topMostIndex + 64];
     float a5 = gs_aoCache2[topMostIndex + 80];
 
-    float d0 = gs_depthCache[topMostIndex + 2];
+    float d0 = gs_depthCache[topMostIndex +  2];
     float d1 = gs_depthCache[topMostIndex + 18];
     float d2 = gs_depthCache[topMostIndex + 34];
     float d3 = gs_depthCache[topMostIndex + 50];
@@ -176,8 +285,9 @@ void BlurVertically(uint topMostIndex)
     float aoResult1 = SmartBlur(a0, a1, a2, a3, a4, c02, c13, c24);
     float aoResult2 = SmartBlur(a1, a2, a3, a4, a5, c13, c24, c35);
 
-    gs_aoCache1[topMostIndex] = aoResult1;
+    gs_aoCache1[topMostIndex     ] = aoResult1;
     gs_aoCache1[topMostIndex + 16] = aoResult2;
+#endif
 }
 
 // We essentially want 5 weights:  4 for each low-res pixel and 1 to blend in when none of the 4 really
@@ -222,31 +332,65 @@ void MAIN(uint GI : SV_GroupIndex, uint2 GTid : SV_GroupThreadID, uint2 DTid : S
     // Bilateral upsample
     //
     uint Idx0 = GTid.x + GTid.y * 16;
+
+#ifdef MSAA
+    float4 LoSSAOs0 = float4(gs_aoCache1[Idx0 + 16].x, gs_aoCache1[Idx0 + 17].x, gs_aoCache1[Idx0 + 1].x, gs_aoCache1[Idx0].x);
+    float4 LoSSAOs1 = float4(gs_aoCache1[Idx0 + 16].y, gs_aoCache1[Idx0 + 17].y, gs_aoCache1[Idx0 + 1].y, gs_aoCache1[Idx0].y);
+#else
     float4 LoSSAOs = float4(gs_aoCache1[Idx0 + 16], gs_aoCache1[Idx0 + 17], gs_aoCache1[Idx0 + 1], gs_aoCache1[Idx0]);
+#endif
 
     // We work on a quad of pixels at once because then we can gather 4 each of high and low-res depth values
     float2 UV0 = DTid * _InvLowResolution.xy;
     float2 UV1 = DTid * 2 * _InvHighResolution.xy;
 
-#ifdef BLEND_WITH_HIGHER_RESOLUTION
-    float4 HiSSAOs = GATHER_TEXTURE2D(_HiResAO, sampler_HiResAO, UV1);
-#else
-    float4 HiSSAOs = 1.0;
-#endif
-    float4 LoDepths = GATHER_TEXTURE2D(_LoResDB, sampler_LoResDB, UV0);
-    float4 HiDepths = GATHER_TEXTURE2D(_HiResDB, sampler_HiResDB, UV1);
+#ifdef MSAA
+    #ifdef BLEND_WITH_HIGHER_RESOLUTION
+        float4 HiSSAOs0 = GATHER_RED_TEXTURE2D(_HiResAO, sampler_HiResAO, UV1);
+        float4 HiSSAOs1 = GATHER_GREEN_TEXTURE2D(_HiResAO, sampler_HiResAO, UV1);
+    #else
+        float4 HiSSAOs0 = 1.0;
+        float4 HiSSAOs1 = 1.0;
+    #endif
+        float4 LoDepths0 = GATHER_RED_TEXTURE2D(_LoResDB, sampler_LoResDB, UV0);
+        float4 LoDepths1 = GATHER_GREEN_TEXTURE2D(_LoResDB, sampler_LoResDB, UV0);
+        float4 HiDepths0 = GATHER_RED_TEXTURE2D(_HiResDB, sampler_HiResDB, UV1);
+        float4 HiDepths1 = GATHER_GREEN_TEXTURE2D(_HiResDB, sampler_HiResDB, UV1);
 
-    int2 OutST = DTid << 1;
+        int2 OutST = DTid.xy << 1;
 
-#ifdef INVERT
-    _AoResult[OutST + int2(-1,  0)] = 1.0 - BilateralUpsample(HiDepths.x, HiSSAOs.x, LoDepths.xyzw, LoSSAOs.xyzw);
-    _AoResult[OutST + int2( 0,  0)] = 1.0 - BilateralUpsample(HiDepths.y, HiSSAOs.y, LoDepths.yzwx, LoSSAOs.yzwx);
-    _AoResult[OutST + int2( 0, -1)] = 1.0 - BilateralUpsample(HiDepths.z, HiSSAOs.z, LoDepths.zwxy, LoSSAOs.zwxy);
-    _AoResult[OutST + int2(-1, -1)] = 1.0 - BilateralUpsample(HiDepths.w, HiSSAOs.w, LoDepths.wxyz, LoSSAOs.wxyz);
+    #ifdef INVERT
+        _AoResult[OutST + int2(-1,  0)] = float2(1.0 - BilateralUpsample(HiDepths0.x, HiSSAOs0.x, LoDepths0.xyzw, LoSSAOs0.xyzw), 1.0 - BilateralUpsample(HiDepths1.x, HiSSAOs1.x, LoDepths1.xyzw, LoSSAOs1.xyzw));
+        _AoResult[OutST + int2( 0,  0)] = float2(1.0 - BilateralUpsample(HiDepths0.y, HiSSAOs0.y, LoDepths0.yzwx, LoSSAOs0.yzwx), 1.0 - BilateralUpsample(HiDepths1.y, HiSSAOs1.y, LoDepths1.yzwx, LoSSAOs1.yzwx));
+        _AoResult[OutST + int2( 0, -1)] = float2(1.0 - BilateralUpsample(HiDepths0.z, HiSSAOs0.z, LoDepths0.zwxy, LoSSAOs0.zwxy), 1.0 - BilateralUpsample(HiDepths1.z, HiSSAOs1.z, LoDepths1.zwxy, LoSSAOs1.zwxy));
+        _AoResult[OutST + int2(-1, -1)] = float2(1.0 - BilateralUpsample(HiDepths0.w, HiSSAOs0.w, LoDepths0.wxyz, LoSSAOs0.wxyz), 1.0 - BilateralUpsample(HiDepths1.w, HiSSAOs1.w, LoDepths1.wxyz, LoSSAOs1.wxyz));
+    #else
+        _AoResult[OutST + int2(-1,  0)] = float2(BilateralUpsample(HiDepths0.x, HiSSAOs0.x, LoDepths0.xyzw, LoSSAOs0.xyzw), BilateralUpsample(HiDepths1.x, HiSSAOs1.x, LoDepths1.xyzw, LoSSAOs1.xyzw));
+        _AoResult[OutST + int2( 0,  0)] = float2(BilateralUpsample(HiDepths0.y, HiSSAOs0.y, LoDepths0.yzwx, LoSSAOs0.yzwx), BilateralUpsample(HiDepths1.y, HiSSAOs1.y, LoDepths1.yzwx, LoSSAOs1.yzwx));
+        _AoResult[OutST + int2( 0, -1)] = float2(BilateralUpsample(HiDepths0.z, HiSSAOs0.z, LoDepths0.zwxy, LoSSAOs0.zwxy), BilateralUpsample(HiDepths1.z, HiSSAOs1.z, LoDepths1.zwxy, LoSSAOs1.zwxy));
+        _AoResult[OutST + int2(-1, -1)] = float2(BilateralUpsample(HiDepths0.w, HiSSAOs0.w, LoDepths0.wxyz, LoSSAOs0.wxyz), BilateralUpsample(HiDepths1.w, HiSSAOs1.w, LoDepths1.wxyz, LoSSAOs1.wxyz));
+    #endif
 #else
-    _AoResult[OutST + int2(-1,  0)] = BilateralUpsample(HiDepths.x, HiSSAOs.x, LoDepths.xyzw, LoSSAOs.xyzw);
-    _AoResult[OutST + int2( 0,  0)] = BilateralUpsample(HiDepths.y, HiSSAOs.y, LoDepths.yzwx, LoSSAOs.yzwx);
-    _AoResult[OutST + int2( 0, -1)] = BilateralUpsample(HiDepths.z, HiSSAOs.z, LoDepths.zwxy, LoSSAOs.zwxy);
-    _AoResult[OutST + int2(-1, -1)] = BilateralUpsample(HiDepths.w, HiSSAOs.w, LoDepths.wxyz, LoSSAOs.wxyz);
+    #ifdef BLEND_WITH_HIGHER_RESOLUTION
+        float4 HiSSAOs = GATHER_TEXTURE2D(_HiResAO, sampler_HiResAO, UV1);
+    #else
+        float4 HiSSAOs = 1.0;
+    #endif
+        float4 LoDepths = GATHER_TEXTURE2D(_LoResDB, sampler_LoResDB, UV0);
+        float4 HiDepths = GATHER_TEXTURE2D(_HiResDB, sampler_HiResDB, UV1);
+
+        int2 OutST = DTid << 1;
+
+    #ifdef INVERT
+        _AoResult[OutST + int2(-1,  0)] = 1.0 - BilateralUpsample(HiDepths.x, HiSSAOs.x, LoDepths.xyzw, LoSSAOs.xyzw);
+        _AoResult[OutST + int2( 0,  0)] = 1.0 - BilateralUpsample(HiDepths.y, HiSSAOs.y, LoDepths.yzwx, LoSSAOs.yzwx);
+        _AoResult[OutST + int2( 0, -1)] = 1.0 - BilateralUpsample(HiDepths.z, HiSSAOs.z, LoDepths.zwxy, LoSSAOs.zwxy);
+        _AoResult[OutST + int2(-1, -1)] = 1.0 - BilateralUpsample(HiDepths.w, HiSSAOs.w, LoDepths.wxyz, LoSSAOs.wxyz);
+    #else
+        _AoResult[OutST + int2(-1,  0)] = BilateralUpsample(HiDepths.x, HiSSAOs.x, LoDepths.xyzw, LoSSAOs.xyzw);
+        _AoResult[OutST + int2( 0,  0)] = BilateralUpsample(HiDepths.y, HiSSAOs.y, LoDepths.yzwx, LoSSAOs.yzwx);
+        _AoResult[OutST + int2( 0, -1)] = BilateralUpsample(HiDepths.z, HiSSAOs.z, LoDepths.zwxy, LoSSAOs.zwxy);
+        _AoResult[OutST + int2(-1, -1)] = BilateralUpsample(HiDepths.w, HiSSAOs.w, LoDepths.wxyz, LoSSAOs.wxyz);
+    #endif
 #endif
 }

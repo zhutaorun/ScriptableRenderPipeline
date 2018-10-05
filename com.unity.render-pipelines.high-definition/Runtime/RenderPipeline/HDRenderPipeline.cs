@@ -1118,7 +1118,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         StartStereoRendering(cmd, renderContext, hdCamera);
 
                         // TODO: Everything here (SSAO, Shadow, Build light list, deferred shadow, material and light classification can be parallelize with Async compute)
-                        m_AmbientOcclusionSystem.Render(cmd, hdCamera, m_SharedRTManager.GetDepthTexture());
+                        m_AmbientOcclusionSystem.Render(cmd, hdCamera, m_SharedRTManager);
 
                         // Needs the depth pyramid and motion vectors, as well as the render of the previous frame.
                         RenderSSR(hdCamera, cmd);
