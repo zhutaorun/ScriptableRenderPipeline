@@ -1,44 +1,75 @@
+using UnityEngine.Assertions;
+
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
+    // Blue noise texture bank
     public sealed class BlueNoise
     {
-        public Texture2D[] textures64 { get; private set; }
-        public Texture2DArray textureArray64 { get; private set; }
+        public Texture2D[] textures16L { get { return m_Textures16L; } }
+        public Texture2D[] textures16RGB { get { return m_Textures16RGB; } }
+
+        public Texture2DArray textureArray16L { get { return m_TextureArray16L; } }
+        public Texture2DArray textureArray16RGB { get { return m_TextureArray16RGB; } }
+
+        Texture2D[] m_Textures16L;
+        Texture2D[] m_Textures16RGB;
+
+        Texture2DArray m_TextureArray16L;
+        Texture2DArray m_TextureArray16RGB;
 
         public BlueNoise(HDRenderPipelineAsset asset)
         {
-            var resources = asset.renderPipelineResources;
+            var resources = asset.renderPipelineResources.textures;
 
-            int len = resources.textures.blueNoise64Tex.Length;
-            textures64 = new Texture2D[len];
-            textureArray64 = new Texture2DArray(64, 64, len, TextureFormat.Alpha8, false, true);
-            textureArray64.hideFlags = HideFlags.HideAndDontSave;
-
-            for (int i = 0; i < len; i++)
-            {
-                var noiseTex = resources.textures.blueNoise64Tex[i];
-
-                // Fail safe; should never happen unless the resources asset is broken
-                if (noiseTex == null)
-                {
-                    textures64[i] = Texture2D.whiteTexture;
-                    continue;
-                }
-
-                textures64[i] = noiseTex;
-                Graphics.CopyTexture(noiseTex, 0, 0, textureArray64, i, 0);
-            }
+            InitTextures(16, TextureFormat.Alpha8, resources.blueNoise16LTex, out m_Textures16L, out m_TextureArray16L);
+            InitTextures(16, TextureFormat.RGB24, resources.blueNoise16RGBTex, out m_Textures16RGB, out m_TextureArray16RGB);
         }
 
         public void Cleanup()
         {
-            CoreUtils.Destroy(textureArray64);
-            textureArray64 = null;
+            CoreUtils.Destroy(m_TextureArray16L);
+            CoreUtils.Destroy(m_TextureArray16RGB);
+
+            m_TextureArray16L = null;
+            m_TextureArray16RGB = null;
         }
 
-        public Texture2D GetRandom64()
+        public Texture2D GetRandom16L()
         {
-            return textures64[(int)(Random.value * (textures64.Length - 1))];
+            return textures16L[(int)(Random.value * (textures16L.Length - 1))];
+        }
+
+        public Texture2D GetRandom16RGB()
+        {
+            return textures16RGB[(int)(Random.value * (textures16RGB.Length - 1))];
+        }
+
+        static void InitTextures(int size, TextureFormat format, Texture2D[] sourceTextures, out Texture2D[] destination, out Texture2DArray destinationArray)
+        {
+            Assert.IsNotNull(sourceTextures);
+
+            int len = sourceTextures.Length;
+
+            Assert.IsTrue(len > 0);
+
+            destination = new Texture2D[len];
+            destinationArray = new Texture2DArray(size, size, len, format, false, true);
+            destinationArray.hideFlags = HideFlags.HideAndDontSave;
+
+            for (int i = 0; i < len; i++)
+            {
+                var noiseTex = sourceTextures[i];
+
+                // Fail safe; should never happen unless the resources asset is broken
+                if (noiseTex == null)
+                {
+                    destination[i] = Texture2D.whiteTexture;
+                    continue;
+                }
+
+                destination[i] = noiseTex;
+                Graphics.CopyTexture(noiseTex, 0, 0, destinationArray, i, 0);
+            }
         }
     }
 }

@@ -894,7 +894,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (camera.dithering)
             {
-                var blueNoiseTexture = blueNoise.textureArray64;
+                var blueNoiseTexture = blueNoise.textureArray16L;
 
                 #if HDRP_DEBUG_STATIC_POSTFX
                 int textureId = 0;

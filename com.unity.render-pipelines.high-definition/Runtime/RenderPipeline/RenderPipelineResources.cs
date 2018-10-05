@@ -131,7 +131,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Texture2D debugFontTex;
 
             // Pre-baked noise
-            public Texture2D[] blueNoise64Tex;
+            public Texture2D[] blueNoise16LTex;
+            public Texture2D[] blueNoise16RGBTex;
 
             // Post-processing
             public Texture2D[] filmGrainTex;
@@ -299,7 +300,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/FilmGrain/Large02.png")
                 },
 
-                blueNoise64Tex = new Texture2D[64]
+                blueNoise16LTex = new Texture2D[64],
+                blueNoise16RGBTex = new Texture2D[64]
             };
 
             // ShaderGraphs
@@ -308,8 +310,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             };
 
             // Fill-in blue noise textures
-            for (int i = 0; i < 64; i++)
-                textures.blueNoise64Tex[i] = Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/BlueNoise64/LDR_LLL1_" + i + ".png");
+            for (int i = 0; i < 32; i++)
+            {
+                textures.blueNoise16LTex[i] = Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/BlueNoise16/L/LDR_LLL1_" + i + ".png");
+                textures.blueNoise16RGBTex[i] = Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/BlueNoise16/RGB/LDR_RGB1_" + i + ".png");
+            }
         }
 #endif
     }
