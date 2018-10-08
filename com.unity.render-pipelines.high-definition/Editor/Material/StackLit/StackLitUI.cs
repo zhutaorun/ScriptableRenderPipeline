@@ -6,8 +6,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     class StackLitGUI : BaseMaterialGUI
     {
-        static Expendable state = Expendable.Base | Expendable.Input | Expendable.VertexAnimation | Expendable.Detail | Expendable.Emissive | Expendable.Transparency | Expendable.Other;
-        protected override uint expendedState { get { return (uint)state; } set { state = (Expendable)value; } }
+        protected override uint defaultExpendedState { get { return (uint)(Expendable.Base | Expendable.Input | Expendable.VertexAnimation | Expendable.Detail | Expendable.Emissive | Expendable.Transparency | Expendable.Other); } }
 
         protected static class StylesStackLit
         {
