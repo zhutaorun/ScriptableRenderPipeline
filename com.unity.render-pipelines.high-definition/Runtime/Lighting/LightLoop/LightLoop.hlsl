@@ -140,6 +140,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
 
     #ifdef LIGHTLOOP_TILE_PASS
         GetCountAndStart(posInput, LIGHTCATEGORY_PUNCTUAL, lightStart, lightCount);
+        lightStart = WaveReadFirstLane(lightStart);
     #else
         lightCount = _PunctualLightCount;
         lightStart = 0;
@@ -163,6 +164,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
 
     #ifdef LIGHTLOOP_TILE_PASS
         GetCountAndStart(posInput, LIGHTCATEGORY_AREA, lightStart, lightCount);
+        lightStart = WaveReadFirstLane(lightStart);
     #else
         lightCount = _AreaLightCount;
         lightStart = _PunctualLightCount;
