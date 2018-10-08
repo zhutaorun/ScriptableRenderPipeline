@@ -33,11 +33,11 @@ struct Gradient
 };
 
 #ifndef SHADERGRAPH_SAMPLE_SCENE_DEPTH
-    #define SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv) shadergraph_SampleSceneDepth(uv);
+    #define SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv) shadergraph_SampleSceneDepth(uv)
 #endif
 
 #ifndef SHADERGRAPH_SAMPLE_SCENE_COLOR
-    #define SHADERGRAPH_SAMPLE_SCENE_COLOR(uv) shadergraph_SampleSceneColor(uv);
+    #define SHADERGRAPH_SAMPLE_SCENE_COLOR(uv) shadergraph_SampleSceneColor(uv)
 #endif
 
 #ifndef SHADERGRAPH_BAKED_GI
@@ -49,15 +49,15 @@ struct Gradient
 #endif
 
 #ifndef SHADERGRAPH_AMBIENT_SKY
-    #define SHADERGRAPH_AMBIENT_SKY float3(0,0,0);
+    #define SHADERGRAPH_AMBIENT_SKY float3(0,0,0)
 #endif
 
 #ifndef SHADERGRAPH_AMBIENT_EQUATOR
-    #define SHADERGRAPH_AMBIENT_EQUATOR float3(0,0,0);
+    #define SHADERGRAPH_AMBIENT_EQUATOR float3(0,0,0)
 #endif
 
 #ifndef SHADERGRAPH_AMBIENT_GROUND
-    #define SHADERGRAPH_AMBIENT_GROUND float3(0,0,0);
+    #define SHADERGRAPH_AMBIENT_GROUND float3(0,0,0)
 #endif
 
 float shadergraph_SampleSceneDepth(float2 uv)
