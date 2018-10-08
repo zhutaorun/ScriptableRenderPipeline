@@ -1,15 +1,15 @@
-The Physically Based shader lets you render real-world surfaces like stone, wood, glass, plastic, and metals in photo-realistic quality. Your light levels and reflections look lifelike and react properly across various lighting conditions, for example bright sunlight, or a dark cave.
+The Lit shader lets you render real-world surfaces like stone, wood, glass, plastic, and metals in photo-realistic quality. Your light levels and reflections look lifelike and react properly across various lighting conditions, for example bright sunlight, or a dark cave.
 
 
-## Using the Physically Based shader in the Editor 
+## Using the Lit shader in the Editor 
 You can either create a new Material with the shader or select the shader from the Material Inspector.
 
 To create a new Material with the shader:
-1. In your Project window, click __Create__ > __Material__. Select the __Physically Based__ shader.
+1. In your Project window, click __Create__ > __Material__. Select the __Lit__ shader.
 
 To select the shader in the Material inspector:
 1. In your Project, select the __Material__ Inspector. 
-2. Click __Shader__, and select __Lightweight Render Pipeline__ > __Physically Based__.
+2. Click __Shader__, and select __Lightweight Render Pipeline__ > __Lit__.
 
 ## UI overview 
 The Inspector window contains these elements: 
@@ -18,7 +18,7 @@ The Inspector window contains these elements:
 * __Surface Inputs__
 * __Advanced__
 
-![Standard (Physically Based) inspector](https://raw.githubusercontent.com/Unity-Technologies/SRPDocContent/master/LWRP/Images/Inspectors/Shaders/StdPhysicallyBased.png)
+![Inspector for the Lit shader](https://raw.githubusercontent.com/Unity-Technologies/SRPDocContent/master/LWRP/Images/Inspectors/Shaders/StdPhysicallyBased.png)
 
 
 
@@ -67,7 +67,7 @@ __GPU Instancing__ | Make Unity render meshes with the same geometry and Materia
 __Double Sided Global Illumination__ | Make the surface act double-sided during lightmapping. When enabled, backfaces bounce light like frontfaces, but Unity still doesn’t render them. 
 
 ## The technology in this shader ##
-This shader follows standard rules for Physically Based Rendering (PBR).To read more about Physically Based Rendering, see [this walkthrough by Joe Wilson on Mamoset](https://marmoset.co/posts/physically-based-rendering-and-you-can-too/).  The shader is energy conserving, which means that the surface never reflects more light than the total incoming light.
+This shader follows standard rules for Lit Rendering (PBR).To read more about Physically Based Rendering, see [this walkthrough by Joe Wilson on Mamoset](https://marmoset.co/posts/physically-based-rendering-and-you-can-too/).  The shader is energy conserving, which means that the surface never reflects more light than the total incoming light.
 
 For specular reflections, the shader uses a [Bidirectional Reflectance Distribution Function (BRDF)](https://en.wikipedia.org/wiki/Bidirectional_reflectance_distribution_function) that uses [GGX](https://blogs.unity3d.com/2016/01/25/ggx-in-unity-5-3/) to control the shape of the specular highlight. 
 For diffuse reflections, the shader uses a [lambertian reflectance](https://en.wikipedia.org/wiki/Lambertian_reflectance) model.
@@ -78,7 +78,7 @@ This shader uses [channel packing](http://wiki.polycount.com/wiki/ChannelPacking
 | --- | ---|
 | **Red** | Metallic |
 | **Green** | Occlusion |
-| **Blue** | None. |
+| **Blue** | None |
 | **Alpha** | Smoothness |
 
 
