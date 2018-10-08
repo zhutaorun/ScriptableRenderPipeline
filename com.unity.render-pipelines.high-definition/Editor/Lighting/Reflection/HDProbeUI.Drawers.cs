@@ -186,12 +186,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         protected static void Drawer_ModeSettingsCustom(HDProbeUI s, SerializedHDProbe p, Editor owner)
         {
-            EditorGUI.showMixedValue = p.customBakedTexture.hasMultipleDifferentValues;
+            EditorGUI.showMixedValue = p.customTexture.hasMultipleDifferentValues;
             EditorGUI.BeginChangeCheck();
-            var customTexture = EditorGUILayout.ObjectField(_.GetContent("Cubemap"), p.customBakedTexture.objectReferenceValue, typeof(Cubemap), false);
+            var customTexture = EditorGUILayout.ObjectField(_.GetContent("Cubemap"), p.customTexture.objectReferenceValue, typeof(Cubemap), false);
             EditorGUI.showMixedValue = false;
             if (EditorGUI.EndChangeCheck())
-                p.customBakedTexture.objectReferenceValue = customTexture;
+                p.customTexture.objectReferenceValue = customTexture;
         }
 
         #region Bake Button

@@ -6,27 +6,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     {
         internal SerializedObject serializedObject;
         
-        internal SerializedProperty customBakedTexture;
-
-        internal SerializedProperty proxyVolumeReference;
-        internal SerializedProperty useInfluenceVolumeAsProxyVolume;
-
-        internal SerializedInfluenceVolume influenceVolume;
-        internal SerializedCaptureSettings captureSettings;
-        internal SerializedFrameSettings frameSettings;
-
-        internal SerializedProperty lightLayers;
-        internal SerializedProperty weight;
-        internal SerializedProperty multiplier;
-
-        internal SerializedProperty mode;
-
-        internal SerializedProperty resolution;
-        internal SerializedProperty shadowDistance;
-        internal SerializedProperty cullingMask;
-        internal SerializedProperty useOcclusionCulling;
-        internal SerializedProperty nearClip;
-        internal SerializedProperty farClip;
+        internal SerializedProperty bakedTexture;
+        internal SerializedProperty customTexture;
+        internal SerializedProbeSettings probeSettings;
 
         internal HDProbe target { get { return serializedObject.targetObject as HDProbe; } }
 
@@ -34,19 +16,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             this.serializedObject = serializedObject;
 
-            customBakedTexture = serializedObject.Find((HDProbe p) => p.customTexture);
-
-            proxyVolumeReference = serializedObject.Find((HDProbe p) => p.proxyVolume);
-            influenceVolume = new SerializedInfluenceVolume(serializedObject.FindProperty("m_ProbeSettings.influence"));
-            useInfluenceVolumeAsProxyVolume = serializedObject.FindProperty("m_ProbeSettings.proxySettings.useInfluenceVolumeAsProxyVolume");
-
-            frameSettings = new SerializedFrameSettings(serializedObject.FindProperty("m_ProbeSettings.camera.frameSettings"));
-
-            lightLayers = serializedObject.FindProperty("m_ProbeSettings.lighting.lightLayer");
-            weight = serializedObject.FindProperty("m_ProbeSettings.lighting.weight");
-            multiplier = serializedObject.FindProperty("m_ProbeSettings.lighting.multiplier");
-
-            mode = serializedObject.FindProperty("m_ProbeSettings.mode");
+            bakedTexture = serializedObject.Find((HDProbe p) => p.bakedTexture);
+            customTexture = serializedObject.Find((HDProbe p) => p.customTexture);
+            probeSettings = new SerializedProbeSettings(serializedObject.FindProperty("m_ProbeSettings"));
         }
 
         internal virtual void Update()
