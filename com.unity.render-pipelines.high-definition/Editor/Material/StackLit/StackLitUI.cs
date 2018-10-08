@@ -6,8 +6,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     class StackLitGUI : BaseMaterialGUI
     {
+        static Expendable state = Expendable.Base | Expendable.Input | Expendable.VertexAnimation | Expendable.Detail | Expendable.Emissive | Expendable.Transparency | Expendable.Other;
+        protected override uint expendedState { get { return (uint)state; } set { state = (Expendable)value; } }
+
         protected static class StylesStackLit
         {
+            public const string stackOptionText = "Stack Option";
+
             public static GUIContent useLocalPlanarMapping = new GUIContent("Use Local Planar Mapping", "Use local space for planar/triplanar mapping instead of world space");
         };
 
@@ -140,6 +145,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         private Property EnableGeometricNormalFiltering;
         private Property EnableTextureNormalFiltering;
+
+        protected bool stackOptionExpended = true;
 
         public StackLitGUI()
         {
@@ -293,8 +300,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             //{
             //    Debug.Log(_materialProperties.ToShaderPropertiesStringInternal());
             //}
-
-            _materialProperties.OnGUI();
+            
+            using (var header = new HeaderScope(StylesStackLit.stackOptionText, (uint)Expendable.Input, this, spaceAtEnd: false))
+            {
+                if (header.expended)
+                    _materialProperties.OnGUI();
+            }
         }
 
         protected override void MaterialPropertiesAdvanceGUI(Material material)

@@ -775,9 +775,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba6af5eaa8d821f4e93093fd37ee3484, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  renderShadows: 1
-  requiresDepthTexture: 0
-  requiresColorTexture: 1
+  m_RenderShadows: 1
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 1
   m_Version: 1
 --- !u!114 &1604351921
 MonoBehaviour:

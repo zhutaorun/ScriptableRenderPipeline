@@ -7,8 +7,11 @@ using System.Linq;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    public class TerrainLitGUI : LitGUI, ITerrainLayerCustomUI
+    class TerrainLitGUI : LitGUI, ITerrainLayerCustomUI
     {
+        static Expendable state = 0;
+        protected override uint expendedState { get { return (uint)state; } set { state = (Expendable)value; } }
+
         private class StylesLayer
         {
             public readonly GUIContent enableHeightBlend = new GUIContent("Enable Height-based Blend", "Blend terrain layers based on height values.");
@@ -139,20 +142,23 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             bool enablePerPixelNormalChanged = false;
 
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField(StylesBaseUnlit.advancedText, EditorStyles.boldLabel);
-            // NB RenderQueue editor is not shown on purpose: we want to override it based on blend mode
-            EditorGUI.indentLevel++;
-            m_MaterialEditor.EnableInstancingField();
-            if (m_MaterialEditor.IsInstancingEnabled())
+
+            using (var header = new HeaderScope(StylesBaseUnlit.advancedText, (uint)Expendable.Advance, this))
             {
-                EditorGUI.indentLevel++;
-                EditorGUI.BeginChangeCheck();
-                m_MaterialEditor.ShaderProperty(enableInstancedPerPixelNormal, styles.enableInstancedPerPixelNormal);
-                enablePerPixelNormalChanged = EditorGUI.EndChangeCheck();
-                EditorGUI.indentLevel--;
+                if (header.expended)
+                {
+                    // NB RenderQueue editor is not shown on purpose: we want to override it based on blend mode
+                    m_MaterialEditor.EnableInstancingField();
+                    if (m_MaterialEditor.IsInstancingEnabled())
+                    {
+                        EditorGUI.indentLevel++;
+                        EditorGUI.BeginChangeCheck();
+                        m_MaterialEditor.ShaderProperty(enableInstancedPerPixelNormal, styles.enableInstancedPerPixelNormal);
+                        enablePerPixelNormalChanged = EditorGUI.EndChangeCheck();
+                        EditorGUI.indentLevel--;
+                    }
+                }
             }
-            EditorGUI.indentLevel--;
 
             if (optionsChanged || enablePerPixelNormalChanged)
             {

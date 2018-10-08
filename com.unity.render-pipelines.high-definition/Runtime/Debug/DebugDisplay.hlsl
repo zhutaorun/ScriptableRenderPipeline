@@ -2,16 +2,16 @@
 #define UNITY_DEBUG_DISPLAY_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Debug.hlsl"
-#include "DebugDisplay.cs.hlsl"
-#include "MaterialDebug.cs.hlsl"
-#include "LightingDebug.cs.hlsl"
-#include "MipMapDebug.cs.hlsl"
-#include "ColorPickerDebug.cs.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.cs.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/MaterialDebug.cs.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/LightingDebug.cs.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/MipMapDebug.cs.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/ColorPickerDebug.cs.hlsl"
 
 CBUFFER_START(UnityDebugDisplay)
 // Set of parameters available when switching to debug shader mode
 int _DebugLightingMode; // Match enum DebugLightingMode
-int _DebugLightingSubMode;
+int _DebugShadowMapMode;
 int _DebugViewMaterial; // Contain the id (define in various materialXXX.cs.hlsl) of the property to display
 int _DebugMipMapMode; // Match enum DebugMipMapMode
 int _DebugMipMapModeTerrainTexture; // Match enum DebugMipMapModeTerrainTexture
@@ -26,12 +26,13 @@ float4 _MouseClickPixelCoord;  // xy unorm, zw norm
 float _DebugExposure;
 CBUFFER_END
 
+float debugShadowAttenuation = 0;
+
 // When displaying lux meter we compress the light in order to be able to display value higher than 65504
 // The sun is between 100 000 and 150 000, so we use 4 to be able to cover such a range (4 * 65504)
 #define LUXMETER_COMPRESSION_RATIO  4
 
 TEXTURE2D(_DebugFont); // Debug font to write string in shader
-RWStructuredBuffer<ScreenSpaceTracingDebug> _DebugScreenSpaceTracingData : register(u7); // TODO: Change the register number for PS4
 
 void GetPropertiesDataDebug(uint paramId, inout float3 result, inout bool needLinearToSRGB)
 {

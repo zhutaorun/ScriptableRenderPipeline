@@ -4,17 +4,32 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
-{
+{ 
     // A Material can be authored from the shader graph or by hand. When written by hand we need to provide an inspector.
     // Such a Material will share some properties between it various variant (shader graph variant or hand authored variant).
     // This is the purpose of BaseLitGUI. It contain all properties that are common to all Material based on Lit template.
     // For the default hand written Lit material see LitUI.cs that contain specific properties for our default implementation.
-    public abstract class BaseUnlitGUI : ShaderGUI
+    abstract class BaseUnlitGUI : ExpendableAreaMaterial
     {
+        //Be sure to end before after last LayeredLitGUI.LayerExpendable
+        [Flags]
+        protected enum Expendable : uint
+        {
+            Base = 1<<0,
+            Input = 1<<1,
+            Tesselation = 1<<2,
+            Transparency = 1<<3,
+            VertexAnimation = 1<<4,
+            Detail = 1<<5,
+            Emissive = 1<<6,
+            Advance = 1<<7,
+            Other = 1 << 8
+        }
+        
         protected static class StylesBaseUnlit
         {
             public static string TransparencyInputsText = "Transparency Inputs";
-            public static string optionText = "Surface options";
+            public static string optionText = "Surface Options";
             public static string surfaceTypeText = "Surface Type";
             public static string blendModeText = "Blend Mode";
 
@@ -227,10 +242,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         protected virtual void BaseMaterialPropertiesGUI()
         {
-            EditorGUILayout.LabelField(StylesBaseUnlit.optionText, EditorStyles.boldLabel);
-
-            EditorGUI.indentLevel++;
-
             SurfaceTypePopup();
             if (surfaceTypeValue == SurfaceType.Transparent)
             {
@@ -307,8 +318,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 m_MaterialEditor.ShaderProperty(doubleSidedEnable, StylesBaseUnlit.doubleSidedEnableText);
             }
-
-            EditorGUI.indentLevel--;
         }
 
         protected void DoDistortionInputsGUI()
@@ -574,45 +583,29 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (material.HasProperty(kTransparentDepthPrepassEnable))
             {
                 bool depthWriteEnable = (material.GetFloat(kTransparentDepthPrepassEnable) > 0.0f) && ((SurfaceType)material.GetFloat(kSurfaceType) == SurfaceType.Transparent);
-                if (depthWriteEnable)
-                {
-                    material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentDepthPrepassStr, true);
-                }
-                else
-                {
-                    material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentDepthPrepassStr, false);
-                }
+                material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentDepthPrepassStr, depthWriteEnable);
             }
 
             if (material.HasProperty(kTransparentDepthPostpassEnable))
             {
                 bool depthWriteEnable = (material.GetFloat(kTransparentDepthPostpassEnable) > 0.0f) && ((SurfaceType)material.GetFloat(kSurfaceType) == SurfaceType.Transparent);
-                if (depthWriteEnable)
-                {
-                    material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentDepthPostpassStr, true);
-                }
-                else
-                {
-                    material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentDepthPostpassStr, false);
-                }
+                material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentDepthPostpassStr, depthWriteEnable);
             }
 
             if (material.HasProperty(kTransparentBackfaceEnable))
             {
                 bool backFaceEnable = (material.GetFloat(kTransparentBackfaceEnable) > 0.0f) && ((SurfaceType)material.GetFloat(kSurfaceType) == SurfaceType.Transparent);
-                if (backFaceEnable)
-                {
-                    material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentBackfaceStr, true);
-                }
-                else
-                {
-                    material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentBackfaceStr, false);
-                }
+                material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentBackfaceStr, backFaceEnable);
             }
 
             if (material.HasProperty(kEnableMotionVectorForVertexAnimation))
             {
                 material.SetShaderPassEnabled(HDShaderPassNames.s_MotionVectorsStr, material.GetFloat(kEnableMotionVectorForVertexAnimation) > 0.0f);
+            }
+            else
+            {
+                // In case we have an HDRP material that inherits from this UI but does not have an _EnableMotionVectorForVertexAnimation property, we need to set it to false (default behavior)
+                material.SetShaderPassEnabled(HDShaderPassNames.s_MotionVectorsStr, false);
             }
         }
 
@@ -630,7 +623,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        public void ShaderPropertiesGUI(Material material)
+        public virtual void ShaderPropertiesGUI(Material material)
         {
             // Use default labelWidth
             EditorGUIUtility.labelWidth = 0f;
@@ -638,24 +631,22 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // Detect any changes to the material
             EditorGUI.BeginChangeCheck();
             {
-                //EditorGUI.indentLevel++;
-                BaseMaterialPropertiesGUI();
-                EditorGUILayout.Space();
-
+                using (var header = new HeaderScope(StylesBaseUnlit.optionText, (uint)Expendable.Base, this))
+                {
+                    if (header.expended)
+                        BaseMaterialPropertiesGUI();
+                }
                 VertexAnimationPropertiesGUI();
-
-                EditorGUILayout.Space();
                 MaterialPropertiesGUI(material);
-
                 DoEmissionArea(material);
-
-                EditorGUILayout.Space();
-                EditorGUILayout.LabelField(StylesBaseUnlit.advancedText, EditorStyles.boldLabel);
-                // NB RenderQueue editor is not shown on purpose: we want to override it based on blend mode
-                EditorGUI.indentLevel++;
-                m_MaterialEditor.EnableInstancingField();
-                MaterialPropertiesAdvanceGUI(material);
-                EditorGUI.indentLevel--;
+                using (var header = new HeaderScope(StylesBaseUnlit.advancedText, (uint)Expendable.Advance, this))
+                {
+                    if(header.expended)
+                    {
+                        m_MaterialEditor.EnableInstancingField();
+                        MaterialPropertiesAdvanceGUI(material);
+                    }
+                }
             }
 
             if (EditorGUI.EndChangeCheck())

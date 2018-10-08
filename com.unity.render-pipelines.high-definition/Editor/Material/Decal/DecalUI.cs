@@ -6,8 +6,16 @@ using UnityEngine.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    public class DecalUI : ShaderGUI
+    class DecalUI : ExpendableAreaMaterial
     {
+        [Flags]
+        enum Expendable : uint
+        {
+            Input = 1 << 0
+        }
+        static Expendable state = Expendable.Input;
+        protected override uint expendedState { get { return (uint)state; } set { state = (Expendable)value; } }
+
         protected static class Styles
         {
             public static string InputsText = "Inputs";
@@ -88,8 +96,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string kDecalStencilRef = "_DecalStencilRef";
 
         protected MaterialEditor m_MaterialEditor;
-
-        // This is call by the inspector
 
         void FindMaterialProperties(MaterialProperty[] props)
         {
@@ -182,79 +188,81 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             HDRenderPipelineAsset hdrp = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
             bool perChannelMask = hdrp.renderPipelineSettings.decalSettings.perChannelMask;
 
-            // Detect any changes to the material
-            EditorGUI.BeginChangeCheck();
+            using (var header = new HeaderScope(Styles.InputsText, (uint)Expendable.Input, this))
             {
-                EditorGUILayout.LabelField(Styles.InputsText, EditorStyles.boldLabel);
-
-                EditorGUI.indentLevel++;
-
-                m_MaterialEditor.TexturePropertySingleLine((material.GetFloat(kAlbedoMode) == 1.0f) ? Styles.baseColorText : Styles.baseColorText2, baseColorMap, baseColor);
-                // Currently always display Albedo contribution as we have an albedo tint that apply
-                EditorGUI.indentLevel++;
-                m_MaterialEditor.ShaderProperty(albedoMode, Styles.AlbedoModeText);
-                EditorGUI.indentLevel--;
-
-                m_MaterialEditor.TexturePropertySingleLine(Styles.normalMapText, normalMap);
-                if (material.GetTexture(kNormalMap))
+                if (header.expended)
                 {
-                    EditorGUI.indentLevel++;
-                    normalBlendSrcValue = EditorGUILayout.Popup("Normal Opacity channel", (int)normalBlendSrcValue, blendSourceNames);
-                    EditorGUI.indentLevel--;
-                }
-
-                m_MaterialEditor.TexturePropertySingleLine(Styles.maskMapText[(int)maskBlendFlags], maskMap);
-                if (material.GetTexture(kMaskMap))
-                {
-                    EditorGUI.indentLevel++;
-                    maskBlendSrcValue = EditorGUILayout.Popup("Mask Opacity channel", (int) maskBlendSrcValue, blendSourceNames);
-                    if (perChannelMask)
+                    // Detect any changes to the material
+                    EditorGUI.BeginChangeCheck();
                     {
-                        // Following condition force users to always have at least one attribute enabled
-                        m_MaterialEditor.ShaderProperty(maskmapMetal, "Affect Metal");
-                        if ((maskmapMetal.floatValue == 0.0f) && (maskmapAO.floatValue == 0.0f) && (maskmapSmoothness.floatValue == 0.0f))
-                            maskmapMetal.floatValue = 1.0f;
-                        m_MaterialEditor.ShaderProperty(maskmapAO, "Affect AO");
-                        if ((maskmapMetal.floatValue == 0.0f) && (maskmapAO.floatValue == 0.0f) && (maskmapSmoothness.floatValue == 0.0f))
-                            maskmapAO.floatValue = 1.0f;
-                        m_MaterialEditor.ShaderProperty(maskmapSmoothness, "Affect Smoothness");
-                        if ((maskmapMetal.floatValue == 0.0f) && (maskmapAO.floatValue == 0.0f) && (maskmapSmoothness.floatValue == 0.0f))
-                            maskmapSmoothness.floatValue = 1.0f;
+                        m_MaterialEditor.TexturePropertySingleLine((material.GetFloat(kAlbedoMode) == 1.0f) ? Styles.baseColorText : Styles.baseColorText2, baseColorMap, baseColor);
+                        // Currently always display Albedo contribution as we have an albedo tint that apply
+                        EditorGUI.indentLevel++;
+                        m_MaterialEditor.ShaderProperty(albedoMode, Styles.AlbedoModeText);
+                        EditorGUI.indentLevel--;
 
-                        maskBlendFlags = 0; // Re-init the mask
+                        m_MaterialEditor.TexturePropertySingleLine(Styles.normalMapText, normalMap);
+                        if (material.GetTexture(kNormalMap))
+                        {
+                            EditorGUI.indentLevel++;
+                            normalBlendSrcValue = EditorGUILayout.Popup("Normal Opacity channel", (int)normalBlendSrcValue, blendSourceNames);
+                            EditorGUI.indentLevel--;
+                        }
 
-                        if (maskmapMetal.floatValue == 1.0f)
-                            maskBlendFlags |= Decal.MaskBlendFlags.Metal;
-                        if (maskmapAO.floatValue == 1.0f)
-                            maskBlendFlags |= Decal.MaskBlendFlags.AO;
-                        if (maskmapSmoothness.floatValue == 1.0f)
-                            maskBlendFlags |= Decal.MaskBlendFlags.Smoothness;
+                        m_MaterialEditor.TexturePropertySingleLine(Styles.maskMapText[(int)maskBlendFlags], maskMap);
+                        if (material.GetTexture(kMaskMap))
+                        {
+                            EditorGUI.indentLevel++;
+                            maskBlendSrcValue = EditorGUILayout.Popup("Mask Opacity channel", (int)maskBlendSrcValue, blendSourceNames);
+                            if (perChannelMask)
+                            {
+                                // Following condition force users to always have at least one attribute enabled
+                                m_MaterialEditor.ShaderProperty(maskmapMetal, "Affect Metal");
+                                if ((maskmapMetal.floatValue == 0.0f) && (maskmapAO.floatValue == 0.0f) && (maskmapSmoothness.floatValue == 0.0f))
+                                    maskmapMetal.floatValue = 1.0f;
+                                m_MaterialEditor.ShaderProperty(maskmapAO, "Affect AO");
+                                if ((maskmapMetal.floatValue == 0.0f) && (maskmapAO.floatValue == 0.0f) && (maskmapSmoothness.floatValue == 0.0f))
+                                    maskmapAO.floatValue = 1.0f;
+                                m_MaterialEditor.ShaderProperty(maskmapSmoothness, "Affect Smoothness");
+                                if ((maskmapMetal.floatValue == 0.0f) && (maskmapAO.floatValue == 0.0f) && (maskmapSmoothness.floatValue == 0.0f))
+                                    maskmapSmoothness.floatValue = 1.0f;
+
+                                maskBlendFlags = 0; // Re-init the mask
+
+                                if (maskmapMetal.floatValue == 1.0f)
+                                    maskBlendFlags |= Decal.MaskBlendFlags.Metal;
+                                if (maskmapAO.floatValue == 1.0f)
+                                    maskBlendFlags |= Decal.MaskBlendFlags.AO;
+                                if (maskmapSmoothness.floatValue == 1.0f)
+                                    maskBlendFlags |= Decal.MaskBlendFlags.Smoothness;
+                            }
+                            else // if perChannelMask is not enabled, force to have smoothness
+                            {
+                                maskBlendFlags = Decal.MaskBlendFlags.Smoothness;
+                            }
+                            EditorGUI.indentLevel--;
+                        }
+
+                        m_MaterialEditor.ShaderProperty(drawOrder, Styles.DrawOrderText);
+                        m_MaterialEditor.ShaderProperty(decalMeshDepthBias, Styles.MeshDecalDepthBiasText);
+                        m_MaterialEditor.ShaderProperty(decalBlend, Styles.decalBlendText);
+
+                        EditorGUI.indentLevel--;
+
+                        EditorGUILayout.HelpBox(
+                            "Control of AO and Metal is based on option 'Enable Metal and AO properties' in HDRP Asset.\nThere is a performance cost of enabling this option.",
+                            MessageType.Info);
                     }
-                    else // if perChannelMask is not enabled, force to have smoothness
+
+                    if (EditorGUI.EndChangeCheck())
                     {
-                        maskBlendFlags = Decal.MaskBlendFlags.Smoothness;
+                        normalBlendSrc.floatValue = normalBlendSrcValue;
+                        maskBlendSrc.floatValue = maskBlendSrcValue;
+                        maskBlendMode.floatValue = (float)maskBlendFlags;
+                        foreach (var obj in m_MaterialEditor.targets)
+                            SetupMaterialKeywordsAndPassInternal((Material)obj);
                     }
-                    EditorGUI.indentLevel--;
                 }
-
-                m_MaterialEditor.ShaderProperty(drawOrder, Styles.DrawOrderText);
-                m_MaterialEditor.ShaderProperty(decalMeshDepthBias, Styles.MeshDecalDepthBiasText);
-                m_MaterialEditor.ShaderProperty(decalBlend, Styles.decalBlendText);                
-
-                EditorGUI.indentLevel--;
-
-                EditorGUILayout.HelpBox(
-                    "Control of AO and Metal is based on option 'Enable Metal and AO properties' in HDRP Asset.\nThere is a performance cost of enabling this option.",
-                    MessageType.Info);
-            }
-
-            if (EditorGUI.EndChangeCheck())
-            {
-                normalBlendSrc.floatValue = normalBlendSrcValue;
-                maskBlendSrc.floatValue = maskBlendSrcValue;
-                maskBlendMode.floatValue = (float) maskBlendFlags;
-                foreach (var obj in m_MaterialEditor.targets)
-                    SetupMaterialKeywordsAndPassInternal((Material)obj);
             }
         }
 
@@ -263,7 +271,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             m_MaterialEditor = materialEditor;
             // We should always do this call at the beginning
             m_MaterialEditor.serializedObject.Update();
-
+            
             FindMaterialProperties(props);
 
             Material material = materialEditor.target as Material;
