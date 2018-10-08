@@ -1,3 +1,4 @@
+using UnityEditor;
 using UnityEngine.Serialization;
 
 namespace UnityEngine.Experimental.Rendering.LightweightPipeline
