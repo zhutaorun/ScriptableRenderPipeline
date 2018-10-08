@@ -63,7 +63,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             props.SetTexture("_MainTex", source);
             props.SetFloat("_InvOmegaP", invOmegaP);
 
-            for (int mip = 1; mip < ((int)EnvConstants.SpecCubeLodStep + 1); ++mip)
+            for (int mip = 0; mip < ((int)EnvConstants.SpecCubeLodStep + 1); ++mip)
             {
                 props.SetFloat("_Level", mip);
 
