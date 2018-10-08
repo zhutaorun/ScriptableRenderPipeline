@@ -4,6 +4,8 @@ All notable changes to this package are documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.1.0-preview] - 2018-09-28
+
 ## [4.0.0-preview] - 2018-09-28
 ### Added
 - Shader Graph now supports the High Definition Render Pipeline with both PBR and Unlit Master nodes. Shaders built with Shader Graph work with both the Lightweight and HD render pipelines.
@@ -79,3 +81,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - The Shader Graph and Sub Shader Graph file extensions are no longer case-sensitive.
 - The dynamic value slot type now uses the correct decimal separator during HLSL generation.
 - Fixed an issue where Show Generated Code could fail when external editor was not set.
+- In the High Definition Render Pipeline, Shader Graph now supports 4-channel UVs.

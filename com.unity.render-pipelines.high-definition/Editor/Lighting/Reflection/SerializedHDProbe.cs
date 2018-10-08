@@ -6,11 +6,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     {
         internal SerializedObject serializedObject;
         
+        internal SerializedProperty customBakedTexture;
+
         internal SerializedProperty proxyVolumeReference;
         internal SerializedProperty useInfluenceVolumeAsProxyVolume;
 
         internal SerializedInfluenceVolume influenceVolume;
-
+        internal SerializedCaptureSettings captureSettings;
         internal SerializedFrameSettings frameSettings;
 
         internal SerializedProperty lightLayers;
@@ -32,6 +34,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             this.serializedObject = serializedObject;
 
+            customBakedTexture = serializedObject.Find((HDProbe p) => p.customTexture);
+
             proxyVolumeReference = serializedObject.Find((HDProbe p) => p.proxyVolume);
             influenceVolume = new SerializedInfluenceVolume(serializedObject.FindProperty("m_ProbeSettings.influence"));
             useInfluenceVolumeAsProxyVolume = serializedObject.FindProperty("m_ProbeSettings.proxySettings.useInfluenceVolumeAsProxyVolume");
@@ -49,6 +53,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             serializedObject.Update();
             //InfluenceVolume does not have Update. Add it here if it have in the future.
+            //CaptureSettings does not have Update. Add it here if it have in the future.
+            //FrameSettings does not have Update. Add it here if it have in the future.
         }
 
         internal virtual void Apply()

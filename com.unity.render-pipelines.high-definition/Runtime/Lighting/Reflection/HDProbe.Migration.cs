@@ -53,5 +53,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         [SerializeField, FormerlySerializedAs("lightLayer"), Obsolete("For Data Migration")]
         LightLayerEnum m_ObsoleteLightLayers = LightLayerEnum.LightLayerDefault;
+
+        [SerializeField, FormerlySerializedAs("m_CaptureSettings"), Obsolete("For Data Migration")]
+        protected ObsoleteCaptureSettings m_ObsoleteCaptureSettings;
     }
 }

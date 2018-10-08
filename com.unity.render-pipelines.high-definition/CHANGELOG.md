@@ -4,7 +4,30 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.1.0-preview] - 2018-09-28
+
+### Added
+- Added occlusion mesh to depth prepass for VR (VR still disabled for now)
+- Added a debug mode to display only one shadow at once
+
+### Fixed
+- Fixed a normal bias issue with Stacklit (Was causing light leaking)
+- Fixed camera preview outputing an error when both scene and game view where display and play and exit was call
+- Fixed override debug mode not apply correctly on static GI
+- Fixed issue where XRGraphicsConfig values set in the asset inspector GUI weren't propagating correctly (VR still disabled for now)
+- Fixed issue with tangent that was using SurfaceGradient instead of regular normal decoding
+- Fixed wrong error message display when switching to unsupported target like IOS
+- Fixed an issue with ambient occlusion texture sometimes not being created properly causing broken rendering
+- Shadow near plane is no longer limited at 0.1
+- Fixed an issue where sometime the lookup texture used for GGX convolution was broken, causing broken rendering
+
+### Changed
+- Use samplerunity_ShadowMask instead of samplerunity_samplerLightmap for shadow mask
+- Allow to resize reflection probe gizmo's size
+- Improve quality of screen space shadow
+
 ## [4.0.0-preview] - 2018-09-28
+
 ### Added
 - Added controls for linear fade at the boundary of density volumes
 - Added new API to control decals without monobehaviour object
@@ -23,12 +46,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added a new HD Lit Master node that implements Lit shader support for Shader Graph
 - Added Micro shadowing support (hack)
 - Added an event on HDAdditionalCameraData for custom rendering
+- HDRP Shader Graph shaders now support 4-channel UVs.
 
 ### Fixed
 - Fixed an issue where sometimes the deferred shadow texture would not be valid, causing wrong rendering.
 - Stencil test during decals normal buffer update is now properly applied
 - Decals corectly update normal buffer in forward
 - Fixed a normalization problem in reflection probe face fading causing artefacts in some cases
+- Fix multi-selection behavior of Density Volumes overwriting the albedo value
+- Fixed support of depth texture for RenderTexture. HDRP now correctly output depth to user depth buffer if RenderTexture request it.
 - Fixed multi-selection behavior of Density Volumes overwriting the albedo value
 - Fixed support of depth for RenderTexture. HDRP now correctly output depth to user depth buffer if RenderTexture request it.
 - Fixed support of Gizmo in game view in the editor
@@ -68,6 +94,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Hide environment lighting settings when enabling HDRP (Settings are control from sceneSettings)
 - Update all shader includes to use absolute path (allow users to create material in their Asset folder)
 - Done a reorganization of the files (Move ShaderPass to RenderPipeline folder, Move all shadow related files to Lighting/Shadow and others)
+- Improved performance and quality of Screen Space Shadows
 
 ## [3.3.0-preview]
 

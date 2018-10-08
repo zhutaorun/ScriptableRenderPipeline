@@ -2,6 +2,28 @@ using System;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
+    [Flags]
+    public enum ProbeSettingsFields
+    {
+        none = 0,
+        type = 1 << 0,
+        mode = 1 << 1,
+        lightingMultiplier = 1 << 2,
+        lightingWeight = 1 << 3,
+        lightingLightLayer = 1 << 4,
+        proxyUseInfluenceVolumeAsProxyVolume = 1 << 5,
+        proxyCapturePositionProxySpace = 1 << 6,
+        proxyCaptureRotationProxySpace = 1 << 7,
+        proxyMirrorPositionProxySpace = 1 << 8,
+        proxyMirrorRotationProxySpace = 1 << 9,
+    }
+
+    public struct ProbeSettingsOverride
+    {
+        public ProbeSettingsFields probe;
+        public CameraSettingsFields camera;
+    }
+
     /// <summary>Settings that defines the rendering of a probe.</summary>
     [Serializable]
     public struct ProbeSettings

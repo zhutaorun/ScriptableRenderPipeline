@@ -11,9 +11,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Matrix4x4 worldToCameraRHS;
 
             public Vector3 capturePosition
+        {
+            get
             {
-                get
-                {
                     var v = worldToCameraRHS.GetColumn(3);
                     return new Vector3(v.x, v.y, -v.z);
                 }
@@ -36,13 +36,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public RenderData GetRenderData(ProbeSettings.Mode targetMode)
         {
             switch (targetMode)
-            {
+        {
                 case ProbeSettings.Mode.Baked: return bakedRenderData;
                 case ProbeSettings.Mode.Custom: return customRenderData;
                 case ProbeSettings.Mode.Realtime: return realtimeRenderData;
                 default: throw new ArgumentOutOfRangeException();
             }
-        }
+            }
 
         protected override void PopulateSettings(ref ProbeSettings settings)
         {
@@ -53,7 +53,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 out settings.proxySettings.captureRotationProxySpace
             );
         }
-        
+
         internal override void Awake()
         {
             base.Awake();

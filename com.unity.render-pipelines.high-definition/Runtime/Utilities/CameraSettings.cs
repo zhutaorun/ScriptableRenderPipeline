@@ -3,6 +3,36 @@ using UnityEngine.Rendering.PostProcessing;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
+    [Flags]
+    public enum CameraSettingsFields
+    {
+        none = 0,
+        physicalAperture = 1 << 0,
+        physicalShutterSpeed = 1 << 1,
+        physicalIso = 1 << 2,
+        bufferClearColorMode = 1 << 3,
+        bufferClearBackgroundColorHDR = 1 << 4,
+        bufferClearClearDepth = 1 << 5,
+        volumesLayerMask = 1 << 6,
+        volumesAnchorOverride = 1 << 7,
+        frustumMode = 1 << 8,
+        frustumAspect = 1 << 9,
+        frustumFarClipPlane = 1 << 10,
+        frustumNearClipPlane = 1 << 11,
+        frustumFieldOfView = 1 << 12,
+        frustumProjectionMatrix = 1 << 13,
+        cullingUseOcclusionCulling = 1 << 14,
+        cullingCullingMask = 1 << 15,
+        cullingInvertCulling = 1 << 16,
+        renderingPath = 1 << 17,
+        flipYMode = 1 << 18,
+    }
+
+    public struct CameraSettingsOverride
+    {
+        public CameraSettingsFields camera;
+    }
+
     /// <summary>Contains all settings required to setup a camera in HDRP.</summary>
     [Serializable]
     public struct CameraSettings
@@ -35,7 +65,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public static readonly BufferClearing @default = new BufferClearing
             {
                 clearColorMode = HDAdditionalCameraData.ClearColorMode.Sky,
-                backgroundColorHDR = new Color(0.025f, 0.07f, 0.19f, 0.0f),
+                backgroundColorHDR = new Color32(6, 18, 48, 0),
                 clearDepth = true
             };
 
@@ -45,6 +75,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             /// The color to use when
             /// <c><see cref="clearColorMode"/> == <see cref="HDAdditionalCameraData.ClearColorMode.BackgroundColor"/></c>.
             /// </summary>
+            [ColorUsage(true, true)]
             public Color backgroundColorHDR;
             /// <summary>True to clear the depth.</summary>
             public bool clearDepth;
@@ -57,14 +88,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             /// <summary>Default value.</summary>
             public static readonly Volumes @default = new Volumes
             {
-                volumeLayerMask = -1,
-                volumeAnchorOverride = null
+                layerMask = -1,
+                anchorOverride = null
             };
 
             /// <summary>The <see cref="LayerMask"/> to use for the volumes.</summary>
-            public LayerMask volumeLayerMask;
+            public LayerMask layerMask;
             /// <summary>If not null, define the location of the evaluation of the volume framework.</summary>
-            public Transform volumeAnchorOverride;
+            public Transform anchorOverride;
         }
 
 

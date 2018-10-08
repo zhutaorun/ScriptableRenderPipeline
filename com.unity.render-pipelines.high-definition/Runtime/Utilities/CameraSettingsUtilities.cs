@@ -31,8 +31,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             add.backgroundColorHDR = settings.bufferClearing.backgroundColorHDR;
             add.clearDepth = settings.bufferClearing.clearDepth;
             // Volumes
-            add.volumeLayerMask = settings.volumes.volumeLayerMask;
-            add.volumeAnchorOverride = settings.volumes.volumeAnchorOverride;
+            add.volumeLayerMask = settings.volumes.layerMask;
+            add.volumeAnchorOverride = settings.volumes.anchorOverride;
             // Physical Parameters
             add.aperture = settings.physical.aperture;
             add.shutterSpeed = settings.physical.shutterSpeed;

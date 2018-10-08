@@ -10,32 +10,58 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             First,
             HDProbeChild = 2,
             UseInfluenceVolume,
-            MergeEditors
+            MergeEditors,
+            AddCaptureSettingsAndFrameSettings,
+            ProbeSettings
         }
 
         static readonly MigrationDescription<Version, HDAdditionalReflectionData> k_Migration
             = MigrationDescription.New(
-                MigrationStep.New(Version.UseInfluenceVolume, (HDAdditionalReflectionData target) =>
+                MigrationStep.New(Version.UseInfluenceVolume, (HDAdditionalReflectionData t) =>
                 {
-                    target.influenceVolume.boxSize = target.reflectionProbe.size;
+                    t.influenceVolume.boxSize = t.reflectionProbe.size;
 #pragma warning disable CS0618 // Type or member is obsolete
-                    target.influenceVolume.sphereRadius = target.influenceSphereRadius;
-                    target.influenceVolume.shape = target.influenceShape; //must be done after each size transfert
-                    target.influenceVolume.boxBlendDistancePositive = target.blendDistancePositive;
-                    target.influenceVolume.boxBlendDistanceNegative = target.blendDistanceNegative;
-                    target.influenceVolume.boxBlendNormalDistancePositive = target.blendNormalDistancePositive;
-                    target.influenceVolume.boxBlendNormalDistanceNegative = target.blendNormalDistanceNegative;
-                    target.influenceVolume.boxSideFadePositive = target.boxSideFadePositive;
-                    target.influenceVolume.boxSideFadeNegative = target.boxSideFadeNegative;
+                    t.influenceVolume.sphereRadius = t.influenceSphereRadius;
+                    t.influenceVolume.shape = t.influenceShape; //must be done after each size transfert
+                    t.influenceVolume.boxBlendDistancePositive = t.blendDistancePositive;
+                    t.influenceVolume.boxBlendDistanceNegative = t.blendDistanceNegative;
+                    t.influenceVolume.boxBlendNormalDistancePositive = t.blendNormalDistancePositive;
+                    t.influenceVolume.boxBlendNormalDistanceNegative = t.blendNormalDistanceNegative;
+                    t.influenceVolume.boxSideFadePositive = t.boxSideFadePositive;
+                    t.influenceVolume.boxSideFadeNegative = t.boxSideFadeNegative;
 #pragma warning restore CS0618 // Type or member is obsolete
                     //Note: former editor parameters will be recreated as if non existent.
                     //User will lose parameters corresponding to non used mode between simplified and advanced
                 }),
-                MigrationStep.New(Version.MergeEditors, (HDAdditionalReflectionData target) =>
+                MigrationStep.New(Version.MergeEditors, (HDAdditionalReflectionData t) =>
                 {
-                    target.m_ProbeSettings.proxySettings.useInfluenceVolumeAsProxyVolume
-                        = target.reflectionProbe.boxProjection;
-                    target.reflectionProbe.boxProjection = false;
+                    t.m_ProbeSettings.proxySettings.useInfluenceVolumeAsProxyVolume
+                        = t.reflectionProbe.boxProjection;
+                    t.reflectionProbe.boxProjection = false;
+                }),
+                MigrationStep.New(Version.AddCaptureSettingsAndFrameSettings, (HDAdditionalReflectionData t) =>
+                {
+#pragma warning disable CS0618 // Type or member is obsolete
+                    t.m_ObsoleteCaptureSettings.shadowDistance = t.reflectionProbe.shadowDistance;
+                    t.m_ObsoleteCaptureSettings.cullingMask = t.reflectionProbe.cullingMask;
+#if UNITY_EDITOR //m_UseOcclusionCulling is not exposed in c# !
+                    var serializedReflectionProbe = new UnityEditor.SerializedObject(t.reflectionProbe);
+                    t.m_ObsoleteCaptureSettings.useOcclusionCulling = serializedReflectionProbe.FindProperty("m_UseOcclusionCulling").boolValue;
+#endif
+                    t.m_ObsoleteCaptureSettings.nearClipPlane = t.reflectionProbe.nearClipPlane;
+                    t.m_ObsoleteCaptureSettings.farClipPlane = t.reflectionProbe.farClipPlane;
+#pragma warning restore CS0618 // Type or member is obsolete
+                }),
+                MigrationStep.New(Version.ProbeSettings, (HDAdditionalReflectionData t) =>
+                {
+#pragma warning disable CS0618 // Type or member is obsolete
+                    // TODO: shadow distance is not yet handled
+                    // ?? = t.m_ObsoleteCaptureSettings.shadowDistance;
+                    t.m_ProbeSettings.camera.culling.cullingMask = t.m_ObsoleteCaptureSettings.cullingMask;
+                    t.m_ProbeSettings.camera.culling.useOcclusionCulling = t.m_ObsoleteCaptureSettings.useOcclusionCulling;
+                    t.m_ProbeSettings.camera.frustum.nearClipPlane = t.m_ObsoleteCaptureSettings.nearClipPlane;
+                    t.m_ProbeSettings.camera.frustum.farClipPlane = t.m_ObsoleteCaptureSettings.farClipPlane;
+#pragma warning restore CS0618 // Type or member is obsolete
                 })
             );
 

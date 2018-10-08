@@ -65,8 +65,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
                     },
                     volumes = new CameraSettings.Volumes
                     {
-                        volumeAnchorOverride = null,
-                        volumeLayerMask = RandomUtilities.RandomInt(i * 3.5f)
+                        anchorOverride = null,
+                        layerMask = RandomUtilities.RandomInt(i * 3.5f)
                     },
                     renderingPath = RandomUtilities.RandomEnum<HDAdditionalCameraData.RenderingPath>(i * 4.5f)
                 };
@@ -121,8 +121,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
                 Assert.AreEqual(settings.bufferClearing.backgroundColorHDR, add.backgroundColorHDR);
                 Assert.AreEqual(settings.bufferClearing.clearDepth, add.clearDepth);
                 // Volumes
-                Assert.AreEqual(settings.volumes.volumeLayerMask, add.volumeLayerMask);
-                Assert.AreEqual(settings.volumes.volumeAnchorOverride, add.volumeAnchorOverride);
+                Assert.AreEqual(settings.volumes.layerMask, add.volumeLayerMask);
+                Assert.AreEqual(settings.volumes.anchorOverride, add.volumeAnchorOverride);
                 // Physical Parameters
                 Assert.AreEqual(settings.physical.aperture, add.aperture);
                 Assert.AreEqual(settings.physical.shutterSpeed, add.shutterSpeed);

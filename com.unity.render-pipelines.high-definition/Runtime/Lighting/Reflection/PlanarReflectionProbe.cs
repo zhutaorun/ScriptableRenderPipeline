@@ -3,7 +3,7 @@ using UnityEngine.Assertions;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
-    [ExecuteInEditMode]
+    [ExecuteAlways]
     public partial class PlanarReflectionProbe : HDProbe, ISerializationCallbackReceiver
     {
         [Serializable]
@@ -14,12 +14,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         // Serialized data
-        [SerializeField]
-        bool m_OverrideFieldOfView = false;
-        [SerializeField]
-        [Range(0, 180)]
-        float m_FieldOfViewOverride = 90;
-
         [SerializeField]
         Vector3 m_LocalReferencePosition = -Vector3.forward;
         [SerializeField]
@@ -47,11 +41,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3 localReferencePosition => m_LocalReferencePosition;
         /// <summary>Reference position to mirror to find the capture point. (world space)</summary>
         public Vector3 referencePosition => transform.TransformPoint(m_LocalReferencePosition);
-
-        /// <summary>True if the capture field of view is overridden.</summary>
-        public bool overrideFieldOfView { get => m_OverrideFieldOfView; set => m_OverrideFieldOfView = value; }
-        /// <summary>The value of the capture field of view.</summary>
-        public float fieldOfViewOverride { get => m_FieldOfViewOverride; set => m_FieldOfViewOverride = value; }
 
         public void OnBeforeSerialize() { }
 
