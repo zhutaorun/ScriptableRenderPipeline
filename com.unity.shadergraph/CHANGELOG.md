@@ -51,6 +51,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - You can now connect Sub Graphs to vertex shader slots. If a node in the Sub Graph specifies a shader stage, that specific Sub Graph node is locked to that stage. When an instance of a Sub Graph node is connected to a slot that specifies a shader stage, all slots on that instance are locked to the stage.
 - Separated material options and tags.
 - Master node settings are now recreated when a topological modification occurs.
+- Converted `Light Probe` node to `Baked GI` node. This node now returns the correct lightmap data when using Lightweight with lightmaps and is now generally supported in HDRP.
+- Made `Reflection Probe` node Lightweight specific. This solves compilation errors in HDRP.
+- Made `Ambient` node Lightweight specific. This solves compilation errors in HDRP.
+- Made `Fog` node Lightweight specific. This solves compilation errors in HDRP.
+- Fixed camera relative issues with `Object` node `Position` port.
+- Moved `Baked GI`, `Reflection Probe` and `Ambient` nodes to the category `Input/Lighting`.
 
 ### Fixed
 - Vector 1 nodes now evaluate correctly. ([#334](https://github.com/Unity-Technologies/ShaderGraph/issues/334) and [#337](https://github.com/Unity-Technologies/ShaderGraph/issues/337))
