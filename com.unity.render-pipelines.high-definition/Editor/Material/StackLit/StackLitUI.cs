@@ -10,7 +10,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         protected static class StylesStackLit
         {
-            public const string stackOptionText = "Stack Option";
+            public const string stackOptionText = "Stack Options";
 
             public static GUIContent useLocalPlanarMapping = new GUIContent("Use Local Planar Mapping", "Use local space for planar/triplanar mapping instead of world space");
         };
