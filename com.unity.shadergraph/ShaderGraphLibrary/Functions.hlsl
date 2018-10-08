@@ -48,6 +48,10 @@ struct Gradient
     #define SHADERGRAPH_REFLECTION_PROBE(viewDir, normalOS, lod) shadergraph_ReflectionProbe(viewDir, normalOS, lod)
 #endif
 
+#ifndef SHADERGRAPH_FOG
+    #define SHADERGRAPH_FOG(position, color, density) shadergraph_Fog(position, color, density)
+#endif
+
 #ifndef SHADERGRAPH_AMBIENT_SKY
     #define SHADERGRAPH_AMBIENT_SKY float3(0,0,0)
 #endif
@@ -78,6 +82,12 @@ float3 shadergraph_BakedGI(float3 positionWS, float3 normalWS, float2 uvStaticLi
 float3 shadergraph_ReflectionProbe(float3 viewDir, float3 normalOS, float lod)
 {
     return 0;
+}
+
+void shadergraph_Fog(float3 position, out float4 color, out float density)
+{
+    color = 0;
+    density = 0;
 }
 
 #endif // UNITY_GRAPHFUNCTIONS_INCLUDED
