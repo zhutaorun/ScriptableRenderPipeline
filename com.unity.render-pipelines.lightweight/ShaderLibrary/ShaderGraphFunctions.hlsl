@@ -3,6 +3,11 @@
 
 #define SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv) shadergraph_LWSampleSceneDepth(uv);
 #define SHADERGRAPH_SAMPLE_SCENE_COLOR(uv) shadergraph_LWSampleSceneColor(uv);
+#define SHADERGRAPH_BAKED_GI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap) shadergraph_LWBakedGI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap);
+#define SHADERGRAPH_REFLECTION_PROBE(viewDir, normalOS, lod) shadergraph_LWReflectionProbe(viewDir, normalOS, lod);
+#define SHADERGRAPH_AMBIENT_SKY unity_AmbientSky;
+#define SHADERGRAPH_AMBIENT_EQUATOR unity_AmbientEquator;
+#define SHADERGRAPH_AMBIENT_GROUND unity_AmbientGround;
 
 #if defined(REQUIRE_DEPTH_TEXTURE)
 #if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
@@ -37,6 +42,21 @@ float3 shadergraph_LWSampleSceneColor(float2 uv)
     return SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, uv);
 #endif
     return 0;
+}
+
+float3 shadergraph_LWBakedGI(float3 positionWS, float3 normalWS, float2 uvStaticLightmap, float2 uvDynamicLightmap)
+{
+#ifdef LIGHTMAP_ON
+    return SampleLightmap(uvStaticLightmap, normalWS);
+#else
+    return SampleSH(normalWS);
+#endif
+}
+
+float3 shadergraph_LWReflectionProbe(float3 viewDir, float3 normalOS, float lod)
+{
+    float3 reflectVec = reflect(-viewDir, normalOS);
+    return DecodeHDREnvironment(SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, reflectVec, lod), unity_SpecCube0_HDR);
 }
 
 // Always include Shader Graph version

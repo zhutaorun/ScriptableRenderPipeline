@@ -40,12 +40,42 @@ struct Gradient
     #define SHADERGRAPH_SAMPLE_SCENE_COLOR(uv) shadergraph_SampleSceneColor(uv);
 #endif
 
+#ifndef SHADERGRAPH_BAKED_GI
+    #define SHADERGRAPH_BAKED_GI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap) shadergraph_BakedGI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap)
+#endif
+
+#ifndef SHADERGRAPH_REFLECTION_PROBE
+    #define SHADERGRAPH_REFLECTION_PROBE(viewDir, normalOS, lod) shadergraph_ReflectionProbe(viewDir, normalOS, lod)
+#endif
+
+#ifndef SHADERGRAPH_AMBIENT_SKY
+    #define SHADERGRAPH_AMBIENT_SKY float3(0,0,0);
+#endif
+
+#ifndef SHADERGRAPH_AMBIENT_EQUATOR
+    #define SHADERGRAPH_AMBIENT_EQUATOR float3(0,0,0);
+#endif
+
+#ifndef SHADERGRAPH_AMBIENT_GROUND
+    #define SHADERGRAPH_AMBIENT_GROUND float3(0,0,0);
+#endif
+
 float shadergraph_SampleSceneDepth(float2 uv)
 {
     return 1;
 }
 
 float3 shadergraph_SampleSceneColor(float2 uv)
+{
+    return 0;
+}
+
+float3 shadergraph_BakedGI(float3 positionWS, float3 normalWS, float2 uvStaticLightmap, float2 uvDynamicLightmap)
+{
+    return 0;
+}
+
+float3 shadergraph_ReflectionProbe(float3 viewDir, float3 normalOS, float lod)
 {
     return 0;
 }
