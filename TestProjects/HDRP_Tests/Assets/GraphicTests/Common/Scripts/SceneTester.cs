@@ -1,17 +1,20 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.TestTools.Graphics;
+//using UnityEngine.TestTools.Graphics;
 
 public class SceneTester : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()
     {
+        Debug.Log("Load test scenes.");
+
         DontDestroyOnLoad(gameObject);
 
         // On scene load, set the application to windowed and target resolution.
+        /*
         SceneManager.sceneLoaded += (Scene scene, LoadSceneMode loadSceneMode) =>
         {
             GraphicsTestSettings testSettings = FindObjectOfType<GraphicsTestSettings>();
@@ -20,6 +23,7 @@ public class SceneTester : MonoBehaviour
                 Screen.SetResolution( testSettings.ImageComparisonSettings.TargetWidth, testSettings.ImageComparisonSettings.TargetHeight, FullScreenMode.Windowed );
             }
         };
+        */
 
         if (SceneManager.sceneCountInBuildSettings > 1)
             SceneManager.LoadScene(1);
@@ -30,6 +34,7 @@ public class SceneTester : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
+            Debug.Log("Switch to next scene.");
             // Load next scene or scene index 1 if looped
             SceneManager.LoadScene( Mathf.Max( 1, ( SceneManager.GetActiveScene().buildIndex + 1 )%SceneManager.sceneCountInBuildSettings ) );
         }

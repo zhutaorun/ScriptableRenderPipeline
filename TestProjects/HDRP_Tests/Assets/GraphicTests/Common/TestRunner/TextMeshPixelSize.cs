@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(TextMesh)), ExecuteInEditMode]
+[RequireComponent(typeof(TextMesh)), ExecuteAlways]
 public class TextMeshPixelSize : MonoBehaviour
 {
-#if UNITY_EDITOR
 
 	[SerializeField] int pixelSize = 8;
 
@@ -15,6 +14,9 @@ public class TextMeshPixelSize : MonoBehaviour
 	[HideInInspector, SerializeField] TextMesh textMesh;
 
 	[SerializeField] bool pixelPerfect = false;
+
+
+#if UNITY_EDITOR
 	void Update()
 	{
 		if (camera == null) camera = FindObjectOfType<Camera>();
