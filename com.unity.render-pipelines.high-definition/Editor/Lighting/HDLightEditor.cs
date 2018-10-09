@@ -142,7 +142,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             Candela = LightUnit.Candela,
         }
 
-        const float k_MinAreaWidth = 0.01f; // Provide a small size of 1cm for line light
+        const float k_MinLightSize = 0.01f; // Provide a small size of 1cm for line light
 
         // Used for UI only; the processing code must use LightTypeExtent and LightType
         LightShape m_LightShape;
@@ -154,7 +154,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         HDShadowInitParameters                m_HDShadowInitParameters;
         Dictionary<HDShadowQuality, Action>   m_ShadowAlgorithmUIs;
-        
+
         protected override void OnEnable()
         {
             base.OnEnable();
@@ -547,8 +547,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     EditorGUILayout.PropertyField(m_AdditionalLightData.shapeHeight, s_Styles.shapeHeightRect);
                     if (EditorGUI.EndChangeCheck())
                     {
-                        m_AdditionalLightData.shapeWidth.floatValue = Mathf.Max(m_AdditionalLightData.shapeWidth.floatValue, k_MinAreaWidth);
-                        m_AdditionalLightData.shapeHeight.floatValue = Mathf.Max(m_AdditionalLightData.shapeHeight.floatValue, k_MinAreaWidth);
+
                         settings.areaSizeX.floatValue = m_AdditionalLightData.shapeWidth.floatValue;
                         settings.areaSizeY.floatValue = m_AdditionalLightData.shapeHeight.floatValue;
                     }
@@ -565,11 +564,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     EditorGUILayout.PropertyField(m_AdditionalLightData.shapeWidth, s_Styles.shapeWidthLine);
                     if (EditorGUI.EndChangeCheck())
                     {
-                        m_AdditionalLightData.shapeWidth.floatValue = Mathf.Max(m_AdditionalLightData.shapeWidth.floatValue, k_MinAreaWidth);
-                        m_AdditionalLightData.shapeHeight.floatValue = Mathf.Max(m_AdditionalLightData.shapeHeight.floatValue, k_MinAreaWidth);
                         // Fake line with a small rectangle in vanilla unity for GI
                         settings.areaSizeX.floatValue = m_AdditionalLightData.shapeWidth.floatValue;
-                        settings.areaSizeY.floatValue = k_MinAreaWidth;
+                        settings.areaSizeY.floatValue = k_MinLightSize;
                     }
                     settings.shadowsType.enumValueIndex = (int)LightShadows.None;
                     break;
@@ -585,6 +582,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             if (EditorGUI.EndChangeCheck())
             {
+                // Light size must be non-zero, else we get NaNs.
+                m_AdditionalLightData.shapeWidth.floatValue  = Mathf.Max(m_AdditionalLightData.shapeWidth.floatValue, k_MinLightSize);
+                m_AdditionalLightData.shapeHeight.floatValue = Mathf.Max(m_AdditionalLightData.shapeHeight.floatValue, k_MinLightSize);
                 m_AdditionalLightData.shapeRadius.floatValue = Mathf.Max(m_AdditionalLightData.shapeRadius.floatValue, 0.0f);
                 m_UpdateAreaLightEmissiveMeshComponents = true;
                 ((Light)target).SetLightDirty(); // Should be apply only to parameter that's affect GI, but make the code cleaner

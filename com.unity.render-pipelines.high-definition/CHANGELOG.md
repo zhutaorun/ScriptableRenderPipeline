@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed shadow cascade sampling outside of the atlas when cascade count is inferior to 4
 - Fixed shadow filter width in deferred rendering not matching shader config
 - Fixed stereo sampling of depth texture in MSAA DepthValues.shader
+- Fix box light UI which allowed negative and zero sizes, thus causing NaNs
 
 ### Changed
 - Use samplerunity_ShadowMask instead of samplerunity_samplerLightmap for shadow mask
