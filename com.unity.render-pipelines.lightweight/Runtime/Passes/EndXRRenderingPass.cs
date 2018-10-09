@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 {
@@ -12,14 +13,17 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
     public class EndXRRenderingPass : ScriptableRenderPass
     {
         /// <inheritdoc/>
+        const string k_StopMultiEyeTag = "Stop MultiEye Rendering";
         public override void Execute(ScriptableRenderer renderer, ScriptableRenderContext context, ref RenderingData renderingData)
         {
             if (renderer == null)
                 throw new ArgumentNullException("renderer");
-            
-            Camera camera = renderingData.cameraData.camera;
-            context.StopMultiEye(camera);
-            context.StereoEndRender(camera);
+
+            CommandBuffer cmd = CommandBufferPool.Get(k_StopMultiEyeTag);
+            cmd.StopMultiEye();
+            context.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
+            context.StereoEndRender(renderingData.cameraData.camera);
         }
     }
 }

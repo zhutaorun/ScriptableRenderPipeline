@@ -55,15 +55,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 ClearFlag.Color | ClearFlag.Depth, Color.white, descriptor.dimension);
             cmd.Blit(screenSpaceOcclusionTexture, screenSpaceOcclusionTexture, renderer.GetMaterial(MaterialHandle.ScreenSpaceShadow));
 
-            if (renderingData.cameraData.isStereoEnabled)
-            {
-                Camera camera = renderingData.cameraData.camera;
-                context.StartMultiEye(camera);
-                context.ExecuteCommandBuffer(cmd);
-                context.StopMultiEye(camera);
-            }
-            else
-                context.ExecuteCommandBuffer(cmd);
+            context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
 

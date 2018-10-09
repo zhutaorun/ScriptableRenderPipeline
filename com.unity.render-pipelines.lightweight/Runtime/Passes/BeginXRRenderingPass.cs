@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 {
@@ -15,13 +16,16 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
     public class BeginXRRenderingPass : ScriptableRenderPass
     {
         /// <inheritdoc/>
+        const string k_StartMultiEyeTag = "Start MultiEye Rendering";
         public override void Execute(ScriptableRenderer renderer, ScriptableRenderContext context, ref RenderingData renderingData)
         {
             if (renderer == null)
                 throw new ArgumentNullException("renderer");
-            
-            Camera camera = renderingData.cameraData.camera;
-            context.StartMultiEye(camera);
+
+            CommandBuffer cmd = CommandBufferPool.Get(k_StartMultiEyeTag);
+            cmd.StartMultiEye();
+            context.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
         }
     }
 }

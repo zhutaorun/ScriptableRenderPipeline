@@ -122,8 +122,12 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             if (renderingData.shadowData.supportsMainLightShadows &&
                 renderingData.shadowData.requiresScreenSpaceShadowResolve)
             {
+                if (renderingData.cameraData.isStereoEnabled)
+                    renderer.EnqueuePass(m_BeginXrRenderingPass);
                 m_ScreenSpaceShadowResolvePass.Setup(baseDescriptor, ScreenSpaceShadowmap);
                 renderer.EnqueuePass(m_ScreenSpaceShadowResolvePass);
+                if (renderingData.cameraData.isStereoEnabled)
+                    renderer.EnqueuePass(m_EndXrRenderingPass);
             }
 
             bool requiresRenderToTexture = ScriptableRenderer.RequiresIntermediateColorTexture(ref renderingData.cameraData, baseDescriptor);
