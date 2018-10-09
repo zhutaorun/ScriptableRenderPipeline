@@ -22,6 +22,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 p.m_ProbeSettings.lighting.weight = p.m_ObsoleteWeight;
                 p.m_ProbeSettings.lighting.lightLayer = p.m_ObsoleteLightLayers;
                 p.m_ProbeSettings.mode = p.m_ObsoleteMode;
+                // TODO: migrate overrides from capturesettings
 #pragma warning restore 618
             })
         );

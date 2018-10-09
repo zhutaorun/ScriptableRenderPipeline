@@ -2,6 +2,20 @@ using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
+    internal class SerializedCameraSettingsOverride
+    {
+        internal SerializedProperty root;
+
+        internal SerializedProperty camera;
+
+        public SerializedCameraSettingsOverride(SerializedProperty root)
+        {
+            this.root = root;
+
+            camera = root.Find((CameraSettingsOverride p) => p.camera);
+        }
+    }
+
     internal class SerializedCameraSettings
     {
         internal SerializedProperty root;

@@ -18,10 +18,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         proxyMirrorRotationProxySpace = 1 << 9,
     }
 
+    [Serializable]
     public struct ProbeSettingsOverride
     {
         public ProbeSettingsFields probe;
-        public CameraSettingsFields camera;
+        public CameraSettingsOverride camera;
     }
 
     /// <summary>Settings that defines the rendering of a probe.</summary>

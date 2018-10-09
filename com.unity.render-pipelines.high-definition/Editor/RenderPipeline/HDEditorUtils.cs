@@ -55,5 +55,41 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             return types;
         }
+
+        static readonly GUIContent s_OverrideTooltip = CoreEditorUtils.GetContent("|Override this setting in component.");
+        public static void FlagToggle<TEnum>(TEnum v, SerializedProperty property)
+            where TEnum : struct, IConvertible // restrict to ~enum
+        {
+            var intV = (int)(object)v;
+            var isOn = (property.intValue & intV) != 0;
+            isOn = GUILayout.Toggle(isOn, s_OverrideTooltip, CoreEditorStyles.smallTickbox);
+            if (isOn)
+                property.intValue |= intV;
+            else
+                property.intValue &= ~intV;
+        }
+
+        public static void PropertyFieldWithFlagToggle<TEnum>(
+            TEnum v, SerializedProperty property, GUIContent label, SerializedProperty @override
+        )
+            where TEnum : struct, IConvertible // restrict to ~enum
+        {
+            EditorGUILayout.BeginHorizontal();
+            FlagToggle(v, @override);
+            EditorGUILayout.PropertyField(property, label);
+            EditorGUILayout.EndHorizontal();
+        }
+
+        public static void PropertyFieldWithFlagToggleIfDisplayed<TEnum>(
+            TEnum v, SerializedProperty property, GUIContent label, SerializedProperty @override,
+            TEnum displayed
+        )
+            where TEnum : struct, IConvertible // restrict to ~enum
+        {
+            var intDisplayed = (int)(object)displayed;
+            var intV = (int)(object)v;
+            if ((intDisplayed & intV) == intV)
+                PropertyFieldWithFlagToggle(v, property, label, @override);
+        }
     }
 }

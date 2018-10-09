@@ -8,6 +8,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [SerializeField]
         protected ProbeSettings m_ProbeSettings;
         [SerializeField]
+        ProbeSettingsOverride m_ProbeSettingsOverride;
+        [SerializeField]
         ReflectionProxyVolumeComponent m_ProxyVolume;
 
         [SerializeField]
@@ -109,6 +111,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return settings;
             }
         }
+        internal ProbeSettingsOverride settingsOverrides => m_ProbeSettingsOverride;
 
         // API
         /// <summary>

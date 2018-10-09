@@ -28,6 +28,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         flipYMode = 1 << 18,
     }
 
+    [Serializable]
     public struct CameraSettingsOverride
     {
         public CameraSettingsFields camera;
@@ -137,6 +138,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             /// <summary>Near clip plane distance.</summary>
             public float nearClipPlane;
             /// <summary>Field of view for perspective matrix (for y axis, in degree).</summary>
+            [Range(1, 179.0f)]
             public float fieldOfView;
 
             /// <summary>Projection matrix used for <see cref="Mode.UseProjectionMatrixField"/> mode.</summary>

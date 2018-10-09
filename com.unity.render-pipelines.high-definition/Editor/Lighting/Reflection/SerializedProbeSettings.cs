@@ -2,6 +2,22 @@ using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
+    internal class SerializedProbeSettingsOverride
+    {
+        internal SerializedProperty root;
+
+        internal SerializedProperty probe;
+        internal SerializedCameraSettingsOverride camera;
+
+        public SerializedProbeSettingsOverride(SerializedProperty root)
+        {
+            this.root = root;
+
+            probe = root.Find((ProbeSettingsOverride p) => p.probe);
+            camera = new SerializedCameraSettingsOverride(root.Find((ProbeSettingsOverride p) => p.camera));
+        }
+    }
+
     internal class SerializedProbeSettings
     {
         internal SerializedProperty root;
