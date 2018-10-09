@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added support for shadow bias for thin object transmission
 - Added FrameSettings to control realtime planar reflection
 - Added control for SRPBatcher on HDRP Asset
+- Added support for disabling SSR on materials
 
 ### Fixed
 - Fixed a normal bias issue with Stacklit (Was causing light leaking)
