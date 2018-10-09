@@ -1398,7 +1398,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 renderContext.DrawRenderers(cull.visibleRenderers, ref drawSettings, filterSettings);
             else
                 renderContext.DrawRenderers(cull.visibleRenderers, ref drawSettings, filterSettings, stateBlock.Value);
-        }
+        }        
 
         void RenderTransparentRenderList(CullResults cull,
             HDCamera hdCamera,
@@ -2385,9 +2385,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             if (hdCamera.frameSettings.enableStereo)
             {
-                renderContext.ExecuteCommandBuffer(cmd);
-                cmd.Clear();
-                renderContext.StartMultiEye(hdCamera.camera);
+                cmd.StartMultiEye();
             }
         }
 
@@ -2395,9 +2393,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             if (hdCamera.frameSettings.enableStereo)
             {
-                renderContext.ExecuteCommandBuffer(cmd);
-                cmd.Clear();
-                renderContext.StopMultiEye(hdCamera.camera);
+                cmd.StopMultiEye();
             }
 
         }
