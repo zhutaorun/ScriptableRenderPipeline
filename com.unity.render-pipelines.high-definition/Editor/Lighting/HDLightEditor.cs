@@ -154,11 +154,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         HDShadowInitParameters                m_HDShadowInitParameters;
         Dictionary<HDShadowQuality, Action>   m_ShadowAlgorithmUIs;
-
-        //we need this to determine if we not attempt to render it two time the same frame
-        //This is needed as we have tried to work outside of Gizmo scope with Handle only for SRP
-        int lastRenderedHandleFrame = 0; 
-
+        
         protected override void OnEnable()
         {
             base.OnEnable();
@@ -301,16 +297,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         protected override void OnSceneGUI()
         {
-            Light light = (Light)target;
-            if (!Selection.Contains(light.gameObject) || lastRenderedHandleFrame == Time.frameCount)
-            {
-                return;
-            }
-            lastRenderedHandleFrame = Time.frameCount;
-
             m_SerializedAdditionalLightData.Update();
 
             HDAdditionalLightData src = (HDAdditionalLightData)m_SerializedAdditionalLightData.targetObject;
+            Light light = (Light)target;
 
             Color wireframeColorAbove = light.enabled ? LightEditor.kGizmoLight : LightEditor.kGizmoDisabledLight;
             Color handleColorAbove = CoreLightEditorUtilities.GetLightHandleColor(wireframeColorAbove);
@@ -335,10 +325,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                                         Vector3 outterAngleInnerAngleRange = new Vector3(light.spotAngle, light.spotAngle * src.GetInnerSpotPercent01(), light.range);
                                         Handles.zTest = UnityEngine.Rendering.CompareFunction.Greater;
                                         Handles.color = wireframeColorBehind;
-                                        CoreLightEditorUtilities.DrawSpotlightWireframe(outterAngleInnerAngleRange, m_AdditionalLightData.shadowNearPlane.floatValue);
+                                        CoreLightEditorUtilities.DrawSpotlightWireframe(outterAngleInnerAngleRange, src.shadowNearPlane);
                                         Handles.zTest = UnityEngine.Rendering.CompareFunction.LessEqual;
                                         Handles.color = wireframeColorAbove;
-                                        CoreLightEditorUtilities.DrawSpotlightWireframe(outterAngleInnerAngleRange, m_AdditionalLightData.shadowNearPlane.floatValue);
+                                        CoreLightEditorUtilities.DrawSpotlightWireframe(outterAngleInnerAngleRange, src.shadowNearPlane);
                                         EditorGUI.BeginChangeCheck();
                                         Handles.zTest = UnityEngine.Rendering.CompareFunction.Greater;
                                         Handles.color = handleColorBehind;
@@ -907,7 +897,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         // Internal utilities
         void ApplyAdditionalComponentsVisibility(bool hide)
         {
-            // UX team decided that we should always show component in inspector.
+            // UX team decided thta we should always show component in inspector.
             // However already authored scene save this settings, so force the component to be visible
             // var flags = hide ? HideFlags.HideInInspector : HideFlags.None;
             var flags = HideFlags.None;
@@ -960,18 +950,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         break;
                 }
             }
+
         }
 
-        [DrawGizmo(GizmoType.Selected | GizmoType.Active)]
+        [DrawGizmo(GizmoType.Selected)]
         static void DrawGizmoForHDAdditionalLightData(HDAdditionalLightData src, GizmoType gizmoType)
         {
-            bool selected = (gizmoType & GizmoType.Selected) != 0;
-
             var light = src.gameObject.GetComponent<Light>();
             Color previousColor = Gizmos.color;
             Gizmos.color = light.enabled ? LightEditor.kGizmoLight : LightEditor.kGizmoDisabledLight;
 
-            if (selected)
+            if (light.type != LightType.Directional)
             {
                 // Trace a ray down to better locate the light location
                 Ray ray = new Ray(src.gameObject.transform.position, Vector3.down);
@@ -993,13 +982,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     }
                 }
             }
-            Handles.zTest = CompareFunction.Always;
+
             Gizmos.color = previousColor;
-            
-            if (Selection.Contains(light.gameObject))
-            {
-                ((HDLightEditor)Editor.CreateEditor(light)).OnSceneGUI();
-            }
         }
     }
 }

@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added per-pixel jitter to volumetrics to reduce aliasing artifacts
 - Added a SurfaceShading.hlsl file, which implements material-agnostic shading functionality in an efficient manner
 - Added support for shadow bias for thin object transmission
+- Added FrameSettings to control realtime planar reflection
+- Added control for SRPBatcher on HDRP Asset
+- Added an option to clear the shadow atlases in the debug menu
+- Added a color visualization of the shadow atlas rescale in debug mode
+- Added support for disabling SSR on materials
 
 ### Fixed
 - Fixed a normal bias issue with Stacklit (Was causing light leaking)
@@ -26,9 +31,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed wrong error message display when switching to unsupported target like IOS
 - Fixed an issue with ambient occlusion texture sometimes not being created properly causing broken rendering
 - Shadow near plane is no longer limited at 0.1
+- Fixed decal draw order on transparent material
 - Fixed an issue where sometime the lookup texture used for GGX convolution was broken, causing broken rendering
 - Fixed an issue where you wouldn't see any fog for certain pipeline/scene configurations
 - Fixed an issue with volumetric lighting where the anisotropy value of 0 would not result in perfectly isotropic lighting
+- Fixed shadow bias when the atlas is rescaled
+- Fixed shadow cascade sampling outside of the atlas when cascade count is inferior to 4
+- Fixed shadow filter width in deferred rendering not matching shader config
+- Fixed stereo sampling of depth texture in MSAA DepthValues.shader
 
 ### Changed
 - Use samplerunity_ShadowMask instead of samplerunity_samplerLightmap for shadow mask
@@ -36,6 +46,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Improve quality of screen space shadow
 - Remove support of projection model for ScreenSpaceLighting (SSR always use HiZ and refraction always Proxy)
 - Remove all the debug mode from SSR that are obsolete now
+- Expose frameSettings and Capture settings for reflection and planar probe
+- Update UI for reflection probe, planar probe, camera and HDRP Asset
 - Implement proper linear blending for volumetric lighting via deep compositing as described in the paper "Deep Compositing Using Lie Algebras"
 
 ## [4.0.0-preview] - 2018-09-28

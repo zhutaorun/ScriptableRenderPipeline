@@ -14,8 +14,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         VisualizeShadowMasks,
         IndirectDiffuseOcclusion,
         IndirectSpecularOcclusion,
-        ScreenSpaceReflection,
-        ScreenSpaceRefraction,
     }
 
     [GenerateHLSL]
@@ -54,6 +52,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public float                shadowMinValue = 0.0f;
         public float                shadowMaxValue = 1.0f;
         public float                shadowResolutionScaleFactor = 1.0f;
+        public bool                 clearShadowAtlas = false;
 
         public bool                 overrideSmoothness = false;
         public float                overrideSmoothnessValue = 0.5f;
