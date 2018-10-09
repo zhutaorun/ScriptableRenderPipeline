@@ -5,7 +5,7 @@ The Unlit shader does not react to lights in the Scene. Instead, you can use the
 
 
 
- 
+
 ## Using the Unlit shader in the Editor
 
 To create a new Material with the shader:
