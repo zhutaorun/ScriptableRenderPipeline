@@ -96,7 +96,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             /// <summary>
             /// Whether to use the influence volume as proxy volume
-            /// when <c><see cref="linkedProxy"/> == null</c>.
+            /// when <c><see cref="proxy"/> == null</c>.
             /// </summary>
             public bool useInfluenceVolumeAsProxyVolume;
             /// <summary>Position of the capture in proxy space. (Reflection Probe only)</summary>
@@ -117,7 +117,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             camera = CameraSettings.@default,
             influence = null,
             lighting = Lighting.@default,
-            linkedProxy = null,
+            proxy = null,
             proxySettings = ProxySettings.@default
         };
 
@@ -130,7 +130,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         /// <summary>The influence volume of the probe.</summary>
         public InfluenceVolume influence;
         /// <summary>Set this variable to explicitly set the proxy volume to use.</summary>
-        public ProxyVolume linkedProxy;
+        public ProxyVolume proxy;
         /// <summary>The proxy settings of the probe for the current volume.</summary>
         public ProxySettings proxySettings;
         /// <summary>Camera settings to use when capturing data.</summary>
@@ -154,9 +154,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 h2 = influence.ComputeHash();
                 HashUtilities.AppendHash(ref h2, ref h);
             }
-            if (linkedProxy != null)
+            if (proxy != null)
             {
-                h2 = linkedProxy.ComputeHash();
+                h2 = proxy.ComputeHash();
                 HashUtilities.AppendHash(ref h2, ref h);
             }
             return h;

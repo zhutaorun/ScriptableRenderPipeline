@@ -40,24 +40,18 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         
         public static readonly CED.IDrawer SectionInfluenceVolume = CED.Select(
             (s, d, o) => s.influenceVolume,
-            (s, d, o) => d.influenceVolume,
+            (s, d, o) => d.probeSettings.influence,
             InfluenceVolumeUI.SectionFoldoutShape
             );
 
         public static readonly CED.IDrawer SectionShapeCheck = CED.Action(Drawer_DifferentShapeError);
-
-        public static readonly CED.IDrawer SectionCaptureSettings = CED.Select(
-            (s, d, o) => s.captureSettings,
-            (s, d, o) => d.captureSettings,
-            CaptureSettingsUI.SectionCaptureSettings
-            );
 
         public static readonly CED.IDrawer SectionFrameSettings = CED.FadeGroup(
             (s, d, o, i) => s.isFrameSettingsOverriden,
             FadeOption.None,
             CED.Select(
                 (s, d, o) => s.frameSettings,
-                (s, d, o) => d.frameSettings,
+                (s, d, o) => d.probeSettings.cameraSettings.frameSettings,
                 FrameSettingsUI.Inspector(withOverride: true, withXR: false))
             );
 
@@ -78,7 +72,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 SectionProxyVolumeSettings,
                 SectionInfluenceVolume,
                 SectionShapeCheck,
-                SectionCaptureSettings,
                 SectionFoldoutAdditionalSettings,
                 SectionFrameSettings,
                 SectionBakeButton
@@ -87,9 +80,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         protected static void Drawer_DifferentShapeError(HDProbeUI s, SerializedHDProbe d, Editor o)
         {
-            var proxy = d.proxyVolumeReference.objectReferenceValue as ReflectionProxyVolumeComponent;
+            var proxy = d.proxyVolume.objectReferenceValue as ReflectionProxyVolumeComponent;
             if (proxy != null
-                && (int)proxy.proxyVolume.shape != d.influenceVolume.shape.enumValueIndex
+                && (int)proxy.proxyVolume.shape != d.probeSettings.influence.shape.enumValueIndex
                 && proxy.proxyVolume.shape != ProxyShape.Infinite)
             {
                 EditorGUILayout.HelpBox(
@@ -120,22 +113,22 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         protected static void Drawer_SectionProxySettings(HDProbeUI s, SerializedHDProbe d, Editor o)
         {
-            EditorGUILayout.PropertyField(d.proxyVolumeReference, proxyVolumeContent);
+            EditorGUILayout.PropertyField(d.proxyVolume, proxyVolumeContent);
             
             if (d.target.proxyVolume == null)
             {
                 EditorGUI.BeginChangeCheck();
-                d.useInfluenceVolumeAsProxyVolume.boolValue = !EditorGUILayout.Toggle(useInfiniteProjectionContent, !d.useInfluenceVolumeAsProxyVolume.boolValue);
+                d.probeSettings.proxyUseInfluenceVolumeAsProxyVolume.boolValue = !EditorGUILayout.Toggle(useInfiniteProjectionContent, !d.probeSettings.proxyUseInfluenceVolumeAsProxyVolume.boolValue);
                 if(EditorGUI.EndChangeCheck())
                 {
                     d.Apply();
                 }
             }
 
-            if (d.proxyVolumeReference.objectReferenceValue != null)
+            if (d.proxyVolume.objectReferenceValue != null)
             {
-                var proxy = (ReflectionProxyVolumeComponent)d.proxyVolumeReference.objectReferenceValue;
-                if ((int)proxy.proxyVolume.shape != d.influenceVolume.shape.enumValueIndex
+                var proxy = (ReflectionProxyVolumeComponent)d.proxyVolume.objectReferenceValue;
+                if ((int)proxy.proxyVolume.shape != d.probeSettings.influence.shape.enumValueIndex
                     && proxy.proxyVolume.shape != ProxyShape.Infinite)
                     EditorGUILayout.HelpBox(
                         proxyInfluenceShapeMismatchHelpBoxText,
@@ -146,7 +139,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             else
             {
                 EditorGUILayout.HelpBox(
-                        d.useInfluenceVolumeAsProxyVolume.boolValue ? noProxyInfiniteHelpBoxText : noProxyHelpBoxText,
+                        d.probeSettings.proxyUseInfluenceVolumeAsProxyVolume.boolValue ? noProxyInfiniteHelpBoxText : noProxyHelpBoxText,
                         MessageType.Info,
                         true
                         );
@@ -158,15 +151,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
             using (new EditorGUI.DisabledScope(!hdPipeline.asset.renderPipelineSettings.supportLightLayers))
             {
-                d.lightLayers.intValue = Convert.ToInt32(EditorGUILayout.EnumFlagsField(lightLayersContent, (LightLayerEnum)d.lightLayers.intValue));
+                d.probeSettings.lightingLightLayer.intValue = Convert.ToInt32(EditorGUILayout.EnumFlagsField(lightLayersContent, (LightLayerEnum)d.probeSettings.lightingLightLayer.intValue));
             }
 
-            EditorGUILayout.PropertyField(d.weight, weightContent);
+            EditorGUILayout.PropertyField(d.probeSettings.lightingWeight, weightContent);
 
             EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(d.multiplier, multiplierContent);
+            EditorGUILayout.PropertyField(d.probeSettings.lightingMultiplier, multiplierContent);
             if (EditorGUI.EndChangeCheck())
-                d.multiplier.floatValue = Mathf.Max(0.0f, d.multiplier.floatValue);
+                d.probeSettings.lightingMultiplier.floatValue = Mathf.Max(0.0f, d.probeSettings.lightingMultiplier.floatValue);
         }
 
         static readonly GUIContent[] k_ModeContents = { new GUIContent("Baked"), new GUIContent("Custom"), new GUIContent("Realtime") };
@@ -174,12 +167,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected static void Drawer_ReflectionProbeMode(HDProbeUI s, SerializedHDProbe p, Editor owner)
         {
             EditorGUI.BeginChangeCheck();
-            EditorGUI.showMixedValue = p.mode.hasMultipleDifferentValues;
-            EditorGUILayout.IntPopup(p.mode, k_ModeContents, k_ModeValues, CoreEditorUtils.GetContent("Type|'Baked Cubemap' uses the 'Auto Baking' mode from the Lighting window. If it is enabled then baking is automatic otherwise manual bake is needed (use the bake button below). \n'Custom' can be used if a custom cubemap is wanted. \n'Realtime' can be used to dynamically re-render the cubemap during runtime (via scripting)."));
+            EditorGUI.showMixedValue = p.probeSettings.mode.hasMultipleDifferentValues;
+            EditorGUILayout.IntPopup(p.probeSettings.mode, k_ModeContents, k_ModeValues, CoreEditorUtils.GetContent("Type|'Baked Cubemap' uses the 'Auto Baking' mode from the Lighting window. If it is enabled then baking is automatic otherwise manual bake is needed (use the bake button below). \n'Custom' can be used if a custom cubemap is wanted. \n'Realtime' can be used to dynamically re-render the cubemap during runtime (via scripting)."));
             EditorGUI.showMixedValue = false;
             if (EditorGUI.EndChangeCheck())
         {
-                s.SetModeTarget(p.mode.intValue);
+                s.SetModeTarget(p.probeSettings.mode.intValue);
                 p.Apply();
         }
         }

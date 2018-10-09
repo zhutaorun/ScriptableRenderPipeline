@@ -15,13 +15,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             switch (EditMode.editMode)
             {
                 case EditBaseShape:
-                    InfluenceVolumeUI.DrawHandles_EditBase(s.influenceVolume, d.influenceVolume, o, mat, probe);
+                    InfluenceVolumeUI.DrawHandles_EditBase(s.influenceVolume, d.probeSettings.influence, o, mat, probe);
                     break;
                 case EditInfluenceShape:
-                    InfluenceVolumeUI.DrawHandles_EditInfluence(s.influenceVolume, d.influenceVolume, o, mat, probe);
+                    InfluenceVolumeUI.DrawHandles_EditInfluence(s.influenceVolume, d.probeSettings.influence, o, mat, probe);
                     break;
                 case EditInfluenceNormalShape:
-                    InfluenceVolumeUI.DrawHandles_EditInfluenceNormal(s.influenceVolume, d.influenceVolume, o, mat, probe);
+                    InfluenceVolumeUI.DrawHandles_EditInfluenceNormal(s.influenceVolume, d.probeSettings.influence, o, mat, probe);
                     break;
                 case EditCenter:
                     {
@@ -34,8 +34,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                             {
                                 Vector3 newOffset = Quaternion.Inverse(probe.transform.rotation) * (newOffsetWorld - probe.transform.position);
                                 Undo.RecordObjects(new Object[] { probe, probe.transform }, "Translate Influence Position");
-                                d.influenceVolume.offset.vector3Value = newOffset;
-                                d.influenceVolume.Apply();
+                                d.probeSettings.influence.offset.vector3Value = newOffset;
+                                d.probeSettings.influence.Apply();
 
                                 //call modification to legacy ReflectionProbe
                                 probe.influenceVolume.offset = newOffset;

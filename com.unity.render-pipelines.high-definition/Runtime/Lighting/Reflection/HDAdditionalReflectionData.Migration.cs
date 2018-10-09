@@ -2,8 +2,7 @@ using UnityEngine.Serialization;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
-    [RequireComponent(typeof(ReflectionProbe))]
-    public partial class HDAdditionalReflectionData : IVersionable<HDAdditionalReflectionData.Version>
+    public sealed partial class HDAdditionalReflectionData : IVersionable<HDAdditionalReflectionData.Version>
     {
         enum Version
         {

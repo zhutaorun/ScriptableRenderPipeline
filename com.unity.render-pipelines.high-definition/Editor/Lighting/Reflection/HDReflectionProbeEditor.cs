@@ -42,8 +42,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             reflectionProbe.Reset();
             // To avoid duplicating init code we copy default settings to Reset additional data
             // Note: we can't call this code inside the HDAdditionalReflectionData, thus why we don't wrap it in Reset() function
-            if(HDUtils.s_DefaultHDAdditionalReflectionData.influenceVolume == null)
-                HDUtils.s_DefaultHDAdditionalReflectionData.Awake();
             EditorUtility.CopySerialized(HDUtils.s_DefaultHDAdditionalReflectionData, reflectionProbeAdditionalData);
         }
 

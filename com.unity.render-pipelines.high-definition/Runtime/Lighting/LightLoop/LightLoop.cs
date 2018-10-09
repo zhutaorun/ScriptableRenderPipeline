@@ -1502,10 +1502,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 if (add == null)
                 {
                     add = HDUtils.s_DefaultHDAdditionalReflectionData;
-                    if (add.influenceVolume == null)
-                    {
-                        add.Awake(); // We need to init the 'default' data if it isn't
-                    }
                     Vector3 distance = Vector3.one * probe.blendDistance;
                     add.influenceVolume.boxBlendDistancePositive = distance;
                     add.influenceVolume.boxBlendDistanceNegative = distance;

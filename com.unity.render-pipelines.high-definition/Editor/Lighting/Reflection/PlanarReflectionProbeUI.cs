@@ -47,7 +47,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             //override SectionInfluenceVolume to remove normals settings
             Inspector[3] = CED.Select(
                       (s, d, o) => s.influenceVolume,
-                      (s, d, o) => d.influenceVolume,
+                      (s, d, o) => d.probeSettings.influence,
                       InfluenceVolumeUI.SectionFoldoutShapePlanar
                   );
         }

@@ -3,7 +3,7 @@ using UnityEngine.Serialization;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
-    public partial class PlanarReflectionProbe : IVersionable<PlanarReflectionProbe.Version>
+    public sealed partial class PlanarReflectionProbe : IVersionable<PlanarReflectionProbe.Version>
     {
         enum Version
         {

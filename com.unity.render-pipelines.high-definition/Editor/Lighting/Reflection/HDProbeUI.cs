@@ -14,7 +14,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static readonly int k_AnimBoolTotal = k_ReflectionProbeModeCount + k_AnimBoolSingleFieldCount + k_ReflectionInfluenceShapeCount;
 
         public InfluenceVolumeUI influenceVolume = new InfluenceVolumeUI();
-        public CaptureSettingsUI captureSettings = new CaptureSettingsUI();
         public FrameSettingsUI frameSettings = new FrameSettingsUI();
         public ReflectionProxyVolumeComponentUI reflectionProxyVolume = new ReflectionProxyVolumeComponentUI();
 
@@ -68,9 +67,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public override void Reset(SerializedHDProbe data, UnityAction repaint)
         {
-            frameSettings.Reset(data.frameSettings, repaint);
-            captureSettings.Reset(data.captureSettings, repaint);
-            influenceVolume.Reset(data.influenceVolume, repaint);
+            frameSettings.Reset(data.probeSettings.cameraSettings.frameSettings, repaint);
+            influenceVolume.Reset(data.probeSettings.influence, repaint);
             base.Reset(data, repaint);
         }
 
@@ -78,16 +76,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
 
             for (var i = 0; i < k_ReflectionProbeModeCount; i++)
-                m_AnimBools[i].target = i == data.mode.intValue;
+                m_AnimBools[i].target = i == data.probeSettings.mode.intValue;
             
-            SetModeTarget(data.mode.hasMultipleDifferentValues ? -1 : data.mode.intValue);
-            influenceVolume.SetIsSectionExpanded_Shape(data.influenceVolume.shape.hasMultipleDifferentValues ? -1 : data.influenceVolume.shape.intValue);
+            SetModeTarget(data.probeSettings.mode.hasMultipleDifferentValues ? -1 : data.probeSettings.mode.intValue);
+            influenceVolume.SetIsSectionExpanded_Shape(data.probeSettings.influence.shape.hasMultipleDifferentValues ? -1 : data.probeSettings.influence.shape.intValue);
 
-            captureSettings.Update();
-            bool frameSettingsOverriden = data.captureSettings.renderingPath.enumValueIndex == (int)HDAdditionalCameraData.RenderingPath.Custom;
-            isFrameSettingsOverriden.value = frameSettingsOverriden;
-            if (frameSettingsOverriden)
-                frameSettings.Update();
+            //bool frameSettingsOverriden = data.captureSettings.renderingPath.enumValueIndex == (int)HDAdditionalCameraData.RenderingPath.Custom;
+            //isFrameSettingsOverriden.value = frameSettingsOverriden;
+            //if (frameSettingsOverriden)
+            //    frameSettings.Update();
             influenceVolume.Update();
             base.Update();
         }

@@ -3,7 +3,7 @@ using System;
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     [RequireComponent(typeof(ReflectionProbe))]
-    public partial class HDAdditionalReflectionData : HDProbe
+    public sealed partial class HDAdditionalReflectionData : HDProbe
     {
         [SerializeField]
         public struct RenderData
@@ -54,7 +54,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             );
         }
 
-        internal override void Awake()
+        protected override void Awake()
         {
             base.Awake();
             k_Migration.Migrate(this);

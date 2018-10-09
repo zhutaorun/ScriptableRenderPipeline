@@ -1,10 +1,9 @@
 using System;
-using UnityEngine.Assertions;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     [ExecuteAlways]
-    public partial class PlanarReflectionProbe : HDProbe, ISerializationCallbackReceiver
+    public sealed partial class PlanarReflectionProbe : HDProbe
     {
         [Serializable]
         public struct RenderData
@@ -42,15 +41,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         /// <summary>Reference position to mirror to find the capture point. (world space)</summary>
         public Vector3 referencePosition => transform.TransformPoint(m_LocalReferencePosition);
 
-        public void OnBeforeSerialize() { }
-
-        public void OnAfterDeserialize()
-        {
-            Assert.IsNotNull(influenceVolume, "influenceVolume must have an instance at this point. See HDProbe.Awake()");
-            // Keep this for a migration that has been done on HDRP/staging
-        }
-
-        internal override void Awake()
+        protected override void Awake()
         {
             base.Awake();
             k_Migration.Migrate(this);

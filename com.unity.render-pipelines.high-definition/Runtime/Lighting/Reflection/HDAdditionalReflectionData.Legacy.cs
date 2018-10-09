@@ -1,7 +1,6 @@
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
-    [RequireComponent(typeof(ReflectionProbe))]
-    public partial class HDAdditionalReflectionData
+    public sealed partial class HDAdditionalReflectionData
     {
         // We use the legacy ReflectionProbe for the culling system
         // So we need to update its influence (center, size) so the culling behave properly

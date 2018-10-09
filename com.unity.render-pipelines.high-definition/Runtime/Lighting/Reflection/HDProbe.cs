@@ -79,7 +79,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Influence
         /// <summary>InfluenceVolume of the probe.</summary>
         public InfluenceVolume influenceVolume
-        { get => m_ProbeSettings.influence; private set => m_ProbeSettings.influence = value; }
+        {
+            get => m_ProbeSettings.influence ?? (m_ProbeSettings.influence = new InfluenceVolume());
+            private set => m_ProbeSettings.influence = value;
+        }
         internal Matrix4x4 influenceToWorld => influenceVolume.GetInfluenceToWorld(transform);
 
         // Camera
@@ -101,7 +104,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 var settings = m_ProbeSettings;
                 // Special case here, we reference a component that is a wrapper
                 // So we need to update with the actual value for the proxyVolume
-                settings.linkedProxy = m_ProxyVolume?.proxyVolume;
+                settings.proxy = m_ProxyVolume?.proxyVolume;
                 PopulateSettings(ref settings);
                 return settings;
             }
@@ -115,16 +118,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public virtual void PrepareCulling() { }
 
         // Life cycle methods
-        internal virtual void Awake() => k_Migration.Migrate(this);
+        protected virtual void Awake() => k_Migration.Migrate(this);
 
-        internal virtual void OnEnable()
+        void OnEnable()
         {
             PrepareCulling();
             HDProbeSystem.RegisterProbe(this);
         }
-        internal virtual void OnDisable() => HDProbeSystem.UnregisterProbe(this);
+        void OnDisable() => HDProbeSystem.UnregisterProbe(this);
 
-        internal virtual void OnValidate()
+        void OnValidate()
         {
             HDProbeSystem.UnregisterProbe(this);
 
