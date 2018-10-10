@@ -96,8 +96,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
     class HDRPreprocessShaders : IPreprocessShaders
     {
-        HDRenderPipelineAsset m_CurrentHDRPAsset;
-
         // Track list of materials asking for specific preprocessor step
         List<BaseShaderPreprocessor> materialList;
 
@@ -114,8 +112,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public int callbackOrder { get { return 0; } }
         public void OnProcessShader(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> inputData)
         {
+            // TODO: Grab correct configuration/quality asset.
+            HDRenderPipelineAsset hdPipelineAsset = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
+            if (hdPipelineAsset == null)
+                return;
+
             // This test will also return if we are not using HDRenderPipelineAsset
-            if (m_CurrentHDRPAsset == null || !m_CurrentHDRPAsset.allowShaderVariantStripping)
+            if (hdPipelineAsset == null || !hdPipelineAsset.allowShaderVariantStripping)
                 return;
 
             int inputShaderVariantCount = inputData.Count;
@@ -129,7 +132,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 // Note that all strippers cumulate each other, so be aware of any conflict here
                 foreach (BaseShaderPreprocessor material in materialList)
                 {
-                    if (material.ShadersStripper(m_CurrentHDRPAsset, shader, snippet, input))
+                    if (material.ShadersStripper(hdPipelineAsset, shader, snippet, input))
                         removeInput = true;
                 }
 
