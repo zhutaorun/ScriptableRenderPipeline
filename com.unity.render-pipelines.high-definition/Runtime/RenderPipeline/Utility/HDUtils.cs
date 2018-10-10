@@ -19,6 +19,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public static Material GetBlitMaterial()
         {
+            // Caution: In batchmode RenderPipelineManager.currentPipeline return null
             HDRenderPipeline hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
             if (hdPipeline != null)
             {
@@ -32,12 +33,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             get
             {
-                HDRenderPipeline hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
-                if (hdPipeline != null)
-                {
-                    return hdPipeline.renderPipelineSettings;
-                }
-                return null;
+                HDRenderPipelineAsset hdPipelineAsset = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
+
+                return hdPipelineAsset.renderPipelineSettings;
             }
         }
         public static int debugStep { get { return MousePositionDebug.instance.debugStep; } }

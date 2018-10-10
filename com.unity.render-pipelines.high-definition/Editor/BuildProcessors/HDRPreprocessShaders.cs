@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEditor.Build;
 using UnityEditor.Rendering;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 
@@ -103,13 +104,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public HDRPreprocessShaders()
         {
             // TODO: Grab correct configuration/quality asset.
-            HDRenderPipeline hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
-            if (hdPipeline != null)
-            {
-                m_CurrentHDRPAsset = hdPipeline.asset;
+            HDRenderPipelineAsset hdPipelineAsset = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
+            if (hdPipelineAsset == null)
+                return;
 
-                materialList = HDEditorUtils.GetBaseShaderPreprocessorList();
-            }
+            materialList = HDEditorUtils.GetBaseShaderPreprocessorList();
         }
 
         public int callbackOrder { get { return 0; } }
