@@ -280,8 +280,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             float f = hdCamera.camera.farClipPlane;
 
             Vector2 vBufferDepthRange = controller.depthRange.value;
-            vBufferDepthRange.y = Mathf.Clamp(vBufferDepthRange.y, n, f);               // far
-            vBufferDepthRange.x = Mathf.Clamp(vBufferDepthRange.x, n, vBufferDepthRange.y); // near
+            vBufferDepthRange.x = Mathf.Max(vBufferDepthRange.x, n);                           // max near
+            vBufferDepthRange.y = Mathf.Min(vBufferDepthRange.y, f);                           // min far
+            vBufferDepthRange.y = Mathf.Max(vBufferDepthRange.x + 0.01f, vBufferDepthRange.y); // near < far
             float vBufferDepthDistributionUniformity = controller.depthDistributionUniformity.value;
 
             return new VBufferParameters(viewportResolution, vBufferDepthRange, vBufferDepthDistributionUniformity);
