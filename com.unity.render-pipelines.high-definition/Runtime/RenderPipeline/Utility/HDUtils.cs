@@ -19,7 +19,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public static Material GetBlitMaterial()
         {
-            // Caution: In batchmode RenderPipelineManager.currentPipeline return null
             HDRenderPipeline hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
             if (hdPipeline != null)
             {
