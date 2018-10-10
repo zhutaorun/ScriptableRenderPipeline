@@ -74,7 +74,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             m_SerializedHDProbe.Update();
 
             HDProbeUI.DrawHandles(m_UIState, m_SerializedHDProbe, this);
-            m_UIState.DoShortcutKey(this);
+            throw new NotImplementedException("Do: Drawer<TProvider>.DoShortcutKey(this) in child classes");
+            //m_UIState.DoShortcutKey(this);
         }
     }
 }

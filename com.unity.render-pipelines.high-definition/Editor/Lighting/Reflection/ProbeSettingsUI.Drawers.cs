@@ -6,7 +6,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     using _ = CoreEditorUtils;
 
-    internal partial class ProbeSettingsUI
+    sealed internal partial class ProbeSettingsUI
     {
         public static void Draw(
             ProbeSettingsUI s, SerializedProbeSettings d, Editor o,

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
+using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
@@ -12,37 +14,181 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
     partial class HDProbeUI
     {
-        public static readonly CED.IDrawer[] Inspector;
-        
-        static readonly CED.IDrawer SectionPrimarySettings = CED.Group(
-            CED.Action(Drawer_ReflectionProbeMode),
-            CED.FadeGroup((s, p, o, i) => s.IsSectionExpandedReflectionProbeMode((ReflectionProbeMode)i),
-                FadeOption.Indent,
-                CED.space,                                              // Baked
-                CED.noop,                                               // Realtime
-                CED.Action(Drawer_ModeSettingsCustom)                   // Custom
-                )
-            );
+        [Flags]
+        internal enum ToolBar
+        {
+            InfluenceShape = 1 << 0,
+            Blend = 1 << 1,
+            NormalBlend = 1 << 2,
+            CapturePosition = 1 << 3
+        }
+
+        protected interface IProbeUISettingsProvider
+        {
+            ProbeSettingsOverride primarySettingsField { get; }
+            Type customTextureType { get; }
+            ToolBar[] toolbars { get; }
+        }
+
+        const EditMode.SceneViewEditMode EditBaseShape = EditMode.SceneViewEditMode.ReflectionProbeBox;
+        const EditMode.SceneViewEditMode EditInfluenceShape = EditMode.SceneViewEditMode.GridBox;
+        const EditMode.SceneViewEditMode EditInfluenceNormalShape = EditMode.SceneViewEditMode.Collider;
+        const EditMode.SceneViewEditMode EditCenter = EditMode.SceneViewEditMode.GridMove;
+        //Note: EditMode.SceneViewEditMode.ReflectionProbeOrigin is still used
+        //by legacy reflection probe and have its own mecanism that we don't want
+
+        static readonly Dictionary<ToolBar, EditMode.SceneViewEditMode> k_ToolbarMode = new Dictionary<ToolBar, EditMode.SceneViewEditMode>
+        {
+            { ToolBar.InfluenceShape,  EditBaseShape },
+            { ToolBar.Blend,  EditInfluenceShape },
+            { ToolBar.NormalBlend,  EditInfluenceNormalShape },
+            { ToolBar.CapturePosition,  EditCenter }
+        };
+
+        protected struct Drawer<TProvider>
+            where TProvider : struct, IProbeUISettingsProvider
+        {
+            static readonly EditMode.SceneViewEditMode[][] k_ListModes;
+            static readonly GUIContent[][] k_ListContent;
+            static readonly GUIContent[] k_ModeContents = { new GUIContent("Baked"), new GUIContent("Custom"), new GUIContent("Realtime") };
+            static readonly int[] k_ModeValues = { (int)ProbeSettings.Mode.Baked, (int)ProbeSettings.Mode.Custom, (int)ProbeSettings.Mode.Realtime };
+
+            static Drawer()
+            {
+                var provider = new TProvider();
+
+                // Build toolbar content
+                var toolbars = provider.toolbars;
+                k_ListContent = new GUIContent[toolbars.Length][];
+                k_ListModes = new EditMode.SceneViewEditMode[toolbars.Length][];
+
+                var listMode = new List<EditMode.SceneViewEditMode>();
+                var listContent = new List<GUIContent>();
+                for (int i = 0; i < toolbars.Length; ++i)
+                {
+                    listMode.Clear();
+                    listContent.Clear();
+
+                    var toolBar = toolbars[i];
+                    if ((toolBar & ToolBar.InfluenceShape) > 0)
+                    {
+                        listMode.Add(k_ToolbarMode[ToolBar.InfluenceShape]);
+                        listContent.Add(k_ToolbarContents[ToolBar.InfluenceShape]);
+                    }
+                    if ((toolBar & ToolBar.Blend) > 0)
+                    {
+                        listMode.Add(k_ToolbarMode[ToolBar.Blend]);
+                        listContent.Add(k_ToolbarContents[ToolBar.Blend]);
+                    }
+                    if ((toolBar & ToolBar.NormalBlend) > 0)
+                    {
+                        listMode.Add(k_ToolbarMode[ToolBar.NormalBlend]);
+                        listContent.Add(k_ToolbarContents[ToolBar.NormalBlend]);
+                    }
+                    if ((toolBar & ToolBar.CapturePosition) > 0)
+                    {
+                        listMode.Add(k_ToolbarMode[ToolBar.CapturePosition]);
+                        listContent.Add(k_ToolbarContents[ToolBar.CapturePosition]);
+                    }
+                    k_ListContent[i] = listContent.ToArray();
+                    k_ListModes[i] = listMode.ToArray();
+                }
+                
+            }
+
+            public static void Drawer_Toolbars(HDProbeUI s, SerializedHDProbe d, Editor o)
+            {
+                var provider = new TProvider();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.FlexibleSpace();
+                GUI.changed = false;
+
+                for (int i = 0; i < k_ListModes.Length; ++i)
+                    EditMode.DoInspectorToolbar(k_ListModes[i], k_ListContent[i], GetBoundsGetter(o), o);
+
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
+
+            public static void DrawPrimarySettings(HDProbeUI s, SerializedHDProbe p, Editor o)
+            {
+                const string modeGUIContent = "Type|'Baked' uses the 'Auto Baking' mode from the Lighting window. " +
+                    "If it is enabled then baking is automatic otherwise manual bake is needed (use the bake button below). \n" +
+                    "'Custom' can be used if a custom capture is wanted. \n" +
+                    "'Realtime' can be used to dynamically re-render the capture during runtime (every frame).";
+
+                var provider = new TProvider();
+
+                // Probe Mode
+                EditorGUI.BeginChangeCheck();
+                EditorGUI.showMixedValue = p.probeSettings.mode.hasMultipleDifferentValues;
+                EditorGUILayout.IntPopup(p.probeSettings.mode, k_ModeContents, k_ModeValues, _.GetContent(modeGUIContent));
+                EditorGUI.showMixedValue = false;
+                if (EditorGUI.EndChangeCheck())
+                    s.SetModeTarget(p.probeSettings.mode.intValue);
+
+                // Baked: nothing
+                // Realtime: nothing
+                // Custom: specific settings
+                if (p.probeSettings.mode.intValue == (int)ProbeSettings.Mode.Custom)
+                {
+                    EditorGUI.showMixedValue = p.customTexture.hasMultipleDifferentValues;
+                    EditorGUI.BeginChangeCheck();
+                    var customTexture = EditorGUILayout.ObjectField(
+                        _.GetContent("Texture"), p.customTexture.objectReferenceValue, provider.customTextureType, false
+                    );
+                    EditorGUI.showMixedValue = false;
+                    if (EditorGUI.EndChangeCheck())
+                        p.customTexture.objectReferenceValue = customTexture;
+                }
+            }
+
+            public void DoShortcutKey(Editor owner)
+            {
+                var evt = Event.current;
+                if (evt.type != EventType.KeyDown || !evt.shift)
+                    return;
+
+                ToolBar toolbar;
+                if (toolbar_ShortCutKey.TryGetValue(evt.keyCode, out toolbar))
+                {
+                    bool used = false;
+                    foreach (ToolBar t in toolBars)
+                    {
+                        if ((t & toolbar) > 0)
+                        {
+                            used = true;
+                            break;
+                        }
+                    }
+                    if (!used)
+                    {
+                        return;
+                    }
+
+                    var targetMode = toolbar_Mode[toolbar];
+                    var mode = EditMode.editMode == targetMode ? EditMode.SceneViewEditMode.None : targetMode;
+                    EditMode.ChangeEditMode(mode, GetBoundsGetter(owner)(), owner);
+                    evt.Use();
+                }
+            }
+        }
 
         public static readonly CED.IDrawer SectionBakeButton = CED.Action(Drawer_SectionBakeButton);
-        
-        public static readonly CED.IDrawer SectionToolbar = CED.Group(
-            CED.Action(Drawer_Toolbars),
-            CED.space
-            );
 
         public static readonly CED.IDrawer SectionProxyVolumeSettings = CED.FoldoutGroup(
                 proxySettingsHeader,
-                (s, d, o) => s.isSectionExpendedProxyVolume,
+                (s, d, o) => s.isSectionExpandedProxyVolume,
                 FoldoutOption.Indent,
                 CED.Action(Drawer_SectionProxySettings)
                 );
         
         public static readonly CED.IDrawer SectionInfluenceVolume = CED.Select(
-            (s, d, o) => s.influenceVolume,
+            (s, d, o) => s.probeSettings.influence,
             (s, d, o) => d.probeSettings.influence,
             InfluenceVolumeUI.SectionFoldoutShape
-            );
+        );
 
         public static readonly CED.IDrawer SectionShapeCheck = CED.Action(Drawer_DifferentShapeError);
 
@@ -50,14 +196,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             (s, d, o, i) => s.isFrameSettingsOverriden,
             FadeOption.None,
             CED.Select(
-                (s, d, o) => s.frameSettings,
+                (s, d, o) => s.probeSettings.cameraFrameSettings,
                 (s, d, o) => d.probeSettings.cameraSettings.frameSettings,
                 FrameSettingsUI.Inspector(withOverride: true, withXR: false))
             );
 
         public static readonly CED.IDrawer SectionFoldoutAdditionalSettings = CED.FoldoutGroup(
                 additionnalSettingsHeader,
-                (s, d, o) => s.isSectionExpendedAdditionalSettings,
+                (s, d, o) => s.isSectionExpandedAdditionalSettings,
                 FoldoutOption.Indent,
             CED.Action(Drawer_SectionCustomSettings),
             CED.space
@@ -65,17 +211,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static HDProbeUI()
         {
-            Inspector = new[]
-            {
-                SectionToolbar,
-                SectionPrimarySettings,
-                SectionProxyVolumeSettings,
-                SectionInfluenceVolume,
-                SectionShapeCheck,
-                SectionFoldoutAdditionalSettings,
-                SectionFrameSettings,
-                SectionBakeButton
-            };
+            //Inspector = new[]
+            //{
+            //    SectionToolbar,
+            //    SectionPrimarySettings,
+            //    SectionProxyVolumeSettings,
+            //    SectionInfluenceVolume,
+            //    SectionShapeCheck,
+            //    SectionFoldoutAdditionalSettings,
+            //    SectionFrameSettings,
+            //    SectionBakeButton
+            //};
         }
 
         protected static void Drawer_DifferentShapeError(HDProbeUI s, SerializedHDProbe d, Editor o)
@@ -93,24 +239,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
         
-        static GUIStyle disabled;
-        static void PropertyField(SerializedProperty prop, GUIContent content)
-        {
-            if(prop != null)
-            {
-                EditorGUILayout.PropertyField(prop, content);
-            }
-            else
-            {
-                if(disabled == null)
-                {
-                    disabled = new GUIStyle(GUI.skin.label);
-                    disabled.onNormal.textColor *= 0.5f;
-                }
-                EditorGUILayout.LabelField(content, disabled);
-            }
-        }
-
         protected static void Drawer_SectionProxySettings(HDProbeUI s, SerializedHDProbe d, Editor o)
         {
             EditorGUILayout.PropertyField(d.proxyVolume, proxyVolumeContent);
@@ -162,29 +290,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 d.probeSettings.lightingMultiplier.floatValue = Mathf.Max(0.0f, d.probeSettings.lightingMultiplier.floatValue);
         }
 
-        static readonly GUIContent[] k_ModeContents = { new GUIContent("Baked"), new GUIContent("Custom"), new GUIContent("Realtime") };
-        static readonly int[] k_ModeValues = { (int)ReflectionProbeMode.Baked, (int)ReflectionProbeMode.Custom, (int)ReflectionProbeMode.Realtime };
-        protected static void Drawer_ReflectionProbeMode(HDProbeUI s, SerializedHDProbe p, Editor owner)
+        static internal void Drawer_ToolBarButton(ToolBar button, Editor owner, params GUILayoutOption[] options)
         {
+            bool enabled = k_ToolbarMode[button] == EditMode.editMode;
             EditorGUI.BeginChangeCheck();
-            EditorGUI.showMixedValue = p.probeSettings.mode.hasMultipleDifferentValues;
-            EditorGUILayout.IntPopup(p.probeSettings.mode, k_ModeContents, k_ModeValues, CoreEditorUtils.GetContent("Type|'Baked Cubemap' uses the 'Auto Baking' mode from the Lighting window. If it is enabled then baking is automatic otherwise manual bake is needed (use the bake button below). \n'Custom' can be used if a custom cubemap is wanted. \n'Realtime' can be used to dynamically re-render the cubemap during runtime (via scripting)."));
-            EditorGUI.showMixedValue = false;
+            enabled = GUILayout.Toggle(enabled, k_ToolbarContents[button], EditorStyles.miniButton, options);
             if (EditorGUI.EndChangeCheck())
-        {
-                s.SetModeTarget(p.probeSettings.mode.intValue);
-                p.Apply();
-        }
-        }
-
-        protected static void Drawer_ModeSettingsCustom(HDProbeUI s, SerializedHDProbe p, Editor owner)
-        {
-            EditorGUI.showMixedValue = p.customTexture.hasMultipleDifferentValues;
-            EditorGUI.BeginChangeCheck();
-            var customTexture = EditorGUILayout.ObjectField(_.GetContent("Cubemap"), p.customTexture.objectReferenceValue, typeof(Cubemap), false);
-            EditorGUI.showMixedValue = false;
-            if (EditorGUI.EndChangeCheck())
-                p.customTexture.objectReferenceValue = customTexture;
+            {
+                EditMode.SceneViewEditMode targetMode = EditMode.editMode == k_ToolbarMode[button] ? EditMode.SceneViewEditMode.None : k_ToolbarMode[button];
+                EditMode.ChangeEditMode(targetMode, GetBoundsGetter(owner)(), owner);
+            }
         }
 
         #region Bake Button

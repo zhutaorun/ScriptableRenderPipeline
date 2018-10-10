@@ -22,7 +22,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         //temporary to lock UI on realtime until other mode than realtime are usable
         static readonly CED.IDrawer SectionPrimarySettings = CED.Group(
             CED.Action(Drawer_ReflectionProbeMode),
-            CED.FadeGroup((s, p, o, i) => s.IsSectionExpandedReflectionProbeMode((ReflectionProbeMode)i),
+            CED.FadeGroup((s, p, o, i) => s.IsSectionExpandedReflectionProbeMode((ProbeSettings.Mode)i),
                 FadeOption.Indent,
                 CED.space,                                              // Baked
                 CED.noop,                                               // Realtime
@@ -46,7 +46,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             //override SectionInfluenceVolume to remove normals settings
             Inspector[3] = CED.Select(
-                      (s, d, o) => s.influenceVolume,
+                      (s, d, o) => s.probeSettings.influence,
                       (s, d, o) => d.probeSettings.influence,
                       InfluenceVolumeUI.SectionFoldoutShapePlanar
                   );

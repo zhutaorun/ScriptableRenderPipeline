@@ -15,13 +15,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             switch (EditMode.editMode)
             {
                 case EditBaseShape:
-                    InfluenceVolumeUI.DrawHandles_EditBase(s.influenceVolume, d.probeSettings.influence, o, mat, probe);
+                    InfluenceVolumeUI.DrawHandles_EditBase(s.probeSettings.influence, d.probeSettings.influence, o, mat, probe);
                     break;
                 case EditInfluenceShape:
-                    InfluenceVolumeUI.DrawHandles_EditInfluence(s.influenceVolume, d.probeSettings.influence, o, mat, probe);
+                    InfluenceVolumeUI.DrawHandles_EditInfluence(s.probeSettings.influence, d.probeSettings.influence, o, mat, probe);
                     break;
                 case EditInfluenceNormalShape:
-                    InfluenceVolumeUI.DrawHandles_EditInfluenceNormal(s.influenceVolume, d.probeSettings.influence, o, mat, probe);
+                    InfluenceVolumeUI.DrawHandles_EditInfluenceNormal(s.probeSettings.influence, d.probeSettings.influence, o, mat, probe);
                     break;
                 case EditCenter:
                     {
@@ -49,8 +49,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         [DrawGizmo(GizmoType.Selected)]
         internal static void DrawGizmos(HDProbe d, GizmoType gizmoType)
         {
-            HDProbeUI s;
-            if (!HDProbeEditor.TryGetUIStateFor(d, out s))
+            if (!HDProbeEditor.TryGetUIStateFor(d, out HDProbeUI s))
                 return;
 
             var mat = Matrix4x4.TRS(d.transform.position, d.transform.rotation, Vector3.one);
@@ -59,13 +58,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 case EditBaseShape:
                     InfluenceVolumeUI.DrawGizmos(
-                        s.influenceVolume, d.influenceVolume, mat,
+                        s.probeSettings.influence, d.influenceVolume, mat,
                         InfluenceVolumeUI.HandleType.Base,
                         InfluenceVolumeUI.HandleType.All);
                     break;
                 case EditInfluenceShape:
                     InfluenceVolumeUI.DrawGizmos(
-                    s.influenceVolume,
+                    s.probeSettings.influence,
                     d.influenceVolume,
                     mat,
                     InfluenceVolumeUI.HandleType.Influence,
@@ -73,7 +72,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     break;
                 case EditInfluenceNormalShape:
                     InfluenceVolumeUI.DrawGizmos(
-                    s.influenceVolume,
+                    s.probeSettings.influence,
                     d.influenceVolume,
                     mat,
                     InfluenceVolumeUI.HandleType.InfluenceNormal,
@@ -81,11 +80,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     break;
                 default:
                 {
-                    var showedHandles = s.influenceVolume.showInfluenceHandles
+                    var showedHandles = s.probeSettings.influence.showInfluenceHandles
                         ? InfluenceVolumeUI.HandleType.All
                         : InfluenceVolumeUI.HandleType.Base;
                     InfluenceVolumeUI.DrawGizmos(
-                        s.influenceVolume,
+                        s.probeSettings.influence,
                         d.influenceVolume,
                         mat,
                         InfluenceVolumeUI.HandleType.None,

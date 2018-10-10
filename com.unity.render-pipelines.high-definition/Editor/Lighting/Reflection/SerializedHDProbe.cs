@@ -9,7 +9,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         internal SerializedProperty bakedTexture;
         internal SerializedProperty customTexture;
         internal SerializedProbeSettings probeSettings;
-        internal SerializedProperty probeSettingsOverride;
+        internal SerializedProbeSettingsOverride probeSettingsOverride;
         internal SerializedProperty proxyVolume;
 
         internal HDProbe target { get { return serializedObject.targetObject as HDProbe; } }
@@ -22,6 +22,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             customTexture = serializedObject.Find((HDProbe p) => p.customTexture);
             proxyVolume = serializedObject.Find((HDProbe p) => p.proxyVolume);
             probeSettings = new SerializedProbeSettings(serializedObject.FindProperty("m_ProbeSettings"));
+            probeSettingsOverride = new SerializedProbeSettingsOverride(serializedObject.FindProperty("m_ProbeSettingsOverride"));
         }
 
         internal virtual void Update()

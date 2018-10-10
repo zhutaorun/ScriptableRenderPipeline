@@ -27,18 +27,18 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 // Influence editing
                 case EditMode.SceneViewEditMode.ReflectionProbeBox:
-                    InfluenceVolumeUI.DrawGizmos(e.m_UIState.influenceVolume, reflectionData.influenceVolume, mat, InfluenceVolumeUI.HandleType.Base, InfluenceVolumeUI.HandleType.All);
+                    InfluenceVolumeUI.DrawGizmos(e.m_UIState.probeSettings.influence, reflectionData.influenceVolume, mat, InfluenceVolumeUI.HandleType.Base, InfluenceVolumeUI.HandleType.All);
                     break;
                 // Influence fade editing
                 case EditMode.SceneViewEditMode.GridBox:
-                    InfluenceVolumeUI.DrawGizmos(e.m_UIState.influenceVolume, reflectionData.influenceVolume, mat, InfluenceVolumeUI.HandleType.Influence, InfluenceVolumeUI.HandleType.All);
+                    InfluenceVolumeUI.DrawGizmos(e.m_UIState.probeSettings.influence, reflectionData.influenceVolume, mat, InfluenceVolumeUI.HandleType.Influence, InfluenceVolumeUI.HandleType.All);
                     break;
                 // Influence normal fade editing
                 case EditMode.SceneViewEditMode.Collider:
-                    InfluenceVolumeUI.DrawGizmos(e.m_UIState.influenceVolume, reflectionData.influenceVolume, mat, InfluenceVolumeUI.HandleType.InfluenceNormal, InfluenceVolumeUI.HandleType.All);
+                    InfluenceVolumeUI.DrawGizmos(e.m_UIState.probeSettings.influence, reflectionData.influenceVolume, mat, InfluenceVolumeUI.HandleType.InfluenceNormal, InfluenceVolumeUI.HandleType.All);
                     break;
                 default:
-                    InfluenceVolumeUI.DrawGizmos(e.m_UIState.influenceVolume, reflectionData.influenceVolume, mat, InfluenceVolumeUI.HandleType.None, InfluenceVolumeUI.HandleType.Base);
+                    InfluenceVolumeUI.DrawGizmos(e.m_UIState.probeSettings.influence, reflectionData.influenceVolume, mat, InfluenceVolumeUI.HandleType.None, InfluenceVolumeUI.HandleType.Base);
                     break;
             }
         }
@@ -57,7 +57,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 Gizmos_CapturePoint(e);
             }
             var mat = Matrix4x4.TRS(reflectionProbe.transform.position, reflectionProbe.transform.rotation, Vector3.one); 
-            InfluenceVolumeUI.DrawGizmos(e.m_UIState.influenceVolume, reflectionData.influenceVolume, mat, InfluenceVolumeUI.HandleType.None, InfluenceVolumeUI.HandleType.Base);
+            InfluenceVolumeUI.DrawGizmos(e.m_UIState.probeSettings.influence, reflectionData.influenceVolume, mat, InfluenceVolumeUI.HandleType.None, InfluenceVolumeUI.HandleType.Base);
 
             if (!e.sceneViewEditing)
                 return;
