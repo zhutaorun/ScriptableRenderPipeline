@@ -179,7 +179,8 @@ float4 SampleVolumetricLighting(TEXTURE3D_ARGS(VBufferLighting, clampSampler),
                                  false);
 
     // TODO: re-enable tone mapping after implementing pre-exposure.
-    return DelinearizeRGBA(float4(/*FastTonemapInvert*/(value.rgb), value.a));
+    // If volumetrics are disabled, the black texture is set, so we have to clamp the alpha to avoid NaNs.
+    return DelinearizeRGBA(float4(/*FastTonemapInvert*/(value.rgb), max(value.a, FLT_MIN)));
 }
 
 #endif // UNITY_VBUFFER_INCLUDED
