@@ -249,6 +249,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             m_SerializedAdditionalLightData.Update();
             m_SerializedAdditionalShadowData.Update();
 
+            //add space before the first collapsable area
+            EditorGUILayout.Space();
+
             // Disable the default light editor for the release, it is just use for development
             /*
             // Temporary toggle to go back to the old editor & separated additional datas
@@ -283,9 +286,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             if (settings.shadowsType.enumValueIndex != (int)LightShadows.None)
                 DrawFoldout(settings.shadowsType, "Shadows", DrawShadows);
-
-            CoreEditorUtils.DrawSplitter();
-            EditorGUILayout.Space();
 
             m_SerializedAdditionalShadowData.ApplyModifiedProperties();
             m_SerializedAdditionalLightData.ApplyModifiedProperties();
