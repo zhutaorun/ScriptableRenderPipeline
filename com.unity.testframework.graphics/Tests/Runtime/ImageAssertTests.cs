@@ -8,6 +8,12 @@ namespace UnityEngine.TestTools.Graphics.Tests
         [Test]
         public void AreEqual_WithNullCamera_ThrowsArgumentNullException()
         {
+            Assert.That(() => ImageAssert.AreEqual(new Texture2D(1, 1), (Camera)null), Throws.ArgumentNullException);
+        }
+
+        [Test]
+        public void AreEqual_WithNullCameras_ThrowsArgumentNullException()
+        {
             Assert.That(() => ImageAssert.AreEqual(new Texture2D(1, 1), (IEnumerable<Camera>)null), Throws.ArgumentNullException);
         }
 

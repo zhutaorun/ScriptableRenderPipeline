@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.LightweightPipeline
@@ -97,6 +98,14 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 cameraData.postProcessEnabled || cameraData.requiresOpaqueTexture || isTargetTexture2DArray || !cameraData.isDefaultViewport;
         }
 
+
+        List<IAfterDepthPrePass> m_AfterDepthpasses = new List<IAfterDepthPrePass>(10);
+        List<IAfterOpaquePass> m_AfterOpaquePasses = new List<IAfterOpaquePass>(10);
+        List<IAfterOpaquePostProcess> m_AfterOpaquePostProcessPasses = new List<IAfterOpaquePostProcess>(10);
+        List<IAfterSkyboxPass> m_AfterSkyboxPasses = new List<IAfterSkyboxPass>(10);
+        List<IAfterTransparentPass> m_AfterTransparentPasses = new List<IAfterTransparentPass>(10);
+        List<IAfterRender> m_AfterRenderPasses = new List<IAfterRender>(10);
+
         public void Setup(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
             Init();
@@ -128,19 +137,19 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             renderer.EnqueuePass(m_SetupForwardRenderingPass);
 
-            var afterDepthpasses = camera.GetComponents<IAfterDepthPrePass>();
-            var afterOpaquePasses = camera.GetComponents<IAfterOpaquePass>();
-            var afterOpaquePostProcessPasses = camera.GetComponents<IAfterOpaquePostProcess>();
-            var afterSkyboxPasses = camera.GetComponents<IAfterSkyboxPass>();
-            var afterTransparentPasses = camera.GetComponents<IAfterTransparentPass>();
-            var afterRenderPasses = camera.GetComponents<IAfterRender>();
+            camera.GetComponents(m_AfterDepthpasses);
+            camera.GetComponents(m_AfterOpaquePasses);
+            camera.GetComponents(m_AfterOpaquePostProcessPasses);
+            camera.GetComponents(m_AfterSkyboxPasses);
+            camera.GetComponents(m_AfterTransparentPasses);
+            camera.GetComponents(m_AfterRenderPasses);
 
             if (requiresDepthPrepass)
             {
                 m_DepthOnlyPass.Setup(baseDescriptor, m_DepthTexture, SampleCount.One);
                 renderer.EnqueuePass(m_DepthOnlyPass);
 
-                foreach (var pass in afterDepthpasses)
+                foreach (var pass in m_AfterDepthpasses)
                     renderer.EnqueuePass(pass.GetPassToEnqueue(m_DepthOnlyPass.descriptor, m_DepthTexture));
             }
 
@@ -152,12 +161,12 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             }
 
             bool requiresRenderToTexture = RequiresIntermediateColorTexture(ref renderingData.cameraData, baseDescriptor)
-                    || afterDepthpasses.Length != 0
-                    || afterOpaquePasses.Length != 0
-                    || afterOpaquePostProcessPasses.Length != 0
-                    || afterSkyboxPasses.Length != 0
-                    || afterTransparentPasses.Length != 0
-                    || afterRenderPasses.Length != 0;
+                    || m_AfterDepthpasses.Count != 0
+                    || m_AfterOpaquePasses.Count != 0
+                    || m_AfterOpaquePostProcessPasses.Count != 0
+                    || m_AfterSkyboxPasses.Count != 0
+                    || m_AfterTransparentPasses.Count != 0
+                    || m_AfterRenderPasses.Count != 0;
 
             RenderTargetHandle colorHandle = RenderTargetHandle.CameraTarget;
             RenderTargetHandle depthHandle = RenderTargetHandle.CameraTarget;
@@ -183,7 +192,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             m_RenderOpaqueForwardPass.Setup(baseDescriptor, colorHandle, depthHandle, ScriptableRenderer.GetCameraClearFlag(camera), camera.backgroundColor, rendererConfiguration);
             renderer.EnqueuePass(m_RenderOpaqueForwardPass);
-            foreach (var pass in afterOpaquePasses)
+            foreach (var pass in m_AfterOpaquePasses)
                 renderer.EnqueuePass(pass.GetPassToEnqueue(baseDescriptor, colorHandle, depthHandle));
 
             if (renderingData.cameraData.postProcessEnabled &&
@@ -196,7 +205,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
                 colorHandle = m_ColorAttachmentAfterOpaquePost;
 
-                foreach (var pass in afterOpaquePostProcessPasses)
+                foreach (var pass in m_AfterOpaquePostProcessPasses)
                     renderer.EnqueuePass(pass.GetPassToEnqueue(baseDescriptor, colorHandle, depthHandle));
             }
 
@@ -206,7 +215,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 renderer.EnqueuePass(m_DrawSkyboxPass);
             }
 
-            foreach (var pass in afterSkyboxPasses)
+            foreach (var pass in m_AfterSkyboxPasses)
                 renderer.EnqueuePass(pass.GetPassToEnqueue(baseDescriptor, colorHandle, depthHandle));
 
             if (renderingData.cameraData.requiresDepthTexture && !requiresDepthPrepass)
@@ -224,10 +233,10 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             m_RenderTransparentForwardPass.Setup(baseDescriptor, colorHandle, depthHandle, rendererConfiguration);
             renderer.EnqueuePass(m_RenderTransparentForwardPass);
 
-            foreach (var pass in afterTransparentPasses)
+            foreach (var pass in m_AfterTransparentPasses)
                 renderer.EnqueuePass(pass.GetPassToEnqueue(baseDescriptor, colorHandle, depthHandle));
 
-            bool afterRenderExists = afterRenderPasses.Length != 0;
+            bool afterRenderExists = m_AfterRenderPasses.Count != 0;
 
             // if we have additional filters
             // we need to stay in a RT
@@ -246,7 +255,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 }
 
                 //execute after passes
-                foreach (var pass in afterRenderPasses)
+                foreach (var pass in m_AfterRenderPasses)
                     renderer.EnqueuePass(pass.GetPassToEnqueue(baseDescriptor, colorHandle, depthHandle));
 
                 //now blit into the final target
