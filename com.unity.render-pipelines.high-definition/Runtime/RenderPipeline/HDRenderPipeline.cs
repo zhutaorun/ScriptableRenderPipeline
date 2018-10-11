@@ -70,12 +70,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         // Renderer Bake configuration can vary depends on if shadow mask is enabled or no
         RendererConfiguration m_currentRendererConfigurationBakedLighting = HDUtils.k_RendererConfigurationBakedLighting;
-        Material m_CopyStencilForNoLighting;
+        Material m_CopyStencil;
         Material m_CopyDepth;
         GPUCopy m_GPUCopy;
         MipGenerator m_MipGenerator;
 
-        IBLFilterGGX m_IBLFilterGGX = null;
+        IBLFilterBSDF[] m_IBLFilterArray = null;
 
         ComputeShader m_ScreenSpaceReflectionsCS { get { return m_Asset.renderPipelineResources.shaders.screenSpaceReflectionsCS; } }
         int m_SsrTracingKernel      = -1;
@@ -158,7 +158,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Clear                           = 0,    // 0x0
             LightingMask                    = 7,    // 0x7  - 3 bit
             Decals                          = 8,    // 0x8  - 1 bit
-            DecalsForwardOutputNormalBuffer = 16,   // 0x10  - 1 bit
+            DecalsForwardOutputNormalBuffer = 16,   // 0x10 - 1 bit
+            DoesntReceiveSSR                = 32,   // 0x20 - 1 bit
             ObjectVelocity                  = 128,  // 0x80 - 1 bit
             All                             = 255   // 0xFF - 8 bit
         }
@@ -270,9 +271,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_SsrReprojectionKernel = m_ScreenSpaceReflectionsCS.FindKernel("ScreenSpaceReflectionsReprojection");
 
             // General material
-            m_CopyStencilForNoLighting = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.shaders.copyStencilBufferPS);
-            m_CopyStencilForNoLighting.SetInt(HDShaderIDs._StencilRef, (int)StencilLightingUsage.NoLighting);
-            m_CopyStencilForNoLighting.SetInt(HDShaderIDs._StencilMask, (int)StencilBitMask.LightingMask);
+            m_CopyStencil = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.shaders.copyStencilBufferPS);
+
             m_CameraMotionVectorsMaterial = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.shaders.cameraMotionVectorsPS);
             m_DecalNormalBufferMaterial = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.shaders.decalNormalBufferPS);
 
@@ -282,11 +282,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_MaterialList.ForEach(material => material.Build(asset));
 
-            m_IBLFilterGGX = new IBLFilterGGX(asset.renderPipelineResources, m_MipGenerator);
+            if(m_Asset.renderPipelineSettings.lightLoopSettings.supportFabricConvolution)
+            {
+                m_IBLFilterArray = new IBLFilterBSDF[2];
+                m_IBLFilterArray[0] = new IBLFilterGGX(asset.renderPipelineResources, m_MipGenerator);
+                m_IBLFilterArray[1] = new IBLFilterCharlie(asset.renderPipelineResources, m_MipGenerator);
+            }
+            else
+            {
+                m_IBLFilterArray = new IBLFilterBSDF[1];
+                m_IBLFilterArray[0] = new IBLFilterGGX(asset.renderPipelineResources, m_MipGenerator);
+            }
 
-            m_LightLoop.Build(asset, m_IBLFilterGGX);
+            m_LightLoop.Build(asset, m_IBLFilterArray);
 
-            m_SkyManager.Build(asset, m_IBLFilterGGX);
+            m_SkyManager.Build(asset, m_IBLFilterArray);
 
             m_VolumetricLightingSystem.Build(asset);
 
@@ -570,7 +580,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_MaterialList.ForEach(material => material.Cleanup());
 
             CoreUtils.Destroy(m_AOResolveMaterial);
-            CoreUtils.Destroy(m_CopyStencilForNoLighting);
+            CoreUtils.Destroy(m_CopyStencil);
             CoreUtils.Destroy(m_CameraMotionVectorsMaterial);
             CoreUtils.Destroy(m_DecalNormalBufferMaterial);
 
@@ -587,7 +597,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_SharedRTManager.Cleanup();
             m_SkyManager.Cleanup();
             m_VolumetricLightingSystem.Cleanup();
-            m_IBLFilterGGX.Cleanup();
+            for(int bsdfIdx = 0; bsdfIdx < m_IBLFilterArray.Length; ++bsdfIdx)
+            {
+                m_IBLFilterArray[bsdfIdx].Cleanup();
+            }
 
             HDCamera.ClearAll();
 
@@ -897,8 +910,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 // Init material if needed
                 // TODO: this should be move outside of the camera loop but we have no command buffer, ask details to Tim or Julien to do this
-                if (!m_IBLFilterGGX.IsInitialized())
-                    m_IBLFilterGGX.Initialize(cmd);
+                for(int bsdfIdx = 0; bsdfIdx < m_IBLFilterArray.Length; ++bsdfIdx)
+                {
+                    if (!m_IBLFilterArray[bsdfIdx].IsInitialized())
+                        m_IBLFilterArray[bsdfIdx].Initialize(cmd);
+                }
+
 
                 foreach (var material in m_MaterialList)
                     material.RenderInit(cmd);
@@ -1124,9 +1141,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         // TODO: Everything here (SSAO, Shadow, Build light list, deferred shadow, material and light classification can be parallelize with Async compute)
                         RenderSSAO(cmd, hdCamera, renderContext, postProcessLayer);
 
-                        // Needs the depth pyramid and motion vectors, as well as the render of the previous frame.
-                        RenderSSR(hdCamera, cmd);
-
                         // Clear and copy the stencil texture needs to be moved to before we invoke the async light list build,
                         // otherwise the async compute queue can end up using that texture before the graphics queue is done with it.
                         // TODO: Move this code inside LightLoop
@@ -1137,11 +1151,36 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             {
                                 HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetStencilBufferCopy(), ClearFlag.Color, CoreUtils.clearColorAllBlack);
 
-                                // In the material classification shader we will simply test is we are no lighting
-                                // Use ShaderPassID 1 => "Pass 1 - Write 1 if value different from stencilRef to output"
-                                HDUtils.DrawFullScreen(cmd, hdCamera, m_CopyStencilForNoLighting, m_SharedRTManager.GetStencilBufferCopy(), m_SharedRTManager.GetDepthStencilBuffer(), null, 1);
+                                HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer());
+                                cmd.SetRandomWriteTarget(1, m_SharedRTManager.GetStencilBufferCopy());
+
+                                m_CopyStencil.SetInt(HDShaderIDs._StencilRef, (int)StencilLightingUsage.NoLighting);
+                                m_CopyStencil.SetInt(HDShaderIDs._StencilMask, (int)StencilBitMask.LightingMask);
+
+                                // Use ShaderPassID 3 => "Pass 3 - Initialize Stencil UAV copy with 1 if value different from stencilRef to output"
+                                CoreUtils.DrawFullScreen(cmd, m_CopyStencil, null, 3);
+                                cmd.ClearRandomWriteTargets();
+                            }
+
+                            if(hdCamera.frameSettings.enableSSR)
+                            {
+                                using (new ProfilingSample(cmd, "Update stencil copy for SSR Exclusion", CustomSamplerId.UpdateStencilCopyForSSRExclusion.GetSampler()))
+                                {
+                                    HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer());
+                                    cmd.SetRandomWriteTarget(1, m_SharedRTManager.GetStencilBufferCopy());
+
+                                    m_CopyStencil.SetInt(HDShaderIDs._StencilRef, (int)StencilBitMask.DoesntReceiveSSR);
+                                    m_CopyStencil.SetInt(HDShaderIDs._StencilMask, (int)StencilBitMask.DoesntReceiveSSR);
+
+                                    // Pass 4 performs an OR between the already present content of the copy and the stencil ref, if stencil test passes. 
+                                    CoreUtils.DrawFullScreen(cmd, m_CopyStencil, null, 4);
+                                    cmd.ClearRandomWriteTargets();
+                                }
                             }
                         }
+
+                        // Needs the depth pyramid and motion vectors, as well as the render of the previous frame.
+                        RenderSSR(hdCamera, cmd);
 
                         StopStereoRendering(cmd, renderContext, hdCamera);
 
@@ -1965,9 +2004,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cmd.SetComputeFloatParam(cs, HDShaderIDs._SsrRoughnessFadeEndTimesRcpLength, roughnessFadeEndTimesRcpLength);
                 cmd.SetComputeIntParam(  cs, HDShaderIDs._SsrDepthPyramidMaxMip,             info.mipLevelCount);
                 cmd.SetComputeFloatParam(cs, HDShaderIDs._SsrEdgeFadeRcpLength,              edgeFadeRcpLength);
+                cmd.SetComputeIntParam(  cs, HDShaderIDs._SsrStencilExclusionValue,          hdCamera.frameSettings.enableForwardRenderingOnly ? -1 : (int)StencilBitMask.DoesntReceiveSSR);
 
                 // cmd.SetComputeTextureParam(cs, kernel, "_SsrDebugTexture",    m_SsrDebugTexture);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._SsrHitPointTexture, m_SsrHitPointTexture);
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._StencilTexture, m_SharedRTManager.GetStencilBufferCopy());
 
                 cmd.SetComputeBufferParam(cs, kernel, HDShaderIDs._SsrDepthPyramidMipOffsets, info.GetOffsetBufferData(m_DepthPyramidMipLevelOffsetsBuffer));
 
@@ -1990,9 +2031,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ColorPyramidTexture, RuntimeUtilities.whiteTexture);
                 }
-
+  
                 cmd.DispatchCompute(cs, kernel, HDUtils.DivRoundUp(hdCamera.actualWidth, 8), HDUtils.DivRoundUp(hdCamera.actualHeight, 8), 1);
             }
+
+            PushFullScreenDebugTexture(hdCamera, cmd, m_SsrLightingTexture, FullScreenDebugMode.ScreenSpaceReflections);
+
         }
 
         void RenderColorPyramid(HDCamera hdCamera, CommandBuffer cmd, bool isPreRefraction)
@@ -2245,6 +2289,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cmd.SetGlobalTexture(HDShaderIDs._DebugFullScreenTexture, m_DebugFullScreenTempBuffer);
                     // TODO: Replace with command buffer call when available
                     m_DebugFullScreen.SetFloat(HDShaderIDs._FullScreenDebugMode, (float)m_CurrentDebugDisplaySettings.fullScreenDebugMode);
+                    HDUtils.PackedMipChainInfo info = m_SharedRTManager.GetDepthBufferMipChainInfo();
+                    m_DebugFullScreen.SetInt(HDShaderIDs._DebugDepthPyramidMip, (int)(m_CurrentDebugDisplaySettings.fullscreenDebugMip * info.mipLevelCount));
+                    m_DebugFullScreen.SetBuffer(HDShaderIDs._DebugDepthPyramidOffsets, info.GetOffsetBufferData(m_DepthPyramidMipLevelOffsetsBuffer));
                     // Everything we have capture is flipped (as it happen before FinalPass/postprocess/Blit. So if we are not in SceneView
                     // (i.e. we have perform a flip, we need to flip the input texture)
                     HDUtils.DrawFullScreen(cmd, hdCamera, m_DebugFullScreen, (RenderTargetIdentifier)BuiltinRenderTextureType.CameraTarget);
