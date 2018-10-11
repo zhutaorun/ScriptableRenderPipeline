@@ -69,6 +69,12 @@ EditorBuildSettings:
     path: Assets/GraphicTests/Scenes/1x_Materials/1501_Fabric.unity
     guid: ce2b258da0df8d245b659390b6c2ac51
   - enabled: 1
+    path: Assets/GraphicTests/Scenes/1x_Materials/1502_Fabric_Env_NoConvolution.unity
+    guid: 57643150de083ba4488c5cb3b4854065
+  - enabled: 1
+    path: Assets/GraphicTests/Scenes/1x_Materials/1502_Fabric_Env_Convolution.unity
+    guid: 54443f41976c13246b6b67ce1dc2a06f
+  - enabled: 1
     path: Assets/GraphicTests/Scenes/1x_Materials/1601_TerrainLit.unity
     guid: d52dbea61cf2f884fadf33f8cc6afc0c
   - enabled: 1
