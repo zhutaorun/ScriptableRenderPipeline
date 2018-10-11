@@ -41,7 +41,7 @@ struct Gradient
 #endif
 
 #ifndef SHADERGRAPH_BAKED_GI
-    #define SHADERGRAPH_BAKED_GI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap) shadergraph_BakedGI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap)
+    #define SHADERGRAPH_BAKED_GI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap, applyScaling) shadergraph_BakedGI(positionWS, normalWS, uvStaticLightmap, uvDynamicLightmap, applyScaling)
 #endif
 
 #ifndef SHADERGRAPH_REFLECTION_PROBE
@@ -78,7 +78,7 @@ float3 shadergraph_SampleSceneColor(float2 uv)
     return 0;
 }
 
-float3 shadergraph_BakedGI(float3 positionWS, float3 normalWS, float2 uvStaticLightmap, float2 uvDynamicLightmap)
+float3 shadergraph_BakedGI(float3 positionWS, float3 normalWS, float2 uvStaticLightmap, float2 uvDynamicLightmap, bool applyScaling)
 {
     return 0;
 }
