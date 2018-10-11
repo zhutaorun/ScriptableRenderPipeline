@@ -16,6 +16,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public Vector3   positiveFade;
         public Vector3   negativeFade;
+        public Vector3   size;
         public bool      invertFade;
 
         public  int      textureIndex; // This shouldn't be public... Internal, maybe?
@@ -35,6 +36,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             positiveFade          = Vector3.zero;
             negativeFade          = Vector3.zero;
+            size                  = Vector3.one;
+
             invertFade            = false;
         }
 
