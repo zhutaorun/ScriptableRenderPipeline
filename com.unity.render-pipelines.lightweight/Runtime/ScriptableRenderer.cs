@@ -289,6 +289,18 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             return desc;
         }
 
+        public static bool Requ iresIntermediateColorTexture(ref CameraData cameraData, RenderTextureDescriptor baseDescriptor)
+        {
+            if (cameraData.isOffscreenRender)
+                return false;
+
+            bool isScaledRender = !Mathf.Approximately(cameraData.renderScale, 1.0f);
+            bool isTargetTexture2DArray = baseDescriptor.dimension == TextureDimension.Tex2DArray;
+            bool noAutoResolveMsaa = cameraData.msaaSamples > 1 && !SystemInfo.supportsMultisampleAutoResolve;
+            return noAutoResolveMsaa || cameraData.isSceneViewCamera || isScaledRender || cameraData.isHdrEnabled ||
+                   cameraData.postProcessEnabled || cameraData.requiresOpaqueTexture || isTargetTexture2DArray || !cameraData.isDefaultViewport;
+        }
+
         public static ClearFlag GetCameraClearFlag(Camera camera)
         {
             if (camera == null)

@@ -33,9 +33,14 @@
     uint _NumTileClusteredX;
     uint _NumTileClusteredY;
     
-    real4 _ShadowAtlasSize;
+    float4 _ShadowAtlasSize;
+    float4 _CascadeShadowAtlasSize;
+    uint _CascadeShadowCount;
 
     float4x4 _Env2DCaptureVP[MAX_ENV2D_LIGHT];
+
+    // TODO: move this elsewhere
+    int _DebugSingleShadowIndex;
 
 #else
 
