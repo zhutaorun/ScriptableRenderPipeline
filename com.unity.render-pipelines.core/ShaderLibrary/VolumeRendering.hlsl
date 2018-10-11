@@ -155,7 +155,8 @@ void ImportanceSamplePunctualLight(real rndVal, real3 lightPosition, real lightS
     // Same but faster:
     // atan(y) - atan(x) = atan((y - x) / (1 + x * y))
     // tan(atan(x) + z)  = (x * cos(z) + sin(z)) / (cos(z) - x * sin(z))
-    real tanGamma = (y - x) * rcp(max(0, 1 + x * y));
+    // Both the tangent and the angle  cannot be negative.
+    real tanGamma = abs((y - x) * rcp(max(0, 1 + x * y)));
     real gamma    = FastATanPos(tanGamma);
     real z        = rndVal * gamma;
     real numer    = x * cos(z) + sin(z);
