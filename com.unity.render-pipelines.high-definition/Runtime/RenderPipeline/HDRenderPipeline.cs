@@ -208,9 +208,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Material GetBlitMaterial() { return m_Blit; }
 
         ComputeBuffer m_DepthPyramidMipLevelOffsetsBuffer = null;
-
-        XRGraphics getXRSettings = new XRGraphics(); 
-
+        
         public HDRenderPipeline(HDRenderPipelineAsset asset)
         {
             m_Asset = asset;
