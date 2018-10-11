@@ -2,8 +2,8 @@
 // Includes
 //-----------------------------------------------------------------------------
 
-// SurfaceData is define in Lit.cs which generate Lit.cs.hlsl
-#include "../Lit/Lit.cs.hlsl"
+// SurfaceData is define in Hair.cs which generate Hair.cs.hlsl
+#include "Hair.cs.hlsl"
 // Those define allow to include desired SSS/Transmission functions
 #define MATERIAL_INCLUDE_SUBSURFACESCATTERING
 #define MATERIAL_INCLUDE_TRANSMISSION
@@ -75,7 +75,7 @@ TEXTURE2D(_ShadowMaskTexture); // Alias for shadow mask, so we don't need to kno
 #define GBUFFERMATERIAL_SHADOWMASK 0
 #endif
 
-// Caution: This must be in sync with Lit.cs GetMaterialGBufferCount()
+// Caution: This must be in sync with Hair.cs GetMaterialGBufferCount()
 #define GBUFFERMATERIAL_COUNT (4 + GBUFFERMATERIAL_LIGHT_LAYERS + GBUFFERMATERIAL_SHADOWMASK)
 
 #if defined(LIGHT_LAYERS) && defined(SHADOWS_SHADOWMASK)
@@ -852,14 +852,14 @@ void GetSurfaceDataDebug(uint paramId, SurfaceData surfaceData, inout float3 res
     // Overide debug value output to be more readable
     switch (paramId)
     {
-    case DEBUGVIEW_LIT_SURFACEDATA_NORMAL_VIEW_SPACE:
+    case DEBUGVIEW_HAIR_SURFACEDATA_NORMAL_VIEW_SPACE:
         // Convert to view space
         result = TransformWorldToViewDir(surfaceData.normalWS) * 0.5 + 0.5;
         break;
-    case DEBUGVIEW_LIT_SURFACEDATA_MATERIAL_FEATURES:
+    case DEBUGVIEW_HAIR_SURFACEDATA_MATERIAL_FEATURES:
         result = (surfaceData.materialFeatures.xxx) / 255.0; // Aloow to read with color picker debug mode
         break;
-    case DEBUGVIEW_LIT_SURFACEDATA_INDEX_OF_REFRACTION:
+    case DEBUGVIEW_HAIR_SURFACEDATA_INDEX_OF_REFRACTION:
         result = saturate((surfaceData.ior - 1.0) / 1.5).xxx;
         break;
     }
@@ -872,14 +872,14 @@ void GetBSDFDataDebug(uint paramId, BSDFData bsdfData, inout float3 result, inou
     // Overide debug value output to be more readable
     switch (paramId)
     {
-    case DEBUGVIEW_LIT_BSDFDATA_NORMAL_VIEW_SPACE:
+    case DEBUGVIEW_HAIR_BSDFDATA_NORMAL_VIEW_SPACE:
         // Convert to view space
         result = TransformWorldToViewDir(bsdfData.normalWS) * 0.5 + 0.5;
         break;
-    case DEBUGVIEW_LIT_BSDFDATA_MATERIAL_FEATURES:
+    case DEBUGVIEW_HAIR_BSDFDATA_MATERIAL_FEATURES:
         result = (bsdfData.materialFeatures.xxx) / 255.0; // Aloow to read with color picker debug mode
         break;
-    case DEBUGVIEW_LIT_BSDFDATA_IOR:
+    case DEBUGVIEW_HAIR_BSDFDATA_IOR:
         result = saturate((bsdfData.ior - 1.0) / 1.5).xxx;
         break;
     }
