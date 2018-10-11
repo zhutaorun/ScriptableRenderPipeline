@@ -139,12 +139,12 @@
 #endif
 
 // Include language header
-#if defined(SHADER_API_D3D11)
-#include "API/D3D11.hlsl"
+#if defined(SHADER_API_XBOXONE)
+#include "API/XBoxOne.hlsl"
 #elif defined(SHADER_API_PSSL)
 #include "API/PSSL.hlsl"
-#elif defined(SHADER_API_XBOXONE)
-#include "API/XBoxOne.hlsl"
+#elif defined(SHADER_API_D3D11)
+#include "API/D3D11.hlsl"
 #elif defined(SHADER_API_METAL)
 #include "API/Metal.hlsl"
 #elif defined(SHADER_API_VULKAN)
@@ -376,13 +376,6 @@ real FastATanPos(real x)
     return (x < 1.0) ? poly : HALF_PI - poly;
 }
 
-#if (SHADER_TARGET >= 45)
-uint FastLog2(uint x)
-{
-    return firstbithigh(x);
-}
-#endif
-
 // 4 VGPR, 16 FR (12 FR, 1 QR), 2 scalar
 // input [-infinity, infinity] and output [-PI/2, PI/2]
 real FastATan(real x)
@@ -390,6 +383,13 @@ real FastATan(real x)
     real t0 = FastATanPos(abs(x));
     return (x < 0.0) ? -t0 : t0;
 }
+
+#if (SHADER_TARGET >= 45)
+uint FastLog2(uint x)
+{
+    return firstbithigh(x);
+}
+#endif
 
 // Using pow often result to a warning like this
 // "pow(f, e) will not work for negative f, use abs(f) or conditionally handle negative values if you expect them"
