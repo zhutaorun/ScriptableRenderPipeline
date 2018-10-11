@@ -12,8 +12,8 @@ using UnityEngine.Experimental.Rendering.HDPipeline;
 namespace UnityEditor.ShaderGraph
 {
     [Serializable]
-    [Title("Master", "HDLit")]
-    public class HDLitMasterNode : MasterNode<IHDHairSubShader>, IMayRequirePosition, IMayRequireNormal, IMayRequireTangent
+    [Title("Master", "HDHair")]
+    public class HDHairMasterNode : MasterNode<IHDHairSubShader>, IMayRequirePosition, IMayRequireNormal, IMayRequireTangent
     {
         public const string AlbedoSlotName = "Albedo";
         public const string AlbedoDisplaySlotName = "BaseColor";
@@ -486,7 +486,7 @@ namespace UnityEditor.ShaderGraph
 
         [SerializeField]
         float m_SpecularAAScreenSpaceVariance;
-    
+
         public float specularAAScreenSpaceVariance
         {
             get { return m_SpecularAAScreenSpaceVariance; }
@@ -546,14 +546,14 @@ namespace UnityEditor.ShaderGraph
             }
         }
 
-        public HDLitMasterNode()
+        public HDHairMasterNode()
         {
             UpdateNodeAfterDeserialization();
         }
 
         public override string documentationURL
         {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/HD-Lit-Master-Node"; }
+            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/HD-Hair-Master-Node"; }
         }
 
         public bool HasRefraction()
@@ -569,7 +569,7 @@ namespace UnityEditor.ShaderGraph
         public sealed override void UpdateNodeAfterDeserialization()
         {
             base.UpdateNodeAfterDeserialization();
-            name = "HD Lit Master";
+            name = "HD Hair Master";
 
             List<int> validSlots = new List<int>();
             if (MaterialTypeUsesSlotMask(SlotMask.Position))
@@ -710,7 +710,7 @@ namespace UnityEditor.ShaderGraph
 
         protected override VisualElement CreateCommonSettingsElement()
         {
-            return new HDLitSettingsView(this);
+            return new HDHairSettingsView(this);
         }
 
         public NeededCoordinateSpace RequiresNormal(ShaderStageCapability stageCapability)
@@ -763,7 +763,7 @@ namespace UnityEditor.ShaderGraph
 
         public bool RequiresSplitLighting()
         {
-            return materialType == HDLitMasterNode.MaterialType.SubsurfaceScattering;
+            return materialType == HDHairMasterNode.MaterialType.SubsurfaceScattering;
         }
 
         public override void CollectShaderProperties(PropertyCollector collector, GenerationMode generationMode)
