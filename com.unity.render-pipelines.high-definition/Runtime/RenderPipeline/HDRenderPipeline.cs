@@ -299,7 +299,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_DepthPyramidMipLevelOffsetsBuffer = new ComputeBuffer(15, sizeof(int) * 2);
 
-            XRGraphics.GetXRSettings().CopyTo(getXRSettings); // Make sure render texture descriptor is up-to-date prior to RT allocation
             InitializeRenderTextures();
 
             // For debugging
@@ -828,9 +827,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // but we keep the dirty state to correctly reset other camera that use RenderingPath.Default.
             bool assetFrameSettingsIsDirty = m_Asset.frameSettingsIsDirty;
             m_Asset.UpdateDirtyFrameSettings();
-
-            // Update XR
-            getXRSettings.Update(); 
 
             // We need to sort by target RenderTexture because we need to accumulate cameras rendering in the same RT.
             // In this case (and if there is more than one camera with the same target) we need to blit to the final target only for the last camera of the group.

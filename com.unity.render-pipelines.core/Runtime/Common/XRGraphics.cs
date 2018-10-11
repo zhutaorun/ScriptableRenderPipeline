@@ -12,53 +12,50 @@ namespace UnityEngine.Experimental.Rendering
 {
     [Serializable]
     public class XRGraphics
-    { // XRGConfig stores the desired XR settings for a given SRP asset.
+    { // XRGraphics insulates SRP from API changes across platforms, Editor versions, and as XR transitions into XR SDK
 
-        public float renderScale = 1.0f;
-        public float viewportScale = 1.0f;
-        public bool useOcclusionMesh = true;
-        public float occlusionMeshScale = 1.0f;
-
-        public void CopyTo(XRGraphics targetConfig)
+        public enum StereoRenderingMode
         {
-            targetConfig.renderScale = this.renderScale;
-            targetConfig.viewportScale = this.viewportScale;
-            targetConfig.useOcclusionMesh = this.useOcclusionMesh;
-            targetConfig.occlusionMeshScale = this.occlusionMeshScale;
-        }
-        
-        public void Update() 
-        { // If XR is enabled, only update the values that might change dynamically
-            if (!enabled)
-                return;
-            renderScale = XRSettings.eyeTextureResolutionScale; // Technically this is expensive to change dynamically, but some users rely on it
-            viewportScale = XRSettings.renderViewportScale; 
-        }
-
-        public static readonly XRGraphics s_DefaultXRConfig = new XRGraphics
-        {
-            renderScale = 1.0f,
-            viewportScale = 1.0f,
-            useOcclusionMesh = true,
-            occlusionMeshScale = 1.0f,
+            None,
+            MultiPass,
+            SinglePassDoubleWide,
+            SinglePassInstanced,
+            SinglePassMultiView
         };
 
-        public static XRGraphics GetXRSettings()
+        public static float eyeTextureScale
         {
-            XRGraphics getXRSettings = new XRGraphics();
-
-            if (!enabled)
+            get
             {
-                return getXRSettings;
+                if (!enabled)
+                    return 1.0f;
+                else
+                    return XRSettings.eyeTextureResolutionScale;
             }
-
-            getXRSettings.renderScale = XRSettings.eyeTextureResolutionScale;
-            getXRSettings.viewportScale = XRSettings.renderViewportScale;
-            getXRSettings.useOcclusionMesh = XRSettings.useOcclusionMesh;
-            getXRSettings.occlusionMeshScale = XRSettings.occlusionMaskScale;
-            return getXRSettings;
         }
 
+        public static float viewportScale
+        {
+            get
+            {
+                if (!enabled)
+                    return 1.0f;
+                else
+                    return XRSettings.renderViewportScale;
+            }
+        }
+
+        public static bool useOcclusionMesh
+        {
+            get
+            {
+                if (!enabled)
+                    return false;
+                else
+                    return XRSettings.useOcclusionMesh;
+            }
+        }
+        
 #if UNITY_EDITOR
         public static bool tryEnable
         { // TryEnable gets updated before "play" is pressed- we use this for updating GUI only. 
@@ -78,33 +75,44 @@ namespace UnityEngine.Experimental.Rendering
             }
         }
 
-#if UNITY_EDITOR
-        // FIXME: We should probably have StereoRenderingPath defined in UnityEngine.XR, not UnityEditor...
-        public static StereoRenderingPath stereoRenderingMode
+        public static StereoRenderingMode stereoRenderingMode
         {
             get
             {
                 if (!enabled)
-                {
-                    return StereoRenderingPath.SinglePass;
-                }
+                    return StereoRenderingMode.None;
 #if UNITY_2018_3_OR_NEWER
-                return (StereoRenderingPath)XRSettings.stereoRenderingMode;
-#else
+                XRSettings.StereoRenderingMode stereoRenderMode = XRSettings.stereoRenderingMode;
+                switch (stereoRenderMode)
+                {
+                    case XRSettings.StereoRenderingMode.MultiPass:
+                        return StereoRenderingMode.MultiPass;
+                    case XRSettings.StereoRenderingMode.SinglePass:
+                        return StereoRenderingMode.SinglePassDoubleWide;
+                    case XRSettings.StereoRenderingMode.SinglePassInstanced:
+                        return StereoRenderingMode.SinglePassInstanced;
+                    case XRSettings.StereoRenderingMode.SinglePassMultiview:
+                        return StereoRenderingMode.SinglePassMultiView;
+                    default:
+                        return StereoRenderingMode.None;
+                }
+#else // Reverse engineer it
+                if (!enabled)
+                    return StereoRenderingMode.None;
                 if (eyeTextureDesc.vrUsage == VRTextureUsage.TwoEyes)
-                    return StereoRenderingPath.SinglePass;
-                else if (eyeTextureDesc.dimension == UnityEngine.Rendering.TextureDimension.Tex2DArray)
-                    return StereoRenderingPath.Instancing;
+                {
+                    if (eyeTextureDesc.dimension == UnityEngine.Rendering.TextureDimension.Tex2DArray)
+                        return StereoRenderingMode.SinglePassInstanced;
+                    return StereoRenderingMode.SinglePassDoubleWide;
+                }
                 else
-                    return StereoRenderingPath.MultiPass;
+                    return StereoRenderingMode.MultiPass;
 #endif
             }
         }
-#endif
-
         public static uint GetPixelOffset(uint eye)
         {
-            if (!enabled || XRSettings.eyeTextureDesc.vrUsage != VRTextureUsage.TwoEyes)
+            if (!enabled || stereoRenderingMode != StereoRenderingMode.SinglePassDoubleWide)
                 return 0;
             return (uint)(Mathf.CeilToInt((eye * XRSettings.eyeTextureWidth) / 2));
         }
