@@ -9,5 +9,5 @@ To install LWRP into an existing Project:
 
 **Note:** Before you can start using LWRP, you must configure it by creating a Scriptable Render Pipeline Asset and changing your Graphics settings. To learn how, see [Configuring LWRP for use](#Configuring-LWRP-for-use).
 
-**Note:** Switching to LWRP inan existing Project consumes a lot of time and resources. LWRP uses custom shaders and is not compatible with the built-in Unity shaders. You will have to manually change or convert many elements. Instead, consider [starting a new Project with LWRP](#Using-LWRP-in-a-new-Project).
+**Note:** Switching to LWRP in an existing Project consumes a lot of time and resources. LWRP uses custom lit shaders and is not compatible with the built-in Unity lit shaders. You will have to manually change or convert many elements. Instead, consider [starting a new Project with LWRP](#Using-LWRP-in-a-new-Project).
 
