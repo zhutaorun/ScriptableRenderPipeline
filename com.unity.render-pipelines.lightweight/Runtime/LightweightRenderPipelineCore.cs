@@ -49,7 +49,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         public int msaaSamples;
         public bool isSceneViewCamera;
         public bool isDefaultViewport;
-        public bool isOffscreenRender;
         public bool isHdrEnabled;
         public bool requiresDepthTexture;
         public bool requiresOpaqueTexture;

@@ -23,10 +23,10 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="expected">The expected image that should be rendered by the camera.</param>
         /// <param name="camera">The camera to render from.</param>
         /// <param name="settings">Optional settings that control how the image comparison is performed. Can be null, in which case the rendered image is required to be exactly identical to the reference.</param>
-        public static void AreEqual(Texture2D expected, Camera camera, ImageComparisonSettings settings = null)
+        public static void AreEqual(Texture2D expected, IEnumerable<Camera> cameras, ImageComparisonSettings settings = null)
         {
-            if (!camera)
-                throw new ArgumentNullException("camera");
+            if (cameras == null)
+                throw new ArgumentNullException(nameof(cameras));
 
             if (settings == null)
                 settings = new ImageComparisonSettings();
@@ -39,9 +39,12 @@ namespace UnityEngine.TestTools.Graphics
             Texture2D actual = null;
             try
             {
-                camera.targetTexture = rt;
-                camera.Render();
-                camera.targetTexture = null;
+                foreach (var camera in cameras)
+                {
+                    camera.targetTexture = rt;
+                    camera.Render();
+                    camera.targetTexture = null;
+                }
 
                 actual = new Texture2D(width, height, format, false);
                 RenderTexture.active = rt;
