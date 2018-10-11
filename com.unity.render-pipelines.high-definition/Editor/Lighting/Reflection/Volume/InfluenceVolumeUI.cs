@@ -1,16 +1,24 @@
 using System;
-using UnityEditor.AnimatedValues;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering.HDPipeline;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    partial class InfluenceVolumeUI : BaseUI<SerializedInfluenceVolume>
+    partial class InfluenceVolumeUI : IUpdateable<SerializedInfluenceVolume>
     {
-        const int k_AnimBoolFields = 2;
-        static readonly int k_ShapeCount = Enum.GetValues(typeof(InfluenceShape)).Length;
+        [Flags]
+        internal enum Flag
+        {
+            None = 0,
+            SectionExpandedShape = 1 << 0,
+            SectionExpandedShapeSphere = 1 << 1,
+            SectionExpandedShapeBox = 1 << 2,
+            ShowInfluenceHandle = 1 << 3
+        }
+
+        EditorPrefBoolFlags<Flag> m_FlagStorage = new EditorPrefBoolFlags<Flag>("InfluenceVolumeUI");
 
         public Gizmo6FacesBox boxBaseHandle;
         public Gizmo6FacesBoxContained boxInfluenceHandle;
@@ -20,14 +28,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public SphereBoundsHandle sphereInfluenceHandle = new SphereBoundsHandle();
         public SphereBoundsHandle sphereInfluenceNormalHandle = new SphereBoundsHandle();
 
-        public AnimBool isSectionExpandedShape { get { return m_AnimBools[k_ShapeCount]; } }
-        public bool showInfluenceHandles { get; set; }
+        public bool HasFlag(Flag v) => m_FlagStorage.HasFlag(v);
+        public bool SetFlag(Flag f, bool v) => m_FlagStorage.SetFlag(f, v);
 
         public InfluenceVolumeUI()
-            : base(k_ShapeCount + k_AnimBoolFields)
         {
-            isSectionExpandedShape.value = true;
-
             boxBaseHandle = new Gizmo6FacesBox(monochromeFace:true, monochromeSelectedFace:true);
             boxInfluenceHandle = new Gizmo6FacesBoxContained(boxBaseHandle, monochromeFace:true, monochromeSelectedFace:true);
             boxInfluenceNormalHandle = new Gizmo6FacesBoxContained(boxBaseHandle, monochromeFace:true, monochromeSelectedFace:true);
@@ -53,20 +58,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             boxInfluenceNormalHandle.faceColorsSelected = new Color[] { HDReflectionProbeEditor.k_GizmoThemeColorInfluenceNormalBlendFace };
         }
 
-        public void SetIsSectionExpanded_Shape(InfluenceShape shape)
+        public void Update(SerializedInfluenceVolume v)
         {
-            SetIsSectionExpanded_Shape((int)shape);
-        }
-
-        public void SetIsSectionExpanded_Shape(int shape)
-        {
-            for (var i = 0; i < k_ShapeCount; i++)
-                m_AnimBools[i].target = shape == i;
-        }
-
-        public AnimBool IsSectionExpanded_Shape(InfluenceShape shapeType)
-        {
-            return m_AnimBools[(int)shapeType];
+            m_FlagStorage.SetFlag(Flag.SectionExpandedShapeBox | Flag.SectionExpandedShapeSphere, false);
+            switch ((InfluenceShape)v.shape.intValue)
+            {
+                case InfluenceShape.Box: m_FlagStorage.SetFlag(Flag.SectionExpandedShapeBox, true); break;
+                case InfluenceShape.Sphere: m_FlagStorage.SetFlag(Flag.SectionExpandedShapeSphere, true); break;
+            }
         }
     }
 }

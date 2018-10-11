@@ -21,8 +21,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public override void Update()
         {
-            influence.SetIsSectionExpanded_Shape(data.influence.shape.hasMultipleDifferentValues ? -1 : data.influence.shape.intValue);
-
             //bool frameSettingsOverriden = data.captureSettings.renderingPath.enumValueIndex == (int)HDAdditionalCameraData.RenderingPath.Custom;
             //isFrameSettingsOverriden.value = frameSettingsOverriden;
             //if (frameSettingsOverriden)

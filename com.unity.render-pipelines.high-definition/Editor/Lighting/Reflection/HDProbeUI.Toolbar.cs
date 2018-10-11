@@ -15,22 +15,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 || editMode == EditCenter;
         }
 
-        //[TODO] change this to be modifiable shortcuts
-        static Dictionary<KeyCode, ToolBar> s_Toolbar_ShortCutKey = null;
-        protected static Dictionary<KeyCode, ToolBar> toolbar_ShortCutKey
-        {
-            get
-            {
-                return s_Toolbar_ShortCutKey ?? (s_Toolbar_ShortCutKey = new Dictionary<KeyCode, ToolBar>
-                {
-                    { KeyCode.Alpha1, ToolBar.InfluenceShape },
-                    { KeyCode.Alpha2, ToolBar.Blend },
-                    { KeyCode.Alpha3, ToolBar.NormalBlend },
-                    { KeyCode.Alpha4, ToolBar.CapturePosition }
-                });
-            }
-        }
-
         static Func<Bounds> GetBoundsGetter(Editor o)
         {
             return () =>

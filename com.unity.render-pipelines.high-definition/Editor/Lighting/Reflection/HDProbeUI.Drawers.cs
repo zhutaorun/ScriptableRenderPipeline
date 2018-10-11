@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEditorInternal;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
-using UnityEngine.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
@@ -23,13 +21,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             CapturePosition = 1 << 3
         }
 
-        protected interface IProbeUISettingsProvider
+        internal interface IProbeUISettingsProvider
         {
-            ProbeSettingsOverride primarySettingsField { get; }
+            ProbeSettingsOverride displayedCaptureSettings { get; }
+            ProbeSettingsOverride displayedAdvancedSettings { get; }
             Type customTextureType { get; }
             ToolBar[] toolbars { get; }
         }
 
+        // Constants
         const EditMode.SceneViewEditMode EditBaseShape = EditMode.SceneViewEditMode.ReflectionProbeBox;
         const EditMode.SceneViewEditMode EditInfluenceShape = EditMode.SceneViewEditMode.GridBox;
         const EditMode.SceneViewEditMode EditInfluenceNormalShape = EditMode.SceneViewEditMode.Collider;
@@ -45,19 +45,31 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             { ToolBar.CapturePosition,  EditCenter }
         };
 
-        protected struct Drawer<TProvider>
-            where TProvider : struct, IProbeUISettingsProvider
+        //[TODO] change this to be modifiable shortcuts
+        static Dictionary<KeyCode, ToolBar> k_ToolbarShortCutKey = new Dictionary<KeyCode, ToolBar>
         {
+            { KeyCode.Alpha1, ToolBar.InfluenceShape },
+            { KeyCode.Alpha2, ToolBar.Blend },
+            { KeyCode.Alpha3, ToolBar.NormalBlend },
+            { KeyCode.Alpha4, ToolBar.CapturePosition }
+        };
+
+        // Probe Setting Mode cache
+        static readonly GUIContent[] k_ModeContents = { new GUIContent("Baked"), new GUIContent("Custom"), new GUIContent("Realtime") };
+        static readonly int[] k_ModeValues = { (int)ProbeSettings.Mode.Baked, (int)ProbeSettings.Mode.Custom, (int)ProbeSettings.Mode.Realtime };
+
+        protected internal struct Drawer<TProvider>
+            where TProvider : struct, IProbeUISettingsProvider, InfluenceVolumeUI.IInfluenceUISettingsProvider
+        {
+            // Toolbar content cache
             static readonly EditMode.SceneViewEditMode[][] k_ListModes;
             static readonly GUIContent[][] k_ListContent;
-            static readonly GUIContent[] k_ModeContents = { new GUIContent("Baked"), new GUIContent("Custom"), new GUIContent("Realtime") };
-            static readonly int[] k_ModeValues = { (int)ProbeSettings.Mode.Baked, (int)ProbeSettings.Mode.Custom, (int)ProbeSettings.Mode.Realtime };
 
             static Drawer()
             {
                 var provider = new TProvider();
 
-                // Build toolbar content
+                // Build toolbar content cache
                 var toolbars = provider.toolbars;
                 k_ListContent = new GUIContent[toolbars.Length][];
                 k_ListModes = new EditMode.SceneViewEditMode[toolbars.Length][];
@@ -96,6 +108,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 
             }
 
+            // Tool bars
             public static void Drawer_Toolbars(HDProbeUI s, SerializedHDProbe d, Editor o)
             {
                 var provider = new TProvider();
@@ -111,6 +124,37 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 GUILayout.EndHorizontal();
             }
 
+            public static void DoToolbarShortcutKey(Editor owner)
+            {
+                var provider = new TProvider();
+                var toolbars = provider.toolbars;
+
+                var evt = Event.current;
+                if (evt.type != EventType.KeyDown || !evt.shift)
+                    return;
+
+                if (k_ToolbarShortCutKey.TryGetValue(evt.keyCode, out ToolBar toolbar))
+                {
+                    bool used = false;
+                    foreach (ToolBar t in toolbars)
+                    {
+                        if ((t & toolbar) > 0)
+                        {
+                            used = true;
+                            break;
+                        }
+                    }
+                    if (!used)
+                        return;
+
+                    var targetMode = k_ToolbarMode[toolbar];
+                    var mode = EditMode.editMode == targetMode ? EditMode.SceneViewEditMode.None : targetMode;
+                    EditMode.ChangeEditMode(mode, GetBoundsGetter(owner)(), owner);
+                    evt.Use();
+                }
+            }
+
+            // Drawers
             public static void DrawPrimarySettings(HDProbeUI s, SerializedHDProbe p, Editor o)
             {
                 const string modeGUIContent = "Type|'Baked' uses the 'Auto Baking' mode from the Lighting window. " +
@@ -144,84 +188,68 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 }
             }
 
-            public void DoShortcutKey(Editor owner)
+            public static void DrawCaptureSettings(HDProbeUI s, SerializedHDProbe p, Editor o)
             {
-                var evt = Event.current;
-                if (evt.type != EventType.KeyDown || !evt.shift)
-                    return;
+                var provider = new TProvider();
+                ProbeSettingsUI.Draw(
+                    s.probeSettings, p.probeSettings, o,
+                    p.probeSettingsOverride, provider.displayedCaptureSettings
+                );
 
-                ToolBar toolbar;
-                if (toolbar_ShortCutKey.TryGetValue(evt.keyCode, out toolbar))
+                // TODO: place it in static cache
+                var drawer = FrameSettingsUI.Inspector(true, false);
+                drawer.Draw(s.probeSettings.cameraFrameSettings, p.probeSettings.cameraSettings.frameSettings, o);
+            }
+
+            public static void DrawCustomSettings(HDProbeUI s, SerializedHDProbe p, Editor o)
+            {
+                var provider = new TProvider();
+                ProbeSettingsUI.Draw(
+                    s.probeSettings, p.probeSettings, o,
+                    p.probeSettingsOverride, provider.displayedAdvancedSettings
+                );
+            }
+
+            public static void DrawInfluenceSettings(HDProbeUI s, SerializedHDProbe p, Editor o)
+            {
+                var provider = new TProvider();
+                InfluenceVolumeUI.Draw<TProvider>(s.probeSettings.influence, p.probeSettings.influence, o);
+            }
+
+            public static void DrawProjectionSettings(HDProbeUI s, SerializedHDProbe d, Editor o)
+            {
+                EditorGUILayout.PropertyField(d.proxyVolume, proxyVolumeContent);
+
+                if (d.target.proxyVolume == null)
                 {
-                    bool used = false;
-                    foreach (ToolBar t in toolBars)
+                    EditorGUI.BeginChangeCheck();
+                    d.probeSettings.proxyUseInfluenceVolumeAsProxyVolume.boolValue = !EditorGUILayout.Toggle(useInfiniteProjectionContent, !d.probeSettings.proxyUseInfluenceVolumeAsProxyVolume.boolValue);
+                    if (EditorGUI.EndChangeCheck())
                     {
-                        if ((t & toolbar) > 0)
-                        {
-                            used = true;
-                            break;
-                        }
+                        d.Apply();
                     }
-                    if (!used)
-                    {
-                        return;
-                    }
+                }
 
-                    var targetMode = toolbar_Mode[toolbar];
-                    var mode = EditMode.editMode == targetMode ? EditMode.SceneViewEditMode.None : targetMode;
-                    EditMode.ChangeEditMode(mode, GetBoundsGetter(owner)(), owner);
-                    evt.Use();
+                if (d.proxyVolume.objectReferenceValue != null)
+                {
+                    var proxy = (ReflectionProxyVolumeComponent)d.proxyVolume.objectReferenceValue;
+                    if ((int)proxy.proxyVolume.shape != d.probeSettings.influence.shape.enumValueIndex
+                        && proxy.proxyVolume.shape != ProxyShape.Infinite)
+                        EditorGUILayout.HelpBox(
+                            proxyInfluenceShapeMismatchHelpBoxText,
+                            MessageType.Error,
+                            true
+                            );
+                }
+                else
+                {
+                    EditorGUILayout.HelpBox(
+                            d.probeSettings.proxyUseInfluenceVolumeAsProxyVolume.boolValue ? noProxyInfiniteHelpBoxText : noProxyHelpBoxText,
+                            MessageType.Info,
+                            true
+                            );
                 }
             }
-        }
-
-        public static readonly CED.IDrawer SectionBakeButton = CED.Action(Drawer_SectionBakeButton);
-
-        public static readonly CED.IDrawer SectionProxyVolumeSettings = CED.FoldoutGroup(
-                proxySettingsHeader,
-                (s, d, o) => s.isSectionExpandedProxyVolume,
-                FoldoutOption.Indent,
-                CED.Action(Drawer_SectionProxySettings)
-                );
-        
-        public static readonly CED.IDrawer SectionInfluenceVolume = CED.Select(
-            (s, d, o) => s.probeSettings.influence,
-            (s, d, o) => d.probeSettings.influence,
-            InfluenceVolumeUI.SectionFoldoutShape
-        );
-
-        public static readonly CED.IDrawer SectionShapeCheck = CED.Action(Drawer_DifferentShapeError);
-
-        public static readonly CED.IDrawer SectionFrameSettings = CED.FadeGroup(
-            (s, d, o, i) => s.isFrameSettingsOverriden,
-            FadeOption.None,
-            CED.Select(
-                (s, d, o) => s.probeSettings.cameraFrameSettings,
-                (s, d, o) => d.probeSettings.cameraSettings.frameSettings,
-                FrameSettingsUI.Inspector(withOverride: true, withXR: false))
-            );
-
-        public static readonly CED.IDrawer SectionFoldoutAdditionalSettings = CED.FoldoutGroup(
-                additionnalSettingsHeader,
-                (s, d, o) => s.isSectionExpandedAdditionalSettings,
-                FoldoutOption.Indent,
-            CED.Action(Drawer_SectionCustomSettings),
-            CED.space
-                );
-
-        static HDProbeUI()
-        {
-            //Inspector = new[]
-            //{
-            //    SectionToolbar,
-            //    SectionPrimarySettings,
-            //    SectionProxyVolumeSettings,
-            //    SectionInfluenceVolume,
-            //    SectionShapeCheck,
-            //    SectionFoldoutAdditionalSettings,
-            //    SectionFrameSettings,
-            //    SectionBakeButton
-            //};
         }
 
         protected static void Drawer_DifferentShapeError(HDProbeUI s, SerializedHDProbe d, Editor o)
@@ -237,57 +265,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     true
                     );
             }
-        }
-        
-        protected static void Drawer_SectionProxySettings(HDProbeUI s, SerializedHDProbe d, Editor o)
-        {
-            EditorGUILayout.PropertyField(d.proxyVolume, proxyVolumeContent);
-            
-            if (d.target.proxyVolume == null)
-            {
-                EditorGUI.BeginChangeCheck();
-                d.probeSettings.proxyUseInfluenceVolumeAsProxyVolume.boolValue = !EditorGUILayout.Toggle(useInfiniteProjectionContent, !d.probeSettings.proxyUseInfluenceVolumeAsProxyVolume.boolValue);
-                if(EditorGUI.EndChangeCheck())
-                {
-                    d.Apply();
-                }
-            }
-
-            if (d.proxyVolume.objectReferenceValue != null)
-            {
-                var proxy = (ReflectionProxyVolumeComponent)d.proxyVolume.objectReferenceValue;
-                if ((int)proxy.proxyVolume.shape != d.probeSettings.influence.shape.enumValueIndex
-                    && proxy.proxyVolume.shape != ProxyShape.Infinite)
-                    EditorGUILayout.HelpBox(
-                        proxyInfluenceShapeMismatchHelpBoxText,
-                        MessageType.Error,
-                        true
-                        );
-            }
-            else
-            {
-                EditorGUILayout.HelpBox(
-                        d.probeSettings.proxyUseInfluenceVolumeAsProxyVolume.boolValue ? noProxyInfiniteHelpBoxText : noProxyHelpBoxText,
-                        MessageType.Info,
-                        true
-                        );
-            }
-        }
-
-        protected static void Drawer_SectionCustomSettings(HDProbeUI s, SerializedHDProbe d, Editor o)
-        {
-            var hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
-            using (new EditorGUI.DisabledScope(!hdPipeline.asset.renderPipelineSettings.supportLightLayers))
-            {
-                d.probeSettings.lightingLightLayer.intValue = Convert.ToInt32(EditorGUILayout.EnumFlagsField(lightLayersContent, (LightLayerEnum)d.probeSettings.lightingLightLayer.intValue));
-            }
-
-            EditorGUILayout.PropertyField(d.probeSettings.lightingWeight, weightContent);
-
-            EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(d.probeSettings.lightingMultiplier, multiplierContent);
-            if (EditorGUI.EndChangeCheck())
-                d.probeSettings.lightingMultiplier.floatValue = Mathf.Max(0.0f, d.probeSettings.lightingMultiplier.floatValue);
         }
 
         static internal void Drawer_ToolBarButton(ToolBar button, Editor owner, params GUILayoutOption[] options)

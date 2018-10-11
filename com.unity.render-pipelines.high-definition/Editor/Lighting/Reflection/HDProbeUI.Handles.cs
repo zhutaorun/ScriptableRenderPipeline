@@ -45,56 +45,5 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     }
             }
         }
-
-        [DrawGizmo(GizmoType.Selected)]
-        internal static void DrawGizmos(HDProbe d, GizmoType gizmoType)
-        {
-            if (!HDProbeEditor.TryGetUIStateFor(d, out HDProbeUI s))
-                return;
-
-            var mat = Matrix4x4.TRS(d.transform.position, d.transform.rotation, Vector3.one);
-
-            switch (EditMode.editMode)
-            {
-                case EditBaseShape:
-                    InfluenceVolumeUI.DrawGizmos(
-                        s.probeSettings.influence, d.influenceVolume, mat,
-                        InfluenceVolumeUI.HandleType.Base,
-                        InfluenceVolumeUI.HandleType.All);
-                    break;
-                case EditInfluenceShape:
-                    InfluenceVolumeUI.DrawGizmos(
-                    s.probeSettings.influence,
-                    d.influenceVolume,
-                    mat,
-                    InfluenceVolumeUI.HandleType.Influence,
-                    InfluenceVolumeUI.HandleType.All);
-                    break;
-                case EditInfluenceNormalShape:
-                    InfluenceVolumeUI.DrawGizmos(
-                    s.probeSettings.influence,
-                    d.influenceVolume,
-                    mat,
-                    InfluenceVolumeUI.HandleType.InfluenceNormal,
-                    InfluenceVolumeUI.HandleType.All);
-                    break;
-                default:
-                {
-                    var showedHandles = s.probeSettings.influence.showInfluenceHandles
-                        ? InfluenceVolumeUI.HandleType.All
-                        : InfluenceVolumeUI.HandleType.Base;
-                    InfluenceVolumeUI.DrawGizmos(
-                        s.probeSettings.influence,
-                        d.influenceVolume,
-                        mat,
-                        InfluenceVolumeUI.HandleType.None,
-                        showedHandles);
-                    break;
-                }
-            }
-
-            if (d.proxyVolume != null)
-                ReflectionProxyVolumeComponentUI.DrawGizmos_EditNone(d.proxyVolume);
-        }
     }
 }

@@ -91,5 +91,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if ((intDisplayed & intV) == intV)
                 PropertyFieldWithFlagToggle(v, property, label, @override);
         }
+
+        public static bool DrawSectionFoldout(string title, bool isExpanded)
+        {
+            CoreEditorUtils.DrawSplitter(false);
+            return CoreEditorUtils.DrawHeaderFoldout(title, isExpanded, false);
+        }
     }
 }

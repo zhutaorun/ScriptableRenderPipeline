@@ -3,58 +3,32 @@ using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    using _ = CoreEditorUtils;
-    using CED = CoreEditorDrawer<InfluenceVolumeUI, SerializedInfluenceVolume>;
-
     partial class InfluenceVolumeUI
     {
-        //[TODO: planar / non planar will be redone in next PR]
-        internal static readonly CED.IDrawer SectionFoldoutShapePlanar;
-        internal static readonly CED.IDrawer SectionFoldoutShape;
-        static readonly CED.IDrawer SectionShapeBoxPlanar = CED.Action((s, p, o) => Drawer_SectionShapeBox( s, p, o, false, false, false));
-        static readonly CED.IDrawer SectionShapeBox = CED.Action((s, p, o) => Drawer_SectionShapeBox(s, p, o, true, true, true));
-        static readonly CED.IDrawer SectionShapeSpherePlanar = CED.Action((s, p, o) => Drawer_SectionShapeSphere(s, p, o, false, false));
-        static readonly CED.IDrawer SectionShapeSphere = CED.Action((s, p, o) => Drawer_SectionShapeSphere(s, p, o, true, true));
-
-        static InfluenceVolumeUI()
+        internal interface IInfluenceUISettingsProvider
         {
-            SectionFoldoutShapePlanar = CED.Group(
-                    CED.FoldoutGroup(
-                        influenceVolumeHeader,
-                        (s, d, o) => s.isSectionExpandedShape,
-                        FoldoutOption.Indent,
-                        CED.Action(Drawer_InfluenceAdvancedSwitch),
-                        CED.space,
-                        CED.Action(Drawer_FieldShapeType),
-                        CED.FadeGroup(
-                            (s, d, o, i) => s.IsSectionExpanded_Shape((InfluenceShape)i),
-                            FadeOption.None,
-                            SectionShapeBoxPlanar,
-                            SectionShapeSpherePlanar
-                            )
-                        )
-                    );
-            SectionFoldoutShape = CED.Group(
-                    CED.FoldoutGroup(
-                        influenceVolumeHeader,
-                        (s, d, o) => s.isSectionExpandedShape,
-                        FoldoutOption.Indent,
-                        CED.Action(Drawer_InfluenceAdvancedSwitch),
-                        CED.space,
-                        CED.Action(Drawer_FieldShapeType),
-                        CED.FadeGroup(
-                            (s, d, o, i) => s.IsSectionExpanded_Shape((InfluenceShape)i),
-                            FadeOption.None,
-                            SectionShapeBox,
-                            SectionShapeSphere
-                            )
-                        )
-                    );
+            bool drawOffset { get; }
+            bool drawNormal { get; }
+            bool drawFace { get; }
         }
 
-        static void Drawer_FieldShapeType(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o)
+        public static void Draw<TProvider>(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o)
+            where TProvider : struct, IInfluenceUISettingsProvider
         {
+            var provider = new TProvider();
+
+            Drawer_InfluenceAdvancedSwitch(s, d, o);
+            EditorGUILayout.Space();
             EditorGUILayout.PropertyField(d.shape, shapeContent);
+            switch ((InfluenceShape)d.shape.intValue)
+            {
+                case InfluenceShape.Box:
+                    Drawer_SectionShapeBox(s, d, o, provider.drawOffset, provider.drawNormal, provider.drawFace);
+                    break;
+                case InfluenceShape.Sphere:
+                    Drawer_SectionShapeSphere(s, d, o, provider.drawOffset, provider.drawNormal);
+                    break;
+            }
         }
 
         static void Drawer_InfluenceAdvancedSwitch(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor owner)

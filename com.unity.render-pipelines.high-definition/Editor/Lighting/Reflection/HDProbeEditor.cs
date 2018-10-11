@@ -9,15 +9,9 @@ using Object = UnityEngine.Object;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    abstract class HDProbeEditor : Editor
+    abstract class HDProbeEditor<TProvider> : Editor
+            where TProvider : struct, HDProbeUI.IProbeUISettingsProvider, InfluenceVolumeUI.IInfluenceUISettingsProvider
     {
-        static Dictionary<HDProbe, HDProbeUI> s_StateMap = new Dictionary<HDProbe, HDProbeUI>();
-
-        internal static bool TryGetUIStateFor(HDProbe p, out HDProbeUI r)
-        {
-            return s_StateMap.TryGetValue(p, out r);
-        }
-
         internal abstract HDProbe GetTarget(Object editorTarget);
 
         protected SerializedHDProbe m_SerializedHDProbe;
@@ -28,10 +22,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected virtual void OnEnable()
         {
             if(m_UIState == null)
-            {
                 m_UIState = HDProbeUI.CreateFor(this);
-            }
-            m_UIState.Reset(m_SerializedHDProbe, Repaint);
 
             m_TypedTargets = new HDProbe[targets.Length];
             m_UIHandleState = new HDProbeUI[m_TypedTargets.Length];
@@ -39,43 +30,34 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 m_TypedTargets[i] = GetTarget(targets[i]);
                 m_UIHandleState[i] = HDProbeUI.CreateFor(m_TypedTargets[i]);
-                m_UIHandleState[i].Reset(m_SerializedHDProbe, null);
-
-                s_StateMap[m_TypedTargets[i]] = m_UIHandleState[i];
             }
         }
 
-        protected virtual void OnDisable()
+        protected virtual void Draw(HDProbeUI s, SerializedHDProbe p, Editor o)
         {
-            for (var i = 0; i < m_TypedTargets.Length; i++)
-                s_StateMap.Remove(m_TypedTargets[i]);
-        }
-
-        protected abstract void Draw(HDProbeUI s, SerializedHDProbe serialized, Editor owner);
-
-        public override void OnInspectorGUI()
-        {
-            var s = m_UIState;
-            var d = m_SerializedHDProbe;
-            var o = this;
-
-            s.Update();
-            d.Update();
-
-            Draw(s, d, o);
-
-            d.Apply();
+            HDProbeUI.Drawer<TProvider>.DrawPrimarySettings(s, p, o);
+            if (DrawAndSetSectionFoldout(s, HDProbeUI.Flag.SectionExpandedProjection, "Projection Settings"))
+                HDProbeUI.Drawer<TProvider>.DrawProjectionSettings(s, p, o);
+            if (DrawAndSetSectionFoldout(s, HDProbeUI.Flag.SectionExpandedInfluence, "Influence Volume"))
+                HDProbeUI.Drawer<TProvider>.DrawInfluenceSettings(s, p, o);
+            if (DrawAndSetSectionFoldout(s, HDProbeUI.Flag.SectionExpandedCapture, "Capture Settings"))
+                HDProbeUI.Drawer<TProvider>.DrawCaptureSettings(s, p, o);
+            if (DrawAndSetSectionFoldout(s, HDProbeUI.Flag.SectionExpandedCustom, "Custom Settings"))
+                HDProbeUI.Drawer<TProvider>.DrawCustomSettings(s, p, o);
         }
 
         protected virtual void OnSceneGUI()
         {
             //mandatory update as for strange reason the serialized rollback one update here
-            m_UIState.Update();
+            m_UIState.Update(m_SerializedHDProbe);
             m_SerializedHDProbe.Update();
 
             HDProbeUI.DrawHandles(m_UIState, m_SerializedHDProbe, this);
-            throw new NotImplementedException("Do: Drawer<TProvider>.DoShortcutKey(this) in child classes");
-            //m_UIState.DoShortcutKey(this);
+            HDProbeUI.Drawer<TProvider>.DoToolbarShortcutKey(this);
         }
+
+        // TODO: generalize this
+        static bool DrawAndSetSectionFoldout(HDProbeUI s, HDProbeUI.Flag flag, string title)
+            => s.SetFlag(flag, HDEditorUtils.DrawSectionFoldout(title, s.HasFlag(flag)));
     }
 }
