@@ -302,10 +302,6 @@ Shader "HDRenderPipeline/Lit"
 
     #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitProperties.hlsl"
 
-    // All our shaders use same name for entry point
-    #pragma vertex Vert
-    #pragma fragment Frag
-
     ENDHLSL
 
     SubShader
@@ -332,6 +328,9 @@ Shader "HDRenderPipeline/Lit"
             #include "ShaderPass/LitDepthPass.hlsl"
             #include "LitData.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl"
+
+            #pragma vertex Vert
+            #pragma fragment Frag
 
             ENDHLSL
         }
@@ -379,6 +378,9 @@ Shader "HDRenderPipeline/Lit"
             #include "LitData.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassGBuffer.hlsl"
 
+            #pragma vertex Vert
+            #pragma fragment Frag
+
             ENDHLSL
         }
 
@@ -403,6 +405,9 @@ Shader "HDRenderPipeline/Lit"
             #include "ShaderPass/LitSharePass.hlsl"
             #include "LitData.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassLightTransport.hlsl"
+
+            #pragma vertex Vert
+            #pragma fragment Frag
 
             ENDHLSL
         }
@@ -429,6 +434,9 @@ Shader "HDRenderPipeline/Lit"
             #include "ShaderPass/LitDepthPass.hlsl"
             #include "LitData.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl"
+
+            #pragma vertex Vert
+            #pragma fragment Frag
 
             ENDHLSL
         }
@@ -461,6 +469,9 @@ Shader "HDRenderPipeline/Lit"
 
             #include "LitData.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl"
+
+            #pragma vertex Vert
+            #pragma fragment Frag
 
             ENDHLSL
         }
@@ -498,6 +509,9 @@ Shader "HDRenderPipeline/Lit"
             #include "LitData.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassVelocity.hlsl"
 
+            #pragma vertex Vert
+            #pragma fragment Frag
+
             ENDHLSL
         }
 
@@ -521,6 +535,9 @@ Shader "HDRenderPipeline/Lit"
             #include "LitData.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDistortion.hlsl"
 
+            #pragma vertex Vert
+            #pragma fragment Frag
+
             ENDHLSL
         }
 
@@ -542,6 +559,9 @@ Shader "HDRenderPipeline/Lit"
             #include "ShaderPass/LitDepthPass.hlsl"
             #include "LitData.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl"
+
+            #pragma vertex Vert
+            #pragma fragment Frag
 
             ENDHLSL
         }
@@ -584,6 +604,9 @@ Shader "HDRenderPipeline/Lit"
             #include "ShaderPass/LitSharePass.hlsl"
             #include "LitData.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassForward.hlsl"
+
+            #pragma vertex Vert
+            #pragma fragment Frag
 
             ENDHLSL
         }
@@ -640,6 +663,9 @@ Shader "HDRenderPipeline/Lit"
             #include "LitData.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassForward.hlsl"
 
+            #pragma vertex Vert
+            #pragma fragment Frag
+
             ENDHLSL
         }
 
@@ -662,9 +688,37 @@ Shader "HDRenderPipeline/Lit"
             #include "LitData.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl"
 
+            #pragma vertex Vert
+            #pragma fragment Frag
+
             ENDHLSL
         }
     }
+
+    /*
+    SubShader
+    {
+        Pass
+        {
+            Name "RTRaytrace_Reflections"
+            Tags{ "LightMode" = "ReflectionDXR" }
+
+            HLSLPROGRAM
+
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/RaytracingIntersection.hlsl"
+
+            #pragma raytracing test      
+
+            [shader("closesthit")]
+            void ClosestHitMain(inout RayIntersection rayIntersection : SV_RayPayload, AttributeData attributeData : SV_IntersectionAttributes)
+            {
+                rayIntersection.color = float3(1.0, 1.0, 0.0);
+            }
+
+            ENDHLSL
+        }
+    }
+    */
 
     CustomEditor "Experimental.Rendering.HDPipeline.LitGUI"
 }
