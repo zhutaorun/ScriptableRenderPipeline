@@ -1,4 +1,10 @@
-|                          | Unity Built-in pipeline                                      | Lightweight Render Pipeline                                  |
+
+
+# Feature comparison
+
+This is an overview of how features work in the Unity built-in Render Pipeline and in the Lightweight Render Pipeline.
+
+|                          | Unity Built-in render pipeline                               | Lightweight Render Pipeline                                  |
 | ------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | Platform Coverage        | All                                                          | All                                                          |
 | Rendering Paths          | Multi-pass Forward<br />Multi-pass Deferred                  | Single-pass Forward                                          |
@@ -25,3 +31,14 @@
 | Sky lighting             | Procedural Sky<br />Cubemap/LatLong Sky<br />Ambient Lighting | Procedural Sky<br />Cubemap<br />Ambient Lighting            |
 
  
+
+
+
+
+
+
+
+ 
+
+
+
