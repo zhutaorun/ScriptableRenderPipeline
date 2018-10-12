@@ -83,7 +83,9 @@ namespace UnityEditor.ShaderGraph.Drawing
                     var node = new SubGraphNode { subGraphAsset = asset };
 
                     if (string.IsNullOrEmpty(asset.subGraph.path))
+                    {
                         AddEntries(node, new string[1] { asset.name }, nodeEntries);
+                    }
                     else
                     {
                         var title = asset.subGraph.path.Split('/').ToList();
