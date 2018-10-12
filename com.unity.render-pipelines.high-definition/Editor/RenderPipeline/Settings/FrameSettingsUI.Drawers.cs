@@ -90,9 +90,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         internal static FrameSettings GetDefaultFrameSettingsFor(Editor owner)
         {
             HDRenderPipelineAsset hdrpAsset = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
-            if (owner is HDProbeEditor)
+            if (owner is IHDProbeEditor)
             {
-                if ((owner as HDProbeEditor).GetTarget(owner.target).mode == ProbeSettings.Mode.Realtime)
+                if ((owner as IHDProbeEditor).GetTarget(owner.target).mode == ProbeSettings.Mode.Realtime)
                 {
                     return hdrpAsset.GetRealtimeReflectionFrameSettings();
                 }
@@ -107,7 +107,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static void Drawer_SectionRenderingPasses(FrameSettingsUI s, SerializedFrameSettings p, Editor owner, bool withOverride)
         {
             //disable temporarily as FrameSettings are not supported for Baked probe at the moment
-            using (new EditorGUI.DisabledScope((owner is HDProbeEditor) && (owner as HDProbeEditor).GetTarget(owner.target).mode != ProbeSettings.Mode.Realtime || (owner is HDRenderPipelineEditor) && HDRenderPipelineUI.selectedFrameSettings == HDRenderPipelineUI.SelectedFrameSettings.BakedOrCustomReflection))
+            using (new EditorGUI.DisabledScope((owner is IHDProbeEditor) && (owner as IHDProbeEditor).GetTarget(owner.target).mode != ProbeSettings.Mode.Realtime || (owner is HDRenderPipelineEditor) && HDRenderPipelineUI.selectedFrameSettings == HDRenderPipelineUI.SelectedFrameSettings.BakedOrCustomReflection))
             {
                 RenderPipelineSettings hdrpSettings = (GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset).renderPipelineSettings;
                 FrameSettings defaultFrameSettings = GetDefaultFrameSettingsFor(owner);
@@ -127,7 +127,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static void Drawer_SectionRenderingSettings(FrameSettingsUI s, SerializedFrameSettings p, Editor owner, bool withOverride)
         {
             //disable temporarily as FrameSettings are not supported for Baked probe at the moment
-            using (new EditorGUI.DisabledScope((owner is HDProbeEditor) && (owner as HDProbeEditor).GetTarget(owner.target).mode != ProbeSettings.Mode.Realtime || (owner is HDRenderPipelineEditor) && HDRenderPipelineUI.selectedFrameSettings == HDRenderPipelineUI.SelectedFrameSettings.BakedOrCustomReflection))
+            using (new EditorGUI.DisabledScope((owner is IHDProbeEditor) && (owner as IHDProbeEditor).GetTarget(owner.target).mode != ProbeSettings.Mode.Realtime || (owner is HDRenderPipelineEditor) && HDRenderPipelineUI.selectedFrameSettings == HDRenderPipelineUI.SelectedFrameSettings.BakedOrCustomReflection))
             {
                 RenderPipelineSettings hdrpSettings = (GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset).renderPipelineSettings;
                 FrameSettings defaultFrameSettings = GetDefaultFrameSettingsFor(owner);
@@ -145,7 +145,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static void Drawer_SectionLightingSettings(FrameSettingsUI s, SerializedFrameSettings p, Editor owner, bool withOverride)
         {
             //disable temporarily as FrameSettings are not supported for Baked probe at the moment
-            using (new EditorGUI.DisabledScope((owner is HDProbeEditor) && (owner as HDProbeEditor).GetTarget(owner.target).mode != ProbeSettings.Mode.Realtime || (owner is HDRenderPipelineEditor) && HDRenderPipelineUI.selectedFrameSettings == HDRenderPipelineUI.SelectedFrameSettings.BakedOrCustomReflection))
+            using (new EditorGUI.DisabledScope((owner is IHDProbeEditor) && (owner as IHDProbeEditor).GetTarget(owner.target).mode != ProbeSettings.Mode.Realtime || (owner is HDRenderPipelineEditor) && HDRenderPipelineUI.selectedFrameSettings == HDRenderPipelineUI.SelectedFrameSettings.BakedOrCustomReflection))
             {
                 RenderPipelineSettings hdrpSettings = (GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset).renderPipelineSettings;
                 FrameSettings defaultFrameSettings = GetDefaultFrameSettingsFor(owner);

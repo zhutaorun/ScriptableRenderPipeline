@@ -22,7 +22,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         [DrawGizmo(GizmoType.Selected)]
         internal static void DrawGizmos(PlanarReflectionProbe d, GizmoType gizmoType)
         {
-            HDProbeUI.DrawGizmos(d, gizmoType);
+            //HDProbeUI.DrawGizmos(d, gizmoType);
         }
     }
 }

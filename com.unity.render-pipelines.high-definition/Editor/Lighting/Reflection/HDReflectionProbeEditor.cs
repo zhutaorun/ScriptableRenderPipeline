@@ -8,7 +8,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     [CustomEditorForRenderPipeline(typeof(ReflectionProbe), typeof(HDRenderPipelineAsset))]
     [CanEditMultipleObjects]
-    partial class HDReflectionProbeEditor : HDProbeEditor<HDProbeSettingsProvider>
+    sealed partial class HDReflectionProbeEditor : HDProbeEditor<HDProbeSettingsProvider>
     {
         #region Context Menu
         [MenuItem("CONTEXT/ReflectionProbe/Remove Component", false, 0)]
@@ -66,6 +66,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             InitializeTargetProbe();
         }
 
+        protected override HDProbeUI NewUI() => new HDReflectionProbeUI();
+
         internal override HDProbe GetTarget(UnityEngine.Object editorTarget)
             => ((ReflectionProbe)editorTarget).GetComponent<HDAdditionalReflectionData>();
         static HDReflectionProbeEditor GetEditorFor(ReflectionProbe p)
@@ -76,31 +78,36 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     struct HDProbeSettingsProvider : HDProbeUI.IProbeUISettingsProvider, InfluenceVolumeUI.IInfluenceUISettingsProvider
     {
         bool InfluenceVolumeUI.IInfluenceUISettingsProvider.drawOffset => true;
-
         bool InfluenceVolumeUI.IInfluenceUISettingsProvider.drawNormal => true;
-
         bool InfluenceVolumeUI.IInfluenceUISettingsProvider.drawFace => true;
 
         ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.displayedCaptureSettings => new ProbeSettingsOverride
         {
-            probe = (ProbeSettingsFields)(-1),
+            probe = ProbeSettingsFields.proxyCapturePositionProxySpace
+                | ProbeSettingsFields.proxyCaptureRotationProxySpace,
             camera = new CameraSettingsOverride
             {
-                camera = (CameraSettingsFields)(-1)
+                camera = (CameraSettingsFields)(-1) & ~(
+                    CameraSettingsFields.frustumFieldOfView
+                    | CameraSettingsFields.flipYMode
+                    | CameraSettingsFields.cullingInvertCulling
+                    | CameraSettingsFields.frustumMode
+                    | CameraSettingsFields.frustumProjectionMatrix
+                )
             }
         };
-
         ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.displayedAdvancedSettings => new ProbeSettingsOverride
         {
-            probe = (ProbeSettingsFields)(-1),
+            probe = ProbeSettingsFields.lightingLightLayer
+                | ProbeSettingsFields.lightingMultiplier
+                | ProbeSettingsFields.lightingWeight,
             camera = new CameraSettingsOverride
             {
-                camera = (CameraSettingsFields)(-1)
+                camera = CameraSettingsFields.none
             }
         };
 
         Type HDProbeUI.IProbeUISettingsProvider.customTextureType => typeof(Cubemap);
-
         static readonly HDProbeUI.ToolBar[] k_ToolBars
         = { HDProbeUI.ToolBar.InfluenceShape | HDProbeUI.ToolBar.NormalBlend | HDProbeUI.ToolBar.Blend, HDProbeUI.ToolBar.CapturePosition };
         HDProbeUI.ToolBar[] HDProbeUI.IProbeUISettingsProvider.toolbars => k_ToolBars;

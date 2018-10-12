@@ -42,6 +42,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public void Update(SerializedHDProbe probe)
         {
+            probeSettings.Reset(probe.probeSettings, null);
             probeSettings.Update();
             SetModeTarget(probe.probeSettings.mode.hasMultipleDifferentValues ? -1 : probe.probeSettings.mode.intValue);
         }

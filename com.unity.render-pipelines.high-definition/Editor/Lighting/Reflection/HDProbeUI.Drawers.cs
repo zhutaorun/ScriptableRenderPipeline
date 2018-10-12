@@ -195,10 +195,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     s.probeSettings, p.probeSettings, o,
                     p.probeSettingsOverride, provider.displayedCaptureSettings
                 );
-
-                // TODO: place it in static cache
-                var drawer = FrameSettingsUI.Inspector(true, false);
-                drawer.Draw(s.probeSettings.cameraFrameSettings, p.probeSettings.cameraSettings.frameSettings, o);
             }
 
             public static void DrawCustomSettings(HDProbeUI s, SerializedHDProbe p, Editor o)

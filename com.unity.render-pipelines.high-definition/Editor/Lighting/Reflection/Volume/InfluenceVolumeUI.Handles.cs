@@ -196,8 +196,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                 float radius = sphere.radius;
                 d.sphereRadius.floatValue = radius;
-                d.sphereBlendDistance.floatValue = Mathf.Clamp(s.data.sphereBlendDistance.floatValue, 0, radius);
-                d.sphereBlendNormalDistance.floatValue = Mathf.Clamp(s.data.sphereBlendNormalDistance.floatValue, 0, radius);
+                d.sphereBlendDistance.floatValue = Mathf.Clamp(d.sphereBlendDistance.floatValue, 0, radius);
+                d.sphereBlendNormalDistance.floatValue = Mathf.Clamp(d.sphereBlendNormalDistance.floatValue, 0, radius);
                 d.Apply();
             }
         }

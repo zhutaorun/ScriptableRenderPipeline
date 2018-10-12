@@ -57,16 +57,20 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         }
 
         static readonly GUIContent s_OverrideTooltip = CoreEditorUtils.GetContent("|Override this setting in component.");
-        public static void FlagToggle<TEnum>(TEnum v, SerializedProperty property)
+        public static bool FlagToggle<TEnum>(TEnum v, SerializedProperty property)
             where TEnum : struct, IConvertible // restrict to ~enum
         {
             var intV = (int)(object)v;
             var isOn = (property.intValue & intV) != 0;
-            isOn = GUILayout.Toggle(isOn, s_OverrideTooltip, CoreEditorStyles.smallTickbox);
+            var rect = GUILayoutUtility.GetRect(21, 11, CoreEditorStyles.smallTickbox);
+            rect.y += 4;
+            isOn = GUI.Toggle(rect, isOn, s_OverrideTooltip, CoreEditorStyles.smallTickbox);
             if (isOn)
                 property.intValue |= intV;
             else
                 property.intValue &= ~intV;
+
+            return isOn;
         }
 
         public static void PropertyFieldWithFlagToggle<TEnum>(
@@ -75,8 +79,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             where TEnum : struct, IConvertible // restrict to ~enum
         {
             EditorGUILayout.BeginHorizontal();
-            FlagToggle(v, @override);
+            var i = EditorGUI.indentLevel;
+            EditorGUI.indentLevel = 0;
+            EditorGUIUtility.labelWidth = 0;
+            GUI.enabled = FlagToggle(v, @override);
             EditorGUILayout.PropertyField(property, label);
+            GUI.enabled = true;
+            EditorGUI.indentLevel = i;
             EditorGUILayout.EndHorizontal();
         }
 

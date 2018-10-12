@@ -51,9 +51,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             physicalAperture = root.FindPropertyRelative("physical.aperture");
             physicalShutterSpeed = root.FindPropertyRelative("physical.shutterSpeed");
             physicalIso = root.FindPropertyRelative("physical.iso");
-            bufferClearColorMode = root.FindPropertyRelative("bufferClear.colorMode");
-            bufferClearBackgroundColorHDR = root.FindPropertyRelative("bufferClear.backgroundColorHDR");
-            bufferClearClearDepth = root.FindPropertyRelative("bufferClear.clearDepth");
+            bufferClearColorMode = root.FindPropertyRelative("bufferClearing.clearColorMode");
+            bufferClearBackgroundColorHDR = root.FindPropertyRelative("bufferClearing.backgroundColorHDR");
+            bufferClearClearDepth = root.FindPropertyRelative("bufferClearing.clearDepth");
             volumesLayerMask = root.FindPropertyRelative("volumes.layerMask");
             volumesAnchorOverride = root.FindPropertyRelative("volumes.anchorOverride");
             frustumMode = root.FindPropertyRelative("frustum.mode");

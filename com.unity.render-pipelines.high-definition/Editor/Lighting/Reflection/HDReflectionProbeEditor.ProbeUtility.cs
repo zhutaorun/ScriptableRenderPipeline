@@ -1,6 +1,9 @@
+using UnityEngine;
+using UnityEngine.Experimental.Rendering.HDPipeline;
+
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    partial class HDReflectionProbeEditor
+    sealed partial class HDReflectionProbeEditor
     {
         void InitializeTargetProbe()
         {

@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using UnityEditor.Callbacks;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 using Object = UnityEngine.Object;
-using System.Linq;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
@@ -14,17 +12,53 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
     [CustomEditorForRenderPipeline(typeof(PlanarReflectionProbe), typeof(HDRenderPipelineAsset))]
     [CanEditMultipleObjects]
-    class PlanarReflectionProbeEditor : HDProbeEditor
+    sealed class PlanarReflectionProbeEditor : HDProbeEditor<PlanarReflectionProbeUISettingsProvider>
     {
-        internal override HDProbe GetTarget(Object editorTarget)
+        const float k_PreviewHeight = 128;
+        List<Texture> m_PreviewedTextures = new List<Texture>();
+
+        public override bool HasPreviewGUI()
         {
-            return editorTarget as HDProbe;
+            foreach (PlanarReflectionProbe p in m_TypedTargets)
+            {
+                if (p.texture != null)
+                    return true;
+            }
+            return false;
         }
 
-        protected override void Draw(HDProbeUI s, SerializedHDProbe serialized, Editor owner)
+        public override GUIContent GetPreviewTitle() => _.GetContent("Planar Reflection");
+
+        public override void OnPreviewGUI(Rect r, GUIStyle background)
         {
-            PlanarReflectionProbeUI.Inspector.Draw(s, serialized, owner);
+            m_PreviewedTextures.Clear();
+            foreach (PlanarReflectionProbe p in m_TypedTargets)
+            {
+                m_PreviewedTextures.Add(p.texture);
+            }
+
+            var space = Vector2.one;
+            var rowSize = Mathf.CeilToInt(Mathf.Sqrt(m_PreviewedTextures.Count));
+            var size = r.size / rowSize - space * (rowSize - 1);
+
+            for (var i = 0; i < m_PreviewedTextures.Count; i++)
+            {
+                var row = i / rowSize;
+                var col = i % rowSize;
+                var itemRect = new Rect(
+                        r.x + size.x * row + ((row > 0) ? (row - 1) * space.x : 0),
+                        r.y + size.y * col + ((col > 0) ? (col - 1) * space.y : 0),
+                        size.x,
+                        size.y);
+
+                if (m_PreviewedTextures[i] != null)
+                    EditorGUI.DrawPreviewTexture(itemRect, m_PreviewedTextures[i], CameraEditorUtils.GUITextureBlit2SRGBMaterial, ScaleMode.ScaleToFit, 0, 1);
+                else
+                    EditorGUI.LabelField(itemRect, _.GetContent("Not Available"));
+            }
         }
+
+        internal override HDProbe GetTarget(Object editorTarget) => editorTarget as HDProbe;
 
         protected override void OnEnable()
         {
@@ -39,13 +73,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             SceneViewOverlay_Window(_.GetContent("Planar Probe"), OnOverlayGUI, -100, target);
 
             var ui = new PlanarReflectionProbeUI();
-            ui.Reset(m_SerializedHDProbe, Repaint);
+            ui.Update(m_SerializedHDProbe);
             PlanarReflectionProbeUI.DrawHandles(ui, (SerializedPlanarReflectionProbe)m_SerializedHDProbe, this);
         }
 
-
-        const float k_PreviewHeight = 128;
-        List<Texture> m_PreviewedTextures = new List<Texture>();
+        protected override HDProbeUI NewUI() => new PlanarReflectionProbeUI();
 
         void OnOverlayGUI(Object target, SceneView sceneView)
         {
@@ -83,50 +115,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        public override bool HasPreviewGUI()
-        {
-            foreach(PlanarReflectionProbe p in m_TypedTargets)
-            {
-                if (p.texture != null)
-                    return true;
-            }
-            return false;
-        }
-
-        public override GUIContent GetPreviewTitle()
-        {
-            return _.GetContent("Planar Reflection");
-        }
-
-        public override void OnPreviewGUI(Rect r, GUIStyle background)
-        {
-            m_PreviewedTextures.Clear();
-            foreach (PlanarReflectionProbe p in m_TypedTargets)
-            {
-                m_PreviewedTextures.Add(p.texture);
-            }
-
-            var space = Vector2.one;
-            var rowSize = Mathf.CeilToInt(Mathf.Sqrt(m_PreviewedTextures.Count));
-            var size = r.size / rowSize - space * (rowSize - 1);
-
-            for (var i = 0; i < m_PreviewedTextures.Count; i++)
-            {
-                var row = i / rowSize;
-                var col = i % rowSize;
-                var itemRect = new Rect(
-                        r.x + size.x * row + ((row > 0) ? (row - 1) * space.x : 0),
-                        r.y + size.y * col + ((col > 0) ? (col - 1) * space.y : 0),
-                        size.x,
-                        size.y);
-
-                if (m_PreviewedTextures[i] != null)
-                    EditorGUI.DrawPreviewTexture(itemRect, m_PreviewedTextures[i], CameraEditorUtils.GUITextureBlit2SRGBMaterial, ScaleMode.ScaleToFit, 0, 1);
-                else
-                    EditorGUI.LabelField(itemRect, _.GetContent("Not Available"));
-            }
-        }
-
         static Type k_SceneViewOverlay_WindowFunction = Type.GetType("UnityEditor.SceneViewOverlay+WindowFunction,UnityEditor");
         static Type k_SceneViewOverlay_WindowDisplayOption = Type.GetType("UnityEditor.SceneViewOverlay+WindowDisplayOption,UnityEditor");
         static MethodInfo k_SceneViewOverlay_Window = Type.GetType("UnityEditor.SceneViewOverlay,UnityEditor")
@@ -147,5 +135,33 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 Enum.ToObject(k_SceneViewOverlay_WindowDisplayOption, 1)
             });
         }
+    }
+
+    struct PlanarReflectionProbeUISettingsProvider : HDProbeUI.IProbeUISettingsProvider, InfluenceVolumeUI.IInfluenceUISettingsProvider
+    {
+        bool InfluenceVolumeUI.IInfluenceUISettingsProvider.drawOffset => false;
+        bool InfluenceVolumeUI.IInfluenceUISettingsProvider.drawNormal => false;
+        bool InfluenceVolumeUI.IInfluenceUISettingsProvider.drawFace => false;
+
+
+        ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.displayedCaptureSettings => new ProbeSettingsOverride
+        {
+            probe = (ProbeSettingsFields)(-1),
+            camera = new CameraSettingsOverride
+            {
+                camera = (CameraSettingsFields)(-1)
+            }
+        };
+        ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.displayedAdvancedSettings => new ProbeSettingsOverride
+        {
+            probe = (ProbeSettingsFields)(-1),
+            camera = new CameraSettingsOverride
+            {
+                camera = (CameraSettingsFields)(-1)
+            }
+        };
+        Type HDProbeUI.IProbeUISettingsProvider.customTextureType => typeof(Cubemap);
+        static readonly HDProbeUI.ToolBar[] k_Toolbars = { HDProbeUI.ToolBar.InfluenceShape | HDProbeUI.ToolBar.Blend };
+        HDProbeUI.ToolBar[] HDProbeUI.IProbeUISettingsProvider.toolbars => k_Toolbars;
     }
 }

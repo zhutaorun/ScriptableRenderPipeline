@@ -6,7 +6,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     sealed internal partial class ProbeSettingsUI : BaseUI<SerializedProbeSettings>
     {
         public InfluenceVolumeUI influence = new InfluenceVolumeUI();
-        public FrameSettingsUI cameraFrameSettings = new FrameSettingsUI();
+        public CameraSettingsUI camera = new CameraSettingsUI();
 
         public ProbeSettingsUI() : base(0)
         {
@@ -15,8 +15,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public override void Reset(SerializedProbeSettings probeSettings, UnityAction repaint)
         {
             base.Reset(probeSettings, repaint);
-            influence.Reset(probeSettings.influence, repaint);
-            cameraFrameSettings.Reset(probeSettings.cameraSettings.frameSettings, repaint);
+            camera.Update(probeSettings.cameraSettings);
         }
 
         public override void Update()
@@ -26,7 +25,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             //if (frameSettingsOverriden)
             //    frameSettings.Update();
 
-            influence.Update();
+            influence.Update(data.influence);
+            camera.Update(data.cameraSettings);
             base.Update();
         }
     }

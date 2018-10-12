@@ -88,6 +88,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.flipYMode, d.flipYMode, _.GetContent("Flip Y"), @override.camera, displayedFields.camera);
             PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.renderingPath, d.renderingPath, _.GetContent("Rendering Path"), @override.camera, displayedFields.camera);
+
+            // TODO: place it in static cache
+            var drawer = FrameSettingsUI.Inspector(true, false);
+            drawer.Draw(s.frameSettings, d.frameSettings, o);
         }
     }
 }

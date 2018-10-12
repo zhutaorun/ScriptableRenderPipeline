@@ -264,7 +264,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if(EditorGUI.EndChangeCheck())
             {
                 //call the offset setter as it will update legacy reflection probe
-                HDProbeEditor editor = (HDProbeEditor)o;
+                var editor = (IHDProbeEditor)o;
                 InfluenceVolume influenceVolume = editor.GetTarget(editor.target).influenceVolume;
                 influenceVolume.offset = d.offset.vector3Value;
             }

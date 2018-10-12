@@ -36,9 +36,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyCapturePositionProxySpace, d.proxyCapturePositionProxySpace, _.GetContent("Capture Position Proxy Space"), @override.probe, displayedFields.probe);
                 PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyCaptureRotationProxySpace, d.proxyCaptureRotationProxySpace, _.GetContent("Capture Rotation Proxy Space"), @override.probe, displayedFields.probe);
                 PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyMirrorPositionProxySpace, d.proxyMirrorPositionProxySpace, _.GetContent("Mirror Position Proxy Space"), @override.probe, displayedFields.probe);
-                PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyMirrorPositionProxySpace, d.proxyMirrorPositionProxySpace, _.GetContent("Mirror Rotation Proxy Space"), @override.probe, displayedFields.probe);
+                PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyMirrorRotationProxySpace, d.proxyMirrorRotationProxySpace, _.GetContent("Mirror Rotation Proxy Space"), @override.probe, displayedFields.probe);
                 EditorGUILayout.Space();
             }
+
+            CameraSettingsUI.Draw(s.camera, d.cameraSettings, o, @override.camera, displayedFields.camera);
         }
     }
 }

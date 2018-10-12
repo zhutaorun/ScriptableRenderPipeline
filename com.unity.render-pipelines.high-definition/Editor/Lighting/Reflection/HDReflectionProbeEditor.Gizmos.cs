@@ -6,7 +6,7 @@ using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    partial class HDReflectionProbeEditor
+    sealed partial class HDReflectionProbeEditor
     {
         static Mesh sphere;
         static Material material;
@@ -56,7 +56,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if(material == null)
                 material = new Material(Shader.Find("Debug/ReflectionProbePreview"));
 
-            material.SetTexture("_Cubemap", GetTexture(e, target));
+            var additional = target.GetComponent<HDAdditionalReflectionData>();
+
+            material.SetTexture("_Cubemap", additional.texture);
             material.SetPass(0);
             Graphics.DrawMeshNow(sphere, Matrix4x4.TRS(target.transform.position, Quaternion.identity, Vector3.one * capturePointPreviewSize));
         }
