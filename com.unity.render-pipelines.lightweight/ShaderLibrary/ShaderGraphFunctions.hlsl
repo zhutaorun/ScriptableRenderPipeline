@@ -49,7 +49,7 @@ float3 shadergraph_LWBakedGI(float3 positionWS, float3 normalWS, float2 uvStatic
 {
 #ifdef LIGHTMAP_ON
     if (applyScaling)
-        uvStaticLightmap.xy *= unity_LightmapST.xy + unity_LightmapST.zw;
+        uvStaticLightmap = uvStaticLightmap * unity_LightmapST.xy + unity_LightmapST.zw;
 
     return SampleLightmap(uvStaticLightmap, normalWS);
 #else
