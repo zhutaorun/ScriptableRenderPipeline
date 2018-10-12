@@ -2302,10 +2302,12 @@ LightTransportData GetLightTransportData(SurfaceData surfaceData, BuiltinData bu
     //lightTransportData.diffuseColor = bsdfData.diffuseColor + bsdfData.fresnel0 * roughness * 0.5 * surfaceData.metallic;
 
     //
-    // In StackLit we also need to deal with vlayering and the tint it might give from the diffuse energy factor:
+    // In StackLit we also need to deal with vlayering and the tint it might give from the diffuse energy factor,
+    // so we end up with two directionally dependent hacks: the diffuseEnergy factor, and the rough metal bounce boost
+    // (which can also be directionally dependent because of the modification to f0 with iridescence, see below)
     //
     // fraginputs are also ShaderPass/StackLitSharePass.hlsl, we should be able to compute the diffuse energy factor,
-    // but we have to run GetPreLightData (but meta pass is not performance critical but for baking).
+    // but we have to run GetPreLightData (but it's ok, meta pass is not performance critical, just baking).
     //
     // Another problem is the input parametrization: if we have specularColor, metallic is meaningless.
     // We can try to infer it.
@@ -2315,12 +2317,13 @@ LightTransportData GetLightTransportData(SurfaceData surfaceData, BuiltinData bu
     // The fresnel0 shouldn't be bsdfData.fresnel0 in the vlayered case also, but preLightData.vLayerEnergyCoeff[BOTTOM_VLAYER_IDX].
     //
     // Also, when vlayered, our computations are directional (diffuseEnergy is a hack), and account for iridescence but obviously
-    // it is not an effect that should normally impact diffuse baking (but neither should specular reflections).
-    // When not vlayered we could handle it to be consistent (see f0forCalculatingFGD).
+    // it is not an effect that should normally impact diffuse baking (but neither should specular reflectance).
+    // When not vlayered we can still handle iridescence to be consistent for the rough metal hack (see f0forCalculatingFGD).
     //
     // Finally, diffuseEnergy should multiply diffuseColor.
 
-    float3 V = bsdfData.normalWS; // TODOTODO: we have V in ShaderPassLightTransport.hlsl, just need to pass it to GetLightTransportData()
+    float3 V = bsdfData.normalWS;
+    // We have V in ShaderPassLightTransport.hlsl, but it isn't setup (the meta pass is just a simple baked-map uv unwrap to screen)
 
     float metallic = surfaceData.metallic;
     float roughness = PerceptualRoughnessToRoughness(lerp(bsdfData.perceptualRoughnessA, bsdfData.perceptualRoughnessB, surfaceData.lobeMix));
@@ -2341,7 +2344,7 @@ LightTransportData GetLightTransportData(SurfaceData surfaceData, BuiltinData bu
         float NdotV[NB_NORMALS];
         PreLightData_SetupNormals(bsdfData, preLightData, V, N, NdotV);
 
-        // TODOTODO N == V everywhere for now so make sure dual normal maps will work using testSingularity:
+        // Here N == V everywhere so make sure dual normal maps will work using testSingularity:
         ComputeAdding(NdotV[COAT_NORMAL_IDX], V, bsdfData, preLightData, false /*calledPerLight*/, true /*testSingularity*/);
 
         roughness = PerceptualRoughnessToRoughness(lerp(preLightData.iblPerceptualRoughness[BASE_LOBEA_IDX], preLightData.iblPerceptualRoughness[BASE_LOBEB_IDX], surfaceData.lobeMix));
@@ -2381,9 +2384,7 @@ LightTransportData GetLightTransportData(SurfaceData surfaceData, BuiltinData bu
 #define USE_DEFERRED_DIRECTIONAL_SHADOWS // Deferred shadows are always enabled for opaque objects
 #endif
 
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialEvaluation.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightEvaluation.hlsl"
-
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Reflection/VolumeProjection.hlsl"
 
 //-----------------------------------------------------------------------------
