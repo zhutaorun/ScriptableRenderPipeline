@@ -21,6 +21,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             MigrationStep.New(Version.CaptureSettings, (Action<PlanarReflectionProbe>)((PlanarReflectionProbe p) =>
             {
 #pragma warning disable 618
+                if (p.m_ObsoleteCaptureSettings == null)
+                    p.m_ObsoleteCaptureSettings = new ObsoleteCaptureSettings();
                 if (p.m_ObsoleteOverrideFieldOfView)
                     p.m_ObsoleteCaptureSettings.overrides |= ObsoleteCaptureSettingsOverrides.FieldOfview;
                 p.m_ObsoleteCaptureSettings.fieldOfView = p.m_ObsoleteFieldOfViewOverride;

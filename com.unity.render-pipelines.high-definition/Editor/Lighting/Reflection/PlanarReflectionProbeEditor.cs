@@ -146,22 +146,38 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.displayedCaptureSettings => new ProbeSettingsOverride
         {
-            probe = (ProbeSettingsFields)(-1),
+            probe = ProbeSettingsFields.proxyMirrorPositionProxySpace
+               | ProbeSettingsFields.proxyMirrorRotationProxySpace,
             camera = new CameraSettingsOverride
             {
-                camera = (CameraSettingsFields)(-1)
+                camera = (CameraSettingsFields)(-1) & ~(
+                   CameraSettingsFields.flipYMode
+                   | CameraSettingsFields.frustumAspect
+                   | CameraSettingsFields.cullingInvertCulling
+                   | CameraSettingsFields.frustumMode
+                   | CameraSettingsFields.frustumProjectionMatrix
+               )
             }
         };
-        public ProbeSettingsOverride overrideableCaptureSettings => new ProbeSettingsOverride();
+        ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.overrideableCaptureSettings => new ProbeSettingsOverride
+        {
+            probe = ProbeSettingsFields.none,
+            camera = new CameraSettingsOverride
+            {
+                camera = CameraSettingsFields.frustumFieldOfView
+            }
+        };
         ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.displayedAdvancedSettings => new ProbeSettingsOverride
         {
-            probe = (ProbeSettingsFields)(-1),
+            probe = ProbeSettingsFields.lightingLightLayer
+                | ProbeSettingsFields.lightingMultiplier
+                | ProbeSettingsFields.lightingWeight,
             camera = new CameraSettingsOverride
             {
-                camera = (CameraSettingsFields)(-1)
+                camera = CameraSettingsFields.none
             }
         };
-        public ProbeSettingsOverride overrideableAdvancedSettings => new ProbeSettingsOverride();
+        ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.overrideableAdvancedSettings => new ProbeSettingsOverride();
         Type HDProbeUI.IProbeUISettingsProvider.customTextureType => typeof(Cubemap);
         static readonly HDProbeUI.ToolBar[] k_Toolbars = { HDProbeUI.ToolBar.InfluenceShape | HDProbeUI.ToolBar.Blend };
         HDProbeUI.ToolBar[] HDProbeUI.IProbeUISettingsProvider.toolbars => k_Toolbars;

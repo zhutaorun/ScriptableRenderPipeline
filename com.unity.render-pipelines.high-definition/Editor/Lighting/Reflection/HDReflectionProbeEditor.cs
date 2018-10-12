@@ -83,12 +83,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.displayedCaptureSettings => new ProbeSettingsOverride
         {
-            probe = ProbeSettingsFields.proxyCapturePositionProxySpace
-                | ProbeSettingsFields.proxyCaptureRotationProxySpace,
+            probe = ProbeSettingsFields.proxyCapturePositionProxySpace,
             camera = new CameraSettingsOverride
             {
                 camera = (CameraSettingsFields)(-1) & ~(
                     CameraSettingsFields.frustumFieldOfView
+                    | CameraSettingsFields.frustumAspect
                     | CameraSettingsFields.flipYMode
                     | CameraSettingsFields.cullingInvertCulling
                     | CameraSettingsFields.frustumMode
