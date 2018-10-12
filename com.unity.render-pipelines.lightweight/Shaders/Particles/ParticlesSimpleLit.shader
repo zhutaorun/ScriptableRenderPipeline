@@ -6,8 +6,8 @@ Shader "Lightweight Render Pipeline/Particles/Simple Lit"
 {
     Properties
     {
-        _MainTex("Albedo", 2D) = "white" {}
-        _Color("Color", Color) = (1,1,1,1)
+        _BaseMap("Albedo", 2D) = "white" {}
+        _BaseColor("Color", Color) = (1,1,1,1)
 
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 
@@ -122,7 +122,7 @@ Shader "Lightweight Render Pipeline/Particles/Simple Lit"
 
             half4 ParticlesLitFragment(VaryingsParticle input) : SV_Target
             {
-                half4 albedo = SampleAlbedo(input, TEXTURE2D_PARAM(_MainTex, sampler_MainTex));
+                half4 albedo = SampleAlbedo(input, TEXTURE2D_PARAM(_BaseMap, sampler_BaseMap));
                 half3 diffuse = AlphaModulate(albedo.rgb, albedo.a);
                 half alpha = AlphaBlendAndTest(albedo.a, _Cutoff);
                 half3 normalTS = SampleNormalTS(input, TEXTURE2D_PARAM(_BumpMap, sampler_BumpMap));

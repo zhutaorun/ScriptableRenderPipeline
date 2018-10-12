@@ -1,18 +1,17 @@
-#ifndef LIGHTWEIGHT_LIT_META_PASS_INCLUDED
-#define LIGHTWEIGHT_LIT_META_PASS_INCLUDED
+#ifndef TERRAIN_LIT_META_PASS_INCLUDED
+#define TERRAIN_LIT_META_PASS_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/MetaInput.hlsl"
 
-Varyings LightweightVertexMeta(Attributes input)
+Varyings TerrainVertexMeta(Attributes input)
 {
     Varyings output;
-    
     output.positionCS = MetaVertexPosition(input.positionOS, input.uvLM, input.uvDLM, unity_LightmapST);
-    output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+    output.uv = TRANSFORM_TEX(input.uv, _MainTex);
     return output;
 }
 
-half4 LightweightFragmentMeta(Varyings input) : SV_Target
+half4 TerrainFragmentMeta(Varyings input) : SV_Target
 {
     SurfaceData surfaceData;
     InitializeStandardLitSurfaceData(input.uv, surfaceData);

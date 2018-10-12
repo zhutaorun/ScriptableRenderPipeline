@@ -23,7 +23,7 @@ Shader "Lightweight Render Pipeline/Terrain/Lit"
 
         // used in fallback on old cards & base map
         [HideInInspector] _MainTex("BaseMap (RGB)", 2D) = "grey" {}
-        [HideInInspector] _Color("Main Color", Color) = (1,1,1,1)
+        [HideInInspector] _BaseColor("Main Color", Color) = (1,1,1,1)
 
         // TODO: Implement ShaderGUI for the shader and display the checkbox only when instancing is enabled.
         [Toggle(_TERRAIN_INSTANCED_PERPIXEL_NORMAL)] _TERRAIN_INSTANCED_PERPIXEL_NORMAL("Enable Instanced Per-pixel Normal", Float) = 0

@@ -22,8 +22,8 @@ Shader "Hidden/Lightweight Render Pipeline/Terrain/Lit (Add Pass)"
         [HideInInspector] _Smoothness3("Smoothness 3", Range(0.0, 1.0)) = 1.0
 
         // used in fallback on old cards & base map
-        [HideInInspector] _MainTex("BaseMap (RGB)", 2D) = "white" {}
-        [HideInInspector] _Color("Main Color", Color) = (1,1,1,1)
+        [HideInInspector] _BaseMap("BaseMap (RGB)", 2D) = "white" {}
+        [HideInInspector] _BaseColor("Main Color", Color) = (1,1,1,1)
     }
 
     SubShader

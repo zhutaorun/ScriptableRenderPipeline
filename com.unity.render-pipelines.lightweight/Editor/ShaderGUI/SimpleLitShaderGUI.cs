@@ -7,85 +7,41 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
     internal class SimpleLitShaderGUI : BaseShaderGUI
     {
         private const float kMinShininessValue = 0.01f;
-        private MaterialProperty albedoMapProp;
-        private MaterialProperty albedoColorProp;
-        private MaterialProperty specularSourceProp;
-        private MaterialProperty glossinessSourceProp;
+        private MaterialProperty specHighlights;
+        private MaterialProperty smoothnessSourceProp;
         private MaterialProperty specularGlossMapProp;
         private MaterialProperty specularColorProp;
         private MaterialProperty shininessProp;
         private MaterialProperty bumpMapProp;
-        private MaterialProperty emissionMapProp;
-        private MaterialProperty emissionColorProp;
 
-        private static class Styles
+        private static class StylesSimpleLit
         {
-            public static GUIContent[] albedoGlosinessLabels =
-            {
-                new GUIContent("Base (RGB) Glossiness (A)", "Base Color (RGB) and Glossiness (A)"),
-                new GUIContent("Base (RGB)", "Base Color (RGB)")
-            };
-
-            public static GUIContent albedoAlphaLabel = new GUIContent("Base (RGB) Alpha (A)",
-                "Base Color (RGB) and Transparency (A)");
-
-            public static GUIContent[] specularGlossMapLabels =
-            {
-                new GUIContent("Specular Map (RGB)", "Specular Color (RGB)"),
-                new GUIContent("Specular Map (RGB) Glossiness (A)", "Specular Color (RGB) Glossiness (A)")
-            };
-
+            public static GUIContent specularMapLabel = new GUIContent("Specular Map", "Specular Color (RGB)");
+            public static readonly string[] smoothnessSourceNames = {"Specular Alpha", "Albedo Alpha"};
+            public static GUIContent smoothnessSource = new GUIContent("Smoothness Source", "Here you can choose where the Map based smoothness comes from.");
+            
             public static GUIContent normalMapText = new GUIContent("Normal Map", "Normal Map");
-            public static GUIContent emissionMapLabel = new GUIContent("Emission Map", "Emission Map");
-
-            public static readonly string[] glossinessSourceNames = Enum.GetNames(typeof(GlossinessSource));
-
-            public static string surfaceProperties = "Surface Properties";
-            public static string specularSourceLabel = "Specular";
-            public static string glossinessSourceLabel = "Glossiness Source";
-            public static string glossinessSource = "Glossiness Source";
-            public static string albedoColorLabel = "Base Color";
-            public static string albedoMapAlphaLabel = "Base(RGB) Alpha(A)";
-            public static string albedoMapGlossinessLabel = "Base(RGB) Glossiness (A)";
-            public static string shininessLabel = "Shininess";
-            public static string normalMapLabel = "Normal map";
-            public static string emissionColorLabel = "Emission Color";
+            
+            public static GUIContent highlightsText = new GUIContent("Specular Highlights", "Specular Highlights");
         }
 
         public override void FindProperties(MaterialProperty[] properties)
         {
             base.FindProperties(properties);
-            albedoMapProp = FindProperty("_MainTex", properties);
-            albedoColorProp = FindProperty("_Color", properties);
-            specularSourceProp = FindProperty("_SpecSource", properties);
-            glossinessSourceProp = FindProperty("_GlossinessSource", properties);
-            specularGlossMapProp = FindProperty("_SpecGlossMap", properties);
+            specHighlights = FindProperty("_SpecularHighlights", properties);
+            smoothnessSourceProp = FindProperty("_SmoothnessSource", properties);
+            specularGlossMapProp = FindProperty("_SpecMap", properties);
             specularColorProp = FindProperty("_SpecColor", properties);
-            shininessProp = FindProperty("_Shininess", properties);
             bumpMapProp = FindProperty("_BumpMap", properties);
             emissionMapProp = FindProperty("_EmissionMap", properties);
             emissionColorProp = FindProperty("_EmissionColor", properties);
         }
 
-        public override void ShaderPropertiesGUI(Material material)
+        public override void DrawSurfaceOptions(Material material)
         {
             EditorGUI.BeginChangeCheck();
             {
-                base.ShaderPropertiesGUI(material);
-                GUILayout.Label(Styles.surfaceProperties, EditorStyles.boldLabel);
-                DoSurfaceArea();
-                DoSpecular();
-
-                EditorGUILayout.Space();
-                materialEditor.TexturePropertySingleLine(Styles.normalMapText, bumpMapProp);
-
-                EditorGUILayout.Space();
-                DoEmissionArea(material);
-
-                EditorGUI.BeginChangeCheck();
-                materialEditor.TextureScaleOffsetProperty(albedoMapProp);
-                if (EditorGUI.EndChangeCheck())
-                    emissionMapProp.textureScaleAndOffset = albedoMapProp.textureScaleAndOffset; // Apply the main texture scale and offset to the emission texture as well, for Enlighten's sake
+                base.DrawSurfaceOptions(material);
             }
 
             if (EditorGUI.EndChangeCheck())
@@ -93,10 +49,36 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
                 foreach (var obj in blendModeProp.targets)
                     MaterialChanged((Material)obj);
             }
-
-            DoMaterialRenderingOptions();
         }
 
+        public override void DrawSurfaceInputs(Material material)
+        {
+            base.DrawSurfaceInputs(material);
+            
+            EditorGUI.BeginChangeCheck();
+            {
+                DoSpecular();
+
+                materialEditor.TexturePropertySingleLine(StylesSimpleLit.normalMapText, bumpMapProp);
+
+                DrawEmissionProperties(material, true);
+
+                DrawBaseTileOffset();
+                EditorGUI.BeginChangeCheck();
+            }
+        }
+
+        public override void DrawAdvancedOptions(Material material)
+        {
+            SpecularSource specularSource = (SpecularSource)specHighlights.floatValue;
+            EditorGUI.BeginChangeCheck();
+            bool enabled = EditorGUILayout.Toggle(StylesSimpleLit.highlightsText, specularSource == SpecularSource.SpecularTextureAndColor);
+            if (EditorGUI.EndChangeCheck())
+                specHighlights.floatValue = enabled ? (float)SpecularSource.SpecularTextureAndColor : (float)SpecularSource.NoSpecular;
+            base.DrawAdvancedOptions(material);
+            
+        }
+        
         public override void MaterialChanged(Material material)
         {
             if (material == null)
@@ -126,7 +108,7 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
 
         private void UpdateMaterialSpecularSource(Material material)
         {
-            SpecularSource specSource = (SpecularSource)material.GetFloat("_SpecSource");
+            SpecularSource specSource = (SpecularSource)material.GetFloat("_SpecularHighlights");
             if (specSource == SpecularSource.NoSpecular)
             {
                 CoreUtils.SetKeyword(material, "_SPECGLOSSMAP", false);
@@ -135,11 +117,11 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             }
             else
             {
-                GlossinessSource glossSource = (GlossinessSource)material.GetFloat("_GlossinessSource");
-                bool hasGlossMap = material.GetTexture("_SpecGlossMap");
-                CoreUtils.SetKeyword(material, "_SPECGLOSSMAP", hasGlossMap);
-                CoreUtils.SetKeyword(material, "_SPECULAR_COLOR", !hasGlossMap);
-                CoreUtils.SetKeyword(material, "_GLOSSINESS_FROM_BASE_ALPHA", glossSource == GlossinessSource.BaseAlpha);
+                var smoothnessSource = (SmoothnessSource)material.GetFloat("_SmoothnessSource");
+                bool hasMap = material.GetTexture("_SpecMap");
+                CoreUtils.SetKeyword(material, "_SPECGLOSSMAP", hasMap);
+                CoreUtils.SetKeyword(material, "_SPECULAR_COLOR", !hasMap);
+                CoreUtils.SetKeyword(material, "_GLOSSINESS_FROM_BASE_ALPHA", smoothnessSource == SmoothnessSource.BaseAlpha);
             }
         }
 
@@ -174,85 +156,32 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             return alphaClipProp.floatValue > 0.0f || surfaceType == SurfaceType.Transparent;
         }
 
-        private void DoSurfaceArea()
-        {
-            EditorGUILayout.Space();
-
-            int surfaceTypeValue = (int)surfaceTypeProp.floatValue;
-            if ((SurfaceType)surfaceTypeValue == SurfaceType.Opaque)
-            {
-                int glossSource = (int)glossinessSourceProp.floatValue;
-                materialEditor.TexturePropertySingleLine(Styles.albedoGlosinessLabels[glossSource], albedoMapProp,
-                    albedoColorProp);
-            }
-            else
-            {
-                materialEditor.TexturePropertySingleLine(Styles.albedoAlphaLabel, albedoMapProp, albedoColorProp);
-            }
-        }
-
         private void DoSpecular()
         {
-            EditorGUILayout.Space();
+            SpecularSource specSource = (SpecularSource)specHighlights.floatValue;
+            EditorGUI.BeginDisabledGroup(specSource == SpecularSource.NoSpecular);
+            
+            materialEditor.TexturePropertySingleLine(StylesSimpleLit.specularMapLabel, specularGlossMapProp, specularColorProp);
 
-            SpecularSource specularSource = (SpecularSource)specularSourceProp.floatValue;
-            EditorGUI.BeginChangeCheck();
-            bool enabled = EditorGUILayout.Toggle(Styles.specularSourceLabel, specularSource == SpecularSource.SpecularTextureAndColor);
-            if (EditorGUI.EndChangeCheck())
-                specularSourceProp.floatValue = enabled ? (float)SpecularSource.SpecularTextureAndColor : (float)SpecularSource.NoSpecular;
-
-            SpecularSource specSource = (SpecularSource)specularSourceProp.floatValue;
-            if (specSource != SpecularSource.NoSpecular)
-            {
-                bool hasSpecularMap = specularGlossMapProp.textureValue != null;
-                materialEditor.TexturePropertySingleLine(Styles.specularGlossMapLabels[(int)glossinessSourceProp.floatValue], specularGlossMapProp, hasSpecularMap ? null : specularColorProp);
-
-                EditorGUI.indentLevel += 2;
-                if (RequiresAlpha())
-                {
-                    GUI.enabled = false;
-                    glossinessSourceProp.floatValue = (float)EditorGUILayout.Popup(Styles.glossinessSourceLabel, (int)GlossinessSource.SpecularAlpha, Styles.glossinessSourceNames);
-                    GUI.enabled = true;
-                }
-                else
-                {
-                    int glossinessSource = (int)glossinessSourceProp.floatValue;
-                    EditorGUI.BeginChangeCheck();
-                    glossinessSource = EditorGUILayout.Popup(Styles.glossinessSourceLabel, glossinessSource, Styles.glossinessSourceNames);
-                    if (EditorGUI.EndChangeCheck())
-                        glossinessSourceProp.floatValue = glossinessSource;
-                    GUI.enabled = true;
-                }
-
+            EditorGUI.indentLevel += 2;
+            //if (RequiresAlpha())
+            //{
+                //EditorGUI.BeginDisabledGroup(true);
+                //smoothnessSourceProp.floatValue = (float)EditorGUILayout.Popup(StylesSimpleLit.smoothnessSource, (int)GlossinessSource.SpecularAlpha, StylesSimpleLit.smoothnessSourceNames);
+                //EditorGUI.EndDisabledGroup();
+            //}
+            //else
+            //{
+                int glossinessSource = (int)smoothnessSourceProp.floatValue;
                 EditorGUI.BeginChangeCheck();
-                float shininess = EditorGUILayout.Slider(Styles.shininessLabel, shininessProp.floatValue,
-                    kMinShininessValue, 1.0f);
+                glossinessSource = EditorGUILayout.Popup(StylesSimpleLit.smoothnessSource, glossinessSource, StylesSimpleLit.smoothnessSourceNames);
                 if (EditorGUI.EndChangeCheck())
-                    shininessProp.floatValue = shininess;
-                EditorGUI.indentLevel -= 2;
-            }
-        }
+                    smoothnessSourceProp.floatValue = glossinessSource;
+            //}
 
-        void DoEmissionArea(Material material)
-        {
-            // Emission for GI?
-            if (materialEditor.EmissionEnabledProperty())
-            {
-                bool hadEmissionTexture = emissionMapProp.textureValue != null;
-
-                // Texture and HDR color controls
-                materialEditor.TexturePropertyWithHDRColor(Styles.emissionMapLabel, emissionMapProp, emissionColorProp, false);
-
-                // If texture was assigned and color was black set color to white
-                float brightness = emissionColorProp.colorValue.maxColorComponent;
-                if (emissionMapProp.textureValue != null && !hadEmissionTexture && brightness <= 0f)
-                    emissionColorProp.colorValue = Color.white;
-
-                // LW does not support RealtimeEmissive. We set it to bake emissive and handle the emissive is black right.
-                material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.BakedEmissive;
-                if (brightness <= 0f)
-                    material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.EmissiveIsBlack;
-            }
+            EditorGUI.indentLevel -= 2;
+            
+            EditorGUI.EndDisabledGroup();
         }
 
         private void ConvertFromLegacy(Material material, string oldShaderName)

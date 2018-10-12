@@ -42,14 +42,14 @@ struct Varyings
     float2 uv           : TEXCOORD0;
 };
 
-float4 MetaVertexPosition(float4 positionOS, float2 uvLM, float2 uvDLM, float4 lightmapST)
+float4 MetaVertexPosition(float3 positionOS, float2 uvLM, float2 uvDLM, float4 lightmapST)
 {
     if (unity_MetaVertexControl.x)
     {
         positionOS.xy = uvLM * lightmapST.xy + lightmapST.zw;
         // OpenGL right now needs to actually use incoming vertex position,
         // so use it in a very dummy way
-        positionOS.z = positionOS.z > 0 ? REAL_MIN : 0.0f;
+        positionOS.z = positionOS.z > 0 ? 1.0e-4f : 0.0f;
     }
     return TransformWorldToHClip(positionOS.xyz); // Need to transfer from world to clip compared to legacy
 }
@@ -72,14 +72,6 @@ half4 MetaFragment(MetaInput input)
         res = half4(input.Emission, 1.0);
     }
     return res;
-}
-
-Varyings LightweightVertexMeta(Attributes input)
-{
-    Varyings output;
-    output.positionCS = MetaVertexPosition(input.positionOS, input.uvLM, input.uvDLM, unity_LightmapST);
-    output.uv = TRANSFORM_TEX(input.uv, _MainTex);
-    return output;
 }
 
 #endif

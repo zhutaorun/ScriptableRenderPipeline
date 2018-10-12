@@ -5,8 +5,8 @@ Shader "Lightweight Render Pipeline/Lit"
         // Specular vs Metallic workflow
         [HideInInspector] _WorkflowMode("WorkflowMode", Float) = 1.0
 
-        _Color("Color", Color) = (0.5,0.5,0.5,1)
-        _MainTex("Albedo", 2D) = "white" {}
+        _BaseColor("Color", Color) = (0.5,0.5,0.5,1)
+        _BaseMap("Albedo", 2D) = "white" {}
 
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 
@@ -71,6 +71,20 @@ Shader "Lightweight Render Pipeline/Lit"
             #pragma prefer_hlslcc gles
             #pragma exclude_renderers d3d11_9x
             #pragma target 2.0
+
+            
+            // color * saturate(Alpha + k);
+            
+             
+
+
+            // _NORMALMAP
+            // _ALPHATEST_ON
+            // _EMISSION
+            // _MASK
+            // _specularlight
+            // _SPECULAR_SETUP
+            // _ReceiveShadows
 
             // -------------------------------------
             // Material Keywords
@@ -198,7 +212,6 @@ Shader "Lightweight Render Pipeline/Lit"
             #pragma shader_feature _EMISSION
             #pragma shader_feature _METALLICSPECGLOSSMAP
             #pragma shader_feature _ _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-            #pragma shader_feature EDITOR_VISUALIZATION
 
             #pragma shader_feature _SPECGLOSSMAP
 

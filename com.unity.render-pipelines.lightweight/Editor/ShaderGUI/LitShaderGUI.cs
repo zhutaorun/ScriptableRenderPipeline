@@ -18,23 +18,21 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             AlbedoAlpha,
         }
 
-        private static class Styles
+        protected class StylesLit
         {
-            public static GUIContent albedoText = new GUIContent("Albedo", "Albedo (RGB) and Transparency (A)");
-            public static GUIContent specularMapText = new GUIContent("Specular", "Specular (RGB) and Smoothness (A)");
-            public static GUIContent metallicMapText = new GUIContent("Metallic", "Metallic (R) and Smoothness (A)");
+            public static GUIContent specularMapText = new GUIContent("Specular Map", "Specular (RGB) and Smoothness (A)");
+            public static GUIContent metallicMapText = new GUIContent("Metallic Map", "Metallic (R) and Smoothness (A)");
             public static GUIContent smoothnessText = new GUIContent("Smoothness", "Smoothness value");
             public static GUIContent smoothnessScaleText = new GUIContent("Smoothness", "Smoothness scale factor");
             public static GUIContent smoothnessMapChannelText = new GUIContent("Source", "Smoothness texture and channel");
             public static GUIContent highlightsText = new GUIContent("Specular Highlights", "Specular Highlights");
-            public static GUIContent reflectionsText = new GUIContent("Reflections", "Glossy Reflections");
+            public static GUIContent reflectionsText = new GUIContent("Environment Reflections", "Glossy Reflections");
             public static GUIContent normalMapText = new GUIContent("Normal Map", "Normal Map");
-            public static GUIContent occlusionText = new GUIContent("Occlusion", "Occlusion (G)");
-            public static GUIContent emissionText = new GUIContent("Color", "Emission (RGB)");
+            public static GUIContent occlusionText = new GUIContent("Occlusion Map", "Occlusion (G)");
             public static GUIContent bumpScaleNotSupported = new GUIContent("Bump scale is not supported on mobile platforms");
             public static GUIContent fixNow = new GUIContent("Fix now");
 
-            public static string surfaceProperties = "Surface Properties";
+            public static string surfaceInputs = "Surface Inputs";
             public static string workflowModeText = "Workflow Mode";
             public static readonly string[] workflowNames = Enum.GetNames(typeof(WorkflowMode));
             public static readonly string[] metallicSmoothnessChannelNames = {"Metallic Alpha", "Albedo Alpha"};
@@ -42,9 +40,6 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
         }
 
         private MaterialProperty workflowMode;
-
-        private MaterialProperty albedoColor;
-        private MaterialProperty albedoMap;
 
         private MaterialProperty smoothness;
         private MaterialProperty smoothnessScale;
@@ -61,16 +56,12 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
         private MaterialProperty bumpMap;
         private MaterialProperty occlusionStrength;
         private MaterialProperty occlusionMap;
-        private MaterialProperty emissionColorForRendering;
-        private MaterialProperty emissionMap;
 
         public override void FindProperties(MaterialProperty[] properties)
         {
             base.FindProperties(properties);
 
             workflowMode = FindProperty("_WorkflowMode", properties);
-            albedoColor = FindProperty("_Color", properties);
-            albedoMap = FindProperty("_MainTex", properties);
 
             smoothness = FindProperty("_Glossiness", properties);
             smoothnessScale = FindProperty("_GlossMapScale", properties, false);
@@ -87,8 +78,6 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             bumpMap = FindProperty("_BumpMap", properties);
             occlusionStrength = FindProperty("_OcclusionStrength", properties);
             occlusionMap = FindProperty("_OcclusionMap", properties);
-            emissionColorForRendering = FindProperty("_EmissionColor", properties);
-            emissionMap = FindProperty("_EmissionMap", properties);
         }
 
         public override void MaterialChanged(Material material)
@@ -101,7 +90,7 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             SetMaterialKeywords(material);
         }
 
-        public override void ShaderPropertiesGUI(Material material)
+        public override void DrawSurfaceOptions(Material material)
         {
             if (material == null)
                 throw new ArgumentNullException("material");
@@ -112,34 +101,43 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             // Detect any changes to the material
             EditorGUI.BeginChangeCheck();
             {
-                DoPopup(Styles.workflowModeText, workflowMode, Styles.workflowNames);
-                base.ShaderPropertiesGUI(material);
-                GUILayout.Label(Styles.surfaceProperties, EditorStyles.boldLabel);
-
-                DoAlbedoArea();
-                DoMetallicSpecularArea();
-                DoNormalArea();
-
-                materialEditor.TexturePropertySingleLine(Styles.occlusionText, occlusionMap, occlusionMap.textureValue != null ? occlusionStrength : null);
-
-                DoEmissionArea(material);
-                EditorGUI.BeginChangeCheck();
-                materialEditor.TextureScaleOffsetProperty(albedoMap);
-                if (EditorGUI.EndChangeCheck())
-                    emissionMap.textureScaleAndOffset = albedoMap.textureScaleAndOffset; // Apply the main texture scale and offset to the emission texture as well, for Enlighten's sake
-
-                EditorGUILayout.Space();
-
-                materialEditor.ShaderProperty(highlights, Styles.highlightsText);
-                materialEditor.ShaderProperty(reflections, Styles.reflectionsText);
+                DoPopup(StylesLit.workflowModeText, workflowMode, StylesLit.workflowNames);
+                base.DrawSurfaceOptions(material);
             }
             if (EditorGUI.EndChangeCheck())
             {
                 foreach (var obj in blendModeProp.targets)
                     MaterialChanged((Material)obj);
             }
+        }
 
-            DoMaterialRenderingOptions();
+        public override void DrawSurfaceInputs(Material material)
+        {
+            base.DrawSurfaceInputs(material);
+            // Detect any changes to the material
+            EditorGUI.BeginChangeCheck();
+            {
+                //DoAlbedoArea();
+                DoMetallicSpecularArea();
+                DoNormalArea();
+
+                materialEditor.TexturePropertySingleLine(StylesLit.occlusionText, occlusionMap, occlusionMap.textureValue != null ? occlusionStrength : null);
+
+                DrawEmissionProperties(material, true);
+
+                DrawBaseTileOffset();
+                EditorGUI.BeginChangeCheck();
+            }
+        }
+
+        public override void DrawAdvancedOptions(Material material)
+        {
+            EditorGUI.BeginChangeCheck();
+            {
+                materialEditor.ShaderProperty(highlights, StylesLit.highlightsText);
+                materialEditor.ShaderProperty(reflections, StylesLit.reflectionsText);
+            }
+            base.DrawAdvancedOptions(material);
         }
 
         public override void AssignNewShaderToMaterial(Material material, Shader oldShader, Shader newShader)
@@ -197,39 +195,12 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             MaterialChanged(material);
         }
 
-        void DoAlbedoArea()
-        {
-            materialEditor.TexturePropertySingleLine(Styles.albedoText, albedoMap, albedoColor);
-        }
-
         void DoNormalArea()
         {
-            materialEditor.TexturePropertySingleLine(Styles.normalMapText, bumpMap, bumpMap.textureValue != null ? bumpScale : null);
+            materialEditor.TexturePropertySingleLine(StylesLit.normalMapText, bumpMap, bumpMap.textureValue != null ? bumpScale : null);
             if (bumpScale.floatValue != 1 && UnityEditorInternal.InternalEditorUtility.IsMobilePlatform(EditorUserBuildSettings.activeBuildTarget))
-                if (materialEditor.HelpBoxWithButton(Styles.bumpScaleNotSupported, Styles.fixNow))
+                if (materialEditor.HelpBoxWithButton(StylesLit.bumpScaleNotSupported, StylesLit.fixNow))
                     bumpScale.floatValue = 1;
-        }
-
-        void DoEmissionArea(Material material)
-        {
-            // Emission for GI?
-            if (materialEditor.EmissionEnabledProperty())
-            {
-                bool hadEmissionTexture = emissionMap.textureValue != null;
-
-                // Texture and HDR color controls
-                materialEditor.TexturePropertyWithHDRColor(Styles.emissionText, emissionMap, emissionColorForRendering, false);
-
-                // If texture was assigned and color was black set color to white
-                float brightness = emissionColorForRendering.colorValue.maxColorComponent;
-                if (emissionMap.textureValue != null && !hadEmissionTexture && brightness <= 0f)
-                    emissionColorForRendering.colorValue = Color.white;
-
-                // LW does not support RealtimeEmissive. We set it to bake emissive and handle the emissive is black right.
-                material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.BakedEmissive;
-                if (brightness <= 0f)
-                    material.globalIlluminationFlags |= MaterialGlobalIlluminationFlags.EmissiveIsBlack;
-            }
         }
 
         void DoMetallicSpecularArea()
@@ -239,15 +210,15 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             if ((WorkflowMode)workflowMode.floatValue == WorkflowMode.Metallic)
             {
                 hasGlossMap = metallicGlossMap.textureValue != null;
-                metallicSpecSmoothnessChannelName = Styles.metallicSmoothnessChannelNames;
-                materialEditor.TexturePropertySingleLine(Styles.metallicMapText, metallicGlossMap,
+                metallicSpecSmoothnessChannelName = StylesLit.metallicSmoothnessChannelNames;
+                materialEditor.TexturePropertySingleLine(StylesLit.metallicMapText, metallicGlossMap,
                     hasGlossMap ? null : metallic);
             }
             else
             {
                 hasGlossMap = specGlossMap.textureValue != null;
-                metallicSpecSmoothnessChannelName = Styles.specularSmoothnessChannelNames;
-                materialEditor.TexturePropertySingleLine(Styles.specularMapText, specGlossMap,
+                metallicSpecSmoothnessChannelName = StylesLit.specularSmoothnessChannelNames;
+                materialEditor.TexturePropertySingleLine(StylesLit.specularMapText, specGlossMap,
                     hasGlossMap ? null : specColor);
             }
 
@@ -260,12 +231,12 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             }
 
             int indentation = 2; // align with labels of texture properties
-            materialEditor.ShaderProperty(showSmoothnessScale ? smoothnessScale : smoothness, showSmoothnessScale ? Styles.smoothnessScaleText : Styles.smoothnessText, indentation);
+            materialEditor.ShaderProperty(showSmoothnessScale ? smoothnessScale : smoothness, showSmoothnessScale ? StylesLit.smoothnessScaleText : StylesLit.smoothnessText, indentation);
 
             int prevIndentLevel = EditorGUI.indentLevel;
             EditorGUI.indentLevel = 3;
             if (smoothnessMapChannel != null)
-                DoPopup(Styles.smoothnessMapChannelText.text, smoothnessMapChannel, metallicSpecSmoothnessChannelName);
+                DoPopup(StylesLit.smoothnessMapChannelText.text, smoothnessMapChannel, metallicSpecSmoothnessChannelName);
             EditorGUI.indentLevel = prevIndentLevel;
         }
 

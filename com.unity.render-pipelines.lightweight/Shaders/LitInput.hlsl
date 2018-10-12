@@ -6,8 +6,8 @@
 #include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/SurfaceInput.hlsl"
 
 CBUFFER_START(UnityPerMaterial)
-float4 _MainTex_ST;
-half4 _Color;
+float4 _BaseMap_ST;
+half4 _BaseColor;
 half4 _SpecColor;
 half4 _EmissionColor;
 half _Cutoff;
@@ -73,11 +73,11 @@ half SampleOcclusion(float2 uv)
 
 inline void InitializeStandardLitSurfaceData(float2 uv, out SurfaceData outSurfaceData)
 {
-    half4 albedoAlpha = SampleAlbedoAlpha(uv, TEXTURE2D_PARAM(_MainTex, sampler_MainTex));
-    outSurfaceData.alpha = Alpha(albedoAlpha.a, _Color, _Cutoff);
+    half4 albedoAlpha = SampleAlbedoAlpha(uv, TEXTURE2D_PARAM(_BaseMap, sampler_BaseMap));
+    outSurfaceData.alpha = Alpha(albedoAlpha.a, _BaseColor, _Cutoff);
 
     half4 specGloss = SampleMetallicSpecGloss(uv, albedoAlpha.a);
-    outSurfaceData.albedo = albedoAlpha.rgb * _Color.rgb;
+    outSurfaceData.albedo = albedoAlpha.rgb * _BaseColor.rgb;
 
 #if _SPECULAR_SETUP
     outSurfaceData.metallic = 1.0h;

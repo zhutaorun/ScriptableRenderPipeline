@@ -8,13 +8,13 @@
 CBUFFER_START(UnityPerMaterial)
 float4 _SoftParticleFadeParams;
 float4 _CameraFadeParams;
-float4 _MainTex_ST;
-half4 _Color;
+float4 _BaseMap_ST;
+half4 _BaseColor;
 half4 _EmissionColor;
 half4 _SpecColor;
 
 #if defined (_COLORADDSUBDIFF_ON)
-    half4 _ColorAddSubDiff;
+    half4 _BaseColorAddSubDiff;
 #endif
 
 half _Cutoff;
@@ -49,7 +49,7 @@ TEXTURE2D(_SpecGlossMap);       SAMPLER(sampler_SpecGlossMap);
 #else
 #define vertTexcoord(v, o) \
         vertInstancingUVs(v.texcoords.xy, o.texcoord); \
-        o.texcoord = TRANSFORM_TEX(o.texcoord, _MainTex);
+        o.texcoord = TRANSFORM_TEX(o.texcoord, _BaseMap);
 #endif
 #else
 #if defined(_FLIPBOOK_BLENDING)
@@ -59,7 +59,7 @@ TEXTURE2D(_SpecGlossMap);       SAMPLER(sampler_SpecGlossMap);
         o.texcoord2AndBlend.z = v.texcoordBlend;
 #else
 #define vertTexcoord(v, o) \
-        o.texcoord = TRANSFORM_TEX(v.texcoords.xy, _MainTex);
+        o.texcoord = TRANSFORM_TEX(v.texcoords.xy, _BaseMap);
 #endif
 #endif
 
@@ -87,8 +87,8 @@ TEXTURE2D(_SpecGlossMap);       SAMPLER(sampler_SpecGlossMap);
     albedo = half4(HsvToRgb(rHSL), albedo.a * i.color.a);
 #elif defined(_COLORADDSUBDIFF_ON)
 #define fragColorMode(i) \
-    albedo.rgb = albedo.rgb + i.color.rgb * _ColorAddSubDiff.x; \
-    albedo.rgb = lerp(albedo.rgb, abs(albedo.rgb), _ColorAddSubDiff.y); \
+    albedo.rgb = albedo.rgb + i.color.rgb * _BaseColorAddSubDiff.x; \
+    albedo.rgb = lerp(albedo.rgb, abs(albedo.rgb), _BaseColorAddSubDiff.y); \
     albedo.a *= i.color.a;
 #else
 #define fragColorMode(i) \
@@ -199,7 +199,7 @@ half3 SampleEmission(VaryingsParticle input, half3 emissionColor, TEXTURE2D_ARGS
 
 half4 SampleAlbedo(VaryingsParticle input, TEXTURE2D_ARGS(albedoMap, sampler_albedoMap))
 {
-    half4 albedo = readTexture(TEXTURE2D_PARAM(albedoMap, sampler_albedoMap), input) * _Color;
+    half4 albedo = readTexture(TEXTURE2D_PARAM(albedoMap, sampler_albedoMap), input) * _BaseColor;
 
     // No distortion Support
     fragColorMode(input);

@@ -2,7 +2,7 @@ Shader "Hidden/Lightweight Render Pipeline/Terrain/Lit (Base Pass)"
 {
     Properties
     {
-        _Color("Color", Color) = (1,1,1,1)
+        _BaseColor("Color", Color) = (1,1,1,1)
         _MainTex("Albedo(RGB), Smoothness(A)", 2D) = "white" {}
         _MetallicTex ("Metallic (R)", 2D) = "black" {}
     }
@@ -125,15 +125,15 @@ Shader "Hidden/Lightweight Render Pipeline/Terrain/Lit (Base Pass)"
             #pragma prefer_hlslcc gles
             #pragma exclude_renderers d3d11_9x
 
-            #pragma vertex LightweightVertexMeta
-            #pragma fragment LightweightFragmentMeta
+            #pragma vertex TerrainVertexMeta
+            #pragma fragment TerrainFragmentMeta
 
             #define _METALLICSPECGLOSSMAP 1
             #define _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A 1
             #pragma shader_feature EDITOR_VISUALIZATION
 
             #include "TerrainLitInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.lightweight/Shaders/LitMetaPass.hlsl"
+            #include "TerrainLitMetaPass.hlsl"
 
             ENDHLSL
         }

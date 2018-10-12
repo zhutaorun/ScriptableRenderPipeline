@@ -7,7 +7,7 @@ TEXTURE2D(_MetallicGlossMap);   SAMPLER(sampler_MetallicGlossMap);
 
 void InitializeSurfaceData(VaryingsParticle input, out SurfaceData surfaceData)
 {
-    half4 albedo = SampleAlbedo(input, TEXTURE2D_PARAM(_MainTex, sampler_MainTex));
+    half4 albedo = SampleAlbedo(input, TEXTURE2D_PARAM(_BaseMap, sampler_BaseMap));
 
 #if defined(_METALLICGLOSSMAP)
     half2 metallicGloss = readTexture(TEXTURE2D_PARAM(_MetallicGlossMap, sampler_MetallicGlossMap), input).ra * half2(1.0, _Glossiness);

@@ -6,8 +6,8 @@ Shader "Lightweight Render Pipeline/Particles/Lit"
 {
     Properties
     {
-        _MainTex("Albedo", 2D) = "white" {}
-        _Color("Color", Color) = (1,1,1,1)
+        _BaseMap("Albedo", 2D) = "white" {}
+        _BaseColor("Color", Color) = (1,1,1,1)
 
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 

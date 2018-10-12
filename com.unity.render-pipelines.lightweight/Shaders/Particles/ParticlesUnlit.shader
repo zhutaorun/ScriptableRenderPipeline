@@ -4,8 +4,8 @@ Shader "Lightweight Render Pipeline/Particles/Unlit"
 {
     Properties
     {
-        _MainTex("Albedo", 2D) = "white" {}
-        _Color("Color", Color) = (1,1,1,1)
+        _BaseMap("Albedo", 2D) = "white" {}
+        _BaseColor("Color", Color) = (1,1,1,1)
 
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 
@@ -19,7 +19,7 @@ Shader "Lightweight Render Pipeline/Particles/Unlit"
 
         // Hidden properties
         [HideInInspector] _Mode("__mode", Float) = 0.0
-        [HideInInspector] _ColorMode("__colormode", Float) = 0.0
+        [HideInInspector] _BaseColorMode("__colormode", Float) = 0.0
         [HideInInspector] _FlipbookMode("__flipbookmode", Float) = 0.0
         [HideInInspector] _LightingEnabled("__lightingenabled", Float) = 0.0
         [HideInInspector] _EmissionEnabled("__emissionenabled", Float) = 0.0
@@ -32,7 +32,7 @@ Shader "Lightweight Render Pipeline/Particles/Unlit"
         [HideInInspector] _CameraFadingEnabled("__camerafadingenabled", Float) = 0.0
         [HideInInspector] _SoftParticleFadeParams("__softparticlefadeparams", Vector) = (0,0,0,0)
         [HideInInspector] _CameraFadeParams("__camerafadeparams", Vector) = (0,0,0,0)
-        [HideInInspector] _ColorAddSubDiff("__coloraddsubdiff", Vector) = (0,0,0,0)
+        [HideInInspector] _BaseColorAddSubDiff("__coloraddsubdiff", Vector) = (0,0,0,0)
     }
 
     Category
@@ -90,7 +90,7 @@ Shader "Lightweight Render Pipeline/Particles/Unlit"
 
                 half4 fragParticleUnlit(VaryingsParticle input) : SV_Target
                 {
-                    half4 albedo = SampleAlbedo(input, TEXTURE2D_PARAM(_MainTex, sampler_MainTex));
+                    half4 albedo = SampleAlbedo(input, TEXTURE2D_PARAM(_BaseMap, sampler_BaseMap));
                     half3 diffuse = AlphaModulate(albedo.rgb, albedo.a);
                     half alpha = AlphaBlendAndTest(albedo.a, _Cutoff);
                     half3 emission = SampleEmission(input, _EmissionColor.rgb, TEXTURE2D_PARAM(_EmissionMap, sampler_EmissionMap));

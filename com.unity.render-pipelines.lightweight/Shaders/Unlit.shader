@@ -2,8 +2,8 @@ Shader "Lightweight Render Pipeline/Unlit"
 {
     Properties
     {
-        _MainTex("Texture", 2D) = "white" {}
-        _Color("Color", Color) = (1, 1, 1, 1)
+        _BaseMap("Texture", 2D) = "white" {}
+        _BaseColor("Color", Color) = (1, 1, 1, 1)
         _Cutoff("AlphaCutout", Range(0.0, 1.0)) = 0.5
         [Toggle] _SampleGI("SampleGI", float) = 0.0
         _BumpMap("Normal Map", 2D) = "bump" {}
@@ -89,7 +89,7 @@ Shader "Lightweight Render Pipeline/Unlit"
 
                 VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
                 output.vertex = vertexInput.positionCS;
-                output.uv0AndFogCoord.xy = TRANSFORM_TEX(input.uv, _MainTex);
+                output.uv0AndFogCoord.xy = TRANSFORM_TEX(input.uv, _BaseMap);
                 output.uv0AndFogCoord.z = ComputeFogFactor(vertexInput.positionCS.z);
 
 #if _SAMPLE_GI
@@ -110,9 +110,9 @@ Shader "Lightweight Render Pipeline/Unlit"
                 UNITY_SETUP_INSTANCE_ID(input);
 
                 half2 uv = input.uv0AndFogCoord.xy;
-                half4 texColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv);
-                half3 color = texColor.rgb * _Color.rgb;
-                half alpha = texColor.a * _Color.a;
+                half4 texColor = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv);
+                half3 color = texColor.rgb * _BaseColor.rgb;
+                half alpha = texColor.a * _BaseColor.a;
                 AlphaDiscard(alpha, _Cutoff);
 
 #ifdef _ALPHAPREMULTIPLY_ON
