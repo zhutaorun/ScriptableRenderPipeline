@@ -2,8 +2,8 @@
 
 To configure and use LWRP, you must first 
 
-- [create the Lightweight Render Pipeline Asset](##Creating-the-Lightweight-Render-Pipeline-Asset), and then
-- [add the Asset to the Graphics settings](##Adding-the-Asset-to-your-Graphics-settings) for your Project.
+- create the Lightweight Render Pipeline Asset, and then
+- add the Asset to the Graphics settings for your Project.
 
 To read more about each step, see below.
 

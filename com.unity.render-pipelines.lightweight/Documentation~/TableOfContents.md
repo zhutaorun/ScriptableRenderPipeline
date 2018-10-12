@@ -1,5 +1,5 @@
 * [About LWRP](index.md)
-  * [Feature comparison: LWRP vs Built-in](lwrp-builtin-feature-comparison.md)
+  * [Built-in/LWRP comparison](lwrp-builtin-feature-comparison.md)
 * [Getting started with LWRP](getting-started-with-lwrp.md)
   * [Creating a new Project with LWRP](creating-a-new-project-with-lwrp.md)
   * [Upgrading your existing Project to use LWRP](installing-lwrp-into-an-existing-project.md)

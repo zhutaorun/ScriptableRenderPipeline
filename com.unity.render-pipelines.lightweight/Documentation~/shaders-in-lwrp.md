@@ -4,7 +4,7 @@ The Lightweight Render Pipeline comes with a set of shaders, listed below. You c
 
 - [Lit](Lit-shader.md)
 - [Simple Lit](Simple-Lit-shader.md)
-- [Unlit](Unlit-Shader.md)
+- [Unlit](Unlit-shader.md)
 - Particles Lit
 - Particles Simple Lit
 - Particles Unlit
