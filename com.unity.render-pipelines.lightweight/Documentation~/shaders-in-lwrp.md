@@ -12,7 +12,7 @@ The Lightweight Render Pipeline comes with a set of shaders, listed below. You c
 - Autodesk Interactive Transparent 
 - Autodesk Interactive Masked 
 
-**Note:** The Lightweight Render Pipeline has a different shading approach than the Unity Built-in Render Pipeline. As a result, Built-in Lit and custom Lit shaders do not work with the LWRP. Instead, LWRP has a new set of standard shaders. If you upgrade a current Project to LWRP, you can [upgrade](Upgrading-your-shaders.md) built-in shaders to the new ones. Unlit shaders from the Built-in render pipeline still work with LWRP.
+**Note:** The Lightweight Render Pipeline has a different shading approach than the Unity Built-in Render Pipeline. As a result, Built-in Lit and custom Lit shaders do not work with the LWRP. Instead, LWRP has a new set of standard shaders. If you upgrade a current Project to LWRP, you can [upgrade](upgrading-your-shaders.md) built-in shaders to the new ones. Unlit shaders from the Built-in render pipeline still work with LWRP.
 
 ## Choosing the shader for your needs
 
