@@ -152,7 +152,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         public static void SetupShadowCasterConstantBuffer(CommandBuffer cmd, ref VisibleLight shadowLight, Vector4 shadowBias)
         {
-            Vector3 lightDirection = -shadowLight.localToWorld.GetColumn(2);
+            Vector3 lightDirection = -shadowLight.localToWorldMatrix.GetColumn(2);
             cmd.SetGlobalVector("_ShadowBias", shadowBias);
             cmd.SetGlobalVector("_LightDirection", new Vector4(lightDirection.x, lightDirection.y, lightDirection.z, 0.0f));
         }

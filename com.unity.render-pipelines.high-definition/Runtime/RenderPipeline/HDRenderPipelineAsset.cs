@@ -18,7 +18,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
         }
 
-        protected override RenderPipeline CreatePipeline()
+        protected override UnityEngine.Rendering.RenderPipeline CreatePipeline()
         {
             return new HDRenderPipeline(this);
         }

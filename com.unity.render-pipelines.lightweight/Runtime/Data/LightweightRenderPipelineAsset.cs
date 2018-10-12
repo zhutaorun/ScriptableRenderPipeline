@@ -199,7 +199,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             }
         }
 
-        protected override RenderPipeline CreatePipeline()
+        protected override UnityEngine.Rendering.RenderPipeline CreatePipeline()
         {
             return new LightweightRenderPipeline(this);
         }

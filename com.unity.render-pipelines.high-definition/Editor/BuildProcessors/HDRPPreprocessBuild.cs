@@ -1,9 +1,7 @@
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine.Rendering;
-using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
-using UnityEngine.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {

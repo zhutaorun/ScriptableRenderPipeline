@@ -3,9 +3,7 @@ using UnityEditor.Build;
 using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
-using UnityEngine.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {

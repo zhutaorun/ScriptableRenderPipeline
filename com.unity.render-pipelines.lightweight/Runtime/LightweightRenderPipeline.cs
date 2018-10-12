@@ -17,7 +17,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         void ExecuteBeforeCameraRender(LightweightRenderPipeline pipelineInstance, ScriptableRenderContext context, Camera camera);
     }
 
-    public sealed partial class LightweightRenderPipeline : RenderPipeline
+    public sealed partial class LightweightRenderPipeline : UnityEngine.Rendering.RenderPipeline
     {
         static class PerFrameBuffer
         {
@@ -361,11 +361,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             renderingData.supportsDynamicBatching = settings.supportsDynamicBatching;
         }
 
-        static void InitializeShadowData(PipelineSettings settings, List<VisibleLight> visibleLights, bool hasDirectionalShadowCastingLight, bool hasPunctualShadowCastingLight, out ShadowData shadowData)
+        static void InitializeShadowData(PipelineSettings settings, NativeArray<VisibleLight> visibleLights, bool hasDirectionalShadowCastingLight, bool hasPunctualShadowCastingLight, out ShadowData shadowData)
         {
             m_ShadowBiasData.Clear();
 
-            for (int i = 0; i < visibleLights.Count; ++i)
+            for (int i = 0; i < visibleLights.Length; ++i)
             {
                 Light light = visibleLights[i].light;
                 LWRPAdditionalLightData data =

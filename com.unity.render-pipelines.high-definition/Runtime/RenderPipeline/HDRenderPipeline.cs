@@ -8,7 +8,7 @@ using UnityEngine.Experimental.GlobalIllumination;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
-    public class HDRenderPipeline : RenderPipeline
+    public class HDRenderPipeline : UnityEngine.Rendering.RenderPipeline
     {
         enum ForwardPass
         {
@@ -785,8 +785,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             if (!m_ValidAPI)
                 return;
-            
-            RenderPipeline.BeginFrameRendering(cameras);
+
+            UnityEngine.Rendering.RenderPipeline.BeginFrameRendering(cameras);
 
             {
                 // SRP.Render() can be called several times per frame.
@@ -853,7 +853,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 if (cameraIndex < (cameras.Length - 1))
                     lastCameraFromGroup = (camera.targetTexture != cameras[cameraIndex + 1].targetTexture);
 
-                RenderPipeline.BeginCameraRendering(camera);
+                UnityEngine.Rendering.RenderPipeline.BeginCameraRendering(camera);
 
                 // First, get aggregate of frame settings base on global settings, camera frame settings and debug settings
                 // Note: the SceneView camera will never have additionalCameraData

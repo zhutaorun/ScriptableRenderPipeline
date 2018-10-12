@@ -303,7 +303,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_Atlas.Layout();
         }
 
-        unsafe public void PrepareGPUShadowDatas(CullResults cullResults, Camera camera)
+        unsafe public void PrepareGPUShadowDatas(CullingResults cullResults, Camera camera)
         {
             int shadowIndex = 0;
 
