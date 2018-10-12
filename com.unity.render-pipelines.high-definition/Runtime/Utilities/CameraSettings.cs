@@ -26,6 +26,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         cullingInvertCulling = 1 << 16,
         renderingPath = 1 << 17,
         flipYMode = 1 << 18,
+        frameSettings = 1 << 19
     }
 
     [Serializable]

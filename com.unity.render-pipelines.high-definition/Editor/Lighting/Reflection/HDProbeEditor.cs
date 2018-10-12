@@ -40,9 +40,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             HDProbeUI.Drawer<TProvider>.DrawPrimarySettings(s, p, o);
             if (DrawAndSetSectionFoldout(s, HDProbeUI.Flag.SectionExpandedProjection, "Projection Settings"))
+            {
+                ++EditorGUI.indentLevel;
                 HDProbeUI.Drawer<TProvider>.DrawProjectionSettings(s, p, o);
+                --EditorGUI.indentLevel;
+            }
             if (DrawAndSetSectionFoldout(s, HDProbeUI.Flag.SectionExpandedInfluence, "Influence Volume"))
+            {
+                ++EditorGUI.indentLevel;
                 HDProbeUI.Drawer<TProvider>.DrawInfluenceSettings(s, p, o);
+                --EditorGUI.indentLevel;
+            }
             if (DrawAndSetSectionFoldout(s, HDProbeUI.Flag.SectionExpandedCapture, "Capture Settings"))
                 HDProbeUI.Drawer<TProvider>.DrawCaptureSettings(s, p, o);
             if (DrawAndSetSectionFoldout(s, HDProbeUI.Flag.SectionExpandedCustom, "Custom Settings"))

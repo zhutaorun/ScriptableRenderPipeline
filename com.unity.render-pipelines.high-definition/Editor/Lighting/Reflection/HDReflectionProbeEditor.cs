@@ -96,6 +96,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 )
             }
         };
+        ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.overrideableCaptureSettings => new ProbeSettingsOverride();
         ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.displayedAdvancedSettings => new ProbeSettingsOverride
         {
             probe = ProbeSettingsFields.lightingLightLayer
@@ -106,10 +107,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 camera = CameraSettingsFields.none
             }
         };
+        ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.overrideableAdvancedSettings => new ProbeSettingsOverride();
 
         Type HDProbeUI.IProbeUISettingsProvider.customTextureType => typeof(Cubemap);
         static readonly HDProbeUI.ToolBar[] k_ToolBars
         = { HDProbeUI.ToolBar.InfluenceShape | HDProbeUI.ToolBar.NormalBlend | HDProbeUI.ToolBar.Blend, HDProbeUI.ToolBar.CapturePosition };
         HDProbeUI.ToolBar[] HDProbeUI.IProbeUISettingsProvider.toolbars => k_ToolBars;
+
+        
     }
 }

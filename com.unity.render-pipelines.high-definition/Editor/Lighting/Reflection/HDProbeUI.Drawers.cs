@@ -24,7 +24,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         internal interface IProbeUISettingsProvider
         {
             ProbeSettingsOverride displayedCaptureSettings { get; }
+            ProbeSettingsOverride overrideableCaptureSettings { get; }
             ProbeSettingsOverride displayedAdvancedSettings { get; }
+            ProbeSettingsOverride overrideableAdvancedSettings { get; }
             Type customTextureType { get; }
             ToolBar[] toolbars { get; }
         }
@@ -193,7 +195,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 var provider = new TProvider();
                 ProbeSettingsUI.Draw(
                     s.probeSettings, p.probeSettings, o,
-                    p.probeSettingsOverride, provider.displayedCaptureSettings
+                    p.probeSettingsOverride,
+                    provider.displayedCaptureSettings, provider.overrideableCaptureSettings
                 );
             }
 
@@ -202,7 +205,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 var provider = new TProvider();
                 ProbeSettingsUI.Draw(
                     s.probeSettings, p.probeSettings, o,
-                    p.probeSettingsOverride, provider.displayedAdvancedSettings
+                    p.probeSettingsOverride,
+                    provider.displayedAdvancedSettings, provider.overrideableAdvancedSettings
                 );
             }
 

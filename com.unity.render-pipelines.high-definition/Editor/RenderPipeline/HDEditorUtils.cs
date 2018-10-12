@@ -62,8 +62,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             var intV = (int)(object)v;
             var isOn = (property.intValue & intV) != 0;
-            var rect = GUILayoutUtility.GetRect(21, 11, CoreEditorStyles.smallTickbox);
-            rect.y += 4;
+            var rect = ReserveAndGetFlagToggleRect();
             isOn = GUI.Toggle(rect, isOn, s_OverrideTooltip, CoreEditorStyles.smallTickbox);
             if (isOn)
                 property.intValue |= intV;
@@ -73,32 +72,54 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return isOn;
         }
 
-        public static void PropertyFieldWithFlagToggle<TEnum>(
-            TEnum v, SerializedProperty property, GUIContent label, SerializedProperty @override
+        public static Rect ReserveAndGetFlagToggleRect()
+        {
+            var rect = GUILayoutUtility.GetRect(11, 17, GUILayout.ExpandWidth(false));
+            rect.y += 4;
+            return rect;
+        }
+
+        public static void PropertyFieldWithOptionalFlagToggle<TEnum>(
+            TEnum v, SerializedProperty property, GUIContent label,
+            SerializedProperty @override, bool showOverrideButton
         )
             where TEnum : struct, IConvertible // restrict to ~enum
         {
             EditorGUILayout.BeginHorizontal();
+
             var i = EditorGUI.indentLevel;
+            var l = EditorGUIUtility.labelWidth;
             EditorGUI.indentLevel = 0;
             EditorGUIUtility.labelWidth = 0;
-            GUI.enabled = FlagToggle(v, @override);
+
+            if (showOverrideButton)
+                GUI.enabled = FlagToggle(v, @override);
+            else
+                ReserveAndGetFlagToggleRect();
             EditorGUILayout.PropertyField(property, label);
+
             GUI.enabled = true;
             EditorGUI.indentLevel = i;
+            EditorGUIUtility.labelWidth = l;
+
             EditorGUILayout.EndHorizontal();
         }
 
         public static void PropertyFieldWithFlagToggleIfDisplayed<TEnum>(
-            TEnum v, SerializedProperty property, GUIContent label, SerializedProperty @override,
-            TEnum displayed
+            TEnum v, SerializedProperty property, GUIContent label,
+            SerializedProperty @override,
+            TEnum displayed, TEnum overrideable
         )
             where TEnum : struct, IConvertible // restrict to ~enum
         {
             var intDisplayed = (int)(object)displayed;
             var intV = (int)(object)v;
             if ((intDisplayed & intV) == intV)
-                PropertyFieldWithFlagToggle(v, property, label, @override);
+            {
+                var intOverridable = (int)(object)overrideable;
+                var isOverrideable = (intOverridable & intV) == intV;
+                PropertyFieldWithOptionalFlagToggle(v, property, label, @override, isOverrideable);
+            }
         }
 
         public static bool DrawSectionFoldout(string title, bool isExpanded)

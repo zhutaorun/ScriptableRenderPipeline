@@ -1,3 +1,4 @@
+using UnityEngine;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 
 using static UnityEditor.Experimental.Rendering.HDPipeline.HDEditorUtils;
@@ -10,7 +11,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     {
         public static void Draw(
             CameraSettingsUI s, SerializedCameraSettings d, Editor o,
-            SerializedCameraSettingsOverride @override, CameraSettingsOverride displayedFields
+            SerializedCameraSettingsOverride @override,
+            CameraSettingsOverride displayedFields, CameraSettingsOverride overridableFields
         )
         {
             const CameraSettingsFields physicalFields = CameraSettingsFields.physicalAperture
@@ -33,65 +35,79 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             const CameraSettingsFields frustumFarOrNearPlane = CameraSettingsFields.frustumFarClipPlane
                 | CameraSettingsFields.frustumNearClipPlane;
 
-            if (displayedFields.camera.HasFlag(physicalFields))
+            if ((displayedFields.camera & physicalFields) != 0)
             {
-                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.physicalAperture, d.physicalAperture, _.GetContent("Aperture"), @override.camera, displayedFields.camera);
-                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.physicalIso, d.physicalIso, _.GetContent("ISO"), @override.camera, displayedFields.camera);
-                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.physicalShutterSpeed, d.physicalShutterSpeed, _.GetContent("Shutter Speed"), @override.camera, displayedFields.camera);
+                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.physicalAperture, d.physicalAperture, _.GetContent("Aperture"), @override.camera, displayedFields.camera, overridableFields.camera);
+                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.physicalIso, d.physicalIso, _.GetContent("ISO"), @override.camera, displayedFields.camera, overridableFields.camera);
+                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.physicalShutterSpeed, d.physicalShutterSpeed, _.GetContent("Shutter Speed"), @override.camera, displayedFields.camera, overridableFields.camera);
                 EditorGUILayout.Space();
             }
 
-            if (displayedFields.camera.HasFlag(bufferFields))
+            if ((displayedFields.camera & bufferFields) != 0)
             {
-                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.bufferClearColorMode, d.bufferClearColorMode, _.GetContent("Clear Mode"), @override.camera, displayedFields.camera);
-                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.bufferClearBackgroundColorHDR, d.bufferClearBackgroundColorHDR, _.GetContent("Background Color"), @override.camera, displayedFields.camera);
-                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.bufferClearClearDepth, d.bufferClearClearDepth, _.GetContent("Clear Depth"), @override.camera, displayedFields.camera);
+                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.bufferClearColorMode, d.bufferClearColorMode, _.GetContent("Clear Mode"), @override.camera, displayedFields.camera, overridableFields.camera);
+                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.bufferClearBackgroundColorHDR, d.bufferClearBackgroundColorHDR, _.GetContent("Background Color"), @override.camera, displayedFields.camera, overridableFields.camera);
+                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.bufferClearClearDepth, d.bufferClearClearDepth, _.GetContent("Clear Depth"), @override.camera, displayedFields.camera, overridableFields.camera);
                 EditorGUILayout.Space();
             }
 
-            if (displayedFields.camera.HasFlag(volumesFields))
+            if ((displayedFields.camera & volumesFields) != 0)
             {
-                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.volumesLayerMask, d.volumesLayerMask, _.GetContent("Volume Layer Mask"), @override.camera, displayedFields.camera);
-                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.volumesAnchorOverride, d.volumesAnchorOverride, _.GetContent("Volume Anchor Override"), @override.camera, displayedFields.camera);
+                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.volumesLayerMask, d.volumesLayerMask, _.GetContent("Volume Layer Mask"), @override.camera, displayedFields.camera, overridableFields.camera);
+                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.volumesAnchorOverride, d.volumesAnchorOverride, _.GetContent("Volume Anchor Override"), @override.camera, displayedFields.camera, overridableFields.camera);
                 EditorGUILayout.Space();
             }
 
-            if (displayedFields.camera.HasFlag(cullingFields))
+            if ((displayedFields.camera & cullingFields) != 0)
             {
-                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.cullingUseOcclusionCulling, d.cullingUseOcclusionCulling, _.GetContent("Use Occlusion Culling"), @override.camera, displayedFields.camera);
-                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.cullingCullingMask, d.cullingCullingMask, _.GetContent("Culling Mask"), @override.camera, displayedFields.camera);
-                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.cullingInvertCulling, d.cullingCullingMask, _.GetContent("Invert Backface Culling"), @override.camera, displayedFields.camera);
+                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.cullingUseOcclusionCulling, d.cullingUseOcclusionCulling, _.GetContent("Use Occlusion Culling"), @override.camera, displayedFields.camera, overridableFields.camera);
+                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.cullingCullingMask, d.cullingCullingMask, _.GetContent("Culling Mask"), @override.camera, displayedFields.camera, overridableFields.camera);
+                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.cullingInvertCulling, d.cullingCullingMask, _.GetContent("Invert Backface Culling"), @override.camera, displayedFields.camera, overridableFields.camera);
                 EditorGUILayout.Space();
             }
 
-            if (displayedFields.camera.HasFlag(frustumFields))
+            if ((displayedFields.camera & frustumFields) != 0)
             {
-                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.frustumAspect, d.frustumAspect, _.GetContent("Aspect"), @override.camera, displayedFields.camera);
-                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.frustumFieldOfView, d.frustumFieldOfView, _.GetContent("Field Of View"), @override.camera, displayedFields.camera);
-                if (displayedFields.camera.HasFlag(frustumFarOrNearPlane))
+                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.frustumAspect, d.frustumAspect, _.GetContent("Aspect"), @override.camera, displayedFields.camera, overridableFields.camera);
+                PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.frustumFieldOfView, d.frustumFieldOfView, _.GetContent("Field Of View"), @override.camera, displayedFields.camera, overridableFields.camera);
+                var areBothOverrideable = overridableFields.camera.HasFlag(frustumFarOrNearPlane);
+                var areBothNotOverrideable = (overridableFields.camera & frustumFarOrNearPlane) == 0;
+                var areBothDisplayed = displayedFields.camera.HasFlag(frustumFarOrNearPlane);
+                if (areBothDisplayed && (areBothOverrideable || areBothNotOverrideable))
                 {
                     EditorGUILayout.BeginHorizontal();
-                    FlagToggle(frustumFarOrNearPlane, @override.camera);
+                    if (areBothOverrideable)
+                        GUI.enabled = FlagToggle(frustumFarOrNearPlane, @override.camera);
+                    else
+                        ReserveAndGetFlagToggleRect();
                     _.DrawMultipleFields(
                         "Clip Planes",
                         new[] { d.frustumNearClipPlane, d.frustumFarClipPlane },
                         new[] { _.GetContent("Near"), _.GetContent("Far") });
+                    GUI.enabled = true;
                     EditorGUILayout.EndHorizontal();
                 }
                 else
                 {
-                    PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.frustumFarClipPlane, d.frustumFarClipPlane, _.GetContent("Far Clip Plane"), @override.camera, displayedFields.camera);
-                    PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.frustumNearClipPlane, d.frustumNearClipPlane, _.GetContent("Near Clip Plane"), @override.camera, displayedFields.camera);
+                    PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.frustumFarClipPlane, d.frustumFarClipPlane, _.GetContent("Far Clip Plane"), @override.camera, displayedFields.camera, overridableFields.camera);
+                    PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.frustumNearClipPlane, d.frustumNearClipPlane, _.GetContent("Near Clip Plane"), @override.camera, displayedFields.camera, overridableFields.camera);
                 }
                 EditorGUILayout.Space();
             }
 
-            PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.flipYMode, d.flipYMode, _.GetContent("Flip Y"), @override.camera, displayedFields.camera);
-            PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.renderingPath, d.renderingPath, _.GetContent("Rendering Path"), @override.camera, displayedFields.camera);
+            PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.flipYMode, d.flipYMode, _.GetContent("Flip Y"), @override.camera, displayedFields.camera, overridableFields.camera);
+            PropertyFieldWithFlagToggleIfDisplayed(CameraSettingsFields.renderingPath, d.renderingPath, _.GetContent("Rendering Path"), @override.camera, displayedFields.camera, overridableFields.camera);
 
-            // TODO: place it in static cache
-            var drawer = FrameSettingsUI.Inspector(true, false);
-            drawer.Draw(s.frameSettings, d.frameSettings, o);
+            if ((displayedFields.camera & CameraSettingsFields.frameSettings) != 0)
+            {
+                var renderingPath = (HDAdditionalCameraData.RenderingPath)d.renderingPath.intValue;
+                if (renderingPath != HDAdditionalCameraData.RenderingPath.UseGraphicsSettings)
+                {
+                    // TODO: place it in static cache
+                    var drawer = FrameSettingsUI.Inspector(true, false);
+                    drawer.Draw(s.frameSettings, d.frameSettings, o);
+                }
+            }
         }
     }
 }
