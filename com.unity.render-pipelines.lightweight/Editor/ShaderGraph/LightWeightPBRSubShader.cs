@@ -68,6 +68,8 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             Name = "",
             PixelShaderSlots = new List<int>()
             {
+                PBRMasterNode.AlbedoSlotId,
+                PBRMasterNode.EmissionSlotId,
                 PBRMasterNode.AlphaSlotId,
                 PBRMasterNode.AlphaThresholdSlotId
             },
@@ -127,6 +129,7 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
                         mode,
                         materialOptions));
             }
+            subShader.Append("CustomEditor \"UnityEditor.ShaderGraph.PBRMasterGUI\"");
 
             return subShader.ToString();
         }

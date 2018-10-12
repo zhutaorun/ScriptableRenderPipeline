@@ -703,21 +703,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         UnityEngine.Debug.LogError("Unknown refraction model: " + masterNode.refractionModel);
                         break;
                 }
-
-                switch (masterNode.projectionModel)
-                {
-                    case HDLitMasterNode.ProjectionModelLit.Proxy:
-                        activeFields.Add("RefractionSSRayProxy");
-                        break;
-
-                    case HDLitMasterNode.ProjectionModelLit.HiZ:
-                        activeFields.Add("RefractionSSRayHiZ");
-                        break;
-
-                    default:
-                        UnityEngine.Debug.LogError("Unknown projection model: " + masterNode.projectionModel);
-                        break;
-                }
             }
 
             if (masterNode.IsSlotConnected(HDLitMasterNode.BentNormalSlotId) && pass.PixelShaderUsesSlot(HDLitMasterNode.BentNormalSlotId))
@@ -750,6 +735,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 if (occlusionSlot.value != occlusionSlot.defaultValue)
                 {
                     activeFields.Add("Occlusion");
+                }
+            }
+
+            if (pass.PixelShaderUsesSlot(HDLitMasterNode.CoatMaskSlotId))
+            {
+                var coatMaskSlot = masterNode.FindSlot<Vector1MaterialSlot>(HDLitMasterNode.CoatMaskSlotId);
+
+                bool connected = masterNode.IsSlotConnected(HDLitMasterNode.CoatMaskSlotId);
+                if (connected || coatMaskSlot.value > 0.0f)
+                {
+                    activeFields.Add("CoatMask");
                 }
             }
 
