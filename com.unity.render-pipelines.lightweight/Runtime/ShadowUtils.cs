@@ -74,15 +74,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         public static int GetMaxTileResolutionInAtlas(int atlasWidth, int atlasHeight, int tileCount)
         {
             int resolution = Mathf.Min(atlasWidth, atlasHeight);
-            if (tileCount > Mathf.Log(resolution))
-            {
-                Debug.LogError(
-                    String.Format(
-                        "Cannot fit {0} tiles into current shadowmap atlas of size ({1}, {2}). ShadowMap Resolution set to zero.",
-                        tileCount, atlasWidth, atlasHeight));
-                return 0;
-            }
-
             int currentTileCount = atlasWidth / resolution * atlasHeight / resolution;
             while (currentTileCount < tileCount)
             {

@@ -93,6 +93,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             int sliceResolution = ShadowUtils.GetMaxTileResolutionInAtlas(atlasWidth, atlasHeight, shadowCastingLightsCount);
 
             bool anyShadows = false;
+            int shadowSlicesPerRow = (atlasWidth / sliceResolution);
             for (int i = 0; i < shadowCastingLightsCount; ++i)
             {
                 int shadowLightIndex = m_AdditionalShadowCastingLightIndices[i];
@@ -108,8 +109,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 {
                     // TODO: We need to pass bias and scale list to shader to be able to support multiple
                     // shadow casting additional lights.
-                    m_AdditionalLightSlices[i].offsetX = (i % 2) * sliceResolution;
-                    m_AdditionalLightSlices[i].offsetY = (i / 2) * sliceResolution;
+                    m_AdditionalLightSlices[i].offsetX = (i % shadowSlicesPerRow) * sliceResolution;
+                    m_AdditionalLightSlices[i].offsetY = (i / shadowSlicesPerRow) * sliceResolution;
                     m_AdditionalLightSlices[i].resolution = sliceResolution;
                     m_AdditionalLightSlices[i].shadowTransform = shadowTransform;
 
