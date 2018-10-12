@@ -578,10 +578,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 var     frameParams = hdCamera.vBufferParams[0];
                 Vector4 resolution  = frameParams.viewportResolution;
-                float   vFoV        = hdCamera.camera.fieldOfView * Mathf.Deg2Rad;
+#if UNITY_2019_1_OR_NEWER
+                float vFoV        = hdCamera.camera.GetGateFittedFieldOfView() * Mathf.Deg2Rad;
+                Vector2 lensShift = hdCamera.camera.GetGateFittedLensShift();
+#else
+                float vFoV        = hdCamera.camera.fieldOfView * Mathf.Deg2Rad;
+                Vector2 lensShift = Vector2.zero;
+#endif
 
                 // Compose the matrix which allows us to compute the world space view direction.
-                Matrix4x4 transform   = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(vFoV, resolution, hdCamera.viewMatrix, false);
+                Matrix4x4 transform = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(vFoV, lensShift, resolution, hdCamera.viewMatrix, false);
 
                 Texture3D volumeAtlas = DensityVolumeManager.manager.volumeAtlas.GetAtlas();
                 Vector4 volumeAtlasDimensions = new Vector4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -700,9 +706,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 var       frameParams = hdCamera.vBufferParams[0];
                 Vector4   resolution  = frameParams.viewportResolution;
-                float     vFoV        = hdCamera.camera.fieldOfView * Mathf.Deg2Rad;
+#if UNITY_2019_1_OR_NEWER
+                float vFoV = hdCamera.camera.GetGateFittedFieldOfView() * Mathf.Deg2Rad;
+                Vector2 lensShift = hdCamera.camera.GetGateFittedLensShift();
+#else
+                float vFoV        = hdCamera.camera.fieldOfView * Mathf.Deg2Rad;
+                Vector2 lensShift   = Vector2.zero;
+#endif
                 // Compose the matrix which allows us to compute the world space view direction.
-                Matrix4x4 transform   = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(vFoV, resolution, hdCamera.viewMatrix, false);
+                Matrix4x4 transform   = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(vFoV, lensShift, resolution, hdCamera.viewMatrix, false);
 
                 GetHexagonalClosePackedSpheres7(m_xySeq);
 

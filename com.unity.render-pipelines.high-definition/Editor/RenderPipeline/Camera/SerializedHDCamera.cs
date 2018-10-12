@@ -21,20 +21,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public SerializedProperty volumeLayerMask;
         public SerializedProperty volumeAnchorOverride;
         public SerializedFrameSettings frameSettings;
-        private CameraEditor.Settings m_Settings;
+        public CameraEditor.Settings baseCameraSettings { get; private set; }
 
-        public CameraEditor.Settings baseCameraSettings
-        {
-            get
-            {
-                if (m_Settings == null)
-                {
-                    m_Settings = new CameraEditor.Settings(serializedObject);
-                    m_Settings.OnEnable();
-                }
-                return m_Settings;
-            }
-        }
 
         public SerializedHDCamera(SerializedObject serializedObject)
         {
@@ -61,6 +49,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             volumeLayerMask = serializedAdditionalDataObject.Find((HDAdditionalCameraData d) => d.volumeLayerMask);
             volumeAnchorOverride = serializedAdditionalDataObject.Find((HDAdditionalCameraData d) => d.volumeAnchorOverride);
             frameSettings = new SerializedFrameSettings(serializedAdditionalDataObject.FindProperty("m_FrameSettings"));
+
+            baseCameraSettings = new CameraEditor.Settings(serializedObject);
+            baseCameraSettings.OnEnable();
         }
 
         public void Update()
