@@ -412,7 +412,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                 // generate the necessary shader passes
                 bool opaque = (masterNode.surfaceType == SurfaceType.Opaque);
-                bool transparent = (masterNode.surfaceType != SurfaceType.Opaque);
 
                 if (opaque)
                 {
