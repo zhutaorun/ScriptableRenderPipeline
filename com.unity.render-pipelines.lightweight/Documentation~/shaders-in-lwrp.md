@@ -2,9 +2,9 @@
 
 The Lightweight Render Pipeline comes with a set of shaders, listed below. You can use these shaders for most common use case scenarios. To read more about each shader, click the name of it.
 
-- [Lit](lit-shader.md)
-- [Simple Lit](#simple-lit-shader.md)
-- [Unlit](unlit-shader.md)
+- [Lit](Lit-shader.md)
+- [Simple Lit](Simple-Lit-shader.md)
+- [Unlit](Unlit-Shader.md)
 - Particles Lit
 - Particles Simple Lit
 - Particles Unlit
