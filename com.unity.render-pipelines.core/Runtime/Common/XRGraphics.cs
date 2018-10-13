@@ -23,7 +23,7 @@ namespace UnityEngine.Experimental.Rendering
             SinglePassMultiView
         };
 
-        public static float eyeTextureScale
+        public static float eyeTextureResolutionScale
         {
             get
             {
@@ -34,7 +34,7 @@ namespace UnityEngine.Experimental.Rendering
             }
         }
 
-        public static float viewportScale
+        public static float renderViewportScale
         {
             get
             {
