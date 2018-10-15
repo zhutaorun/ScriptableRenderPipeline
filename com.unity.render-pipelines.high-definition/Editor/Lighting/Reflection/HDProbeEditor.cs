@@ -69,8 +69,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             m_UIState.Update(m_SerializedHDProbe);
             m_SerializedHDProbe.Update();
 
+            EditorGUI.BeginChangeCheck();
             HDProbeUI.DrawHandles(m_UIState, m_SerializedHDProbe, this);
             HDProbeUI.Drawer<TProvider>.DoToolbarShortcutKey(this);
+            if (EditorGUI.EndChangeCheck())
+                m_SerializedHDProbe.Apply();
         }
 
         abstract protected HDProbeUI NewUI();
