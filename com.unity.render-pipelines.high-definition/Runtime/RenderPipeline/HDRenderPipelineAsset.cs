@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
@@ -162,15 +163,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public override string[] renderingLayerMaskNames
         {
             get
-            {
-                return renderingLayerNames;
-            }
+        {
+            return renderingLayerNames;
+        }
         }
 
         public override Material defaultMaterial
         {
             get
-            {
+        {
                 return m_RenderPipelineResources.materials.defaultDiffuseMat;
             }
         }
@@ -217,9 +218,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public override Material defaultTerrainMaterial
         {
             get
-            {
-                return m_RenderPipelineResources.materials.defaultTerrainMat;
-            }
+        {
+            return m_RenderPipelineResources.materials.defaultTerrainMat;
+        }
         }
 
         void ISerializationCallbackReceiver.OnBeforeSerialize()
@@ -239,5 +240,53 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_Version = currentVersion;
             }
         }
+
+#if UNITY_EDITOR
+        // Array structure that allow us to manipulate the set of defines that the HD render pipeline needs
+        List<string> defineArray = new List<string>();
+
+        bool UpdateDefineList(bool flagValue, string defineMacroValue)
+        {
+            bool macroExists = defineArray.Contains(defineMacroValue);
+            if (flagValue)
+            {
+                if (!macroExists)
+                {
+                    defineArray.Add(defineMacroValue);
+                    return true;
+                }
+            }
+            else
+            {
+                if (macroExists)
+                {
+                    defineArray.Remove(defineMacroValue);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // This function allows us to raise or remove some preprocessing defines based on the render pipeline settings
+        public void EvaluateSettings()
+        {
+#if REALTIME_RAYTRACING_SUPPORT
+            // Grab the current set of defines and split them
+            string currentDefineList = UnityEditor.PlayerSettings.GetScriptingDefineSymbolsForGroup(UnityEditor.BuildTargetGroup.Standalone);
+            defineArray.Clear();
+            defineArray.AddRange(currentDefineList.Split(';'));
+
+            // Update all the individual defines
+            bool needUpdate = false;
+            needUpdate |= UpdateDefineList(renderPipelineSettings.supportRayTracing, "ENABLE_RAYTRACING");
+
+            // Only set if it changed
+            if(needUpdate)
+            {
+                UnityEditor.PlayerSettings.SetScriptingDefineSymbolsForGroup(UnityEditor.BuildTargetGroup.Standalone, string.Join(";", defineArray.ToArray()));
+            }
+#endif
+        }
+#endif
     }
 }
