@@ -283,7 +283,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             // If XR is enabled, use XR renderScale.
             // Discard variations lesser than kRenderScaleThreshold.
             // Scale is only enabled for gameview.
-            float usedRenderScale = XRGraphics.enabled ? XRGraphics.eyeTextureScale : settings.renderScale;
+            float usedRenderScale = XRGraphics.enabled ? XRGraphics.eyeTextureResolutionScale : settings.renderScale;
             cameraData.renderScale = (Mathf.Abs(1.0f - usedRenderScale) < kRenderScaleThreshold) ? 1.0f : usedRenderScale;
             cameraData.renderScale = (camera.cameraType == CameraType.Game) ? cameraData.renderScale : 1.0f;
 
