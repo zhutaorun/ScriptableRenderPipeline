@@ -141,8 +141,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         uint lightCount, lightStart;
 
     #ifdef LIGHTLOOP_TILE_PASS
-        uint cellIndex; 
-        GetCountAndStart(posInput, LIGHTCATEGORY_PUNCTUAL, lightStart, lightCount, cellIndex);
+        GetCountAndStart(posInput, LIGHTCATEGORY_PUNCTUAL, lightStart, lightCount);
     #if SCALARIZE_CLUSTER 
         // Fast path is when we all pixels in a wave is accessing same tile or cluster.
         uint lightStartLane0 = WaveReadFirstLane(lightStart);
@@ -245,8 +244,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         uint lightCount, lightStart;
 
     #ifdef LIGHTLOOP_TILE_PASS
-        uint TODO_SCALARIZE_ME = 0;// TODO_FCC Scalarize
-        GetCountAndStart(posInput, LIGHTCATEGORY_AREA, lightStart, lightCount, TODO_SCALARIZE_ME); 
+        GetCountAndStart(posInput, LIGHTCATEGORY_AREA, lightStart, lightCount/*, TODO_SCALARIZE_ME*/); // TODO_FCC: Scalarize. 
     #ifdef USE_FPTL_LIGHTLIST
         lightStart = WaveReadFirstLane(lightStart);
     #endif
@@ -316,7 +314,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         // Fetch first env light to provide the scene proxy for screen space computation
     #ifdef LIGHTLOOP_TILE_PASS
         uint TODO_SCALARIZE_ME = 0;// TODO_FCC Scalarize
-        GetCountAndStart(posInput, LIGHTCATEGORY_ENV, envLightStart, envLightCount, TODO_SCALARIZE_ME); // TODO_FCC Scalarize
+        GetCountAndStart(posInput, LIGHTCATEGORY_ENV, envLightStart, envLightCount/*, TODO_SCALARIZE_ME*/); // TODO_FCC Scalarize
     #else
         envLightCount = _EnvLightCount;
         envLightStart = 0;

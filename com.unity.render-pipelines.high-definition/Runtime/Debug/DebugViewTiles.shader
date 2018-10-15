@@ -165,8 +165,7 @@ Shader "Hidden/HDRenderPipeline/DebugViewTiles"
                     {
                         uint start;
                         uint count;
-                        uint cellIndex;
-                        GetCountAndStart(posInput, category, start, count, cellIndex);
+                        GetCountAndStart(posInput, category, start, count);
                         n += count;
                     }
                 }
@@ -203,8 +202,7 @@ Shader "Hidden/HDRenderPipeline/DebugViewTiles"
                     uint category = (LIGHTCATEGORY_COUNT - 1) - tileCoord.y;
                     uint start;
                     uint count;
-                    uint cellIndex;
-                    GetCountAndStart(mousePosInput, category, start, count, cellIndex);
+                    GetCountAndStart(mousePosInput, category, start, count);
 
                     float4 result2 = float4(.1,.1,.1,.9);
                     int2 fontCoord = int2(pixelCoord.x, offsetInTile.y);
