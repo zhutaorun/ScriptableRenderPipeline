@@ -74,6 +74,7 @@ namespace UnityEditor.Experimental.Rendering
             range = SliderLineHandle(Vector3.zero, Vector3.forward, range);
             if (EditorGUI.EndChangeCheck())
             {
+                Undo.RecordObjects(new[] { spotlight }, "Undo range change.");
                 m_HandleHotControl = GUIUtility.hotControl;
                 m_ShowRange = true;
             }
@@ -85,6 +86,7 @@ namespace UnityEditor.Experimental.Rendering
             float outerAngle = DrawConeHandles(spotlight.transform.position, spotlight.spotAngle, range, DrawHandleDirections);
             if (EditorGUI.EndChangeCheck())
             {
+                Undo.RecordObjects(new[] { spotlight }, "Undo outer angle change.");
                 m_HandleHotControl = GUIUtility.hotControl;
                 m_ShowOuterLabel = true;
             }
@@ -98,6 +100,7 @@ namespace UnityEditor.Experimental.Rendering
                 innerAngle = DrawConeHandles(spotlight.transform.position, spotlight.innerSpotAngle, range, DrawHandleDirections);
                 if (EditorGUI.EndChangeCheck())
                 {
+                    Undo.RecordObjects(new[] { spotlight }, "Undo inner angle change.");
                     m_HandleHotControl = GUIUtility.hotControl;
                     m_ShowOuterLabel = false;
                 }
@@ -112,6 +115,7 @@ namespace UnityEditor.Experimental.Rendering
                 nearPlaneRange = SliderLineHandle(Vector3.zero, Vector3.forward, nearPlaneRange);
                 if (EditorGUI.EndChangeCheck())
                 {
+                    Undo.RecordObjects(new[] { spotlight }, "Undo shadow near plane change.");
                     m_HandleHotControl = GUIUtility.hotControl;
                     m_ShowNearPlaneRange = true;
                     nearPlaneRange = Mathf.Clamp(nearPlaneRange, 0.1f, spotlight.range);
