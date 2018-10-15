@@ -44,18 +44,7 @@ namespace UnityEngine.Experimental.Rendering
                     return XRSettings.renderViewportScale;
             }
         }
-
-        public static bool useOcclusionMesh
-        {
-            get
-            {
-                if (!enabled)
-                    return false;
-                else
-                    return XRSettings.useOcclusionMesh;
-            }
-        }
-        
+                
 #if UNITY_EDITOR
         public static bool tryEnable
         { // TryEnable gets updated before "play" is pressed- we use this for updating GUI only. 
@@ -72,6 +61,36 @@ namespace UnityEngine.Experimental.Rendering
 #else
                 return false;
 #endif
+            }
+        }
+
+        public static bool isDeviceActive
+        {
+            get
+            {
+                if (!enabled)
+                    return false;
+                return XRSettings.isDeviceActive;
+            }
+        }
+
+        public static string loadedDeviceName
+        {
+            get
+            {
+                if (!enabled)
+                    return "No XR device loaded";
+                return XRSettings.loadedDeviceName;
+            }
+        }
+
+        public static string[] supportedDevices
+        {
+            get
+            {
+                if (!enabled)
+                    return new string[1];
+                return XRSettings.supportedDevices;
             }
         }
 
