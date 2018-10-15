@@ -146,14 +146,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
     #if SCALARIZE_CLUSTER 
         // Fast path is when we all pixels in a wave is accessing same tile or cluster.
         uint lightStartLane0 = WaveReadFirstLane(lightStart);
-        uint lightCountLane0 = WaveReadFirstLane(lightCount);
-        bool sameStartAcrossLanes = all(Ballot(lightStart == lightStartLane0) == ~0);
-        bool sameCountAcrossLanes = all(Ballot(lightCount == lightCountLane0) == ~0);
-
-        lightStart = sameStartAcrossLanes ? lightStartLane0 : lightStart;
-        lightCount = sameCountAcrossLanes ? lightCountLane0 : lightCount;
-
-        bool fastPass = sameStartAcrossLanes && sameCountAcrossLanes;
+        bool fastPass = all(Ballot(lightStart == lightStartLane0) == ~0);
 
     #endif
     #else
@@ -191,6 +184,8 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         // TODO_FCC: REFACTOR TOO MUCH REPETITION HERE. (could easily do all options by just changing few things in the loop, but need to verify the loop is scalarized). 
         UNITY_BRANCH if (fastPass)
         {
+            lightStart = lightStartLane0;
+
             for (i = 0; i < lightCount; i++)
             {
                 LightData lightData = FetchLight(lightStart, i);
