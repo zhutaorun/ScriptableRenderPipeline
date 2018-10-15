@@ -33,97 +33,6 @@ TEXTURE2D(_SpecGlossMap);       SAMPLER(sampler_SpecGlossMap);
 #define CAMERA_NEAR_FADE _CameraFadeParams.x
 #define CAMERA_INV_FADE_DISTANCE _CameraFadeParams.y
 
-// Color function
-#if defined(UNITY_PARTICLE_INSTANCING_ENABLED)
-#define vertColor(c) \
-        vertInstancingColor(c);
-#else
-#define vertColor(c)
-#endif
-
-// Flipbook vertex function
-#if defined(UNITY_PARTICLE_INSTANCING_ENABLED)
-#if defined(_FLIPBOOK_BLENDING)
-#define vertTexcoord(v, o) \
-        vertInstancingUVs(v.texcoords.xy, o.texcoord, o.texcoord2AndBlend);
-#else
-#define vertTexcoord(v, o) \
-        vertInstancingUVs(v.texcoords.xy, o.texcoord); \
-        o.texcoord = TRANSFORM_TEX(o.texcoord, _BaseMap);
-#endif
-#else
-#if defined(_FLIPBOOK_BLENDING)
-#define vertTexcoord(v, o) \
-        o.texcoord = v.texcoords.xy; \
-        o.texcoord2AndBlend.xy = v.texcoords.zw; \
-        o.texcoord2AndBlend.z = v.texcoordBlend;
-#else
-#define vertTexcoord(v, o) \
-        o.texcoord = TRANSFORM_TEX(v.texcoords.xy, _BaseMap);
-#endif
-#endif
-
-// Fading vertex function
-#if defined(SOFTPARTICLES_ON) || defined(_FADING_ON)
-#define vertFading(o, positionWS, positionCS) \
-    o.projectedPosition.xy = positionCS.xy * 0.5 + positionCS.w; \
-    o.projectedPosition.y *= _ProjectionParams.x; \
-    o.projectedPosition.w = positionCS.w; \
-    o.projectedPosition.z = -TransformWorldToView(positionWS.xyz).z
-#else
-#define vertFading(o, positionWS, positionCS)
-#endif
-
-// Color blending fragment function
-#if defined(_COLOROVERLAY_ON)
-#define fragColorMode(i) \
-    albedo.rgb = lerp(1 - 2 * (1 - albedo.rgb) * (1 - i.color.rgb), 2 * albedo.rgb * i.color.rgb, step(albedo.rgb, 0.5)); \
-    albedo.a *= i.color.a;
-#elif defined(_COLORCOLOR_ON)
-#define fragColorMode(i) \
-    half3 aHSL = RgbToHsv(albedo.rgb); \
-    half3 bHSL = RgbToHsv(i.color.rgb); \
-    half3 rHSL = half3(bHSL.x, bHSL.y, aHSL.z); \
-    albedo = half4(HsvToRgb(rHSL), albedo.a * i.color.a);
-#elif defined(_COLORADDSUBDIFF_ON)
-#define fragColorMode(i) \
-    albedo.rgb = albedo.rgb + i.color.rgb * _BaseColorAddSubDiff.x; \
-    albedo.rgb = lerp(albedo.rgb, abs(albedo.rgb), _BaseColorAddSubDiff.y); \
-    albedo.a *= i.color.a;
-#else
-#define fragColorMode(i) \
-    albedo *= i.color;
-#endif
-
-// Pre-multiplied alpha helper
-#if defined(_ALPHAPREMULTIPLY_ON)
-#define ALBEDO_MUL albedo
-#else
-#define ALBEDO_MUL albedo.a
-#endif
-
-// Soft particles fragment function
-#if defined(SOFTPARTICLES_ON) && defined(_FADING_ON)
-#define fragSoftParticles(i) \
-    if (SOFT_PARTICLE_NEAR_FADE > 0.0 || SOFT_PARTICLE_INV_FADE_DISTANCE > 0.0) \
-    { \
-        float sceneZ = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, i.projectedPosition.xy / i.projectedPosition.w), _ZBufferParams); \
-        float fade = saturate (SOFT_PARTICLE_INV_FADE_DISTANCE * ((sceneZ - SOFT_PARTICLE_NEAR_FADE) - i.projectedPosition.z)); \
-        ALBEDO_MUL *= fade; \
-    }
-#else
-#define fragSoftParticles(i)
-#endif
-
-// Camera fading fragment function
-#if defined(_FADING_ON)
-#define fragCameraFading(i) \
-    float cameraFade = saturate((i.projectedPosition.z - CAMERA_NEAR_FADE) * CAMERA_INV_FADE_DISTANCE); \
-    ALBEDO_MUL *= cameraFade;
-#else
-#define fragCameraFading(i)
-#endif
-
 // Vertex shader input
 struct AttributesParticle
 {
@@ -164,6 +73,85 @@ struct VaryingsParticle
     float4 clipPos                  : SV_POSITION;
 };
 
+// Color function
+#if defined(UNITY_PARTICLE_INSTANCING_ENABLED)
+#define vertColor(c) \
+        vertInstancingColor(c);
+#else
+#define vertColor(c)
+#endif
+
+// Flipbook vertex function
+#if defined(UNITY_PARTICLE_INSTANCING_ENABLED)
+#if defined(_FLIPBOOK_BLENDING)
+#define vertTexcoord(v, o) \
+        vertInstancingUVs(v.texcoords.xy, o.texcoord, o.texcoord2AndBlend);
+#else
+#define vertTexcoord(v, o) \
+        vertInstancingUVs(v.texcoords.xy, o.texcoord); \
+        o.texcoord = TRANSFORM_TEX(o.texcoord, _BaseMap);
+#endif
+#else
+#if defined(_FLIPBOOK_BLENDING)
+#define vertTexcoord(v, o) \
+        o.texcoord = v.texcoords.xy; \
+        o.texcoord2AndBlend.xy = v.texcoords.zw; \
+        o.texcoord2AndBlend.z = v.texcoordBlend;
+#else
+#define vertTexcoord(v, o) \
+        o.texcoord = TRANSFORM_TEX(v.texcoords.xy, _BaseMap);
+#endif
+#endif
+
+// Color blending fragment function
+#if defined(_COLOROVERLAY_ON)
+#define fragColorMode(i) \
+    albedo.rgb = lerp(1 - 2 * (1 - albedo.rgb) * (1 - i.color.rgb), 2 * albedo.rgb * i.color.rgb, step(albedo.rgb, 0.5)); \
+    albedo.a *= i.color.a;
+#elif defined(_COLORCOLOR_ON)
+#define fragColorMode(i) \
+    half3 aHSL = RgbToHsv(albedo.rgb); \
+    half3 bHSL = RgbToHsv(i.color.rgb); \
+    half3 rHSL = half3(bHSL.x, bHSL.y, aHSL.z); \
+    albedo = half4(HsvToRgb(rHSL), albedo.a * i.color.a);
+#elif defined(_COLORADDSUBDIFF_ON)
+#define fragColorMode(i) \
+    albedo.rgb = albedo.rgb + i.color.rgb * _BaseColorAddSubDiff.x; \
+    albedo.rgb = lerp(albedo.rgb, abs(albedo.rgb), _BaseColorAddSubDiff.y); \
+    albedo.a *= i.color.a;
+#else
+#define fragColorMode(i) \
+    albedo *= i.color;
+#endif
+
+// Pre-multiplied alpha helper
+#if defined(_ALPHAPREMULTIPLY_ON)
+#define ALBEDO_MUL albedo
+#else
+#define ALBEDO_MUL albedo.a
+#endif
+
+// Soft particles fragment function
+float SoftParticles(float4 projection)
+{
+    float fade = 1;
+    if (SOFT_PARTICLE_NEAR_FADE > 0.0 || SOFT_PARTICLE_INV_FADE_DISTANCE > 0.0)
+    {
+        float sceneZ = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, projection.xy / projection.w), _ZBufferParams);
+        fade = saturate (SOFT_PARTICLE_INV_FADE_DISTANCE * ((sceneZ - SOFT_PARTICLE_NEAR_FADE) - projection.z));
+    }
+    return fade;
+}
+
+// Camera fading fragment function
+#if defined(_FADING_ON)
+#define fragCameraFading(i) \
+    float cameraFade = saturate((i.projectedPosition.z - CAMERA_NEAR_FADE) * CAMERA_INV_FADE_DISTANCE); \
+    ALBEDO_MUL *= cameraFade;
+#else
+#define fragCameraFading(i)
+#endif
+
 half4 readTexture(TEXTURE2D_ARGS(_Texture, sampler_Texture), VaryingsParticle input)
 {
     half4 color = SAMPLE_TEXTURE2D(_Texture, sampler_Texture, input.texcoord);
@@ -203,7 +191,11 @@ half4 SampleAlbedo(VaryingsParticle input, TEXTURE2D_ARGS(albedoMap, sampler_alb
 
     // No distortion Support
     fragColorMode(input);
-    fragSoftParticles(input);
+    
+#if defined(SOFTPARTICLES_ON) && defined(_FADING_ON)
+    ALBEDO_MUL *= SoftParticles(input.projectedPosition);
+#endif
+
     fragCameraFading(input);
 
     return albedo;

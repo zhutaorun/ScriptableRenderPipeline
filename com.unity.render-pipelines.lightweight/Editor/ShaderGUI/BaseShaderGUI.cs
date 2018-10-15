@@ -55,6 +55,7 @@ namespace UnityEditor
             public static readonly GUIContent emissionMap = new GUIContent("Emission Map", "This Property is used for adding emissive light to the material.\n" +
                                                                               "If there is no RGB texture map assigned the color property controls the emission, otherwise it is multiplied over the texture map.");
             public static readonly GUIContent emissionColor = new GUIContent("Emission Color", "This color property adds emissive to the material, if a Base Map is assigned this color will be multiplied over it.");
+            public static readonly GUIContent queueSlider = new GUIContent("Queue Offset", "This slider controls the offset in the render queue, use this for fine tuning render order.");
         }
 
         protected MaterialEditor materialEditor { get; set; }
@@ -69,11 +70,13 @@ namespace UnityEditor
         protected MaterialProperty baseColorProp { get; set; }
         protected MaterialProperty emissionMapProp { get; set; }
         protected MaterialProperty emissionColorProp { get; set; }
+        protected MaterialProperty queueOffsetProp { get; set; }
         private bool m_FirstTimeApply = true;
 
         private const string k_KeyPrefix = "LightweightRP:Material:UI_State:";
         private string m_HeaderStateKey;
         protected uint defaultHeaderState = 0;
+        private const int queueOffsetRange = 50;
 
         public abstract void MaterialChanged(Material material);
 
@@ -89,6 +92,7 @@ namespace UnityEditor
             baseColorProp = FindProperty("_BaseColor", properties, false);
             emissionMapProp = FindProperty("_EmissionMap", properties, false);
             emissionColorProp = FindProperty("_EmissionColor", properties, false);
+            queueOffsetProp = FindProperty("_QueueOffset", properties, false);
         }
 
         public void ShaderPropertiesGUI(Material material)
@@ -186,6 +190,11 @@ namespace UnityEditor
         public virtual void DrawAdvancedOptions(Material material)
         {
             materialEditor.EnableInstancingField();
+
+            if (queueOffsetProp != null)
+            {
+                queueOffsetProp.floatValue = EditorGUILayout.IntSlider(Styles.queueSlider, (int)queueOffsetProp.floatValue, -queueOffsetRange, queueOffsetRange);
+            }
         }
 
         public virtual void DrawBaseProperties()
@@ -252,6 +261,10 @@ namespace UnityEditor
             else
                 material.DisableKeyword("_ALPHATEST_ON");
 
+            var queueOffset = queueOffsetRange;
+            if(material.HasProperty("_QueueOffset"))
+                queueOffset = queueOffsetRange - (int) material.GetFloat("_QueueOffset");
+
             SurfaceType surfaceType = (SurfaceType)material.GetFloat("_Surface");
             if (surfaceType == SurfaceType.Opaque)
             {
@@ -260,7 +273,7 @@ namespace UnityEditor
                 material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
                 material.SetInt("_ZWrite", 1);
                 material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-                material.renderQueue = -1;
+                material.renderQueue = -1 + queueOffset;
                 material.SetShaderPassEnabled("ShadowCaster", true);
             }
             else
@@ -274,7 +287,7 @@ namespace UnityEditor
                         material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
                         material.SetInt("_ZWrite", 0);
                         material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-                        material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+                        material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent + queueOffset;
                         material.SetShaderPassEnabled("ShadowCaster", false);
                         break;
                     case BlendMode.Premultiply:
@@ -283,7 +296,7 @@ namespace UnityEditor
                         material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
                         material.SetInt("_ZWrite", 0);
                         material.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-                        material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+                        material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent + queueOffset;
                         material.SetShaderPassEnabled("ShadowCaster", false);
                         break;
                     case BlendMode.Additive:
@@ -292,7 +305,7 @@ namespace UnityEditor
                         material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.One);
                         material.SetInt("_ZWrite", 0);
                         material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-                        material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+                        material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent + queueOffset;
                         material.SetShaderPassEnabled("ShadowCaster", false);
                         break;
                     case BlendMode.Multiply:
@@ -301,7 +314,7 @@ namespace UnityEditor
                         material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
                         material.SetInt("_ZWrite", 0);
                         material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-                        material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+                        material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent + queueOffset;
                         material.SetShaderPassEnabled("ShadowCaster", false);
                         break;
                 }

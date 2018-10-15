@@ -42,6 +42,9 @@ Shader "Lightweight Render Pipeline/Lit"
         [HideInInspector] _Cull("__cull", Float) = 2.0
 
         _ReceiveShadows("Receive Shadows", Float) = 1.0
+        
+        // Editmode props
+        [HideInInspector] _QueueOffset("Queue offset", Float) = 0.0
     }
 
     SubShader

@@ -115,8 +115,8 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             colorMode = FindProperty("_ColorMode", props, false);
             flipbookMode = FindProperty("_FlipbookMode", props);
             cullMode = FindProperty("_Cull", props);
-            albedoMap = FindProperty("_MainTex", props);
-            albedoColor = FindProperty("_Color", props);
+            albedoMap = FindProperty("_BaseMap", props);
+            albedoColor = FindProperty("_BaseColor", props);
             alphaCutoff = FindProperty("_Cutoff", props);
             metallicMap = FindProperty("_MetallicGlossMap", props, false);
             metallic = FindProperty("_Metallic", props, false);
@@ -684,7 +684,12 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             bool useFading = (useSoftParticles || useCameraFading) && !hasZWrite;
             SetKeyword(material, "_FADING_ON", useFading);
             if (useSoftParticles)
-                material.SetVector("_SoftParticleFadeParams", new Vector4(softParticlesNearFadeDistance, 1.0f / (softParticlesFarFadeDistance - softParticlesNearFadeDistance), 0.0f, 0.0f));
+            {
+                material.SetVector("_SoftParticleFadeParams",
+                    new Vector4(softParticlesNearFadeDistance,
+                        1.0f / (softParticlesFarFadeDistance - softParticlesNearFadeDistance), 0.0f, 0.0f));
+                material.EnableKeyword("SOFTPARTICLES_ON");
+            }
             else
                 material.SetVector("_SoftParticleFadeParams", new Vector4(0.0f, 0.0f, 0.0f, 0.0f));
             if (useCameraFading)

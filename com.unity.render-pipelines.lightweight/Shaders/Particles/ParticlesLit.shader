@@ -103,7 +103,9 @@ Shader "Lightweight Render Pipeline/Particles/Lit"
                 // TODO: Instancing
                 // vertColor(output.color);
                 vertTexcoord(input, output);
-                vertFading(output, vertexInput.positionWS, vertexInput.positionCS);
+#if defined(SOFTPARTICLES_ON) || defined(_FADING_ON)
+                output.projectedPosition = vertexInput.positionNDC;
+#endif
                 return output;
             }
 
@@ -118,6 +120,8 @@ Shader "Lightweight Render Pipeline/Particles/Lit"
                 half4 color = LightweightFragmentPBR(inputData, surfaceData.albedo,
                     surfaceData.metallic, half3(0, 0, 0), surfaceData.smoothness, surfaceData.occlusion, surfaceData.emission, surfaceData.alpha);
                 color.rgb = MixFog(color.rgb, inputData.fogCoord);
+                //color.rgb = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, input.projectedPosition.xy / input.projectedPosition.w), _ZBufferParams);
+                //color.a = 1;
                 return color;
             }
 

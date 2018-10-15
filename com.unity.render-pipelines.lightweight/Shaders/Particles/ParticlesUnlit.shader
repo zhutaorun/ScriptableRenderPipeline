@@ -83,7 +83,9 @@ Shader "Lightweight Render Pipeline/Particles/Unlit"
                     // TODO: Instancing
                     //vertColor(output.color);
                     vertTexcoord(input, output);
-                    vertFading(output, vertexInput.positionWS, vertexInput.positionCS);
+#if defined(SOFTPARTICLES_ON) || defined(_FADING_ON)
+                    output.projectedPosition = ComputeScreenPos(vertexInput.positionCS);
+#endif
 
                     return output;
                 }

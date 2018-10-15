@@ -16,6 +16,9 @@ Shader "Lightweight Render Pipeline/Unlit"
         [HideInInspector] _DstBlend("Dst", Float) = 0.0
         [HideInInspector] _ZWrite("ZWrite", Float) = 1.0
         [HideInInspector] _Cull("__cull", Float) = 2.0
+        
+        // Editmode props
+        [HideInInspector] _QueueOffset("Queue offset", Float) = 0.0
     }
     SubShader
     {
