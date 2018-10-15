@@ -64,6 +64,8 @@ bool IsMatchingLightLayer(uint lightLayers, uint renderingLayers)
     return (lightLayers & renderingLayers) != 0;
 }
 
+#define SCALARIZE_CLUSTER 1
+
 void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BSDFData bsdfData, BuiltinData builtinData, uint featureFlags,
                 out float3 diffuseLighting,
                 out float3 specularLighting)
@@ -139,12 +141,56 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         uint lightCount, lightStart;
 
     #ifdef LIGHTLOOP_TILE_PASS
-        GetCountAndStart(posInput, LIGHTCATEGORY_PUNCTUAL, lightStart, lightCount);
+        uint cellIndex; 
+        GetCountAndStart(posInput, LIGHTCATEGORY_PUNCTUAL, lightStart, lightCount, cellIndex);
+#if defined(SUPPORTS_WAVE_INTRINSICS)
+        // Ref: GPU Best Practices – Part 2, Fuller 2015
+        // Fast path is when we all pixels in a wave is accessing same tile or cluster.
+        uint firstLaneCellIndex = WaveReadFirstLane(cellIndex);
+        bool fastPass = all(Ballot(cellIndex == firstLaneCellIndex) == ~0);
+        lightStart = fastPass ? WaveReadFirstLane(lightStart) : lightStart;
+#endif
     #else
         lightCount = _PunctualLightCount;
         lightStart = 0;
     #endif
 
+
+#if (SCALARIZE_CLUSTER && defined(SUPPORTS_WAVE_INTRINSICS) && defined(LIGHTLOOP_TILE_PASS))
+
+    //    if (!fastPass) // We are not using the same cluster/tile for all the pixels in the wave, so need to scalarize in a slightly more involved way
+        {
+            // Scalarized loop. All lights that are in a tile/cluster touched by any pixel in the wave are loaded (scalar load), only the one relevant to current thread/pixel are processed.
+            // For clarity, the following code will follow the convention: variables starting with s_ are wave uniform (meant for scalar register),
+            // v_ are variables that might have different value for each thread in the wave (meant for vector registers).
+            // This will perform more loads than it is supposed to, however, the benefits should offset the downside, especially given that light data accessed should be largely coherent
+            uint v_lightListIdx = 0;
+            uint v_lightIdx = lightStart;
+            while (v_lightListIdx < lightCount)
+            {
+                v_lightIdx = FetchIndex(lightStart, v_lightListIdx);
+                uint s_lightIdx = min(WaveMinUint(v_lightIdx), _PunctualLightCount - 1);
+
+                LightData s_lightData = _LightDatas[s_lightIdx];    // Scalar load.
+
+                // If current scalar and vector light index match, we process the light
+                // The v_lightListIdx for current thread is increased.
+                if (s_lightIdx >= v_lightIdx)   // TODO_FCC Can use the == instead 
+                {
+                    v_lightListIdx++;
+
+                    if (IsMatchingLightLayer(s_lightData.lightLayers, builtinData.renderingLayers))
+                    {
+                        DirectLighting lighting = EvaluateBSDF_Punctual(context, V, posInput, preLightData, s_lightData, bsdfData, builtinData);
+                        AccumulateDirectLighting(lighting, aggregateLighting);
+                    }
+                }
+            }
+
+        }
+      /*  else
+        {*/
+#else
         for (i = 0; i < lightCount; i++)
         {
             LightData lightData = FetchLight(lightStart, i);
@@ -155,6 +201,10 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
                 AccumulateDirectLighting(lighting, aggregateLighting);
             }
         }
+#if (SCALARIZE_CLUSTER && defined(SUPPORTS_WAVE_INTRINSICS))
+   //     }
+#endif
+#endif
     }
 
     if (featureFlags & LIGHTFEATUREFLAGS_AREA)
@@ -162,7 +212,12 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         uint lightCount, lightStart;
 
     #ifdef LIGHTLOOP_TILE_PASS
-        GetCountAndStart(posInput, LIGHTCATEGORY_AREA, lightStart, lightCount);
+        uint TODO_SCALARIZE_ME = 0;// TODO_FCC Scalarize
+        GetCountAndStart(posInput, LIGHTCATEGORY_AREA, lightStart, lightCount, TODO_SCALARIZE_ME); 
+    #ifdef USE_FPTL_LIGHTLIST
+        lightStart = WaveReadFirstLane(lightStart);
+    #endif
+
     #else
         lightCount = _AreaLightCount;
         lightStart = _PunctualLightCount;
@@ -227,7 +282,8 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
 
         // Fetch first env light to provide the scene proxy for screen space computation
     #ifdef LIGHTLOOP_TILE_PASS
-        GetCountAndStart(posInput, LIGHTCATEGORY_ENV, envLightStart, envLightCount);
+        uint TODO_SCALARIZE_ME = 0;// TODO_FCC Scalarize
+        GetCountAndStart(posInput, LIGHTCATEGORY_ENV, envLightStart, envLightCount, TODO_SCALARIZE_ME); // TODO_FCC Scalarize
     #else
         envLightCount = _EnvLightCount;
         envLightStart = 0;

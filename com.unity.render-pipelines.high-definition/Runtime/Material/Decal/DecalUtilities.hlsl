@@ -128,7 +128,8 @@ DecalSurfaceData GetDecalSurfaceData(PositionInputs posInput, inout float alpha)
     #endif
 
     #ifdef LIGHTLOOP_TILE_PASS
-    GetCountAndStart(posInput, LIGHTCATEGORY_DECAL, decalStart, decalCount);
+    uint TODO_SCALARIZE_ME = 0;// TODO_FCC Scalarize
+    GetCountAndStart(posInput, LIGHTCATEGORY_DECAL, decalStart, decalCount, TODO_SCALARIZE_ME); // TODO_FCC Scalarize.
     #else
     decalCount = _DecalCount;
     decalStart = 0;
