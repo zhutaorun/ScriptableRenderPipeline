@@ -8,6 +8,15 @@ namespace UnityEditor.Experimental.Rendering
 {
     public static class CoreLightEditorUtilities
     {
+        [Flags]
+        public enum HandleDirections
+        {
+            Left = 1 << 0,
+            Up = 1 << 1,
+            Right = 1 << 2,
+            Down = 1 << 3,
+            All = Left | Up | Right | Down
+        }
         public static void DrawSpotlightWireFrameWithZTest(Light spotlight, Color? drawColorOuter = null, Color? drawColorInner = null, bool drawHandlesAndLabels = true)
         {
             // Saving the default colors
@@ -49,11 +58,15 @@ namespace UnityEditor.Experimental.Rendering
         static int m_HandleHotControl = 0;
         static bool m_ShowOuterLabel = true;
         static bool m_ShowRange = false;
+        static bool m_ShowNearPlaneRange = false;
 
         public static void DrawHandlesAndLabels(Light spotlight)
         {
+             // Variable for which direction to draw the handles
+            HandleDirections DrawHandleDirections;
+
             // Draw the handles ///////////////////////////////
-            Handles.color = GetLightHandleColor(Color.white);
+            Handles.color = spotlight.color;
 
             // Draw Center Handle
             float range = spotlight.range;
@@ -66,24 +79,42 @@ namespace UnityEditor.Experimental.Rendering
             }
 
             // Draw outer handles
+            DrawHandleDirections = HandleDirections.Down | HandleDirections.Up;
+
             EditorGUI.BeginChangeCheck();
-            float outerAngle = DrawConeHandles(spotlight.transform.position, spotlight.spotAngle, range);
+            float outerAngle = DrawConeHandles(spotlight.transform.position, spotlight.spotAngle, range, DrawHandleDirections);
             if (EditorGUI.EndChangeCheck())
             {
                 m_HandleHotControl = GUIUtility.hotControl;
                 m_ShowOuterLabel = true;
             }
 
-            float innerAngle = 0;
             // Draw inner handles
+            float innerAngle = 0;
             if (spotlight.innerSpotAngle > 0f)
             {
+                DrawHandleDirections = HandleDirections.Left | HandleDirections.Right;
                 EditorGUI.BeginChangeCheck();
-                innerAngle = DrawConeHandles(spotlight.transform.position, spotlight.innerSpotAngle, range);
+                innerAngle = DrawConeHandles(spotlight.transform.position, spotlight.innerSpotAngle, range, DrawHandleDirections);
                 if (EditorGUI.EndChangeCheck())
                 {
                     m_HandleHotControl = GUIUtility.hotControl;
                     m_ShowOuterLabel = false;
+                }
+            }
+
+            // Draw Near Plane Handle
+            float nearPlaneRange = spotlight.shadowNearPlane;
+            if(spotlight.shadows != LightShadows.None && spotlight.shadowNearPlane > 0f)
+            {
+                // Draw Near Plane Handle
+                EditorGUI.BeginChangeCheck();
+                nearPlaneRange = SliderLineHandle(Vector3.zero, Vector3.forward, nearPlaneRange);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    m_HandleHotControl = GUIUtility.hotControl;
+                    m_ShowNearPlaneRange = true;
+                    nearPlaneRange = Mathf.Clamp(nearPlaneRange, 0.1f, spotlight.range);
                 }
             }
             /////////////////////////////////////////////////////
@@ -96,6 +127,8 @@ namespace UnityEditor.Experimental.Rendering
                 string labelText = "";
                 if (m_ShowRange)
                     labelText = (spotlight.range).ToString("0.00");
+                else if (m_ShowNearPlaneRange)
+                    labelText = (spotlight.shadowNearPlane).ToString("0.00");
                 else if (m_ShowOuterLabel)
                     labelText = (spotlight.spotAngle).ToString("0.00");
                 else
@@ -114,6 +147,7 @@ namespace UnityEditor.Experimental.Rendering
                 spotlight.spotAngle = outerAngle;
                 spotlight.innerSpotAngle = innerAngle;
                 spotlight.range = Math.Max(range, 0.01f);
+                spotlight.shadowNearPlane = nearPlaneRange;
             }
 
             // Resets the member variables
@@ -122,11 +156,15 @@ namespace UnityEditor.Experimental.Rendering
                 m_HandleHotControl = 0;
                 m_ShowOuterLabel = true;
                 m_ShowRange = false;
+                m_ShowNearPlaneRange = false;
             }
         }
 
         public static void DrawSpotlightWireframe(Light spotlight, Color outerColor, Color innerColor)
         {
+            // Variable for which direction to draw the handles
+            HandleDirections DrawHandleDirections;
+
             float outerAngle = spotlight.spotAngle;
             float innerAngle = spotlight.innerSpotAngle;
             float range = spotlight.range;
@@ -139,28 +177,49 @@ namespace UnityEditor.Experimental.Rendering
             // Need to check if we need to draw inner angle
             if(innerAngle>0f)
             {
+                DrawHandleDirections = HandleDirections.Up | HandleDirections.Down;
                 var innerDiscRadius = range * Mathf.Sin(innerAngle * Mathf.Deg2Rad * 0.5f);
                 var innerDiscDistance = Mathf.Cos(Mathf.Deg2Rad * innerAngle * 0.5f) * range;
 
                 // Drawing the inner Cone and also z-testing it to draw another color if behind
                 Handles.color = innerColor;
-                DrawConeWireframe(innerDiscRadius, innerDiscDistance);
+                DrawConeWireframe(innerDiscRadius, innerDiscDistance, DrawHandleDirections);
             }
+
+            // Draw range line
+            Handles.color = innerColor;
+            var rangeCenter = Vector3.forward * range;
+            Handles.DrawLine(Vector3.zero, rangeCenter);
 
             // Drawing the outer Cone and also z-testing it to draw another color if behind
             Handles.color = outerColor;
-            DrawConeWireframe(outerDiscRadius, outerDiscDistance);
+
+            DrawHandleDirections = HandleDirections.Left | HandleDirections.Right;
+            DrawConeWireframe(outerDiscRadius, outerDiscDistance, DrawHandleDirections);
 
             // Bottom arcs, making a nice rounded shape
             Handles.DrawWireArc(Vector3.zero, Vector3.right, vectorLineUp, outerAngle, range);
             Handles.DrawWireArc(Vector3.zero, Vector3.up, vectorLineLeft, outerAngle, range);
 
+            // If we are using shadows we draw the near plane for shadows
             if(spotlight.shadows != LightShadows.None)
             {
-                var shadowDiscRadius = spotlight.shadowNearPlane * Mathf.Sin(outerAngle * Mathf.Deg2Rad * 0.5f);
-                var shadowDiscDistance = Mathf.Cos(Mathf.Deg2Rad * outerAngle / 2) * spotlight.shadowNearPlane ;
-                Handles.DrawWireDisc(Vector3.forward * shadowDiscDistance, Vector3.forward, shadowDiscRadius);
+                DrawShadowNearPlane(spotlight, innerColor);
             }
+        }
+
+        public static void DrawShadowNearPlane(Light spotlight, Color color)
+        {
+            Color previousColor = Handles.color;
+            Handles.color = color;
+
+            var shadowDiscRadius = Mathf.Tan(spotlight.spotAngle * Mathf.Deg2Rad * 0.5f) * spotlight.shadowNearPlane;
+            var shadowDiscDistance = spotlight.shadowNearPlane ;
+            Handles.DrawWireDisc(Vector3.forward * shadowDiscDistance, Vector3.forward, shadowDiscRadius);
+            Handles.DrawLine(Vector3.forward * shadowDiscDistance, (Vector3.right * shadowDiscRadius) + (Vector3.forward * shadowDiscDistance));
+            Handles.DrawLine(Vector3.forward * shadowDiscDistance, (-Vector3.right * shadowDiscRadius) + (Vector3.forward * shadowDiscDistance));
+
+            Handles.color = previousColor;
         }
 
         public static void DrawSpotlightWireframe(Vector3 outerAngleInnerAngleRange, float shadowPlaneDistance = -1f)
@@ -210,14 +269,56 @@ namespace UnityEditor.Experimental.Rendering
             Handles.DrawWireDisc(rangeCenter, Vector3.forward, radius);
         }
 
-
-        public static float DrawConeHandles(Vector3 position, float angle, float range)
+        static void DrawConeWireframe(float radius, float height, HandleDirections handleDirections)
         {
-            angle = SizeSliderSpotAngle(position, Vector3.forward, Vector3.right, range, angle);
-            angle = SizeSliderSpotAngle(position, Vector3.forward, -Vector3.right, range, angle);
-            angle = SizeSliderSpotAngle(position, Vector3.forward, Vector3.up, range, angle);
-            angle = SizeSliderSpotAngle(position, Vector3.forward, -Vector3.up, range, angle);
+            var rangeCenter = Vector3.forward * height;
+            if (handleDirections.HasFlag(HandleDirections.Up))
+            {
+                var rangeUp = rangeCenter + Vector3.up * radius;
+                Handles.DrawLine(Vector3.zero, rangeUp);
+            }
 
+            if (handleDirections.HasFlag(HandleDirections.Down))
+            {
+                var rangeDown = rangeCenter - Vector3.up * radius;
+                Handles.DrawLine(Vector3.zero, rangeDown);
+            }
+
+            if (handleDirections.HasFlag(HandleDirections.Right))
+            {
+                var rangeRight = rangeCenter + Vector3.right * radius;
+                Handles.DrawLine(Vector3.zero, rangeRight);
+            }
+
+            if (handleDirections.HasFlag(HandleDirections.Left))
+            {
+                var rangeLeft = rangeCenter - Vector3.right * radius;
+                Handles.DrawLine(Vector3.zero, rangeLeft);
+            }
+
+            //Draw Circle
+            Handles.DrawWireDisc(rangeCenter, Vector3.forward, radius);
+        }
+
+
+        public static float DrawConeHandles(Vector3 position, float angle, float range, HandleDirections handleDirections)
+        {
+            if(handleDirections.HasFlag(HandleDirections.Left))
+            {
+                angle = SizeSliderSpotAngle(position, Vector3.forward, -Vector3.right, range, angle);
+            }
+            if(handleDirections.HasFlag(HandleDirections.Up))
+            {
+                angle = SizeSliderSpotAngle(position, Vector3.forward, Vector3.up, range, angle);
+            }
+            if(handleDirections.HasFlag(HandleDirections.Right))
+            {
+                angle = SizeSliderSpotAngle(position, Vector3.forward, Vector3.right, range, angle);
+            }
+            if(handleDirections.HasFlag(HandleDirections.Down))
+            {
+                angle = SizeSliderSpotAngle(position, Vector3.forward, -Vector3.up, range, angle);
+            }
             return angle;
         }
 
@@ -518,7 +619,7 @@ namespace UnityEditor.Experimental.Rendering
             float sizeHandle = HandleUtility.GetHandleSize(pos);
             bool temp = GUI.changed;
             GUI.changed = false;
-            pos = Handles.Slider(pos, direction, sizeHandle * 0.03f, Handles.DotHandleCap, 0f);
+            pos = Handles.Slider(pos, direction, sizeHandle * 0.04f, Handles.DotHandleCap, 0f);
             if (GUI.changed)
             {
                 value = Vector3.Dot(pos - position, direction);
@@ -549,10 +650,11 @@ namespace UnityEditor.Experimental.Rendering
             return angleValue;
         }
 
-        public static Color GetLightHandleColor(Color wireframeColor)
+        public static Color GetLightHandleColor(Color handleColor, bool doubleAlpha = true)
         {
-            Color color = wireframeColor;
-            color.a = Mathf.Clamp01(color.a * 2);
+            Color color = handleColor;
+            if(doubleAlpha)
+                color.a = Mathf.Clamp01(color.a * 2);
             return (QualitySettings.activeColorSpace == ColorSpace.Linear) ? color.linear : color;
         }
 
