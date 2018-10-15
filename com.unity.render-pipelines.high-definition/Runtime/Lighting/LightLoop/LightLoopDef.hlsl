@@ -205,7 +205,7 @@ void GetCountAndStartCluster(PositionInputs posInput, uint lightCategory, out ui
     // which means ShaderVariables.hlsl needs to be defined ahead of this!
 
     uint2 tileIndex    = posInput.tileCoord;
-    clusterIndex = GetLightClusterIndex(tileIndex, posInput.linearDepth);
+    uint clusterIndex = GetLightClusterIndex(tileIndex, posInput.linearDepth);
 
     GetCountAndStartCluster(tileIndex, clusterIndex, lightCategory, start, lightCount);
 }
