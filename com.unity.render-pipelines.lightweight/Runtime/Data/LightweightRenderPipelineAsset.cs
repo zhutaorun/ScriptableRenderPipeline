@@ -45,7 +45,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         _4xBilinear
     }
 
-    public enum DefaultMaterialType
+    internal enum DefaultMaterialType
     {
         Standard,
         Particle,
@@ -58,6 +58,13 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         Disabled,
         PerPixel,
         PerVertex,
+    }
+
+    public enum ShaderVariantLogLevel
+    {
+        Disabled,
+        OnlyLightweightRPShaders,
+        AllShaders,
     }
 
     public class LightweightRenderPipelineAsset : RenderPipelineAsset, ISerializationCallbackReceiver
@@ -111,9 +118,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         [SerializeField] ShadowResolution m_ShadowAtlasResolution = ShadowResolution._256;
 
         [SerializeField] LightweightRenderPipelineResources m_ResourcesAsset;
-        
-        [SerializeField] XRGraphics m_GetXRSettings;
-
+        [SerializeField] ShaderVariantLogLevel m_ShaderVariantLogLevel = ShaderVariantLogLevel.Disabled;
 #if UNITY_EDITOR
         [NonSerialized]
         LightweightRenderPipelineEditorResources m_EditorResourcesAsset;
@@ -352,6 +357,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         public bool supportsMixedLighting
         {
             get { return m_MixedLightingSupported; }
+        }
+
+        public ShaderVariantLogLevel shaderVariantLogLevel
+        {
+            get { return m_ShaderVariantLogLevel; }
         }
 
         public override Material GetDefaultMaterial()
