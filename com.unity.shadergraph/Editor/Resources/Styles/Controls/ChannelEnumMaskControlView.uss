@@ -1,4 +1,5 @@
 ChannelEnumMaskControlView {
+    flex-direction: row;
     padding-left: 8;
     padding-right: 8;
     padding-top: 4;
