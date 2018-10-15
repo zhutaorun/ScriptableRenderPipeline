@@ -181,6 +181,5 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         Type HDProbeUI.IProbeUISettingsProvider.customTextureType => typeof(Cubemap);
         static readonly HDProbeUI.ToolBar[] k_Toolbars = { HDProbeUI.ToolBar.InfluenceShape | HDProbeUI.ToolBar.Blend };
         HDProbeUI.ToolBar[] HDProbeUI.IProbeUISettingsProvider.toolbars => k_Toolbars;
-
     }
 }

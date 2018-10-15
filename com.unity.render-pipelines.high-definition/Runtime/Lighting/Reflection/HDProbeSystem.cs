@@ -14,41 +14,47 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static void RegisterProbe(HDProbe probe) => s_Instance.RegisterProbe(probe);
         public static void UnregisterProbe(HDProbe probe) => s_Instance.UnregisterProbe(probe);
 
-        public static void RenderAndUpdateRenderData(
+        public static void RenderAndUpdateRealtimeRenderData(
             IEnumerable<HDProbe> probes,
-            Transform viewerTransform,
-            ProbeSettings.Mode targetMode
+            Transform viewerTransform
         )
         {
             foreach (var probe in probes)
-                RenderAndUpdateRenderData(probe, viewerTransform, targetMode);
+                RenderAndUpdateRealtimeRenderData(probe, viewerTransform);
         }
 
-        public static void RenderAndUpdateRenderData(
-            HDProbe probe, Transform viewerTransform, ProbeSettings.Mode targetMode
+        public static void RenderAndUpdateRealtimeRenderData(
+            HDProbe probe, Transform viewerTransform
+        )
+        {
+            var target = CreateAndSetRenderTargetIfRequired(probe, ProbeSettings.Mode.Realtime);
+            Render(probe, viewerTransform, target, out HDProbe.RenderData renderData);
+            AssignRenderData(probe, renderData, ProbeSettings.Mode.Realtime);
+        }
+
+        public static void Render(
+            HDProbe probe, Transform viewerTransform,
+            Texture outTarget, out HDProbe.RenderData outRenderData
         )
         {
             var positionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, viewerTransform);
-            var target = CreateAndSetRenderTargetIfRequired(probe, targetMode);
-            Matrix4x4 projectionMatrix, worldToCameraRHSMatrix;
             HDRenderUtilities.Render(
                 probe.settings,
                 positionSettings,
-                target,
-                out worldToCameraRHSMatrix, out projectionMatrix
+                outTarget,
+                out Matrix4x4 worldToCameraRHSMatrix, out Matrix4x4 projectionMatrix
             );
 
-            var renderData = new PlanarReflectionProbe.RenderData
+            outRenderData = new HDProbe.RenderData
             {
                 projectionMatrix = projectionMatrix,
                 worldToCameraRHS = worldToCameraRHSMatrix
             };
-            AssignRenderData(probe, renderData, targetMode);
         }
 
         public static void AssignRenderData(
             HDProbe probe,
-            PlanarReflectionProbe.RenderData renderData,
+            HDProbe.RenderData renderData,
             ProbeSettings.Mode targetMode
         )
         {
@@ -67,15 +73,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static void PrepareCull(Camera camera, ReflectionProbeCullResults results)
             => s_Instance.PrepareCull(camera, results);
 
-        static Texture CreateAndSetRenderTargetIfRequired(HDProbe probe, ProbeSettings.Mode targetMode)
+        public static Texture CreateRenderTargetForMode(HDProbe probe, ProbeSettings.Mode targetMode)
         {
-            var settings = probe.settings;
-            Texture target = probe.GetTexture(targetMode);
-
-            if (target != null)
-                return target;
-
+            Texture target = null;
             var hd = (HDRenderPipeline)RenderPipelineManager.currentPipeline;
+            var settings = probe.settings;
             switch (targetMode)
             {
                 case ProbeSettings.Mode.Realtime:
@@ -114,6 +116,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         break;
                     }
             }
+
+            return target;
+        }
+
+        static Texture CreateAndSetRenderTargetIfRequired(HDProbe probe, ProbeSettings.Mode targetMode)
+        {
+            var settings = probe.settings;
+            Texture target = probe.GetTexture(targetMode);
+
+            if (target != null)
+                return target;
+
+            target = CreateRenderTargetForMode(probe, targetMode);
 
             probe.SetTexture(targetMode, target);
             return target;

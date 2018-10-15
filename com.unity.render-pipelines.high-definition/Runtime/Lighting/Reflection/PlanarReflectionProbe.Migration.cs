@@ -13,7 +13,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ProbeSettings
         }
 
-        [SerializeField, FormerlySerializedAs("version")]
+        [SerializeField, FormerlySerializedAs("version"), FormerlySerializedAs("m_Version")]
         int m_PlanarProbeVersion;
         Version IVersionable<Version>.version { get => (Version)m_PlanarProbeVersion; set => m_PlanarProbeVersion = (int)value; }
 

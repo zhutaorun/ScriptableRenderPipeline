@@ -4,9 +4,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     public abstract partial class HDProbe : MonoBehaviour
     {
+        [Serializable]
+        public struct RenderData
+        {
+            public Matrix4x4 worldToCameraRHS;
+            public Matrix4x4 projectionMatrix;
+
+            public Vector3 capturePosition
+            {
+                get
+                {
+                    var v = worldToCameraRHS.GetColumn(3);
+                    return new Vector3(v.x, v.y, -v.z);
+                }
+            }
+        }
+
         // Serialized Data
         [SerializeField]
-        protected ProbeSettings m_ProbeSettings;
+        // This one is protected only to have access during migration of children classes.
+        // In children classes, it must be used only during the migration.
+        protected ProbeSettings m_ProbeSettings = ProbeSettings.@default;
         [SerializeField]
         ProbeSettingsOverride m_ProbeSettingsOverride;
         [SerializeField]
@@ -16,9 +34,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Texture m_BakedTexture;
         [SerializeField]
         Texture m_CustomTexture;
+        [SerializeField]
+        RenderData m_BakedRenderData;
+        [SerializeField]
+        RenderData m_CustomRenderData;
 
         // Runtime Data
         RenderTexture m_RealtimeTexture;
+        RenderData m_RealtimeRenderData;
 
         // Public API
         // Texture asset
@@ -50,9 +73,34 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
+        public RenderData bakedRenderData { get => m_BakedRenderData; internal set => m_BakedRenderData = value; }
+        public RenderData customRenderData { get => m_CustomRenderData; internal set => m_CustomRenderData = value; }
+        public RenderData realtimeRenderData { get => m_RealtimeRenderData; internal set => m_RealtimeRenderData = value; }
+        public RenderData renderData => GetRenderData(mode);
+        public RenderData GetRenderData(ProbeSettings.Mode targetMode)
+        {
+            switch (mode)
+            {
+                case ProbeSettings.Mode.Baked: return bakedRenderData;
+                case ProbeSettings.Mode.Custom: return customRenderData;
+                case ProbeSettings.Mode.Realtime: return realtimeRenderData;
+                default: throw new ArgumentOutOfRangeException();
+            }
+        }
+        public void SetRenderData(ProbeSettings.Mode targetMode, RenderData renderData)
+        {
+            switch (mode)
+            {
+                case ProbeSettings.Mode.Baked: bakedRenderData = renderData; break;
+                case ProbeSettings.Mode.Custom: customRenderData = renderData; break;
+                case ProbeSettings.Mode.Realtime: realtimeRenderData = renderData; break;
+                default: throw new ArgumentOutOfRangeException();
+            }
+        }
+
         // Settings
         // General
-        public ProbeSettings.ProbeType type => m_ProbeSettings.type;
+        public ProbeSettings.ProbeType type { get => m_ProbeSettings.type; protected set => m_ProbeSettings.type = value; }
         /// <summary>The capture mode.</summary>
         public virtual ProbeSettings.Mode mode { get => m_ProbeSettings.mode; set => m_ProbeSettings.mode = value; }
 

@@ -827,8 +827,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
             // TODO: Render only visible probes
                 var realtimeViewIndependentProbes = HDProbeSystem.realtimeViewIndependentProbes;
-                HDProbeSystem.RenderAndUpdateRenderData(
-                    realtimeViewIndependentProbes, null, ProbeSettings.Mode.Realtime
+                HDProbeSystem.RenderAndUpdateRealtimeRenderData(
+                    realtimeViewIndependentProbes, null
                 );
             }
 
@@ -910,8 +910,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     // TODO: Render only visible probes
                     var realtimeViewDependentProbes = HDProbeSystem.realtimeViewDependentProbes;
-                    HDProbeSystem.RenderAndUpdateRenderData(
-                        realtimeViewDependentProbes, camera.transform, ProbeSettings.Mode.Realtime
+                    HDProbeSystem.RenderAndUpdateRealtimeRenderData(
+                        realtimeViewDependentProbes, camera.transform
                     );
                 }
 

@@ -1309,8 +1309,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 var gpuProj = GL.GetGPUProjectionMatrix(renderData.projectionMatrix, true);
                 var gpuView = renderData.worldToCameraRHS;
 
-                // We transform it to object space by translating the capturePosition
-                var vp = gpuProj * gpuView * Matrix4x4.Translate(capturePosition);
+                var vp = gpuProj * gpuView;
                 m_Env2DCaptureVP[fetchIndex] = vp;
             }
             else if (cubeProbe != null)
@@ -1318,7 +1317,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 envIndex = m_ReflectionProbeCache.FetchSlice(cmd, probe.texture);
                 envIndex = envIndex << 1 | (int)EnvCacheType.Cubemap;
                 var renderData = cubeProbe.renderData;
-                capturePosition = renderData.capturePosition;
+                var probePositionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, camera.transform);
+                HDRenderUtilities.ComputeCameraSettingsFromProbeSettings(
+                    probe.settings, probePositionSettings, probe.texture,
+                    out CameraSettings cameraSettings, out CameraPositionSettings cameraPositionSettings,
+                    out Matrix4x4 worldToCameraRHSMatrix, out Matrix4x4 projectionMatrix
+                );
+                capturePosition = cameraPositionSettings.position;
             }
             // -1 means that the texture is not ready yet (ie not convolved/compressed yet)
             if (envIndex == -1)

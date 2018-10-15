@@ -64,7 +64,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 })
             );
 
-        [SerializeField, FormerlySerializedAs("version")]
+        [SerializeField, FormerlySerializedAs("version"), FormerlySerializedAs("m_Version")]
         int m_ReflectionProbeVersion;
         Version IVersionable<Version>.version { get => (Version)m_ReflectionProbeVersion; set => m_ReflectionProbeVersion = (int)value; }
 

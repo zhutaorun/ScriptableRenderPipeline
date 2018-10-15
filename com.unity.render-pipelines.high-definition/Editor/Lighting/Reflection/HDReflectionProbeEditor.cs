@@ -113,7 +113,5 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static readonly HDProbeUI.ToolBar[] k_ToolBars
         = { HDProbeUI.ToolBar.InfluenceShape | HDProbeUI.ToolBar.NormalBlend | HDProbeUI.ToolBar.Blend, HDProbeUI.ToolBar.CapturePosition };
         HDProbeUI.ToolBar[] HDProbeUI.IProbeUISettingsProvider.toolbars => k_ToolBars;
-
-        
     }
 }

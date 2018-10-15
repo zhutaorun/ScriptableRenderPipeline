@@ -5,36 +5,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     [ExecuteAlways]
     public sealed partial class PlanarReflectionProbe : HDProbe
     {
-        [Serializable]
-        public struct RenderData
-        {
-            public Matrix4x4 worldToCameraRHS;
-            public Matrix4x4 projectionMatrix;
-        }
-
         // Serialized data
         [SerializeField]
         Vector3 m_LocalReferencePosition = -Vector3.forward;
-        [SerializeField]
-        RenderData m_BakedRenderData;
-        [SerializeField]
-        RenderData m_CustomRenderData;
-        RenderData m_RealtimeRenderData;
-
-        public RenderData bakedRenderData { get => m_BakedRenderData; internal set => m_BakedRenderData = value; }
-        public RenderData customRenderData { get => m_CustomRenderData; internal set => m_CustomRenderData = value; }
-        public RenderData realtimeRenderData { get => m_RealtimeRenderData; internal set => m_RealtimeRenderData = value; }
-        public RenderData renderData => GetRenderData(mode);
-        public RenderData GetRenderData(ProbeSettings.Mode targetMode)
-        {
-            switch (mode)
-            {
-                case ProbeSettings.Mode.Baked: return bakedRenderData;
-                case ProbeSettings.Mode.Custom: return customRenderData;
-                case ProbeSettings.Mode.Realtime: return realtimeRenderData;
-                default: throw new ArgumentOutOfRangeException();
-            }
-        }
 
         /// <summary>Reference position to mirror to find the capture point. (local space)</summary>
         public Vector3 localReferencePosition => m_LocalReferencePosition;
@@ -44,6 +17,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         protected override void Awake()
         {
             base.Awake();
+            type = ProbeSettings.ProbeType.PlanarProbe;
             k_Migration.Migrate(this);
         }
 

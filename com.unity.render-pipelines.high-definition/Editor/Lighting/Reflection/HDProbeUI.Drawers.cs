@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEditorInternal;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
@@ -250,6 +251,147 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                             );
                 }
             }
+
+            static readonly string[] k_BakeCustomOptionText = { "Bake as new Cubemap..." };
+            static readonly string[] k_BakeButtonsText = { "Bake All Reflection Probes" };
+            public static void DrawBakeButton(HDProbeUI s, SerializedHDProbe d, Editor o)
+            {
+                // Disable baking of multiple probes with different modes
+                if (d.probeSettings.mode.hasMultipleDifferentValues)
+                {
+                    EditorGUILayout.HelpBox(
+                        "Baking is not possible when selecting probe with different modes",
+                        MessageType.Info
+                    );
+                    return;
+                }
+
+                // Check if current mode support baking
+                var mode = (ProbeSettings.Mode)d.probeSettings.mode.intValue;
+                var doesModeSupportBaking = mode == ProbeSettings.Mode.Custom || mode == ProbeSettings.Mode.Baked;
+                if (!doesModeSupportBaking)
+                    return;
+
+                // Check if all scene are saved to a file (requirement to bake probes)
+                foreach (var target in d.serializedObject.targetObjects)
+                {
+                    var comp = (Component)target;
+                    var go = comp.gameObject;
+                    var scene = go.scene;
+                    if (string.IsNullOrEmpty(scene.path))
+                    {
+                        EditorGUILayout.HelpBox(
+                            "Baking is possible only if all open scenes are saved on disk. " +
+                            "Please save the scenes before baking.",
+                            MessageType.Info
+                        );
+                        return;
+                    }
+                }
+
+                switch (mode)
+                {
+                    case ProbeSettings.Mode.Custom:
+                        {
+                            if (ButtonWithDropdownList(
+                                _.GetContent(
+                                    "Bake|Bakes Probe's texture, overwriting the existing texture asset " +
+                                    "(if any)."
+                                ),
+                                k_BakeCustomOptionText,
+                                data =>
+                                {
+                                    switch ((int)data)
+                                    {
+                                        case 0:
+                                            RenderInCustomAsset(d.target, false);
+                                            break;
+                                    }
+                                }))
+                            {
+                                RenderInCustomAsset(d.target, true);
+                            }
+                            break;
+                        }
+                    case ProbeSettings.Mode.Baked:
+                        {
+                            if (UnityEditor.Lightmapping.giWorkflowMode
+                                != UnityEditor.Lightmapping.GIWorkflowMode.OnDemand)
+                            {
+                                EditorGUILayout.HelpBox("Baking of this probe is automatic because this probe's " +
+                                    "type is 'Baked' and the Lighting window is using 'Auto Baking'. " +
+                                    "The texture created is stored in the GI cache.", MessageType.Info);
+                                break;
+                            }
+
+                            GUI.enabled = d.target.enabled;
+
+                            // Bake button in non-continous mode
+                            if (ButtonWithDropdownList(
+                                    _.GetContent("Bake"),
+                                    k_BakeButtonsText,
+                                    data =>
+                                    {
+                                        if ((int)data == 0)
+                                        {
+                                            var system = ScriptableBakedReflectionSystemSettings.system;
+                                            system.BakeAllReflectionProbes();
+                                        }
+                                    },
+                                    GUILayout.ExpandWidth(true)))
+                            {
+                                HDBakedReflectionSystem.BakeProbes(new HDProbe[] { d.target });
+                                GUIUtility.ExitGUI();
+                            }
+
+                            GUI.enabled = true;
+                            break;
+                        }
+                    case ProbeSettings.Mode.Realtime:
+                        break;
+                    default: throw new ArgumentOutOfRangeException();
+                }
+            }
+
+            static MethodInfo k_EditorGUI_ButtonWithDropdownList = typeof(EditorGUI).GetMethod("ButtonWithDropdownList", BindingFlags.Static | BindingFlags.NonPublic, null, CallingConventions.Any, new[] { typeof(GUIContent), typeof(string[]), typeof(GenericMenu.MenuFunction2), typeof(GUILayoutOption[]) }, new ParameterModifier[0]);
+            static bool ButtonWithDropdownList(GUIContent content, string[] buttonNames, GenericMenu.MenuFunction2 callback, params GUILayoutOption[] options)
+            {
+                return (bool)k_EditorGUI_ButtonWithDropdownList.Invoke(null, new object[] { content, buttonNames, callback, options });
+            }
+
+            static void RenderInCustomAsset(HDProbe probe, bool useExistingCustomAsset)
+            {
+                var provider = new TProvider();
+
+                string assetPath = null;
+                if (useExistingCustomAsset && probe.customTexture != null && !probe.customTexture.Equals(null))
+                    assetPath = AssetDatabase.GetAssetPath(probe.customTexture);
+
+                if (string.IsNullOrEmpty(assetPath))
+                {
+                    assetPath = EditorUtility.SaveFilePanelInProject(
+                        "Save custom capture",
+                        probe.name, "exr",
+                        "Save custom capture");
+                }
+
+                if (!string.IsNullOrEmpty(assetPath))
+                {
+                    var target = HDProbeSystem.CreateRenderTargetForMode(
+                        probe, ProbeSettings.Mode.Custom
+                    );
+                    HDProbeSystem.Render(probe, null, target, out HDProbe.RenderData renderData);
+                    HDTextureUtilities.WriteTextureFileToDisk(target, assetPath);
+                    AssetDatabase.ImportAsset(assetPath);
+                    HDBakedReflectionSystem.ImportAssetAt(probe, assetPath);
+                    CoreUtils.Destroy(target);
+
+                    var assetTarget = AssetDatabase.LoadAssetAtPath<Texture>(assetPath);
+                    probe.SetTexture(ProbeSettings.Mode.Custom, assetTarget);
+                    probe.SetRenderData(ProbeSettings.Mode.Custom, renderData);
+                    EditorUtility.SetDirty(probe);
+                }
+            }
         }
 
         protected static void Drawer_DifferentShapeError(HDProbeUI s, SerializedHDProbe d, Editor o)
@@ -278,97 +420,5 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 EditMode.ChangeEditMode(targetMode, GetBoundsGetter(owner)(), owner);
             }
         }
-
-        #region Bake Button
-        static readonly string[] k_BakeCustomOptionText = { "Bake as new Cubemap..." };
-        static readonly string[] k_BakeButtonsText = { "Bake All Reflection Probes" };
-        protected static void Drawer_SectionBakeButton(HDProbeUI s, SerializedHDProbe d, Editor o)
-        {
-            var so = d.serializedObject;
-            if (so.isEditingMultipleObjects)
-            {
-
-            }
-            else
-            {
-                var settings = d.target.settings;
-                switch (settings.mode)
-                {
-                    case ProbeSettings.Mode.Custom:
-                        {
-                            if (UnityEditor.Lightmapping.giWorkflowMode
-                                != UnityEditor.Lightmapping.GIWorkflowMode.OnDemand)
-                            {
-                                EditorGUILayout.HelpBox("Baking of this probe is automatic because this probe's " +
-                                    "type is 'Baked' and the Lighting window is using 'Auto Baking'. " +
-                                    "The texture created is stored in the GI cache.", MessageType.Info);
-                                break;
-                            }
-                            if (ButtonWithDropdownList(
-                                _.GetContent(
-                                    "Bake|Bakes Probe's texture, overwriting the existing texture asset " +
-                                    "(if any)."
-                                ),
-                                k_BakeCustomOptionText,
-                                data =>
-                                {
-                                    var mode = (int)data;
-                                    switch ((int)data)
-                                    {
-                                        case 0:
-                                            throw new NotImplementedException();
-                                            // TODO: Create a new custom texture asset
-                                            HDProbeSystem.RenderAndUpdateRenderData(
-                                                d.target, null, ProbeSettings.Mode.Custom
-                                            );
-                                            break;
-                                    }
-                                }))
-                            {
-                                HDProbeSystem.RenderAndUpdateRenderData(
-                                    d.target, null, ProbeSettings.Mode.Custom
-                                );
-                            }
-                            break;
-                        }
-                    case ProbeSettings.Mode.Baked:
-                        {
-                            GUI.enabled = d.target.enabled;
-
-                            // Bake button in non-continous mode
-                            if (ButtonWithDropdownList(
-                                    _.GetContent("Bake"),
-                                    k_BakeButtonsText,
-                                    data =>
-                                    {
-                                        var mode = (int)data;
-                                        if (mode == 0)
-                                        {
-                                            var system = ScriptableBakedReflectionSystemSettings.system;
-                                            system.BakeAllReflectionProbes();
-                                        }
-                                    },
-                                    GUILayout.ExpandWidth(true)))
-                            {
-                                HDBakedReflectionSystem.BakeProbes(new HDProbe[] { d.target });
-                                GUIUtility.ExitGUI();
-                            }
-
-                            GUI.enabled = true;
-                            break;
-                        }
-                    case ProbeSettings.Mode.Realtime:
-                        break;
-                    default: throw new ArgumentOutOfRangeException();
-                }
-            }
-        }
-
-        static MethodInfo k_EditorGUI_ButtonWithDropdownList = typeof(EditorGUI).GetMethod("ButtonWithDropdownList", BindingFlags.Static | BindingFlags.NonPublic, null, CallingConventions.Any, new[] { typeof(GUIContent), typeof(string[]), typeof(GenericMenu.MenuFunction2), typeof(GUILayoutOption[]) }, new ParameterModifier[0]);
-        static bool ButtonWithDropdownList(GUIContent content, string[] buttonNames, GenericMenu.MenuFunction2 callback, params GUILayoutOption[] options)
-        {
-            return (bool)k_EditorGUI_ButtonWithDropdownList.Invoke(null, new object[] { content, buttonNames, callback, options });
-        }
-        #endregion
     }
 }

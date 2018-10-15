@@ -130,17 +130,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Render(settings, position, target, out worldToCameraRHSMatrix, out projectionMatrix);
         }
 
-        public static void Render(
+        public static void ComputeCameraSettingsFromProbeSettings(
             ProbeSettings settings,
             ProbeCapturePositionSettings position,
             Texture target,
+            out CameraSettings cameraSettings,
+            out CameraPositionSettings cameraPositionSettings,
             out Matrix4x4 worldToCameraRHSMatrix,
             out Matrix4x4 projectionMatrix
         )
         {
             // Copy settings
-            var cameraSettings = settings.camera;
-            var cameraPositionSettings = CameraPositionSettings.@default;
+            cameraSettings = settings.camera;
+            cameraPositionSettings = CameraPositionSettings.@default;
 
             // Update settings
             ProbeSettingsUtilities.ApplySettings(
@@ -154,11 +156,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 ref cameraSettings, ref cameraPositionSettings
             );
 
-            // Perform rendering
-            Render(cameraSettings, cameraPositionSettings, target);
-
             worldToCameraRHSMatrix = cameraPositionSettings.GetUsedWorldToCameraMatrix();
             projectionMatrix = cameraSettings.frustum.GetUsedProjectionMatrix();
+        }
+
+        public static void Render(
+            ProbeSettings settings,
+            ProbeCapturePositionSettings position,
+            Texture target,
+            out Matrix4x4 worldToCameraRHSMatrix,
+            out Matrix4x4 projectionMatrix
+        )
+        {
+            // Copy settings
+            ComputeCameraSettingsFromProbeSettings(
+                settings, position, target,
+                out CameraSettings cameraSettings, out CameraPositionSettings cameraPositionSettings,
+                out worldToCameraRHSMatrix, out projectionMatrix
+            );
+
+            // Perform rendering
+            Render(cameraSettings, cameraPositionSettings, target);
         }
 
         public static RenderTexture CreateReflectionProbeRenderTarget(int cubemapSize)
@@ -209,7 +227,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Unity will flip the image during the read back before writing into the cubemap
             // But in the end, the cubemap is flipped
             // So we force in the HDRP to flip the last blit so we have the proper flipping.
-            if (target is Cubemap
+            RenderTexture rt = null;
+            if ((target is Cubemap || (rt = target as RenderTexture) != null && rt.dimension == TextureDimension.Cube)
                 && settings.type == ProbeSettings.ProbeType.ReflectionProbe
                 && SystemInfo.graphicsUVStartsAtTop)
                 cameraSettings.flipYMode = HDAdditionalCameraData.FlipYMode.ForceFlipY;

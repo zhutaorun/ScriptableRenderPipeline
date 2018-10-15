@@ -373,8 +373,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         var dataFile = bakedTexturePath + ".renderData";
                         if (File.Exists(dataFile))
                         {
-                            PlanarReflectionProbe.RenderData renderData;
-                            if (HDBakingUtilities.TryDeserializeFromDisk(dataFile, out renderData))
+                            if (HDBakingUtilities.TryDeserializeFromDisk(dataFile, out HDProbe.RenderData renderData))
                             {
                                 HDProbeSystem.AssignRenderData(probe, renderData, ProbeSettings.Mode.Baked);
                                 EditorUtility.SetDirty(probe);
@@ -409,12 +408,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             planarProbe.referencePosition
                         );
 
-                        Matrix4x4 worldToCameraRHSMatrix, projectionMatrix;
                         HDRenderUtilities.Render(
                             settings,
                             positionSettings,
                             planarRT,
-                            out worldToCameraRHSMatrix, out projectionMatrix
+                            out Matrix4x4 worldToCameraRHSMatrix, out Matrix4x4 projectionMatrix
                         );
                         HDBakingUtilities.CreateParentDirectoryIfMissing(targetFile);
                         HDTextureUtilities.WriteTextureFileToDisk(planarRT, targetFile);

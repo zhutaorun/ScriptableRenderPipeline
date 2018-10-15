@@ -20,7 +20,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected HDProbeUI[] m_UIHandleState;
         protected HDProbe[] m_TypedTargets;
 
-        public override void OnInspectorGUI() => Draw(m_UIState, m_SerializedHDProbe, this);
+        public override void OnInspectorGUI()
+        {
+            m_SerializedHDProbe.Update();
+            Draw(m_UIState, m_SerializedHDProbe, this);
+            m_SerializedHDProbe.Apply();
+        }
 
         protected virtual void OnEnable()
         {
@@ -55,6 +60,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 HDProbeUI.Drawer<TProvider>.DrawCaptureSettings(s, p, o);
             if (DrawAndSetSectionFoldout(s, HDProbeUI.Flag.SectionExpandedCustom, "Custom Settings"))
                 HDProbeUI.Drawer<TProvider>.DrawCustomSettings(s, p, o);
+            HDProbeUI.Drawer<TProvider>.DrawBakeButton(s, p, o);
         }
 
         protected virtual void OnSceneGUI()

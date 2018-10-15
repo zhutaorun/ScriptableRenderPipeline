@@ -28,8 +28,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         );
 
         [SerializeField]
-        Version m_Version;
-        Version IVersionable<Version>.version { get => m_Version; set => m_Version = value; }
+        Version m_HDProbeVersion;
+        Version IVersionable<Version>.version { get => m_HDProbeVersion; set => m_HDProbeVersion = value; }
 
         // Legacy fields for HDProbe
         [SerializeField, FormerlySerializedAs("m_InfiniteProjection"), Obsolete("For Data Migration")]
