@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [5.0.0-preview] - 2018-09-28
+### Changed
+- XRGraphicConfig has been changed from a read-write control of XRSettings to XRGraphics, a read-only accessor to XRSettings
+- XRGraphics members have been modified to only contain accessors potentially useful to SRP
 
 ## [4.0.0-preview] - 2018-09-28
 ### Added
