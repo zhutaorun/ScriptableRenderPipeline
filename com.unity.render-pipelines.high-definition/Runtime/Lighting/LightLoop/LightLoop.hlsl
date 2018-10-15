@@ -64,7 +64,7 @@ bool IsMatchingLightLayer(uint lightLayers, uint renderingLayers)
     return (lightLayers & renderingLayers) != 0;
 }
 
-#define SCALARIZE_CLUSTER 1
+#define SCALARIZE_CLUSTER (1 && defined(SUPPORTS_WAVE_INTRINSICS) && defined(LIGHTLOOP_TILE_PASS))
 
 void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BSDFData bsdfData, BuiltinData builtinData, uint featureFlags,
                 out float3 diffuseLighting,
@@ -143,22 +143,66 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
     #ifdef LIGHTLOOP_TILE_PASS
         uint cellIndex; 
         GetCountAndStart(posInput, LIGHTCATEGORY_PUNCTUAL, lightStart, lightCount, cellIndex);
-#if defined(SUPPORTS_WAVE_INTRINSICS)
-        // Ref: GPU Best Practices – Part 2, Fuller 2015
+    #if SCALARIZE_CLUSTER 
         // Fast path is when we all pixels in a wave is accessing same tile or cluster.
-        uint firstLaneCellIndex = WaveReadFirstLane(cellIndex);
-        bool fastPass = all(Ballot(cellIndex == firstLaneCellIndex) == ~0);
-        lightStart = fastPass ? WaveReadFirstLane(lightStart) : lightStart;
-#endif
+        uint lightStartLane0 = WaveReadFirstLane(lightStart);
+        uint lightCountLane0 = WaveReadFirstLane(lightCount);
+        bool sameStartAcrossLanes = all(Ballot(lightStart == lightStartLane0) == ~0);
+        bool sameCountAcrossLanes = all(Ballot(lightCount == lightCountLane0) == ~0);
+
+        lightStart = sameStartAcrossLanes ? lightStartLane0 : lightStart;
+        lightCount = sameCountAcrossLanes ? lightCountLane0 : lightCount;
+
+        bool fastPass = sameStartAcrossLanes && sameCountAcrossLanes;
+
+    #endif
     #else
         lightCount = _PunctualLightCount;
         lightStart = 0;
     #endif
 
+#if 0
+        uint v_lightListIdx = 0;
+        uint v_lightIdx = lightStart;
+        while (v_lightListIdx < lightCount)
+        {
+            v_lightIdx = FetchIndex(lightStart, v_lightListIdx);
+            uint s_lightIdx = fastPass ? v_lightIdx : min(WaveMinUint(v_lightIdx), _PunctualLightCount - 1);
 
-#if (SCALARIZE_CLUSTER && defined(SUPPORTS_WAVE_INTRINSICS) && defined(LIGHTLOOP_TILE_PASS))
+            LightData s_lightData = _LightDatas[s_lightIdx];    // Scalar load.
 
-    //    if (!fastPass) // We are not using the same cluster/tile for all the pixels in the wave, so need to scalarize in a slightly more involved way
+            // If current scalar and vector light index match, we process the light
+            // The v_lightListIdx for current thread is increased.
+            if (s_lightIdx >= v_lightIdx)   // TODO_FCC Can use the == instead 
+            {
+                v_lightListIdx++;
+
+                if (IsMatchingLightLayer(s_lightData.lightLayers, builtinData.renderingLayers))
+                {
+                    DirectLighting lighting = EvaluateBSDF_Punctual(context, V, posInput, preLightData, s_lightData, bsdfData, builtinData);
+                    AccumulateDirectLighting(lighting, aggregateLighting);
+                }
+            }
+        }
+#endif
+
+#if (SCALARIZE_CLUSTER)
+
+        // TODO_FCC: REFACTOR TOO MUCH REPETITION HERE. (could easily do all options by just changing few things in the loop, but need to verify the loop is scalarized). 
+        UNITY_BRANCH if (fastPass)
+        {
+            for (i = 0; i < lightCount; i++)
+            {
+                LightData lightData = FetchLight(lightStart, i);
+
+                if (IsMatchingLightLayer(lightData.lightLayers, builtinData.renderingLayers))
+                {
+                    DirectLighting lighting = EvaluateBSDF_Punctual(context, V, posInput, preLightData, lightData, bsdfData, builtinData);
+                    AccumulateDirectLighting(lighting, aggregateLighting);
+                }
+            }
+        }
+        else
         {
             // Scalarized loop. All lights that are in a tile/cluster touched by any pixel in the wave are loaded (scalar load), only the one relevant to current thread/pixel are processed.
             // For clarity, the following code will follow the convention: variables starting with s_ are wave uniform (meant for scalar register),
@@ -186,10 +230,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
                     }
                 }
             }
-
         }
-      /*  else
-        {*/
 #else
         for (i = 0; i < lightCount; i++)
         {
@@ -201,9 +242,6 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
                 AccumulateDirectLighting(lighting, aggregateLighting);
             }
         }
-#if (SCALARIZE_CLUSTER && defined(SUPPORTS_WAVE_INTRINSICS))
-   //     }
-#endif
 #endif
     }
 
