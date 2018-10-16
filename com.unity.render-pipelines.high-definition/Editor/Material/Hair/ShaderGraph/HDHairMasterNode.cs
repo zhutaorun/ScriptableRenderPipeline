@@ -16,20 +16,13 @@ namespace UnityEditor.ShaderGraph
     public class HDHairMasterNode : MasterNode<IHDHairSubShader>, IMayRequirePosition, IMayRequireNormal, IMayRequireTangent
     {
         public const string AlbedoSlotName = "Albedo";
-        public const string AlbedoDisplaySlotName = "BaseColor";
+        public const string AlbedoDisplaySlotName = "DiffuseColor";
         public const string NormalSlotName = "Normal";
         public const string BentNormalSlotName = "BentNormal";
         public const string TangentSlotName = "Tangent";
         public const string SubsurfaceMaskSlotName = "SubsurfaceMask";
         public const string ThicknessSlotName = "Thickness";
         public const string DiffusionProfileSlotName = "DiffusionProfile";
-        public const string IridescenceMaskSlotName = "IridescenceMask";
-        public const string IridescenceThicknessSlotName = "IridescenceThickness";
-        public const string SpecularColorSlotName = "Specular";
-        public const string SpecularColorDisplaySlotName = "SpecularColor";
-        public const string CoatMaskSlotName = "CoatMask";
-        public const string EmissionSlotName = "Emission";
-        public const string MetallicSlotName = "Metallic";
         public const string SmoothnessSlotName = "Smoothness";
         public const string AmbientOcclusionSlotName = "Occlusion";
         public const string AmbientOcclusionDisplaySlotName = "AmbientOcclusion";
@@ -37,15 +30,9 @@ namespace UnityEditor.ShaderGraph
         public const string AlphaClipThresholdSlotName = "AlphaClipThreshold";
         public const string AlphaClipThresholdDepthPrepassSlotName = "AlphaClipThresholdDepthPrepass";
         public const string AlphaClipThresholdDepthPostpassSlotName = "AlphaClipThresholdDepthPostpass";
-        public const string AnisotropySlotName = "Anisotropy";
         public const string PositionSlotName = "Position";
         public const string SpecularAAScreenSpaceVarianceSlotName = "SpecularAAScreenSpaceVariance";
         public const string SpecularAAThresholdSlotName = "SpecularAAThreshold";
-        public const string RefractionIndexSlotName = "RefractionIndex";
-        public const string RefractionColorSlotName = "RefractionColor";
-        public const string RefractionDistanceSlotName = "RefractionDistance";
-        public const string DistortionSlotName = "Distortion";
-        public const string DistortionBlurSlotName = "DistortionBlur";
 
         public const int PositionSlotId = 0;
         public const int AlbedoSlotId = 1;
@@ -78,12 +65,8 @@ namespace UnityEditor.ShaderGraph
 
         public enum MaterialType
         {
-            Standard,
-            SubsurfaceScattering,
-            Anisotropy,
-            Iridescence,
-            SpecularColor,
-            Translucent
+            KajiyaKay,
+            Marschner
         }
 
         // Don't support Multiply
@@ -92,12 +75,6 @@ namespace UnityEditor.ShaderGraph
             Alpha,
             PremultipliedAlpha,
             Additive,
-        }
-
-        public enum ProjectionModelLit
-        {
-            Proxy = 0,
-            HiZ = 1,
         }
 
         // Just for convenience of doing simple masks. We could run out of bits of course.
@@ -113,12 +90,6 @@ namespace UnityEditor.ShaderGraph
             SubsurfaceMask = 1 << SubsurfaceMaskSlotId,
             Thickness = 1 << ThicknessSlotId,
             DiffusionProfile = 1 << DiffusionProfileSlotId,
-            IridescenceMask = 1 << IridescenceMaskSlotId,
-            IridescenceLayerThickness = 1 << IridescenceThicknessSlotId,
-            Specular = 1 << SpecularColorSlotId,
-            CoatMask = 1 << CoatMaskSlotId,
-            Metallic = 1 << MetallicSlotId,
-            Emission = 1 << EmissionSlotId,
             Smoothness = 1 << SmoothnessSlotId,
             Occlusion = 1 << AmbientOcclusionSlotId,
             Alpha = 1 << AlphaSlotId,
@@ -128,35 +99,15 @@ namespace UnityEditor.ShaderGraph
             Anisotropy = 1 << AnisotropySlotId,
         }
 
-        const SlotMask StandardSlotMask = SlotMask.Position | SlotMask.Albedo | SlotMask.Normal | SlotMask.BentNormal | SlotMask.CoatMask | SlotMask.Emission | SlotMask.Metallic | SlotMask.Smoothness | SlotMask.Occlusion | SlotMask.Alpha | SlotMask.AlphaThreshold | SlotMask.AlphaThresholdDepthPrepass | SlotMask.AlphaThresholdDepthPostpass;
-        const SlotMask SubsurfaceScatteringSlotMask = SlotMask.Position | SlotMask.Albedo | SlotMask.Normal | SlotMask.BentNormal | SlotMask.SubsurfaceMask | SlotMask.Thickness | SlotMask.DiffusionProfile | SlotMask.CoatMask | SlotMask.Emission | SlotMask.Smoothness | SlotMask.Occlusion | SlotMask.Alpha | SlotMask.AlphaThreshold | SlotMask.AlphaThresholdDepthPrepass | SlotMask.AlphaThresholdDepthPostpass;
-        const SlotMask AnisotropySlotMask = SlotMask.Position | SlotMask.Albedo | SlotMask.Normal | SlotMask.BentNormal | SlotMask.Tangent | SlotMask.Anisotropy | SlotMask.CoatMask | SlotMask.Emission | SlotMask.Metallic | SlotMask.Smoothness | SlotMask.Occlusion | SlotMask.Alpha | SlotMask.AlphaThreshold | SlotMask.AlphaThresholdDepthPrepass | SlotMask.AlphaThresholdDepthPostpass;
-        const SlotMask IridescenceSlotMask = SlotMask.Position | SlotMask.Albedo | SlotMask.Normal | SlotMask.BentNormal | SlotMask.IridescenceMask | SlotMask.IridescenceLayerThickness | SlotMask.CoatMask | SlotMask.Emission | SlotMask.Metallic | SlotMask.Smoothness | SlotMask.Occlusion | SlotMask.Alpha | SlotMask.AlphaThreshold | SlotMask.AlphaThresholdDepthPrepass | SlotMask.AlphaThresholdDepthPostpass;
-        const SlotMask SpecularColorSlotMask = SlotMask.Position | SlotMask.Albedo | SlotMask.Normal | SlotMask.BentNormal | SlotMask.Specular | SlotMask.CoatMask | SlotMask.Emission | SlotMask.Smoothness | SlotMask.Occlusion | SlotMask.Alpha | SlotMask.AlphaThreshold | SlotMask.AlphaThresholdDepthPrepass | SlotMask.AlphaThresholdDepthPostpass;
-        const SlotMask TranslucentSlotMask = SlotMask.Position | SlotMask.Albedo | SlotMask.Normal | SlotMask.BentNormal | SlotMask.Thickness | SlotMask.DiffusionProfile | SlotMask.CoatMask | SlotMask.Emission | SlotMask.Smoothness | SlotMask.Occlusion | SlotMask.Alpha | SlotMask.AlphaThreshold | SlotMask.AlphaThresholdDepthPrepass | SlotMask.AlphaThresholdDepthPostpass;
+        const SlotMask KajiyaKaySlotMask = SlotMask.Position | SlotMask.Albedo | SlotMask.Normal | SlotMask.BentNormal | SlotMask.Smoothness | SlotMask.Occlusion | SlotMask.Alpha | SlotMask.AlphaThreshold | SlotMask.AlphaThresholdDepthPrepass | SlotMask.AlphaThresholdDepthPostpass;
 
         // This could also be a simple array. For now, catch any mismatched data.
         SlotMask GetActiveSlotMask()
         {
             switch (materialType)
             {
-                case MaterialType.Standard:
-                    return StandardSlotMask;
-
-                case MaterialType.SubsurfaceScattering:
-                    return SubsurfaceScatteringSlotMask;
-
-                case MaterialType.Anisotropy:
-                    return AnisotropySlotMask;
-
-                case MaterialType.Iridescence:
-                    return IridescenceSlotMask;
-
-                case MaterialType.SpecularColor:
-                    return SpecularColorSlotMask;
-
-                case MaterialType.Translucent:
-                    return TranslucentSlotMask;
+                case MaterialType.KajiyaKay:
+                    return KajiyaKaySlotMask;
 
                 default:
                     return SlotMask.None;
@@ -245,71 +196,6 @@ namespace UnityEditor.ShaderGraph
                 m_DrawBeforeRefraction = value.isOn;
                 UpdateNodeAfterDeserialization();
                 Dirty(ModificationScope.Topological);
-            }
-        }
-
-        [SerializeField]
-        ScreenSpaceLighting.RefractionModel m_RefractionModel;
-
-        public ScreenSpaceLighting.RefractionModel refractionModel
-        {
-            get { return m_RefractionModel; }
-            set
-            {
-                if (m_RefractionModel == value)
-                    return;
-
-                m_RefractionModel = value;
-                UpdateNodeAfterDeserialization();
-                Dirty(ModificationScope.Topological);
-            }
-        }
-
-        [SerializeField]
-        bool m_Distortion;
-
-        public ToggleData distortion
-        {
-            get { return new ToggleData(m_Distortion); }
-            set
-            {
-                if (m_Distortion == value.isOn)
-                    return;
-                m_Distortion = value.isOn;
-                UpdateNodeAfterDeserialization();
-                Dirty(ModificationScope.Topological);
-            }
-        }
-
-        [SerializeField]
-        DistortionMode m_DistortionMode;
-
-        public DistortionMode distortionMode
-        {
-            get { return m_DistortionMode; }
-            set
-            {
-                if (m_DistortionMode == value)
-                    return;
-
-                m_DistortionMode = value;
-                UpdateNodeAfterDeserialization();
-                Dirty(ModificationScope.Topological);
-            }
-        }
-
-        [SerializeField]
-        bool m_DistortionDepthTest = true;
-
-        public ToggleData distortionDepthTest
-        {
-            get { return new ToggleData(m_DistortionDepthTest); }
-            set
-            {
-                if (m_DistortionDepthTest == value.isOn)
-                    return;
-                m_DistortionDepthTest = value.isOn;
-                Dirty(ModificationScope.Graph);
             }
         }
 
@@ -556,16 +442,6 @@ namespace UnityEditor.ShaderGraph
             get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/HD-Hair-Master-Node"; }
         }
 
-        public bool HasRefraction()
-        {
-            return (surfaceType == SurfaceType.Transparent && !drawBeforeRefraction.isOn && refractionModel != ScreenSpaceLighting.RefractionModel.None);
-        }
-
-        public bool HasDistortion()
-        {
-            return (surfaceType == SurfaceType.Transparent && distortion.isOn);
-        }
-
         public sealed override void UpdateNodeAfterDeserialization()
         {
             base.UpdateNodeAfterDeserialization();
@@ -597,17 +473,12 @@ namespace UnityEditor.ShaderGraph
                 AddSlot(new TangentMaterialSlot(TangentSlotId, TangentSlotName, TangentSlotName, CoordinateSpace.Tangent, ShaderStageCapability.Fragment));
                 validSlots.Add(TangentSlotId);
             }
-            if (MaterialTypeUsesSlotMask(SlotMask.Anisotropy))
-            {
-                AddSlot(new Vector1MaterialSlot(AnisotropySlotId, AnisotropySlotName, AnisotropySlotName, SlotType.Input, 1.0f, ShaderStageCapability.Fragment));
-                validSlots.Add(AnisotropySlotId);
-            }
             if (MaterialTypeUsesSlotMask(SlotMask.SubsurfaceMask))
             {
                 AddSlot(new Vector1MaterialSlot(SubsurfaceMaskSlotId, SubsurfaceMaskSlotName, SubsurfaceMaskSlotName, SlotType.Input, 1.0f, ShaderStageCapability.Fragment));
                 validSlots.Add(SubsurfaceMaskSlotId);
             }
-            if ((MaterialTypeUsesSlotMask(SlotMask.Thickness) && (sssTransmission.isOn || materialType == MaterialType.Translucent)) || HasRefraction())
+            if (MaterialTypeUsesSlotMask(SlotMask.Thickness) && sssTransmission.isOn)
             {
                 AddSlot(new Vector1MaterialSlot(ThicknessSlotId, ThicknessSlotName, ThicknessSlotName, SlotType.Input, 1.0f, ShaderStageCapability.Fragment));
                 validSlots.Add(ThicknessSlotId);
@@ -616,31 +487,6 @@ namespace UnityEditor.ShaderGraph
             {
                 AddSlot(new DiffusionProfileInputMaterialSlot(DiffusionProfileSlotId, DiffusionProfileSlotName, DiffusionProfileSlotName, ShaderStageCapability.Fragment));
                 validSlots.Add(DiffusionProfileSlotId);
-            }
-            if (MaterialTypeUsesSlotMask(SlotMask.IridescenceMask))
-            {
-                AddSlot(new Vector1MaterialSlot(IridescenceMaskSlotId, IridescenceMaskSlotName, IridescenceMaskSlotName, SlotType.Input, 0.0f, ShaderStageCapability.Fragment));
-                validSlots.Add(IridescenceMaskSlotId);
-            }
-            if (MaterialTypeUsesSlotMask(SlotMask.IridescenceLayerThickness))
-            {
-                AddSlot(new Vector1MaterialSlot(IridescenceThicknessSlotId, IridescenceThicknessSlotName, IridescenceThicknessSlotName, SlotType.Input, 0.0f, ShaderStageCapability.Fragment));
-                validSlots.Add(IridescenceThicknessSlotId);
-            }
-            if (MaterialTypeUsesSlotMask(SlotMask.Specular))
-            {
-                AddSlot(new ColorRGBMaterialSlot(SpecularColorSlotId, SpecularColorDisplaySlotName, SpecularColorSlotName, SlotType.Input, Color.white, ColorMode.Default, ShaderStageCapability.Fragment));
-                validSlots.Add(SpecularColorSlotId);
-            }
-            if (MaterialTypeUsesSlotMask(SlotMask.CoatMask))
-            {
-                AddSlot(new Vector1MaterialSlot(CoatMaskSlotId, CoatMaskSlotName, CoatMaskSlotName, SlotType.Input, 0.0f, ShaderStageCapability.Fragment));
-                validSlots.Add(CoatMaskSlotId);
-            }
-            if (MaterialTypeUsesSlotMask(SlotMask.Metallic))
-            {
-                AddSlot(new Vector1MaterialSlot(MetallicSlotId, MetallicSlotName, MetallicSlotName, SlotType.Input, 0.0f, ShaderStageCapability.Fragment));
-                validSlots.Add(MetallicSlotId);
             }
             if (MaterialTypeUsesSlotMask(SlotMask.Smoothness))
             {
@@ -651,11 +497,6 @@ namespace UnityEditor.ShaderGraph
             {
                 AddSlot(new Vector1MaterialSlot(AmbientOcclusionSlotId, AmbientOcclusionDisplaySlotName, AmbientOcclusionSlotName, SlotType.Input, 1.0f, ShaderStageCapability.Fragment));
                 validSlots.Add(AmbientOcclusionSlotId);
-            }
-            if (MaterialTypeUsesSlotMask(SlotMask.Emission))
-            {
-                AddSlot(new ColorRGBMaterialSlot(EmissionSlotId, EmissionSlotName, EmissionSlotName, SlotType.Input, Color.black, ColorMode.HDR, ShaderStageCapability.Fragment));
-                validSlots.Add(EmissionSlotId);
             }
             if (MaterialTypeUsesSlotMask(SlotMask.Alpha))
             {
@@ -684,25 +525,6 @@ namespace UnityEditor.ShaderGraph
 
                 AddSlot(new Vector1MaterialSlot(SpecularAAThresholdSlotId, SpecularAAThresholdSlotName, SpecularAAThresholdSlotName, SlotType.Input, 0.0f, ShaderStageCapability.Fragment));
                 validSlots.Add(SpecularAAThresholdSlotId);
-            }
-            if (HasRefraction())
-            {
-                AddSlot(new Vector1MaterialSlot(RefractionIndexSlotId, RefractionIndexSlotName, RefractionIndexSlotName, SlotType.Input, 1.0f, ShaderStageCapability.Fragment));
-                validSlots.Add(RefractionIndexSlotId);
-
-                AddSlot(new ColorRGBMaterialSlot(RefractionColorSlotId, RefractionColorSlotName, RefractionColorSlotName, SlotType.Input, Color.white, ColorMode.Default, ShaderStageCapability.Fragment));
-                validSlots.Add(RefractionColorSlotId);
-
-                AddSlot(new Vector1MaterialSlot(RefractionDistanceSlotId, RefractionDistanceSlotName, RefractionDistanceSlotName, SlotType.Input, 0.0f, ShaderStageCapability.Fragment));
-                validSlots.Add(RefractionDistanceSlotId);
-            }
-            if (HasDistortion())
-            {
-                AddSlot(new Vector2MaterialSlot(DistortionSlotId, DistortionSlotName, DistortionSlotName, SlotType.Input, new Vector2(2.0f, -1.0f), ShaderStageCapability.Fragment));
-                validSlots.Add(DistortionSlotId);
-
-                AddSlot(new Vector1MaterialSlot(DistortionBlurSlotId, DistortionBlurSlotName, DistortionBlurSlotName, SlotType.Input, 1.0f, ShaderStageCapability.Fragment));
-                validSlots.Add(DistortionBlurSlotId);
             }
 
             RemoveSlotsNameNotMatching(validSlots, true);
@@ -763,23 +585,12 @@ namespace UnityEditor.ShaderGraph
 
         public bool RequiresSplitLighting()
         {
-            return materialType == HDHairMasterNode.MaterialType.SubsurfaceScattering;
+            // return materialType == HDHairMasterNode.MaterialType.SubsurfaceScattering;
+            return true;
         }
 
         public override void CollectShaderProperties(PropertyCollector collector, GenerationMode generationMode)
         {
-            // Trunk currently relies on checking material property "_EmissionColor" to allow emissive GI. If it doesn't find that property, or it is black, GI is forced off.
-            // ShaderGraph doesn't use this property, so currently it inserts a dummy color (white). This dummy color may be removed entirely once the following PR has been merged in trunk: Pull request #74105
-            // The user will then need to explicitly disable emissive GI if it is not needed.
-            // To be able to automatically disable emission based on the ShaderGraph config when emission is black,
-            // we will need a more general way to communicate this to the engine (not directly tied to a material property).
-            collector.AddShaderProperty(new ColorShaderProperty()
-            {
-                overrideReferenceName = "_EmissionColor",
-                hidden = true,
-                value = new Color(1.0f, 1.0f, 1.0f, 1.0f)
-            });
-
             base.CollectShaderProperties(collector, generationMode);
         }
     }

@@ -5,20 +5,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     public partial class Hair : RenderPipelineMaterial
     {
-        // Currently we have only one materialId (Standard GGX), so it is not store in the GBuffer and we don't test for it
-
-        // If change, be sure it match what is done in Hair.hlsl: MaterialFeatureFlagsFromGBuffer
-        // Material bit mask must match the size define LightDefinitions.s_MaterialFeatureMaskFlags value
         [GenerateHLSL(PackingRules.Exact)]
         public enum MaterialFeatureFlags
         {
-            LitStandard             = 1 << 0,   // For material classification we need to identify that we are indeed use as standard material, else we are consider as sky/background element
-            LitSpecularColor        = 1 << 1,   // LitSpecularColor is not use statically but only dynamically
-            LitSubsurfaceScattering = 1 << 2,
-            LitTransmission         = 1 << 3,
-            LitAnisotropy           = 1 << 4,
-            LitIridescence          = 1 << 5,
-            LitClearCoat            = 1 << 6
+            HairKajiyaKay               = 1 << 0,
+            HairSubsurfaceScattering    = 1 << 1,
+            HairTransmission            = 1 << 2
         };
 
         //-----------------------------------------------------------------------------
@@ -26,37 +18,29 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         //-----------------------------------------------------------------------------
 
         // Main structure that store the user data (i.e user input of master node in material graph)
-        [GenerateHLSL(PackingRules.Exact, false, true, 1000)]
+        [GenerateHLSL(PackingRules.Exact, false, true, 1400)]
         public struct SurfaceData
         {
             [SurfaceDataAttributes("MaterialFeatures")]
             public uint materialFeatures;
 
-            // Standard
-            [SurfaceDataAttributes("Base Color", false, true)]
-            public Vector3 baseColor;
-            [SurfaceDataAttributes("Specular Occlusion")]
-            public float specularOcclusion;
-
-            [SurfaceDataAttributes(new string[] {"Normal", "Normal View Space"}, true)]
-            public Vector3 normalWS;
-            [SurfaceDataAttributes("Smoothness")]
-            public float perceptualSmoothness;
-
             [SurfaceDataAttributes("Ambient Occlusion")]
             public float ambientOcclusion;
 
-            [SurfaceDataAttributes("Metallic")]
-            public float metallic;
+            [SurfaceDataAttributes("Specular Occlusion")]
+            public float specularOcclusion;
 
-            [SurfaceDataAttributes("Coat mask")]
-            public float coatMask;
+            [SurfaceDataAttributes("Diffuse Color", false, true)]
+            public Vector3 diffuseColor;
 
-            // MaterialFeature dependent attribute
+            [SurfaceDataAttributes(new string[] {"Normal", "Normal View Space"}, true)]
+            public Vector3 normalWS;
 
-            // Specular Color
-            [SurfaceDataAttributes("Specular Color", false, true)]
-            public Vector3 specularColor;
+            [SurfaceDataAttributes(new string[] { "Geometric Normal", "Geometric Normal View Space" }, true)]
+            public Vector3 geomNormalWS;
+
+            [SurfaceDataAttributes("Smoothness")]
+            public float perceptualSmoothness;
 
             // SSS
             [SurfaceDataAttributes("Diffusion Profile")]
@@ -72,55 +56,47 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Anisotropic
             [SurfaceDataAttributes("Tangent", true)]
             public Vector3 tangentWS;
-            [SurfaceDataAttributes("Anisotropy")]
-            public float anisotropy; // anisotropic ratio(0->no isotropic; 1->full anisotropy in tangent direction, -1->full anisotropy in bitangent direction)
 
-            // Iridescence
-            [SurfaceDataAttributes("Iridescence Layer Thickness")]
-            public float iridescenceThickness;
-            [SurfaceDataAttributes("Iridescence Mask")]
-            public float iridescenceMask;
+            // Kajiya kay
+            [SurfaceDataAttributes("Secondary Smoothness")]
+            public float secondaryPerceptualSmoothness;
 
-            // Forward property only
+            // Specular Color
+            [SurfaceDataAttributes("Specular Tint", false, true)]
+            public Vector3 specularTint;
 
-            // Transparency
-            // Reuse thickness from SSS
+            [SurfaceDataAttributes("Secondary Specular Tint", false, true)]
+            public Vector3 secondarySpecularTint;
 
-            [SurfaceDataAttributes("Index of refraction")]
-            public float ior;
-            [SurfaceDataAttributes("Transmittance Color")]
-            public Vector3 transmittanceColor;
-            [SurfaceDataAttributes("Transmittance Absorption Distance")]
-            public float atDistance;
-            [SurfaceDataAttributes("Transmittance mask")]
-            public float transmittanceMask;
+            [SurfaceDataAttributes("Specular Shift")]
+            public float specularShift;
+
+            [SurfaceDataAttributes("Secondary Specular Shift")]
+            public float secondarySpecularShift;
         };
 
         //-----------------------------------------------------------------------------
         // BSDFData
         //-----------------------------------------------------------------------------
 
-        [GenerateHLSL(PackingRules.Exact, false, true, 1050)]
+        [GenerateHLSL(PackingRules.Exact, false, true, 1450)]
         public struct BSDFData
         {
             public uint materialFeatures;
+
+            public float ambientOcclusion;
+            public float specularOcclusion;
 
             [SurfaceDataAttributes("", false, true)]
             public Vector3 diffuseColor;
             public Vector3 fresnel0;
 
-            public float ambientOcclusion; // Caution: This is accessible only if light layer is enabled, otherwise it is 1
-            public float specularOcclusion;
-
             [SurfaceDataAttributes(new string[] { "Normal WS", "Normal View Space" }, true)]
             public Vector3 normalWS;
+
+            public Vector3 geomNormalWS;
+
             public float perceptualRoughness;
-
-            public float coatMask;
-
-            // MaterialFeature dependent attribute
-
-            // SpecularColor fold into fresnel0
 
             // SSS
             public uint diffusionProfile;
@@ -137,24 +113,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Vector3 tangentWS;
             [SurfaceDataAttributes("", true)]
             public Vector3 bitangentWS;
-            public float roughnessT;
-            public float roughnessB;
-            public float anisotropy;
 
-            // Iridescence
-            public float iridescenceThickness;
-            public float iridescenceMask;
-
-            // ClearCoat
-            public float coatRoughness; // Automatically fill
-
-            // Forward property only
-
-            // Transparency
-            public float ior;
-            // Reuse thickness from SSS
-            public Vector3 absorptionCoefficient;
-            public float transmittanceMask;
+            // Kajiya kay
+            public float secondaryPerceptualSmoothness;
+            public Vector3 secondarySpecularTint;
+            public float specularExponent;
+            public float secondarySpecularExponent;
+            public float specularShift;
+            public float secondarySpecularShift;
         };
 
         //-----------------------------------------------------------------------------

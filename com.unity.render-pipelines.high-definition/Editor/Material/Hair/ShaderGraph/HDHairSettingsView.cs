@@ -44,17 +44,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (m_Node.surfaceType == SurfaceType.Transparent)
             {
                 ++indentLevel;
-                if (!m_Node.HasRefraction())
-                {
-                    ps.Add(new PropertyRow(CreateLabel("Blend Mode", indentLevel)), (row) =>
-                    {
-                        row.Add(new EnumField(HDHairMasterNode.AlphaModeLit.Additive), (field) =>
-                        {
-                            field.value = GetAlphaModeLit(m_Node.alphaMode);
-                            field.OnValueChanged(ChangeBlendMode);
-                        });
-                    });
-                }
 
                 ps.Add(new PropertyRow(CreateLabel("Blend Preserves Specular", indentLevel)), (row) =>
                 {
@@ -82,49 +71,6 @@ namespace UnityEditor.ShaderGraph.Drawing
                         toggle.OnToggleChanged(ChangeDrawBeforeRefraction);
                     });
                 });
-
-                if (!m_Node.drawBeforeRefraction.isOn)
-                {
-                    ps.Add(new PropertyRow(CreateLabel("Refraction Model", indentLevel)), (row) =>
-                    {
-                        row.Add(new EnumField(ScreenSpaceLighting.RefractionModel.None), (field) =>
-                        {
-                            field.value = m_Node.refractionModel;
-                            field.OnValueChanged(ChangeRefractionModel);
-                        });
-                    });
-                }
-
-                ps.Add(new PropertyRow(CreateLabel("Distortion", indentLevel)), (row) =>
-                {
-                    row.Add(new Toggle(), (toggle) =>
-                    {
-                        toggle.value = m_Node.distortion.isOn;
-                        toggle.OnToggleChanged(ChangeDistortion);
-                    });
-                });
-
-                if (m_Node.distortion.isOn)
-                {
-                    ++indentLevel;
-                    ps.Add(new PropertyRow(CreateLabel("Mode", indentLevel)), (row) =>
-                    {
-                        row.Add(new EnumField(DistortionMode.Add), (field) =>
-                        {
-                            field.value = m_Node.distortionMode;
-                            field.OnValueChanged(ChangeDistortionMode);
-                        });
-                    });
-                    ps.Add(new PropertyRow(CreateLabel("Depth Test", indentLevel)), (row) =>
-                    {
-                        row.Add(new Toggle(), (toggle) =>
-                        {
-                            toggle.value = m_Node.distortionDepthTest.isOn;
-                            toggle.OnToggleChanged(ChangeDistortionDepthTest);
-                        });
-                    });
-                    --indentLevel;
-                }
 
                 ps.Add(new PropertyRow(CreateLabel("Back Then Front Rendering", indentLevel)), (row) =>
                 {
@@ -190,38 +136,12 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             ps.Add(new PropertyRow(CreateLabel("Material Type", indentLevel)), (row) =>
             {
-                row.Add(new EnumField(HDHairMasterNode.MaterialType.Standard), (field) =>
+                row.Add(new EnumField(HDHairMasterNode.MaterialType.KajiyaKay), (field) =>
                 {
                     field.value = m_Node.materialType;
                     field.OnValueChanged(ChangeMaterialType);
                 });
             });
-
-            ++indentLevel;
-            if (m_Node.materialType == HDHairMasterNode.MaterialType.SubsurfaceScattering)
-            {
-                ps.Add(new PropertyRow(CreateLabel("Transmission", indentLevel)), (row) =>
-                {
-                    row.Add(new Toggle(), (toggle) =>
-                    {
-                        toggle.value = m_Node.sssTransmission.isOn;
-                        toggle.OnToggleChanged(ChangeSSSTransmission);
-                    });
-                });
-            }
-
-            if (m_Node.materialType == HDHairMasterNode.MaterialType.SpecularColor)
-            {
-                ps.Add(new PropertyRow(CreateLabel("Energy Conserving Specular", indentLevel)), (row) =>
-                {
-                    row.Add(new Toggle(), (toggle) =>
-                    {
-                        toggle.value = m_Node.energyConservingSpecular.isOn;
-                        toggle.OnToggleChanged(ChangeEnergyConservingSpecular);
-                    });
-                });
-            }
-            --indentLevel;
 
             ps.Add(new PropertyRow(CreateLabel("Receive Decals", indentLevel)), (row) =>
             {
@@ -322,40 +242,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             ToggleData td = m_Node.drawBeforeRefraction;
             td.isOn = evt.newValue;
             m_Node.drawBeforeRefraction = td;
-        }
-
-        void ChangeRefractionModel(ChangeEvent<Enum> evt)
-        {
-            if (Equals(m_Node.refractionModel, evt.newValue))
-                return;
-
-            m_Node.owner.owner.RegisterCompleteObjectUndo("Refraction Model Change");
-            m_Node.refractionModel = (ScreenSpaceLighting.RefractionModel)evt.newValue;
-        }
-
-        void ChangeDistortion(ChangeEvent<bool> evt)
-        {
-            m_Node.owner.owner.RegisterCompleteObjectUndo("Distortion Change");
-            ToggleData td = m_Node.distortion;
-            td.isOn = evt.newValue;
-            m_Node.distortion = td;
-        }
-
-        void ChangeDistortionMode(ChangeEvent<Enum> evt)
-        {
-            if (Equals(m_Node.distortionMode, evt.newValue))
-                return;
-
-            m_Node.owner.owner.RegisterCompleteObjectUndo("Distortion Mode Change");
-            m_Node.distortionMode = (DistortionMode)evt.newValue;
-        }
-
-        void ChangeDistortionDepthTest(ChangeEvent<bool> evt)
-        {
-            m_Node.owner.owner.RegisterCompleteObjectUndo("Distortion Depth Test Change");
-            ToggleData td = m_Node.distortionDepthTest;
-            td.isOn = evt.newValue;
-            m_Node.distortionDepthTest = td;
         }
 
         void ChangeBackThenFrontRendering(ChangeEvent<bool> evt)
