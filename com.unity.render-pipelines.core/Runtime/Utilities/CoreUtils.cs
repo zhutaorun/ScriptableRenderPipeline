@@ -166,7 +166,7 @@ namespace UnityEngine.Experimental.Rendering
 
         public static void SetRenderTarget(CommandBuffer cmd, RenderTargetIdentifier[] colorBuffers, RenderTargetIdentifier depthBuffer, ClearFlag clearFlag = ClearFlag.None)
         {
-            SetRenderTarget(cmd, colorBuffers, depthBuffer, clearFlag, clearColorAllBlack);
+            SetRenderTarget(cmd, colorBuffers, depthBuffer, clearFlag, clearColor: clearColorAllBlack);
         }
 
         public static void SetRenderTarget(CommandBuffer cmd, RenderTargetIdentifier[] colorBuffers, RenderTargetIdentifier depthBuffer, ClearFlag clearFlag, Color clearColor)

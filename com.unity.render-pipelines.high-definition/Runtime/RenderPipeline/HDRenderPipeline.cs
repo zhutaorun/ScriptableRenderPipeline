@@ -350,6 +350,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             RenderPipelineSettings settings = m_Asset.renderPipelineSettings;
 
+            VRTextureUsage vrUsage = XRGraphics.eyeTextureDesc.vrUsage;
+            int numSlices = XRGraphics.NumSlices;
+
             if (!settings.supportOnlyForward)
                 m_GbufferManager.CreateBuffers();
 
@@ -359,32 +362,32 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_SSSBufferManager.InitSSSBuffers(m_GbufferManager, m_Asset.renderPipelineSettings);
             m_SharedRTManager.InitSharedBuffers(m_GbufferManager, m_Asset.renderPipelineSettings, m_Asset.renderPipelineResources);
 
-            m_CameraColorBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: false, name: "CameraColor");
-            m_CameraSssDiffuseLightingBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, enableRandomWrite: true, name: "CameraSSSDiffuseLighting");
-            m_CameraColorBufferMipChain = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: true, autoGenerateMips: false, name: "CameraColorBufferMipChain");
+            m_CameraColorBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: false, name: "CameraColor", vrUsage : vrUsage, slices : numSlices);
+            m_CameraSssDiffuseLightingBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, enableRandomWrite: true, name: "CameraSSSDiffuseLighting", vrUsage: vrUsage, slices: numSlices);
+            m_CameraColorBufferMipChain = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: true, autoGenerateMips: false, name: "CameraColorBufferMipChain", vrUsage: vrUsage, slices: numSlices);
 
             if (settings.supportSSAO)
             {
-                m_AmbientOcclusionBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Bilinear, colorFormat: RenderTextureFormat.R8, sRGB: false, enableRandomWrite: true, name: "AmbientOcclusion");
+                m_AmbientOcclusionBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Bilinear, colorFormat: RenderTextureFormat.R8, sRGB: false, enableRandomWrite: true, name: "AmbientOcclusion", vrUsage: vrUsage, slices: numSlices);
             }
 
-            m_DistortionBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetDistortionBufferFormat(), sRGB: Builtin.GetDistortionBufferSRGBFlag(), name: "Distortion");
+            m_DistortionBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetDistortionBufferFormat(), sRGB: Builtin.GetDistortionBufferSRGBFlag(), name: "Distortion", vrUsage: vrUsage, slices: numSlices);
 
             // TODO: For MSAA, we'll need to add a Draw path in order to support MSAA properlye
             // Use RG16 as we only have one deferred directional and one screen space shadow light currently
-            m_ScreenSpaceShadowsBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.R16, sRGB: false, enableRandomWrite: true, name: "ScreenSpaceShadowsBuffer");
+            m_ScreenSpaceShadowsBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.R16, sRGB: false, enableRandomWrite: true, name: "ScreenSpaceShadowsBuffer", vrUsage: vrUsage, slices: numSlices);
 
             if (settings.supportSSR)
             {
-                // m_SsrDebugTexture    = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBFloat, sRGB: false, enableRandomWrite: true, name: "SSR_Debug_Texture");
-                m_SsrHitPointTexture = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RG32,      sRGB: false, enableRandomWrite: true, name: "SSR_Hit_Point_Texture");
-                m_SsrLightingTexture = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf,  sRGB: false, enableRandomWrite: true, name: "SSR_Lighting_Texture");
+                // m_SsrDebugTexture    = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBFloat, sRGB: false, enableRandomWrite: true, name: "SSR_Debug_Texture", vrUsage : vrUsage, slices : numSlices);
+                m_SsrHitPointTexture = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RG32,      sRGB: false, enableRandomWrite: true, name: "SSR_Hit_Point_Texture", vrUsage: vrUsage, slices: numSlices);
+                m_SsrLightingTexture = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf,  sRGB: false, enableRandomWrite: true, name: "SSR_Lighting_Texture", vrUsage: vrUsage, slices: numSlices);
             }
 
             if (Debug.isDebugBuild)
             {
-                m_DebugColorPickerBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, name: "DebugColorPicker");
-                m_DebugFullScreenTempBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, name: "DebugFullScreen");
+                m_DebugColorPickerBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, name: "DebugColorPicker", vrUsage: vrUsage, slices: numSlices);
+                m_DebugFullScreenTempBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, name: "DebugFullScreen", vrUsage: vrUsage, slices: numSlices);
             }
 
             // Let's create the MSAA textures
@@ -393,10 +396,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // MSAA versions of classic texture
                 if (m_Asset.renderPipelineSettings.supportSSAO)
                 {
-                    m_MultiAmbientOcclusionBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Bilinear, colorFormat: RenderTextureFormat.RG16, sRGB: false, enableRandomWrite: true, name: "AmbientOcclusionMSAA");
+                    m_MultiAmbientOcclusionBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Bilinear, colorFormat: RenderTextureFormat.RG16, sRGB: false, enableRandomWrite: true, name: "AmbientOcclusionMSAA", vrUsage: vrUsage, slices: numSlices);
                 }
-                m_CameraColorMSAABuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, bindTextureMS: true, enableMSAA: true, name: "CameraColorMSAA");
-                m_CameraSssDiffuseLightingMSAABuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, bindTextureMS: true, enableMSAA: true, name: "CameraSSSDiffuseLightingMSAA");
+                m_CameraColorMSAABuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, bindTextureMS: true, enableMSAA: true, name: "CameraColorMSAA", vrUsage: vrUsage, slices: numSlices);
+                m_CameraSssDiffuseLightingMSAABuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, bindTextureMS: true, enableMSAA: true, name: "CameraSSSDiffuseLightingMSAA", vrUsage: vrUsage, slices: numSlices);
             }
         }
 
@@ -1115,7 +1118,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             m_DecalNormalBufferMaterial.SetInt(HDShaderIDs._DecalNormalBufferStencilReadMask, stencilMask);
                             m_DecalNormalBufferMaterial.SetInt(HDShaderIDs._DecalNormalBufferStencilRef, stencilRef);
 
-                            HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer());
+                            HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer(), depthSlice: XRGraphics.DepthSlice);
                             cmd.SetRandomWriteTarget(1, m_SharedRTManager.GetNormalBuffer());
                             cmd.DrawProcedural(Matrix4x4.identity, m_DecalNormalBufferMaterial, 0, MeshTopology.Triangles, 3, 1);
                             cmd.ClearRandomWriteTargets();
@@ -1163,9 +1166,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             // For material classification we use compute shader and so can't read into the stencil, so prepare it.
                             using (new ProfilingSample(cmd, "Clear and copy stencil texture", CustomSamplerId.ClearAndCopyStencilTexture.GetSampler()))
                             {
-                                HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetStencilBufferCopy(), ClearFlag.Color, CoreUtils.clearColorAllBlack);
+                                HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetStencilBufferCopy(), ClearFlag.Color, CoreUtils.clearColorAllBlack, depthSlice: XRGraphics.DepthSlice);
 
-                                HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer());
+                                HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer(), depthSlice: XRGraphics.DepthSlice);
                                 cmd.SetRandomWriteTarget(1, m_SharedRTManager.GetStencilBufferCopy());
 
                                 m_CopyStencil.SetInt(HDShaderIDs._StencilRef, (int)StencilLightingUsage.NoLighting);
@@ -1180,7 +1183,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             {
                                 using (new ProfilingSample(cmd, "Update stencil copy for SSR Exclusion", CustomSamplerId.UpdateStencilCopyForSSRExclusion.GetSampler()))
                                 {
-                                    HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer());
+                                    HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer(), depthSlice: XRGraphics.DepthSlice);
                                     cmd.SetRandomWriteTarget(1, m_SharedRTManager.GetStencilBufferCopy());
 
                                     m_CopyStencil.SetInt(HDShaderIDs._StencilRef, (int)StencilBitMask.DoesntReceiveSSR);
@@ -1233,7 +1236,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             // When debug is enabled we need to clear otherwise we may see non-shadows areas with stale values.
                             if (m_CurrentDebugDisplaySettings.fullScreenDebugMode == FullScreenDebugMode.ContactShadows)
                             {
-                                HDUtils.SetRenderTarget(cmd, hdCamera, m_ScreenSpaceShadowsBuffer, ClearFlag.Color, CoreUtils.clearColorAllBlack);
+                                HDUtils.SetRenderTarget(cmd, hdCamera, m_ScreenSpaceShadowsBuffer, ClearFlag.Color, CoreUtils.clearColorAllBlack, depthSlice: XRGraphics.DepthSlice);
                             }
 
                             HDUtils.CheckRTCreated(m_ScreenSpaceShadowsBuffer);

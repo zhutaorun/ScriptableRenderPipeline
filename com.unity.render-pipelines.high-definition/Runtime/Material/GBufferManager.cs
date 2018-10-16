@@ -46,9 +46,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             bool[] enableWrite;
             m_DeferredMaterial.GetMaterialGBufferDescription(m_asset, out rtFormat, out sRGBFlags, out m_GBufferUsage, out enableWrite);
 
+            VRTextureUsage vrUsage = XRGraphics.eyeTextureDesc.vrUsage;
+            int numSlices = XRGraphics.NumSlices;
+
             for (int gbufferIndex = 0; gbufferIndex < m_BufferCount; ++gbufferIndex)
             {
-                m_RTs[gbufferIndex] = RTHandles.Alloc(Vector2.one, colorFormat: rtFormat[gbufferIndex], sRGB: sRGBFlags[gbufferIndex], filterMode: FilterMode.Point, name: string.Format("GBuffer{0}", gbufferIndex), enableRandomWrite: enableWrite[gbufferIndex]); 
+                m_RTs[gbufferIndex] = RTHandles.Alloc(Vector2.one, colorFormat: rtFormat[gbufferIndex], sRGB: sRGBFlags[gbufferIndex], filterMode: FilterMode.Point, name: string.Format("GBuffer{0}", gbufferIndex), enableRandomWrite: enableWrite[gbufferIndex], vrUsage: vrUsage, slices : numSlices); 
                 m_RTIDs[gbufferIndex] = m_RTs[gbufferIndex].nameID;
                 m_TextureShaderIDs[gbufferIndex] = HDShaderIDs._GBufferTexture[gbufferIndex];
 

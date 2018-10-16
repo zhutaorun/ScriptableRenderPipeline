@@ -159,6 +159,30 @@ namespace UnityEngine.Experimental.Rendering
                 return XRSettings.eyeTextureHeight;
             }
         }
+        public static int NumSlices
+        {
+            get
+            {
+                if (!enabled) // Need to check that XR is enabled before anything else
+                    return 1;
+                if ((stereoRenderingMode == StereoRenderingMode.SinglePassInstanced) || (stereoRenderingMode == StereoRenderingMode.SinglePassMultiView))
+                    return 2; // TODO VR: Generalize this for numEyes > 2 when StarVR support lands
+                else
+                    return 1;
+            }
+        }
 
+        public static int DepthSlice
+        {
+            get
+            {
+                if (!enabled)
+                    return 0;
+                if ((stereoRenderingMode == StereoRenderingMode.SinglePassInstanced) || (stereoRenderingMode == StereoRenderingMode.SinglePassMultiView))
+                    return -1;
+                else
+                    return 0;
+            }
+        }
     }
 }
