@@ -16,7 +16,6 @@ namespace UnityEngine.Experimental.Rendering
 
         public enum StereoRenderingMode
         {
-            None,
             MultiPass,
             SinglePassDoubleWide,
             SinglePassInstanced,
@@ -99,7 +98,7 @@ namespace UnityEngine.Experimental.Rendering
             get
             {
                 if (!enabled)
-                    return StereoRenderingMode.None;
+                    return StereoRenderingMode.SinglePassDoubleWide;
 #if UNITY_2018_3_OR_NEWER
                 XRSettings.StereoRenderingMode stereoRenderMode = XRSettings.stereoRenderingMode;
                 switch (stereoRenderMode)
@@ -113,11 +112,11 @@ namespace UnityEngine.Experimental.Rendering
                     case XRSettings.StereoRenderingMode.SinglePassMultiview:
                         return StereoRenderingMode.SinglePassMultiView;
                     default:
-                        return StereoRenderingMode.None;
+                        return StereoRenderingMode.SinglePassDoubleWide;
                 }
 #else // Reverse engineer it
                 if (!enabled)
-                    return StereoRenderingMode.None;
+                    return StereoRenderingMode.SinglePassMultiView;
                 if (eyeTextureDesc.vrUsage == VRTextureUsage.TwoEyes)
                 {
                     if (eyeTextureDesc.dimension == UnityEngine.Rendering.TextureDimension.Tex2DArray)
@@ -173,5 +172,6 @@ namespace UnityEngine.Experimental.Rendering
                 return XRSettings.eyeTextureHeight;
             }
         }
+
     }
 }
