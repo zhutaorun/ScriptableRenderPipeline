@@ -29,14 +29,8 @@ float4 Frag(PackedVaryingsToPS packedInput) : SV_Target
     FragInputs input = UnpackVaryingsMeshToFragInputs(packedInput.vmesh);
 
     // input.positionSS is SV_Position
-    PositionInputs posInput = GetPositionInput(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionRWS);
-
-#ifdef VARYINGS_NEED_POSITION_WS
+    PositionInputs posInput = GetPositionInput(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, UNITY_MATRIX_I_VP);
     float3 V = GetWorldSpaceNormalizeViewDir(input.positionRWS);
-#else
-    // Unused
-    float3 V = float3(1.0, 1.0, 1.0); // Avoid the division by 0
-#endif
 
     SurfaceData surfaceData;
     BuiltinData builtinData;

@@ -834,32 +834,30 @@ PositionInputs GetPositionInput(float2 positionSS, float2 invScreenSize)
 
 // From forward
 // deviceDepth and linearDepth come directly from .zw of SV_Position
-PositionInputs GetPositionInput_Stereo(float2 positionSS, float2 invScreenSize, float deviceDepth, float linearDepth, float3 positionWS, uint2 tileCoord, uint eye)
+PositionInputs GetPositionInput_Stereo(float2 positionSS, float2 invScreenSize, float deviceDepth, float linearDepth, float4x4 invViewProjMatrix, uint2 tileCoord, uint eye)
 {
     PositionInputs posInput = GetPositionInput_Stereo(positionSS, invScreenSize, tileCoord, eye);
-    posInput.positionWS = positionWS;
+    posInput.positionWS = ComputeWorldSpacePosition(posInput.positionNDC, deviceDepth, invViewProjMatrix);
     posInput.deviceDepth = deviceDepth;
     posInput.linearDepth = linearDepth;
 
     return posInput;
 }
 
-PositionInputs GetPositionInput(float2 positionSS, float2 invScreenSize, float deviceDepth, float linearDepth, float3 positionWS, uint2 tileCoord)
+PositionInputs GetPositionInput(float2 positionSS, float2 invScreenSize, float deviceDepth, float linearDepth, float4x4 invViewProjMatrix, uint2 tileCoord)
 {
-    return GetPositionInput_Stereo(positionSS, invScreenSize, deviceDepth, linearDepth, positionWS, tileCoord, 0);
+    return GetPositionInput_Stereo(positionSS, invScreenSize, deviceDepth, linearDepth, invViewProjMatrix, tileCoord, 0);
 }
 
-PositionInputs GetPositionInput(float2 positionSS, float2 invScreenSize, float deviceDepth, float linearDepth, float3 positionWS)
+PositionInputs GetPositionInput(float2 positionSS, float2 invScreenSize, float deviceDepth, float linearDepth, float4x4 invViewProjMatrix)
 {
-    return GetPositionInput(positionSS, invScreenSize, deviceDepth, linearDepth, positionWS, uint2(0, 0));
+    return GetPositionInput(positionSS, invScreenSize, deviceDepth, linearDepth, invViewProjMatrix, uint2(0, 0));
 }
 
 // From deferred or compute shader
 // depth must be the depth from the raw depth buffer. This allow to handle all kind of depth automatically with the inverse view projection matrix.
 // For information. In Unity Depth is always in range 0..1 (even on OpenGL) but can be reversed.
-PositionInputs GetPositionInput_Stereo(float2 positionSS, float2 invScreenSize, float deviceDepth,
-    float4x4 invViewProjMatrix, float4x4 viewMatrix,
-    uint2 tileCoord, uint eye)
+PositionInputs GetPositionInput_Stereo(float2 positionSS, float2 invScreenSize, float deviceDepth, float4x4 invViewProjMatrix, float4x4 viewMatrix, uint2 tileCoord, uint eye)
 {
     PositionInputs posInput = GetPositionInput_Stereo(positionSS, invScreenSize, tileCoord, eye);
     posInput.positionWS = ComputeWorldSpacePosition(posInput.positionNDC, deviceDepth, invViewProjMatrix);
