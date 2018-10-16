@@ -12,9 +12,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         const int k_AnimBoolFields = 2;
         static readonly int k_ShapeCount = Enum.GetValues(typeof(InfluenceShape)).Length;
 
-        public Gizmo6FacesBox boxBaseHandle;
-        public Gizmo6FacesBoxContained boxInfluenceHandle;
-        public Gizmo6FacesBoxContained boxInfluenceNormalHandle;
+        public HierarchicalBox boxBaseHandle;
+        public HierarchicalBox boxInfluenceHandle;
+        public HierarchicalBox boxInfluenceNormalHandle;
 
         public SphereBoundsHandle sphereBaseHandle = new SphereBoundsHandle();
         public SphereBoundsHandle sphereInfluenceHandle = new SphereBoundsHandle();
@@ -28,29 +28,27 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             isSectionExpandedShape.value = true;
 
-            boxBaseHandle = new Gizmo6FacesBox(monochromeFace:true, monochromeSelectedFace:true);
-            boxInfluenceHandle = new Gizmo6FacesBoxContained(boxBaseHandle, monochromeFace:true, monochromeSelectedFace:true);
-            boxInfluenceNormalHandle = new Gizmo6FacesBoxContained(boxBaseHandle, monochromeFace:true, monochromeSelectedFace:true);
-
             Color[] handleColors = new Color[]
             {
-                HDReflectionProbeEditor.k_handlesColor[0][0],
-                HDReflectionProbeEditor.k_handlesColor[0][1],
-                HDReflectionProbeEditor.k_handlesColor[0][2],
-                HDReflectionProbeEditor.k_handlesColor[1][0],
-                HDReflectionProbeEditor.k_handlesColor[1][1],
-                HDReflectionProbeEditor.k_handlesColor[1][2]
+                InfluenceVolumeUI.k_HandlesColor[0][0],
+                InfluenceVolumeUI.k_HandlesColor[0][1],
+                InfluenceVolumeUI.k_HandlesColor[0][2],
+                InfluenceVolumeUI.k_HandlesColor[1][0],
+                InfluenceVolumeUI.k_HandlesColor[1][1],
+                InfluenceVolumeUI.k_HandlesColor[1][2]
             };
-            boxBaseHandle.handleColors = handleColors;
-            boxInfluenceHandle.handleColors = handleColors;
-            boxInfluenceNormalHandle.handleColors = handleColors;
 
-            boxBaseHandle.faceColors = new Color[] { HDReflectionProbeEditor.k_GizmoThemeColorExtent };
-            boxBaseHandle.faceColorsSelected = new Color[] { HDReflectionProbeEditor.k_GizmoThemeColorExtentFace };
-            boxInfluenceHandle.faceColors = new Color[] { HDReflectionProbeEditor.k_GizmoThemeColorInfluenceBlend };
-            boxInfluenceHandle.faceColorsSelected = new Color[] { HDReflectionProbeEditor.k_GizmoThemeColorInfluenceBlendFace };
-            boxInfluenceNormalHandle.faceColors = new Color[] { HDReflectionProbeEditor.k_GizmoThemeColorInfluenceNormalBlend };
-            boxInfluenceNormalHandle.faceColorsSelected = new Color[] { HDReflectionProbeEditor.k_GizmoThemeColorInfluenceNormalBlendFace };
+            Color baseHandle = InfluenceVolumeUI.k_GizmoThemeColorBase;
+            baseHandle.a = 1f;
+            Color[] basehandleColors = new Color[]
+            {
+                baseHandle, baseHandle, baseHandle,
+                baseHandle, baseHandle, baseHandle
+            };
+            boxBaseHandle = new HierarchicalBox(InfluenceVolumeUI.k_GizmoThemeColorBase, basehandleColors);
+            boxBaseHandle.monoHandle = false;
+            boxInfluenceHandle = new HierarchicalBox(InfluenceVolumeUI.k_GizmoThemeColorInfluence, handleColors, container: boxBaseHandle);
+            boxInfluenceNormalHandle = new HierarchicalBox(InfluenceVolumeUI.k_GizmoThemeColorInfluenceNormal, handleColors, container: boxBaseHandle);
         }
 
         public void SetIsSectionExpanded_Shape(InfluenceShape shape)
