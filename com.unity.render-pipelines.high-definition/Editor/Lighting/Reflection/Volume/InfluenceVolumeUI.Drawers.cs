@@ -71,7 +71,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 bool advanced = d.editorAdvancedModeEnabled.boolValue;
                 advanced = !GUILayout.Toggle(!advanced, normalModeContent, EditorStyles.miniButtonLeft, GUILayout.Width(60f), GUILayout.ExpandWidth(false));
                 advanced = GUILayout.Toggle(advanced, advancedModeContent, EditorStyles.miniButtonRight, GUILayout.Width(60f), GUILayout.ExpandWidth(false));
-                s.boxInfluenceHandle.allHandleControledByOne = s.boxInfluenceNormalHandle.allHandleControledByOne = !advanced;
                 if (d.editorAdvancedModeEnabled.boolValue ^ advanced)
                 {
                     d.editorAdvancedModeEnabled.boolValue = advanced;
@@ -179,7 +178,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 EditorGUILayout.BeginHorizontal();
                 EditorGUI.BeginChangeCheck();
-                CoreEditorUtils.DrawVector6(faceFadeContent, d.editorAdvancedModeFaceFadePositive, d.editorAdvancedModeFaceFadeNegative, Vector3.zero, Vector3.one, HDReflectionProbeEditor.k_handlesColor);
+                CoreEditorUtils.DrawVector6(faceFadeContent, d.editorAdvancedModeFaceFadePositive, d.editorAdvancedModeFaceFadeNegative, Vector3.zero, Vector3.one, InfluenceVolumeUI.k_HandlesColor);
                 if (EditorGUI.EndChangeCheck())
                 {
                     d.boxSideFadePositive.vector3Value = d.editorAdvancedModeFaceFadePositive.vector3Value;
@@ -211,7 +210,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 blendDistanceNegative.vector3Value = editorAdvancedModeBlendDistanceNegative.vector3Value;
                 CoreEditorUtils.DrawVector6(
                     content,
-                    blendDistancePositive, blendDistanceNegative, Vector3.zero, maxBlendDistance, HDReflectionProbeEditor.k_handlesColor);
+                    blendDistancePositive, blendDistanceNegative, Vector3.zero, maxBlendDistance, InfluenceVolumeUI.k_HandlesColor);
                 if(EditorGUI.EndChangeCheck())
                 {
                     editorAdvancedModeBlendDistancePositive.vector3Value = blendDistancePositive.vector3Value;
