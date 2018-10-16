@@ -212,9 +212,6 @@ real3 TransmittanceColorAtDistanceToAbsorption(real3 transmittanceColor, real at
     return -log(transmittanceColor + FLT_EPS) / max(atDistance, FLT_EPS);
 }
 
-// TODO: it would be good to improve the perf and numerical stability
-// of approximations below by finding a polynomial approximation.
-
 // input = {radiance, opacity}
 // Note that opacity must be less than 1 (not fully opaque).
 real4 LinearizeRGBA(real4 value)
@@ -224,8 +221,7 @@ real4 LinearizeRGBA(real4 value)
     // We drop redundant negations.
     real a = value.a;
     real d = -log(1 - a);
-    real r = (a >= FLT_EPS) ? (d * rcp(a)) : 1; // Prevent numerical explosion
-    return real4(r * value.rgb, d);
+    return real4((d * rcp(a)) * value.rgb, d);
 }
 
 // input = {radiance, optical_depth}
@@ -237,8 +233,7 @@ real4 LinearizeRGBD(real4 value)
     // We drop redundant negations.
     real d = value.a;
     real a = 1 - exp(-d);
-    real r = (a >= FLT_EPS) ? (d * rcp(a)) : 1; // Prevent numerical explosion
-    return real4(r * value.rgb, d);
+    return real4((d * rcp(a)) * value.rgb, d);
 }
 
 // output = {radiance, opacity}
@@ -250,8 +245,7 @@ real4 DelinearizeRGBA(real4 value)
     // We drop redundant negations.
     real d = value.a;
     real a = 1 - exp(-d);
-    real i = (a >= FLT_EPS) ? (a * rcp(d)) : 1; // Prevent numerical explosion
-    return real4(i * value.rgb, a);
+    return real4((a * rcp(d)) * value.rgb, a);
 }
 
 // input = {radiance, optical_depth}
@@ -263,8 +257,7 @@ real4 DelinearizeRGBD(real4 value)
     // We drop redundant negations.
     real d = value.a;
     real a = 1 - exp(-d);
-    real i = (a >= FLT_EPS) ? (a * rcp(d)) : 1; // Prevent numerical explosion
-    return real4(i * value.rgb, d);
+    return real4((a * rcp(d)) * value.rgb, d);
 }
 
 #endif // UNITY_VOLUME_RENDERING_INCLUDED
