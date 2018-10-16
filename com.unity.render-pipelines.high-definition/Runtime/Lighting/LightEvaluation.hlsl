@@ -59,11 +59,11 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
 
     // Height fog attenuation.
     {
-        float cosZenithAngle = L.z;
+        float cosZenithAngle = L.y;
         float fragmentHeight = posInput.positionWS.y;
         attenuation *= Transmittance(OpticalDepthHeightFog(_HeightFogBaseExtinction, _HeightFogBaseHeight,
-                                                           _HeightFogExponent, cosZenithAngle,
-                                                           fragmentHeight, FLT_INF));
+                                                           _HeightFogExponents, cosZenithAngle,
+                                                           fragmentHeight));
     }
 
     if (light.cookieIndex >= 0)
@@ -223,11 +223,11 @@ void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs po
 
     // Height fog attenuation.
     {
-        float cosZenithAngle = L.z;
+        float cosZenithAngle = L.y;
         float distToLight    = (light.lightType == GPULIGHTTYPE_PROJECTOR_BOX) ? distances.w : distances.x;
         float fragmentHeight = posInput.positionWS.y;
         attenuation *= Transmittance(OpticalDepthHeightFog(_HeightFogBaseExtinction, _HeightFogBaseHeight,
-                                                           _HeightFogExponent, cosZenithAngle,
+                                                           _HeightFogExponents, cosZenithAngle,
                                                            fragmentHeight, distToLight));
     }
 

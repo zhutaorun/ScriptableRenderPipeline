@@ -50,35 +50,45 @@ real3 TransmittanceIntegralHomogeneousMedium(real3 extinction, real intervalLeng
 }
 
 // Can be used to scale base extinction and scattering coefficients.
-real ComputeHeightFogMultiplier(real height, real baseHeight, real heightExponent)
+real ComputeHeightFogMultiplier(real height, real baseHeight, real2 heightExponents)
 {
     height = max(0, height - baseHeight);
 
-    return exp(-heightExponent * height);
+    return exp(-heightExponents.x * height);
 }
 
 // Optical depth between two endpoints.
-real OpticalDepthHeightFog(real baseExtinction, real baseHeight, real heightExponent,
+real OpticalDepthHeightFog(real baseExtinction, real baseHeight, real2 heightExponents,
                            real cosZenith, real startHeight, real intervalLength)
 {
     // Height fog is composed of two slices:
     // - constant fog below 'baseHeight'   : d = k * t
     // - exponential fog above 'baseHeight': d = Integrate[k * e^(-a * (h_0 + z * x)) dx, {x, 0, t}]
 
-    cosZenith = max(abs(cosZenith), FLT_EPS);
+    real rcpAbsCos = rcp(max(abs(cosZenith), FLT_EPS));
 
-    real constantHeightRange = max(0, baseHeight - startHeight);
-    real constantFogDistance = min(intervalLength, constantHeightRange * rcp(cosZenith));
-    real heightFogDistance   = intervalLength - constantFogDistance;
+    real endHeight = startHeight + intervalLength * cosZenith;
+    real minHeight = min(startHeight, endHeight);
+    real maxHeight = max(startHeight, endHeight);
 
-    startHeight = max(0, startHeight - baseHeight);
+    real constantFogDistance = clamp((baseHeight - minHeight) * rcpAbsCos, 0, intervalLength);
 
-    real denom = heightExponent * cosZenith;
-    real numer = 1 - exp(-denom * heightFogDistance);
+    minHeight = max(0, minHeight - baseHeight);
+    maxHeight = max(0, maxHeight - baseHeight);
 
-    real heightFogFactor = exp(-heightExponent * startHeight) * numer * rcp(denom);
+    real heightFogFactor  = abs(exp(-heightExponents.x * maxHeight) - exp(-heightExponents.x * minHeight));
+         heightFogFactor *= rcpAbsCos * heightExponents.y;
 
     return baseExtinction * (constantFogDistance + heightFogFactor);
+}
+
+// This version of the function assumes the interval of infinite length.
+real OpticalDepthHeightFog(real baseExtinction, real baseHeight, real2 heightExponents,
+                           real cosZenith, real startHeight)
+{
+    // TODO: optimize.
+    return OpticalDepthHeightFog(baseExtinction, baseHeight, heightExponents,
+                                 cosZenith, startHeight, rcp(FLT_EPS));
 }
 
 real IsotropicPhaseFunction()

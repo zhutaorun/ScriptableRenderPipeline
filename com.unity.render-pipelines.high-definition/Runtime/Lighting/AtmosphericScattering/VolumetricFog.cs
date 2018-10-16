@@ -33,8 +33,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 crBaseHeight -= hdCamera.camera.transform.position.y;
             }
 
+            cmd.SetGlobalVector(HDShaderIDs._HeightFogExponents, new Vector2(heightExponent, 1.0f / heightExponent));
             cmd.SetGlobalFloat(HDShaderIDs._HeightFogBaseHeight, crBaseHeight);
-            cmd.SetGlobalFloat(HDShaderIDs._HeightFogExponent,   heightExponent);
             cmd.SetGlobalFloat(HDShaderIDs._GlobalFogAnisotropy, anisotropy);
         }
     }

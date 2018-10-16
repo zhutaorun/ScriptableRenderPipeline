@@ -269,10 +269,9 @@ CBUFFER_START(UnityGlobal)
     float3 _HeightFogBaseScattering;
     float  _HeightFogBaseExtinction;
 
+    float2 _HeightFogExponents;         // {a, 1/a}
     float  _HeightFogBaseHeight;
-    float  _HeightFogExponent;
     float  _GlobalFogAnisotropy;
-    float  _Padding;
 
     float4 _VBufferResolution;          // { w, h, 1/w, 1/h }
     float4 _VBufferSliceCount;          // { count, 1/count, 0, 0 }

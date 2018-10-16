@@ -405,7 +405,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _HeightFogBaseExtinction        = Shader.PropertyToID("_HeightFogBaseExtinction");
         public static readonly int _HeightFogBaseScattering        = Shader.PropertyToID("_HeightFogBaseScattering");
         public static readonly int _HeightFogBaseHeight            = Shader.PropertyToID("_HeightFogBaseHeight");
-        public static readonly int _HeightFogExponent              = Shader.PropertyToID("_HeightFogExponent");
+        public static readonly int _HeightFogExponents             = Shader.PropertyToID("_HeightFogExponents");
         public static readonly int _GlobalFogAnisotropy            = Shader.PropertyToID("_GlobalFogAnisotropy");
         public static readonly int _CornetteShanksConstant         = Shader.PropertyToID("_CornetteShanksConstant");
         public static readonly int _VBufferResolution              = Shader.PropertyToID("_VBufferResolution");
