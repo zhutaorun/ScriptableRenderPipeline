@@ -7,23 +7,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     partial class InfluenceVolumeUI
     {
  
-        static readonly Color k_GizmoThemeColorBase = new Color(255 / 255f, 229 / 255f, 148 / 255f, 8 / 255f);
-        static readonly Color k_GizmoThemeColorInfluence = new Color(83 / 255f, 255 / 255f, 95 / 255f, 8 / 255f);
-        static readonly Color k_GizmoThemeColorInfluenceNormal = new Color(0 / 255f, 229 / 255f, 255 / 255f, 8 / 255f);
-        internal static readonly Color[][] k_HandlesColor = new Color[][]
+        static readonly Color k_GizmoThemeColorBase = new Color(230 / 255f, 229 / 255f, 148 / 255f, 8 / 255f).gamma;
+        static readonly Color k_GizmoThemeColorInfluence = new Color(83 / 255f, 255 / 255f, 95 / 255f, 8 / 255f).gamma;
+        static readonly Color k_GizmoThemeColorInfluenceNormal = new Color(128 / 255f, 128 / 255f, 255 / 255f, 8 / 255f).gamma;
+        internal static readonly Color[] k_HandlesColor = new Color[]
         {
-            new Color[]
-            {
-                Color.red,
-                Color.green,
-                Color.blue
-            },
-            new Color[]
-            {
-                new Color(.5f, 0f, 0f, 1f),
-                new Color(0f, .5f, 0f, 1f),
-                new Color(0f, 0f, .5f, 1f)
-            }
+            Color.red,
+            Color.green,
+            Color.blue,
+            new Color(.5f, 0f, 0f, 1f),
+            new Color(0f, .5f, 0f, 1f),
+            new Color(0f, 0f, .5f, 1f)
         };
 
         static readonly GUIContent shapeContent = CoreEditorUtils.GetContent("Shape");

@@ -29,16 +29,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             isSectionExpandedShape.value = true;
 
-            Color[] handleColors = new Color[]
-            {
-                InfluenceVolumeUI.k_HandlesColor[0][0],
-                InfluenceVolumeUI.k_HandlesColor[0][1],
-                InfluenceVolumeUI.k_HandlesColor[0][2],
-                InfluenceVolumeUI.k_HandlesColor[1][0],
-                InfluenceVolumeUI.k_HandlesColor[1][1],
-                InfluenceVolumeUI.k_HandlesColor[1][2]
-            };
-
             Color baseHandle = InfluenceVolumeUI.k_GizmoThemeColorBase;
             baseHandle.a = 1f;
             Color[] basehandleColors = new Color[]
@@ -48,8 +38,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             };
             boxBaseHandle = new HierarchicalBox(InfluenceVolumeUI.k_GizmoThemeColorBase, basehandleColors);
             boxBaseHandle.monoHandle = false;
-            boxInfluenceHandle = new HierarchicalBox(InfluenceVolumeUI.k_GizmoThemeColorInfluence, handleColors, container: boxBaseHandle);
-            boxInfluenceNormalHandle = new HierarchicalBox(InfluenceVolumeUI.k_GizmoThemeColorInfluenceNormal, handleColors, container: boxBaseHandle);
+            boxInfluenceHandle = new HierarchicalBox(InfluenceVolumeUI.k_GizmoThemeColorInfluence, k_HandlesColor, container: boxBaseHandle);
+            boxInfluenceNormalHandle = new HierarchicalBox(InfluenceVolumeUI.k_GizmoThemeColorInfluenceNormal, k_HandlesColor, container: boxBaseHandle);
 
             sphereBaseHandle = new HierarchicalSphere(InfluenceVolumeUI.k_GizmoThemeColorBase);
             sphereInfluenceHandle = new HierarchicalSphere(InfluenceVolumeUI.k_GizmoThemeColorInfluence, container: sphereBaseHandle);
