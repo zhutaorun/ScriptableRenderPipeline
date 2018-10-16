@@ -99,16 +99,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 Undo.RecordObject(sourceAsset, "Modified Base Volume AABB");
 
                 d.offset.vector3Value = box.center;
-                var size = box.size;
                 
                 Vector3 blendPositive = d.boxBlendDistancePositive.vector3Value;
                 Vector3 blendNegative = d.boxBlendDistanceNegative.vector3Value;
                 Vector3 blendNormalPositive = d.boxBlendNormalDistancePositive.vector3Value;
                 Vector3 blendNormalNegative = d.boxBlendNormalDistanceNegative.vector3Value;
-                for (int i = 0; i < 3; ++i)
-                {
-                    size[i] = Mathf.Max(0f, size[i]);
-                }
+                Vector3 size = box.size;
                 d.boxSize.vector3Value = size;
                 Vector3 halfSize = size * .5f;
                 for (int i = 0; i < 3; ++i)
@@ -160,24 +156,22 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             box.size = d.boxSize.vector3Value - positive.vector3Value - negative.vector3Value;
             box.monoHandle = !d.editorAdvancedModeEnabled.boolValue;
 
+            //set up parent box too for clamping
+            s.boxBaseHandle.center = d.offset.vector3Value;
+            s.boxBaseHandle.size = d.boxSize.vector3Value;
+
             EditorGUI.BeginChangeCheck();
             box.DrawHandle();
             if (EditorGUI.EndChangeCheck())
             {
                 Undo.RecordObject(sourceAsset, "Modified Influence Volume");
-
-                var influenceCenter = d.offset.vector3Value;
+                
                 var halfInfluenceSize = d.boxSize.vector3Value * .5f;
+                var blendDistancePositive = d.offset.vector3Value - box.center - box.size * .5f + halfInfluenceSize;
+                var blendDistanceNegative = box.center - d.offset.vector3Value - box.size * .5f + halfInfluenceSize;
 
-                var centerDiff = box.center - influenceCenter;
-                var halfSizeDiff = halfInfluenceSize - box.size * .5f;
-                var positiveNew = halfSizeDiff - centerDiff;
-                var negativeNew = halfSizeDiff + centerDiff;
-                var blendDistancePositive = Vector3.Max(Vector3.zero, Vector3.Min(positiveNew, halfInfluenceSize));
-                var blendDistanceNegative = Vector3.Max(Vector3.zero, Vector3.Min(negativeNew, halfInfluenceSize));
-
-                positive.vector3Value = blendDistancePositive;
-                negative.vector3Value = blendDistanceNegative;
+                positive.vector3Value = Vector3.Min(blendDistancePositive, halfInfluenceSize);
+                negative.vector3Value = Vector3.Min(blendDistanceNegative, halfInfluenceSize);
 
                 d.Apply();
             }
