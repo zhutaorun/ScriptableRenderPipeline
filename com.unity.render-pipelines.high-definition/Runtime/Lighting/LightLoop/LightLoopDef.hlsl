@@ -255,6 +255,12 @@ LightData FetchLight(uint start, uint i)
     return _LightDatas[j];
 }
 
+LightData FetchLight(uint index)
+{
+    return _LightDatas[index];
+}
+
+
 EnvLightData FetchEnvLight(uint start, uint i)
 {
     int j = FetchIndex(start, i);

@@ -66,6 +66,22 @@ bool IsMatchingLightLayer(uint lightLayers, uint renderingLayers)
 
 #define SCALARIZE_CLUSTER (1 && defined(SUPPORTS_WAVE_INTRINSICS) && defined(LIGHTLOOP_TILE_PASS))
 
+bool CanUseScalarizedFastPath(inout uint lightStart)
+{
+#if SCALARIZE_CLUSTER
+    // Fast path is when we all pixels in a wave is accessing same tile or cluster.
+    uint lightStartLane0 = WaveReadFirstLane(lightStart);
+    bool fastPath = all(Ballot(lightStart == lightStartLane0) == ~0);
+    if (fastPath)
+    {
+        lightStart = lightStartLane0;
+    }
+    return fastPath;
+#else
+    return false;
+#endif
+}
+
 void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BSDFData bsdfData, BuiltinData builtinData, uint featureFlags,
                 out float3 diffuseLighting,
                 out float3 specularLighting)
@@ -142,49 +158,16 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
 
     #ifdef LIGHTLOOP_TILE_PASS
         GetCountAndStart(posInput, LIGHTCATEGORY_PUNCTUAL, lightStart, lightCount);
-    #if SCALARIZE_CLUSTER 
-        // Fast path is when we all pixels in a wave is accessing same tile or cluster.
-        uint lightStartLane0 = WaveReadFirstLane(lightStart);
-        bool fastPass = all(Ballot(lightStart == lightStartLane0) == ~0);
-
-    #endif
+        bool fastPath = CanUseScalarizedFastPath(lightStart);
     #else
         lightCount = _PunctualLightCount;
         lightStart = 0;
     #endif
 
-#if 0
-        uint v_lightListIdx = 0;
-        uint v_lightIdx = lightStart;
-        while (v_lightListIdx < lightCount)
-        {
-            v_lightIdx = FetchIndex(lightStart, v_lightListIdx);
-            uint s_lightIdx = fastPass ? v_lightIdx : min(WaveMinUint(v_lightIdx), _PunctualLightCount - 1);
-
-            LightData s_lightData = _LightDatas[s_lightIdx];    // Scalar load.
-
-            // If current scalar and vector light index match, we process the light
-            // The v_lightListIdx for current thread is increased.
-            if (s_lightIdx >= v_lightIdx)   // TODO_FCC Can use the == instead 
-            {
-                v_lightListIdx++;
-
-                if (IsMatchingLightLayer(s_lightData.lightLayers, builtinData.renderingLayers))
-                {
-                    DirectLighting lighting = EvaluateBSDF_Punctual(context, V, posInput, preLightData, s_lightData, bsdfData, builtinData);
-                    AccumulateDirectLighting(lighting, aggregateLighting);
-                }
-            }
-        }
-#endif
-
 #if (SCALARIZE_CLUSTER)
-
-        // TODO_FCC: REFACTOR TOO MUCH REPETITION HERE. (could easily do all options by just changing few things in the loop, but need to verify the loop is scalarized). 
-        UNITY_BRANCH if (fastPass)
+        UNITY_BRANCH if (fastPath)
+#endif
         {
-            lightStart = lightStartLane0;
-
             for (i = 0; i < lightCount; i++)
             {
                 LightData lightData = FetchLight(lightStart, i);
@@ -196,6 +179,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
                 }
             }
         }
+#if (SCALARIZE_CLUSTER)
         else
         {
             // Scalarized loop. All lights that are in a tile/cluster touched by any pixel in the wave are loaded (scalar load), only the one relevant to current thread/pixel are processed.
@@ -207,13 +191,13 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
             while (v_lightListIdx < lightCount)
             {
                 v_lightIdx = FetchIndex(lightStart, v_lightListIdx);
-                uint s_lightIdx = min(WaveMinUint(v_lightIdx), _PunctualLightCount - 1);
+                uint s_lightIdx = min(WaveMinUint(v_lightIdx), _PunctualLightCount);
 
-                LightData s_lightData = _LightDatas[s_lightIdx];    // Scalar load.
+                LightData s_lightData = FetchLight(s_lightIdx);    // Scalar load.
 
                 // If current scalar and vector light index match, we process the light
                 // The v_lightListIdx for current thread is increased.
-                if (s_lightIdx >= v_lightIdx)   // TODO_FCC Can use the == instead 
+                if (s_lightIdx >= v_lightIdx) 
                 {
                     v_lightListIdx++;
 
@@ -223,17 +207,6 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
                         AccumulateDirectLighting(lighting, aggregateLighting);
                     }
                 }
-            }
-        }
-#else
-        for (i = 0; i < lightCount; i++)
-        {
-            LightData lightData = FetchLight(lightStart, i);
-
-            if (IsMatchingLightLayer(lightData.lightLayers, builtinData.renderingLayers))
-            {
-                DirectLighting lighting = EvaluateBSDF_Punctual(context, V, posInput, preLightData, lightData, bsdfData, builtinData);
-                AccumulateDirectLighting(lighting, aggregateLighting);
             }
         }
 #endif
