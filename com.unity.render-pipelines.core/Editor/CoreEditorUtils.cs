@@ -262,10 +262,10 @@ namespace UnityEditor.Experimental.Rendering
         const int k_DrawVector6Slider_LabelSize = 60;
         const int k_DrawVector6Slider_FieldSize = 80;
 
-        public static void DrawVector6(GUIContent label, SerializedProperty positive, SerializedProperty negative, Vector3 min, Vector3 max, Color[][] colors = null)
+        public static void DrawVector6(GUIContent label, SerializedProperty positive, SerializedProperty negative, Vector3 min, Vector3 max, Color[] colors = null)
         {
-            if (colors != null && (colors.Length != 2 || colors[0].Length != 3 || colors[1].Length != 3))
-                    throw new System.ArgumentException("Colors must be a 2x3 array.");
+            if (colors != null && (colors.Length != 6))
+                    throw new System.ArgumentException("Colors must be a 6 element array. [+X, +Y, +X, -X, -Y, -Z]");
 
             GUILayout.BeginVertical();
             Rect rect = EditorGUI.IndentedRect(GUILayoutUtility.GetRect(0, float.MaxValue, EditorGUIUtility.singleLineHeight, EditorGUIUtility.singleLineHeight));
@@ -281,7 +281,7 @@ namespace UnityEditor.Experimental.Rendering
             
             var v = positive.vector3Value;
             EditorGUI.BeginChangeCheck();
-            v = DrawVector3(rect, k_DrawVector6_Label, v, min, max, false, colors == null ? null : colors[0]);
+            v = DrawVector3(rect, k_DrawVector6_Label, v, min, max, false, colors == null ? null : new Color[] { colors[0], colors[1], colors[2] });
             if (EditorGUI.EndChangeCheck())
                 positive.vector3Value = v;
 
@@ -292,7 +292,7 @@ namespace UnityEditor.Experimental.Rendering
             rect.width -= EditorGUIUtility.labelWidth - 1f - 11f * EditorGUI.indentLevel;
             v = negative.vector3Value;
             EditorGUI.BeginChangeCheck();
-            v = DrawVector3(rect, k_DrawVector6_Label, v, min, max, true, colors == null ? null : colors[1]);
+            v = DrawVector3(rect, k_DrawVector6_Label, v, min, max, true, colors == null ? null : new Color[] { colors[3], colors[4], colors[5] });
             if (EditorGUI.EndChangeCheck())
                 negative.vector3Value = v;
             GUILayout.EndVertical();
