@@ -272,11 +272,11 @@ namespace UnityEditor.Experimental.Rendering
             if (label != GUIContent.none)
             {
                 var labelRect = rect;
-                labelRect.x -= 12f;
+                labelRect.x -= 11f * EditorGUI.indentLevel;
                 labelRect.width = EditorGUIUtility.labelWidth;
                 EditorGUI.LabelField(labelRect, label);
-                rect.x += EditorGUIUtility.labelWidth - 12f;
-                rect.width -= EditorGUIUtility.labelWidth - 12f;
+                rect.x += EditorGUIUtility.labelWidth - 1f - 11f * EditorGUI.indentLevel;
+                rect.width -= EditorGUIUtility.labelWidth - 1f - 11f * EditorGUI.indentLevel;
             }
             
             var v = positive.vector3Value;
@@ -288,8 +288,8 @@ namespace UnityEditor.Experimental.Rendering
             GUILayout.Space(EditorGUIUtility.standardVerticalSpacing);
 
             rect = EditorGUI.IndentedRect(GUILayoutUtility.GetRect(0, float.MaxValue, EditorGUIUtility.singleLineHeight, EditorGUIUtility.singleLineHeight));
-            rect.x += EditorGUIUtility.labelWidth - 12f;
-            rect.width -= EditorGUIUtility.labelWidth - 12f;
+            rect.x += EditorGUIUtility.labelWidth - 1f - 11f * EditorGUI.indentLevel;
+            rect.width -= EditorGUIUtility.labelWidth - 1f - 11f * EditorGUI.indentLevel;
             v = negative.vector3Value;
             EditorGUI.BeginChangeCheck();
             v = DrawVector3(rect, k_DrawVector6_Label, v, min, max, true, colors == null ? null : colors[1]);
@@ -315,7 +315,7 @@ namespace UnityEditor.Experimental.Rendering
             //Suffix is a hack as sublabel only work with 1 character
             if(addMinusPrefix)
             {
-                Rect suffixRect = new Rect(rect.x-19, rect.y, 100, rect.height);
+                Rect suffixRect = new Rect(rect.x - 4 - 15 * EditorGUI.indentLevel, rect.y, 100, rect.height);
                 for(int i = 0; i < 3; ++i)
                 {
                     EditorGUI.LabelField(suffixRect, "-");
@@ -329,7 +329,7 @@ namespace UnityEditor.Experimental.Rendering
                 if (colors.Length != 3)
                     throw new System.ArgumentException("colors must have 3 elements.");
 
-                Rect suffixRect = new Rect(rect.x - 8, rect.y, 100, rect.height);
+                Rect suffixRect = new Rect(rect.x + 7 - 15 * EditorGUI.indentLevel, rect.y, 100, rect.height);
                 GUIStyle colorMark = new GUIStyle(EditorStyles.label);
                 colorMark.normal.textColor = colors[0];
                 EditorGUI.LabelField(suffixRect, "|", colorMark);
@@ -340,7 +340,7 @@ namespace UnityEditor.Experimental.Rendering
                 EditorGUI.LabelField(suffixRect, "|", colorMark);
                 suffixRect.x += 1;
                 EditorGUI.LabelField(suffixRect, "|", colorMark);
-                suffixRect.x += fieldWidth  + .5f;
+                suffixRect.x += fieldWidth;
                 colorMark.normal.textColor = colors[2];
                 EditorGUI.LabelField(suffixRect, "|", colorMark);
                 suffixRect.x += 1;
