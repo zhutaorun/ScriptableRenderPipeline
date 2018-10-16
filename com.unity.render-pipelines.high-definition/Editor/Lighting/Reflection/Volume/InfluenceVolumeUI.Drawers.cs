@@ -177,12 +177,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (advanced && drawFace)
             {
                 EditorGUILayout.BeginHorizontal();
+                Vector3 positive = d.editorAdvancedModeFaceFadePositive.vector3Value;
+                Vector3 negative = d.editorAdvancedModeFaceFadeNegative.vector3Value;
                 EditorGUI.BeginChangeCheck();
-                CoreEditorUtils.DrawVector6(faceFadeContent, d.editorAdvancedModeFaceFadePositive, d.editorAdvancedModeFaceFadeNegative, Vector3.zero, Vector3.one, InfluenceVolumeUI.k_HandlesColor);
+                CoreEditorUtils.DrawVector6(faceFadeContent, ref positive, ref negative, Vector3.zero, Vector3.one, InfluenceVolumeUI.k_HandlesColor);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    d.boxSideFadePositive.vector3Value = d.editorAdvancedModeFaceFadePositive.vector3Value;
-                    d.boxSideFadeNegative.vector3Value = d.editorAdvancedModeFaceFadeNegative.vector3Value;
+                    d.boxSideFadePositive.vector3Value = d.editorAdvancedModeFaceFadePositive.vector3Value = positive;
+                    d.boxSideFadeNegative.vector3Value = d.editorAdvancedModeFaceFadeNegative.vector3Value = negative;
                 }
                 GUILayout.Space(28f + 9f); //add right margin for alignment
                 EditorGUILayout.EndHorizontal();
@@ -206,15 +208,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (d.editorAdvancedModeEnabled.boolValue)
             {
                 EditorGUI.BeginChangeCheck();
-                blendDistancePositive.vector3Value = editorAdvancedModeBlendDistancePositive.vector3Value;
-                blendDistanceNegative.vector3Value = editorAdvancedModeBlendDistanceNegative.vector3Value;
-                CoreEditorUtils.DrawVector6(
-                    content,
-                    blendDistancePositive, blendDistanceNegative, Vector3.zero, maxBlendDistance, InfluenceVolumeUI.k_HandlesColor);
+                Vector3 positive = blendDistancePositive.vector3Value = editorAdvancedModeBlendDistancePositive.vector3Value;
+                Vector3 negative = blendDistanceNegative.vector3Value = editorAdvancedModeBlendDistanceNegative.vector3Value;
+                CoreEditorUtils.DrawVector6(content, ref positive, ref negative, Vector3.zero, maxBlendDistance, InfluenceVolumeUI.k_HandlesColor);
                 if(EditorGUI.EndChangeCheck())
                 {
-                    editorAdvancedModeBlendDistancePositive.vector3Value = blendDistancePositive.vector3Value;
-                    editorAdvancedModeBlendDistanceNegative.vector3Value = blendDistanceNegative.vector3Value;
+                    editorAdvancedModeBlendDistancePositive.vector3Value = blendDistancePositive.vector3Value = positive;
+                    editorAdvancedModeBlendDistanceNegative.vector3Value = blendDistanceNegative.vector3Value = negative;
                 }
             }
             else
