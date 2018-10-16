@@ -16,7 +16,7 @@ namespace UnityEngine.Experimental.Rendering
 
         public enum StereoRenderingMode
         {
-            MultiPass,
+            MultiPass = 0,
             SinglePassDoubleWide,
             SinglePassInstanced,
             SinglePassMultiView
