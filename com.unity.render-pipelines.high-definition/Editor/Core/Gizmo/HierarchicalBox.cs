@@ -348,8 +348,6 @@ namespace UnityEditor.Experimental.Rendering
                         }
                     }
 
-                    //center = (max + min) * .5f;
-
                     //ensure containedBox do not exit container
                     if (m_container != null)
                     {

@@ -16,9 +16,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public HierarchicalBox boxInfluenceHandle;
         public HierarchicalBox boxInfluenceNormalHandle;
 
-        public SphereBoundsHandle sphereBaseHandle = new SphereBoundsHandle();
-        public SphereBoundsHandle sphereInfluenceHandle = new SphereBoundsHandle();
-        public SphereBoundsHandle sphereInfluenceNormalHandle = new SphereBoundsHandle();
+
+        public HierarchicalSphere sphereBaseHandle;
+        public HierarchicalSphere sphereInfluenceHandle;
+        public HierarchicalSphere sphereInfluenceNormalHandle;
 
         public AnimBool isSectionExpandedShape { get { return m_AnimBools[k_ShapeCount]; } }
         public bool showInfluenceHandles { get; set; }
@@ -49,6 +50,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             boxBaseHandle.monoHandle = false;
             boxInfluenceHandle = new HierarchicalBox(InfluenceVolumeUI.k_GizmoThemeColorInfluence, handleColors, container: boxBaseHandle);
             boxInfluenceNormalHandle = new HierarchicalBox(InfluenceVolumeUI.k_GizmoThemeColorInfluenceNormal, handleColors, container: boxBaseHandle);
+
+            sphereBaseHandle = new HierarchicalSphere(InfluenceVolumeUI.k_GizmoThemeColorBase);
+            sphereInfluenceHandle = new HierarchicalSphere(InfluenceVolumeUI.k_GizmoThemeColorInfluence, container: sphereBaseHandle);
+            sphereInfluenceNormalHandle = new HierarchicalSphere(InfluenceVolumeUI.k_GizmoThemeColorInfluenceNormal, container: sphereBaseHandle);
         }
 
         public void SetIsSectionExpanded_Shape(InfluenceShape shape)
