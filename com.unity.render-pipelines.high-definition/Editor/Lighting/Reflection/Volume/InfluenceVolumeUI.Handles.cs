@@ -183,7 +183,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        static void DrawSphereHandle(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, Object sourceAsset,  SphereBoundsHandle sphere)
+        static void DrawSphereHandle(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, Object sourceAsset, HierarchicalSphere sphere)
         {
             sphere.center = d.offset.vector3Value;
             sphere.radius = d.sphereRadius.floatValue;
@@ -202,10 +202,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        static void DrawSphereFadeHandle(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, Object sourceAsset, SphereBoundsHandle sphere, SerializedProperty radius)
+        static void DrawSphereFadeHandle(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, Object sourceAsset, HierarchicalSphere sphere, SerializedProperty blend)
         {
             sphere.center = d.offset.vector3Value;
-            sphere.radius = radius.floatValue;
+            sphere.radius = d.sphereRadius.floatValue - blend.floatValue;
 
             EditorGUI.BeginChangeCheck();
             sphere.DrawHandle();
@@ -213,7 +213,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 Undo.RecordObject(sourceAsset, "Modified Influence volume");
 
-                radius.floatValue = Mathf.Clamp(d.sphereRadius.floatValue - sphere.radius, 0, d.sphereRadius.floatValue);
+                blend.floatValue = Mathf.Clamp(d.sphereRadius.floatValue - sphere.radius, 0, d.sphereRadius.floatValue);
                 d.Apply();
             }
         }
