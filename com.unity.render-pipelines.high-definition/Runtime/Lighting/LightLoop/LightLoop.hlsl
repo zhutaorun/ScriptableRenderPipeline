@@ -66,22 +66,6 @@ bool IsMatchingLightLayer(uint lightLayers, uint renderingLayers)
 
 #define SCALARIZE_CLUSTER (1 && defined(SUPPORTS_WAVE_INTRINSICS) && defined(LIGHTLOOP_TILE_PASS))
 
-bool CanUseScalarizedFastPath(inout uint lightStart)
-{
-#if SCALARIZE_CLUSTER
-    // Fast path is when we all pixels in a wave is accessing same tile or cluster.
-    uint lightStartLane0 = WaveReadFirstLane(lightStart);
-    bool fastPath = all(Ballot(lightStart == lightStartLane0) == ~0);
-    if (fastPath)
-    {
-        lightStart = lightStartLane0;
-    }
-    return fastPath;
-#else
-    return false;
-#endif
-}
-
 void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BSDFData bsdfData, BuiltinData builtinData, uint featureFlags,
                 out float3 diffuseLighting,
                 out float3 specularLighting)
@@ -159,7 +143,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
     #ifdef LIGHTLOOP_TILE_PASS
         GetCountAndStart(posInput, LIGHTCATEGORY_PUNCTUAL, lightStart, lightCount);
 #if SCALARIZE_CLUSTER
-        // Fast path is when we all pixels in a wave is accessing same tile or cluster.
+        // Fast path is when we all pixels in a wave are accessing same tile or cluster.
         uint lightStartLane0 = WaveReadFirstLane(lightStart);
         fastPath = all(Ballot(lightStart == lightStartLane0) == ~0);
 #endif
@@ -241,7 +225,13 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         if (lightCount > 0)
         {
             i = 0;
-
+#if SCALARIZE_CLUSTER
+            if (fastPath)
+            {
+                lightStart = lightStartLane0;
+                lightCount = WaveReadFirstLane(lightCount);
+            }
+#endif
             uint      last      = lightCount - 1;
             LightData lightData = FetchLight(lightStart, i);
 
