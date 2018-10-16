@@ -268,6 +268,11 @@ EnvLightData FetchEnvLight(uint start, uint i)
     return _EnvLightDatas[j];
 }
 
+EnvLightData FetchEnvLight(uint index)
+{
+    return _EnvLightDatas[index];
+}
+
 // We always fetch the screen space shadow texture to reduce the number of shader variant, overhead is negligible,
 // it is a 1x1 white texture if deferred directional shadow and/or contact shadow are disabled
 // We perform a single featch a the beginning of the lightloop

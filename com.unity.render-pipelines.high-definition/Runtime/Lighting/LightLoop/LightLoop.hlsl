@@ -155,19 +155,24 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
     if (featureFlags & LIGHTFEATUREFLAGS_PUNCTUAL)
     {
         uint lightCount, lightStart;
-
+        bool fastPath = false;
     #ifdef LIGHTLOOP_TILE_PASS
         GetCountAndStart(posInput, LIGHTCATEGORY_PUNCTUAL, lightStart, lightCount);
-        bool fastPath = CanUseScalarizedFastPath(lightStart);
-    #else
+#if SCALARIZE_CLUSTER
+        // Fast path is when we all pixels in a wave is accessing same tile or cluster.
+        uint lightStartLane0 = WaveReadFirstLane(lightStart);
+        fastPath = all(Ballot(lightStart == lightStartLane0) == ~0);
+#endif
+#else
         lightCount = _PunctualLightCount;
         lightStart = 0;
     #endif
 
 #if (SCALARIZE_CLUSTER)
         UNITY_BRANCH if (fastPath)
-#endif
         {
+            lightStart = lightStartLane0;
+#endif
             for (i = 0; i < lightCount; i++)
             {
                 LightData lightData = FetchLight(lightStart, i);
@@ -178,8 +183,8 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
                     AccumulateDirectLighting(lighting, aggregateLighting);
                 }
             }
-        }
 #if (SCALARIZE_CLUSTER)
+        }
         else
         {
             // Scalarized loop. All lights that are in a tile/cluster touched by any pixel in the wave are loaded (scalar load), only the one relevant to current thread/pixel are processed.
@@ -191,7 +196,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
             while (v_lightListIdx < lightCount)
             {
                 v_lightIdx = FetchIndex(lightStart, v_lightListIdx);
-                uint s_lightIdx = min(WaveMinUint(v_lightIdx), _PunctualLightCount);
+                uint s_lightIdx = min(WaveMinUint(v_lightIdx), max(_PunctualLightCount-1, 0));
 
                 LightData s_lightData = FetchLight(s_lightIdx);    // Scalar load.
 
@@ -215,13 +220,14 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
     if (featureFlags & LIGHTFEATUREFLAGS_AREA)
     {
         uint lightCount, lightStart;
-
+        bool fastPath = false;
     #ifdef LIGHTLOOP_TILE_PASS
-        GetCountAndStart(posInput, LIGHTCATEGORY_AREA, lightStart, lightCount/*, TODO_SCALARIZE_ME*/); // TODO_FCC: Scalarize. 
-    #ifdef USE_FPTL_LIGHTLIST
-        lightStart = WaveReadFirstLane(lightStart);
-    #endif
-
+        GetCountAndStart(posInput, LIGHTCATEGORY_AREA, lightStart, lightCount);
+#if SCALARIZE_CLUSTER
+        // Fast path is when we all pixels in a wave is accessing same tile or cluster.
+        uint lightStartLane0 = WaveReadFirstLane(lightStart);
+        fastPath = all(Ballot(lightStart == lightStartLane0) == ~0);
+#endif
     #else
         lightCount = _AreaLightCount;
         lightStart = _PunctualLightCount;
@@ -283,15 +289,19 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         float refractionHierarchyWeight = 0.0; // Max: 1.0
 
         uint envLightStart, envLightCount;
-
+        bool fastPath = false;
         // Fetch first env light to provide the scene proxy for screen space computation
-    #ifdef LIGHTLOOP_TILE_PASS
-        uint TODO_SCALARIZE_ME = 0;// TODO_FCC Scalarize
-        GetCountAndStart(posInput, LIGHTCATEGORY_ENV, envLightStart, envLightCount/*, TODO_SCALARIZE_ME*/); // TODO_FCC Scalarize
-    #else
+#ifdef LIGHTLOOP_TILE_PASS
+        GetCountAndStart(posInput, LIGHTCATEGORY_ENV, envLightStart, envLightCount);
+    #if SCALARIZE_CLUSTER
+        // Fast path is when we all pixels in a wave is accessing same tile or cluster.
+        uint envStartFirstLane = WaveReadFirstLane(envLightStart);
+        fastPath = all(Ballot(envLightStart == envStartFirstLane) == ~0);
+    #endif
+#else
         envLightCount = _EnvLightCount;
         envLightStart = 0;
-    #endif
+#endif
 
         // Reflection / Refraction hierarchy is
         //  1. Screen Space Refraction / Reflection
@@ -328,24 +338,58 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         {
             context.sampleReflection = SINGLE_PASS_CONTEXT_SAMPLE_REFLECTION_PROBES;
 
-            // Note: In case of IBL we are sorted from smaller to bigger projected solid angle bounds. We are not sorted by type so we can't do a 'while' approach like for area light.
-            for (i = 0; i < envLightCount && reflectionHierarchyWeight < 1.0; ++i)
+#if SCALARIZE_CLUSTER
+            UNITY_BRANCH if (fastPath)
             {
-                EVALUATE_BSDF_ENV(FetchEnvLight(envLightStart, i), REFLECTION, reflection);
-            }
-
-            // Refraction probe and reflection probe will process exactly the same weight. It will be good for performance to be able to share this computation
-            // However it is hard to deal with the fact that reflectionHierarchyWeight and refractionHierarchyWeight have not the same values, they are independent
-            // The refraction probe is rarely used and happen only with sphere shape and high IOR. So we accept the slow path that use more simple code and
-            // doesn't affect the performance of the reflection which is more important.
-            // We reuse LIGHTFEATUREFLAGS_SSREFRACTION flag as refraction is mainly base on the screen. Would be a waste to not use screen and only cubemap.
-            if (featureFlags & LIGHTFEATUREFLAGS_SSREFRACTION)
-            {
-                for (i = 0; i < envLightCount && refractionHierarchyWeight < 1.0; ++i)
+                envLightStart = envStartFirstLane;
+#endif
+                // Note: In case of IBL we are sorted from smaller to bigger projected solid angle bounds. We are not sorted by type so we can't do a 'while' approach like for area light.
+                for (i = 0; i < envLightCount && reflectionHierarchyWeight < 1.0; ++i)
                 {
-                    EVALUATE_BSDF_ENV(FetchEnvLight(envLightStart, i), REFRACTION, refraction);
+                    EVALUATE_BSDF_ENV(FetchEnvLight(envLightStart, i), REFLECTION, reflection);
+                }
+
+                // Refraction probe and reflection probe will process exactly the same weight. It will be good for performance to be able to share this computation
+                // However it is hard to deal with the fact that reflectionHierarchyWeight and refractionHierarchyWeight have not the same values, they are independent
+                // The refraction probe is rarely used and happen only with sphere shape and high IOR. So we accept the slow path that use more simple code and
+                // doesn't affect the performance of the reflection which is more important.
+                // We reuse LIGHTFEATUREFLAGS_SSREFRACTION flag as refraction is mainly base on the screen. Would be a waste to not use screen and only cubemap.
+                if (featureFlags & LIGHTFEATUREFLAGS_SSREFRACTION)
+                {
+                    for (i = 0; i < envLightCount && refractionHierarchyWeight < 1.0; ++i)
+                    {
+                        EVALUATE_BSDF_ENV(FetchEnvLight(envLightStart, i), REFRACTION, refraction);
+                    }
+                }
+#if SCALARIZE_CLUSTER
+            }
+            else
+            {
+                // Scalarized loop, same rationale of the punctual light version
+                uint v_envLightListIdx = 0;
+                uint v_envLightIdx = envLightStart;
+                while (v_envLightListIdx < envLightCount)
+                {
+                    v_envLightIdx = FetchIndex(envLightStart, v_envLightListIdx);
+                    uint s_envLightIdx = min(WaveMinUint(v_envLightIdx), max(_EnvLightCount - 1, 0));
+
+                    EnvLightData s_envLightData = FetchEnvLight(s_envLightIdx);    // Scalar load.
+
+                    if (s_envLightIdx >= v_envLightIdx)
+                    {
+                        v_envLightListIdx++;
+                        if (reflectionHierarchyWeight < 1.0)
+                        {
+                            EVALUATE_BSDF_ENV(s_envLightData, REFLECTION, reflection);
+                        }
+                        if ((featureFlags & LIGHTFEATUREFLAGS_SSREFRACTION) && refractionHierarchyWeight < 1.0)
+                        {
+                            EVALUATE_BSDF_ENV(s_envLightData, REFRACTION, refraction);
+                        }
+                    }
                 }
             }
+#endif
         }
 
         // Only apply the sky IBL if the sky texture is available
