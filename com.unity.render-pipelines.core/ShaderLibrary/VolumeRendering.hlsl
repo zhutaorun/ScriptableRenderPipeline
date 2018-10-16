@@ -49,6 +49,38 @@ real3 TransmittanceIntegralHomogeneousMedium(real3 extinction, real intervalLeng
     return rcp(extinction) - rcp(extinction) * exp(-extinction * intervalLength);
 }
 
+// Can be used to scale base extinction and scattering coefficients.
+real ComputeHeightFogMultiplier(real height, real baseHeight, real heightExponent)
+{
+    height = max(0, height - baseHeight);
+
+    return exp(-heightExponent * height);
+}
+
+// Optical depth between two endpoints.
+real OpticalDepthHeightFog(real baseExtinction, real baseHeight, real heightExponent,
+                           real cosZenith, real startHeight, real intervalLength)
+{
+    // Height fog is composed of two slices:
+    // - constant fog below 'baseHeight'   : d = k * t
+    // - exponential fog above 'baseHeight': d = Integrate[k * e^(-a * (h_0 + z * x)) dx, {x, 0, t}]
+
+    cosZenith = max(abs(cosZenith), FLT_EPS);
+
+    real constantHeightRange = max(0, baseHeight - startHeight);
+    real constantFogDistance = min(intervalLength, constantHeightRange * rcp(cosZenith));
+    real heightFogDistance   = intervalLength - constantFogDistance;
+
+    startHeight = max(0, startHeight - baseHeight);
+
+    real denom = heightExponent * cosZenith;
+    real numer = 1 - exp(-denom * heightFogDistance);
+
+    real heightFogFactor = exp(-heightExponent * startHeight) * numer * rcp(denom);
+
+    return baseExtinction * (constantFogDistance + heightFogFactor);
+}
+
 real IsotropicPhaseFunction()
 {
     return INV_FOUR_PI;
@@ -180,6 +212,9 @@ real3 TransmittanceColorAtDistanceToAbsorption(real3 transmittanceColor, real at
     return -log(transmittanceColor + FLT_EPS) / max(atDistance, FLT_EPS);
 }
 
+// TODO: it would be good to improve the perf and numerical stability
+// of approximations below by finding a polynomial approximation.
+
 // input = {radiance, opacity}
 // Note that opacity must be less than 1 (not fully opaque).
 real4 LinearizeRGBA(real4 value)
@@ -189,7 +224,8 @@ real4 LinearizeRGBA(real4 value)
     // We drop redundant negations.
     real a = value.a;
     real d = -log(1 - a);
-    return real4((d * rcp(a)) * value.rgb, d);
+    real r = (a >= FLT_EPS) ? (d * rcp(a)) : 1; // Prevent numerical explosion
+    return real4(r * value.rgb, d);
 }
 
 // input = {radiance, optical_depth}
@@ -201,7 +237,8 @@ real4 LinearizeRGBD(real4 value)
     // We drop redundant negations.
     real d = value.a;
     real a = 1 - exp(-d);
-    return real4((d * rcp(a)) * value.rgb, d);
+    real r = (a >= FLT_EPS) ? (d * rcp(a)) : 1; // Prevent numerical explosion
+    return real4(r * value.rgb, d);
 }
 
 // output = {radiance, opacity}
@@ -213,7 +250,8 @@ real4 DelinearizeRGBA(real4 value)
     // We drop redundant negations.
     real d = value.a;
     real a = 1 - exp(-d);
-    return real4((a * rcp(d)) * value.rgb, a);
+    real i = (a >= FLT_EPS) ? (a * rcp(d)) : 1; // Prevent numerical explosion
+    return real4(i * value.rgb, a);
 }
 
 // input = {radiance, optical_depth}
@@ -225,7 +263,8 @@ real4 DelinearizeRGBD(real4 value)
     // We drop redundant negations.
     real d = value.a;
     real a = 1 - exp(-d);
-    return real4((a * rcp(d)) * value.rgb, d);
+    real i = (a >= FLT_EPS) ? (a * rcp(d)) : 1; // Prevent numerical explosion
+    return real4(i * value.rgb, d);
 }
 
 #endif // UNITY_VOLUME_RENDERING_INCLUDED

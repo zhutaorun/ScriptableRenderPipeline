@@ -265,9 +265,15 @@ CBUFFER_START(UnityGlobal)
 
     // Volumetric lighting.
     float4 _AmbientProbeCoeffs[7];      // 3 bands of SH, packed, rescaled and convolved with the phase function
-    float  _GlobalAnisotropy;
-    float3 _GlobalScattering;
-    float  _GlobalExtinction;
+
+    float3 _HeightFogBaseScattering;
+    float  _HeightFogBaseExtinction;
+
+    float  _HeightFogBaseHeight;
+    float  _HeightFogExponent;
+    float  _GlobalFogAnisotropy;
+    float  _Padding;
+
     float4 _VBufferResolution;          // { w, h, 1/w, 1/h }
     float4 _VBufferSliceCount;          // { count, 1/count, 0, 0 }
     float4 _VBufferUvScaleAndLimit;     // Necessary us to work with sub-allocation (resource aliasing) in the RTHandle system
