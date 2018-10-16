@@ -447,13 +447,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         {
             get { return resources != null ? resources.samplingShader : null; }
         }
-
-        public XRGraphics getXRSettings
-        {
-            get { return m_GetXRSettings; }
-            set { m_GetXRSettings = value;  }
-        }
-
+        
         public void OnBeforeSerialize()
         {
         }
