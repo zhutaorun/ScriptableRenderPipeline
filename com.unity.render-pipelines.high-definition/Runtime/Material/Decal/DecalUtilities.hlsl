@@ -250,6 +250,9 @@ DecalSurfaceData GetDecalSurfaceData(PositionInputs posInput, inout float alpha)
         {
             s_decalIdx = min(WaveMinUint(v_decalIdx), max(_DecalCount - 1, 0));
         }
+        // Note that the WaveReadFirstLane should not be needed, but the compiler might insist in putting the result in VGPR.
+        // However, we are certain at this point that the index is scalar.
+        s_decalIdx = WaveReadFirstLane(s_decalIdx);
 #endif
 
         DecalData s_decalData = FetchDecal(s_decalIdx);

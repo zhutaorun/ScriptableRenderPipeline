@@ -159,7 +159,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         }
 #endif
         // Scalarized loop. All lights that are in a tile/cluster touched by any pixel in the wave are loaded (scalar load), only the one relevant to current thread/pixel are processed.
-        // For clarity, the following code will follow the convention: variables starting with s_ are wave uniform (meant for scalar register),
+        // For clarity, the following code will follow the convention: variables starting with s_ are meant to be wave uniform (meant for scalar register),
         // v_ are variables that might have different value for each thread in the wave (meant for vector registers).
         // This will perform more loads than it is supposed to, however, the benefits should offset the downside, especially given that light data accessed should be largely coherent.
         // Note that the above is valid only if wave intriniscs are supported.
@@ -172,9 +172,12 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
 #if SCALARIZE_LIGHT_LOOP
             if (!fastPath)
             {
-                // If we are not in fast path, v_lightIdx is not scalar 
+                // If we are not in fast path, v_lightIdx is not scalar
                 s_lightIdx = min(WaveMinUint(v_lightIdx), max(_PunctualLightCount - 1, 0));
             }
+            // Note that the WaveReadFirstLane should not be needed, but the compiler might insist in putting the result in VGPR.
+            // However, we are certain at this point that the index is scalar.
+            s_lightIdx = WaveReadFirstLane(s_lightIdx);
 #endif
             LightData s_lightData = FetchLight(s_lightIdx);    
 
@@ -337,9 +340,13 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
 #if SCALARIZE_LIGHT_LOOP
                 if (!fastPath)
                 {
-                    // If we are not in fast path, s_envLightIdx is not scalar 
+                    // If we are not in fast path, s_envLightIdx is not scalar
                     s_envLightIdx = min(WaveMinUint(v_envLightIdx), max(_EnvLightCount - 1, 0));
                 }
+                // Note that the WaveReadFirstLane should not be needed, but the compiler might insist in putting the result in VGPR.
+                // However, we are certain at this point that the index is scalar.
+                s_envLightIdx = WaveReadFirstLane(s_envLightIdx);
+
 #endif
 
                 EnvLightData s_envLightData = FetchEnvLight(s_envLightIdx);    // Scalar load.
