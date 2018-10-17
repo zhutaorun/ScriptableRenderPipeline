@@ -14,7 +14,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         [DrawGizmo(GizmoType.Selected)]
         static void DrawSelectedGizmo(ReflectionProbe reflectionProbe, GizmoType gizmoType)
         {
-            var e = GetEditorFor(reflectionProbe);
+            var e = (HDReflectionProbeEditor)GetEditorFor(reflectionProbe);
             if (e == null)
                 return;
 

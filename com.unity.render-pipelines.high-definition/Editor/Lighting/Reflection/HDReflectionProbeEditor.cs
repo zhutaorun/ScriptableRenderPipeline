@@ -8,7 +8,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     [CustomEditorForRenderPipeline(typeof(ReflectionProbe), typeof(HDRenderPipelineAsset))]
     [CanEditMultipleObjects]
-    sealed partial class HDReflectionProbeEditor : HDProbeEditor<HDProbeSettingsProvider>
+    sealed partial class HDReflectionProbeEditor : HDProbeEditor<HDProbeSettingsProvider, HDReflectionProbeUI, SerializedHDReflectionProbe>
     {
         #region Context Menu
         [MenuItem("CONTEXT/ReflectionProbe/Remove Component", false, 0)]
@@ -45,34 +45,20 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         }
         #endregion
 
-        static Dictionary<ReflectionProbe, HDReflectionProbeEditor> s_ReflectionProbeEditors = new Dictionary<ReflectionProbe, HDReflectionProbeEditor>();
-        
-        SerializedObject m_AdditionalDataSerializedObject;
-
         protected override void OnEnable()
         {
-            var additionalData = CoreEditorUtils.GetAdditionalData<HDAdditionalReflectionData>(targets);
-            m_AdditionalDataSerializedObject = new SerializedObject(additionalData);
-            m_SerializedHDProbe = new SerializedHDReflectionProbe(serializedObject, m_AdditionalDataSerializedObject);
-
-            foreach (var t in targets)
-            {
-                var p = (ReflectionProbe)t;
-                s_ReflectionProbeEditors[p] = this;
-            }
-
             base.OnEnable();
-            
             InitializeTargetProbe();
         }
 
-        protected override HDProbeUI NewUI() => new HDReflectionProbeUI();
-
         internal override HDProbe GetTarget(UnityEngine.Object editorTarget)
             => ((ReflectionProbe)editorTarget).GetComponent<HDAdditionalReflectionData>();
-        static HDReflectionProbeEditor GetEditorFor(ReflectionProbe p)
-            => s_ReflectionProbeEditors.TryGetValue(p, out HDReflectionProbeEditor e)
-                ? e : null;
+        protected override SerializedHDReflectionProbe NewSerializedObject(SerializedObject so)
+        {
+            var additionalData = CoreEditorUtils.GetAdditionalData<HDAdditionalReflectionData>(targets);
+            var addSO = new SerializedObject(additionalData);
+            return new SerializedHDReflectionProbe(so, addSO);
+        }
     }
 
     struct HDProbeSettingsProvider : HDProbeUI.IProbeUISettingsProvider, InfluenceVolumeUI.IInfluenceUISettingsProvider

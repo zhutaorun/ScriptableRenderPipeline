@@ -14,9 +14,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             serializedObject.FindProperty("m_Type").intValue = 0;
             serializedObject.ApplyModifiedProperties();
 
-            var probe = (HDAdditionalReflectionData)m_AdditionalDataSerializedObject.targetObject;
-            //unhide previously hidden components if any
-            probe.hideFlags = HideFlags.None;
+            foreach (var target in serializedObject.targetObjects)
+            {
+                var probeTarget = (ReflectionProbe)target;
+                var addTarget = probeTarget.GetComponent<HDAdditionalReflectionData>();
+                // unhide previously hidden components if any
+                addTarget.hideFlags = HideFlags.None;
+            }
         }
     }
 }

@@ -12,9 +12,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
     [CustomEditorForRenderPipeline(typeof(PlanarReflectionProbe), typeof(HDRenderPipelineAsset))]
     [CanEditMultipleObjects]
-    sealed class PlanarReflectionProbeEditor : HDProbeEditor<PlanarReflectionProbeUISettingsProvider>
+    sealed class PlanarReflectionProbeEditor : HDProbeEditor<PlanarReflectionProbeUISettingsProvider, PlanarReflectionProbeUI, SerializedPlanarReflectionProbe>
     {
         const float k_PreviewHeight = 128;
+
         List<Texture> m_PreviewedTextures = new List<Texture>();
 
         public override bool HasPreviewGUI()
@@ -58,26 +59,25 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
+        protected override SerializedPlanarReflectionProbe NewSerializedObject(SerializedObject so)
+            => new SerializedPlanarReflectionProbe(so);
         internal override HDProbe GetTarget(Object editorTarget) => editorTarget as HDProbe;
 
-        protected override void OnEnable()
+        protected override void DrawHandles(
+            PlanarReflectionProbeUI s,
+            SerializedPlanarReflectionProbe d,
+            Editor o
+        )
         {
-            m_SerializedHDProbe = new SerializedPlanarReflectionProbe(serializedObject);
-            base.OnEnable();
-        }
-
-        protected override void OnSceneGUI()
-        {
-            base.OnSceneGUI();
+            base.DrawHandles(s, d, o);
 
             SceneViewOverlay_Window(_.GetContent("Planar Probe"), OnOverlayGUI, -100, target);
 
-            var ui = new PlanarReflectionProbeUI();
-            ui.Update(m_SerializedHDProbe);
-            PlanarReflectionProbeUI.DrawHandles(ui, (SerializedPlanarReflectionProbe)m_SerializedHDProbe, this);
+            var referencePosition = d.target.transform.TransformPoint(d.localReferencePosition.vector3Value);
+            referencePosition = Handles.PositionHandle(referencePosition, d.target.transform.rotation);
+            d.localReferencePosition.vector3Value = d.target.transform.InverseTransformPoint(referencePosition);
+            d.serializedObject.ApplyModifiedProperties();
         }
-
-        protected override HDProbeUI NewUI() => new PlanarReflectionProbeUI();
 
         void OnOverlayGUI(Object target, SceneView sceneView)
         {
@@ -134,6 +134,23 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 target,
                 Enum.ToObject(k_SceneViewOverlay_WindowDisplayOption, 1)
             });
+        }
+
+        [DrawGizmo(GizmoType.Selected)]
+        static void DrawSelectedGizmo(PlanarReflectionProbe probe, GizmoType gizmoType)
+        {
+            var e = (PlanarReflectionProbeEditor)GetEditorFor(probe);
+            if (e == null)
+                return;
+
+            var mat = Matrix4x4.TRS(probe.transform.position, probe.transform.rotation, Vector3.one);
+            InfluenceVolumeUI.DrawGizmos(
+                e.m_UIState.probeSettings.influence,
+                probe.influenceVolume,
+                mat,
+                InfluenceVolumeUI.HandleType.None,
+                InfluenceVolumeUI.HandleType.Base | InfluenceVolumeUI.HandleType.Influence
+            );
         }
     }
 
