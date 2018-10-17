@@ -36,13 +36,18 @@ namespace UnityEditor.ShaderGraph
             set { m_Name = value; }
         }
 
+        [SerializeField]
+        string m_DefaultReferenceName;
+
         public string referenceName
         {
             get
             {
                 if (string.IsNullOrEmpty(overrideReferenceName))
                 {
-                    m_OverrideReferenceName = string.Format("{0}_{1}", propertyType, GuidEncoder.Encode(guid));
+                    if (string.IsNullOrEmpty(m_DefaultReferenceName))
+                        m_DefaultReferenceName = string.Format("{0}_{1}", propertyType, GuidEncoder.Encode(guid));
+                    return m_DefaultReferenceName;
                 }
                 return overrideReferenceName;
             }
