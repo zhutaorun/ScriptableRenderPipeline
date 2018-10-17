@@ -43,5 +43,14 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             get { return m_RequiresColorTexture; }
             set { m_RequiresColorTexture = value; }
         }
+
+        [MenuItem("CONTEXT/AdditionalCameraData/Remove Component")]
+        static void RemoveComponent(MenuCommand command)
+        {
+            if (EditorUtility.DisplayDialog("Remove Component?", "Are you sure you want to remove this component? If you do, you will lose some settings.", "Remove", "Cancel"))
+            {
+                Undo.DestroyObjectImmediate(command.context);
+            }
+        }
     }
 }
