@@ -220,13 +220,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         if (lightCount > 0)
         {
             i = 0;
-#if SCALARIZE_LIGHT_LOOP
-            if (fastPath)
-            {
-                lightStart = lightStartLane0;
-                lightCount = WaveReadFirstLane(lightCount);
-            }
-#endif
+
             uint      last      = lightCount - 1;
             LightData lightData = FetchLight(lightStart, i);
 
