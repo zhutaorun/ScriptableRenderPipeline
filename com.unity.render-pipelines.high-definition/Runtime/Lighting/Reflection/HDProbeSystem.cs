@@ -34,7 +34,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public static void Render(
             HDProbe probe, Transform viewerTransform,
-            Texture outTarget, out HDProbe.RenderData outRenderData
+            Texture outTarget, out HDProbe.RenderData outRenderData,
+            bool forceFlipY = false
         )
         {
             var positionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, viewerTransform);
@@ -42,7 +43,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 probe.settings,
                 positionSettings,
                 outTarget,
-                out Matrix4x4 worldToCameraRHSMatrix, out Matrix4x4 projectionMatrix
+                out Matrix4x4 worldToCameraRHSMatrix, out Matrix4x4 projectionMatrix,
+                forceFlipY: forceFlipY
             );
 
             outRenderData = new HDProbe.RenderData
@@ -185,6 +187,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         internal void UnregisterProbe(HDProbe probe)
         {
             m_BakedProbes.Remove(probe);
+            m_RealtimeViewDependentProbes.Remove(probe);
+            m_RealtimeViewIndependentProbes.Remove(probe);
 
             // Remove swap back
             var index = Array.IndexOf(m_RealtimePlanarProbes, probe);

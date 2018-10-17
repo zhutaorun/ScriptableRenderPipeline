@@ -395,7 +395,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 case ProbeSettings.ProbeType.ReflectionProbe:
                     {
                         var positionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, null);
-                        HDRenderUtilities.Render(probe.settings, positionSettings, cubeRT);
+                        HDRenderUtilities.Render(probe.settings, positionSettings, cubeRT, forceFlipY: true);
                         HDBakingUtilities.CreateParentDirectoryIfMissing(targetFile);
                         HDTextureUtilities.WriteTextureFileToDisk(cubeRT, targetFile);
                         break;

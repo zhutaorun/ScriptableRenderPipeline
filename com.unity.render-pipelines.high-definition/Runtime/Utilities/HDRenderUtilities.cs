@@ -123,11 +123,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static void Render(
             ProbeSettings settings,
             ProbeCapturePositionSettings position,
-            Texture target
+            Texture target,
+            bool forceFlipY = false
         )
         {
-            Matrix4x4 worldToCameraRHSMatrix, projectionMatrix;
-            Render(settings, position, target, out worldToCameraRHSMatrix, out projectionMatrix);
+            Render(
+                settings, position, target,
+                out Matrix4x4 worldToCameraRHSMatrix, out Matrix4x4 projectionMatrix,
+                forceFlipY: forceFlipY
+            );
         }
 
         public static void ComputeCameraSettingsFromProbeSettings(
@@ -150,12 +154,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 ref cameraSettings, ref cameraPositionSettings
             );
 
-            FixSettings(
-                target,
-                ref settings, ref position,
-                ref cameraSettings, ref cameraPositionSettings
-            );
-
             worldToCameraRHSMatrix = cameraPositionSettings.GetUsedWorldToCameraMatrix();
             projectionMatrix = cameraSettings.frustum.GetUsedProjectionMatrix();
         }
@@ -165,7 +163,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ProbeCapturePositionSettings position,
             Texture target,
             out Matrix4x4 worldToCameraRHSMatrix,
-            out Matrix4x4 projectionMatrix
+            out Matrix4x4 projectionMatrix,
+            bool forceFlipY = false
         )
         {
             // Copy settings
@@ -174,6 +173,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 out CameraSettings cameraSettings, out CameraPositionSettings cameraPositionSettings,
                 out worldToCameraRHSMatrix, out projectionMatrix
             );
+
+            if (forceFlipY)
+                cameraSettings.flipYMode = HDAdditionalCameraData.FlipYMode.ForceFlipY;
 
             // Perform rendering
             Render(cameraSettings, cameraPositionSettings, target);
@@ -228,7 +230,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // But in the end, the cubemap is flipped
             // So we force in the HDRP to flip the last blit so we have the proper flipping.
             RenderTexture rt = null;
-            if ((target is Cubemap || (rt = target as RenderTexture) != null && rt.dimension == TextureDimension.Cube)
+            if ((rt = target as RenderTexture) != null
+                && rt.dimension == TextureDimension.Cube
                 && settings.type == ProbeSettings.ProbeType.ReflectionProbe
                 && SystemInfo.graphicsUVStartsAtTop)
                 cameraSettings.flipYMode = HDAdditionalCameraData.FlipYMode.ForceFlipY;

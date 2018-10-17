@@ -380,7 +380,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     var target = HDProbeSystem.CreateRenderTargetForMode(
                         probe, ProbeSettings.Mode.Custom
                     );
-                    HDProbeSystem.Render(probe, null, target, out HDProbe.RenderData renderData);
+                    HDProbeSystem.Render(probe, null, target, out HDProbe.RenderData renderData, forceFlipY: true);
                     HDTextureUtilities.WriteTextureFileToDisk(target, assetPath);
                     AssetDatabase.ImportAsset(assetPath);
                     HDBakedReflectionSystem.ImportAssetAt(probe, assetPath);
