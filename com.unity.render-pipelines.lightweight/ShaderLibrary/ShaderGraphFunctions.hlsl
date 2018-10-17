@@ -71,6 +71,6 @@ void shadergraph_LWFog(float3 position, out float4 color, out float density)
 
 // Always include Shader Graph version
 // Always include last to avoid double macros
-#include "ShaderGraphLibrary/Functions.hlsl" 
+#include "Packages/com.unity.shadergraph/ShaderGraphLibrary/Functions.hlsl" 
 
 #endif // UNITY_GRAPHFUNCTIONS_LW_INCLUDED

@@ -22,6 +22,6 @@ float3 shadergraph_HDBakedGI(float3 positionWS, float3 normalWS, float2 uvStatic
 
 // Always include Shader Graph version
 // Always include last to avoid double macros
-#include "ShaderGraphLibrary/Functions.hlsl" 
+#include "Packages/com.unity.shadergraph/ShaderGraphLibrary/Functions.hlsl" 
 
 #endif // UNITY_GRAPHFUNCTIONS_HD_INCLUDED
