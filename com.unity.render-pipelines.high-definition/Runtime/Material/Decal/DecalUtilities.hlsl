@@ -1,5 +1,9 @@
 #include "Decal.hlsl"
 
+#ifndef SCALARIZE_LIGHT_LOOP
+#define SCALARIZE_LIGHT_LOOP (defined(SUPPORTS_WAVE_INTRINSICS) && defined(LIGHTLOOP_TILE_PASS))
+#endif
+
 DECLARE_DBUFFER_TEXTURE(_DBufferTexture);
 
 DecalData FetchDecal(uint start, uint i)
@@ -190,10 +194,6 @@ void EvalDecalMask(PositionInputs posInput, float3 positionRWSDdx, float3 positi
     }
 }
 
-#ifndef SCALARIZE_CLUSTER
-#define SCALARIZE_CLUSTER (1 && defined(SUPPORTS_WAVE_INTRINSICS) && defined(LIGHTLOOP_TILE_PASS))
-#endif 
-
 DecalSurfaceData GetDecalSurfaceData(PositionInputs posInput, inout float alpha)
 {
     int mask = 0;
@@ -213,7 +213,7 @@ DecalSurfaceData GetDecalSurfaceData(PositionInputs posInput, inout float alpha)
 
     #ifdef LIGHTLOOP_TILE_PASS
     GetCountAndStart(posInput, LIGHTCATEGORY_DECAL, decalStart, decalCount);
-#if SCALARIZE_CLUSTER
+#if SCALARIZE_LIGHT_LOOP
 // Fast path is when we all pixels in a wave are accessing same tile or cluster.
     uint decalStartLane0 = WaveReadFirstLane(decalStart);
     bool fastPath = all(Ballot(decalStart == decalStartLane0) == ~0);
@@ -244,10 +244,12 @@ DecalSurfaceData GetDecalSurfaceData(PositionInputs posInput, inout float alpha)
         v_decalIdx = decalStart + v_decalListIdx;
 #endif
 
-#if SCALARIZE_CLUSTER
-        uint s_decalIdx = min(WaveMinUint(v_decalIdx), max(_DecalCount - 1, 0));
-#else
         uint s_decalIdx = v_decalIdx;
+#if SCALARIZE_LIGHT_LOOP
+        if (!fastPath)
+        {
+            s_decalIdx = min(WaveMinUint(v_decalIdx), max(_DecalCount - 1, 0));
+        }
 #endif
 
         DecalData s_decalData = FetchDecal(s_decalIdx);

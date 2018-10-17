@@ -1,5 +1,7 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Macros.hlsl"
 
+#define SCALARIZE_LIGHT_LOOP (defined(SUPPORTS_WAVE_INTRINSICS) && defined(LIGHTLOOP_TILE_PASS))
+
 //-----------------------------------------------------------------------------
 // LightLoop
 // ----------------------------------------------------------------------------
@@ -63,8 +65,6 @@ bool IsMatchingLightLayer(uint lightLayers, uint renderingLayers)
 {
     return (lightLayers & renderingLayers) != 0;
 }
-
-#define SCALARIZE_CLUSTER (1 && defined(SUPPORTS_WAVE_INTRINSICS) && defined(LIGHTLOOP_TILE_PASS))
 
 void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BSDFData bsdfData, BuiltinData builtinData, uint featureFlags,
                 out float3 diffuseLighting,
@@ -142,7 +142,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         bool fastPath = false;
     #ifdef LIGHTLOOP_TILE_PASS
         GetCountAndStart(posInput, LIGHTCATEGORY_PUNCTUAL, lightStart, lightCount);
-#if SCALARIZE_CLUSTER
+#if SCALARIZE_LIGHT_LOOP
         // Fast path is when we all pixels in a wave are accessing same tile or cluster.
         uint lightStartLane0 = WaveReadFirstLane(lightStart);
         fastPath = all(Ballot(lightStart == lightStartLane0) == ~0);
@@ -152,8 +152,8 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         lightStart = 0;
     #endif
 
-#if (SCALARIZE_CLUSTER)
-        UNITY_BRANCH if (fastPath)
+#if SCALARIZE_LIGHT_LOOP
+        if (fastPath)
         {
             lightStart = lightStartLane0;
         }
@@ -168,11 +168,14 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         while (v_lightListIdx < lightCount)
         {
             v_lightIdx = FetchIndex(lightStart, v_lightListIdx);
-            #if (SCALARIZE_CLUSTER)
-            uint s_lightIdx = min(WaveMinUint(v_lightIdx), max(_PunctualLightCount-1, 0));
-            #else
             uint s_lightIdx = v_lightIdx;
-            #endif
+#if SCALARIZE_LIGHT_LOOP
+            if (!fastPath)
+            {
+                // If we are not in fast path, v_lightIdx is not scalar 
+                s_lightIdx = min(WaveMinUint(v_lightIdx), max(_PunctualLightCount - 1, 0));
+            }
+#endif
             LightData s_lightData = FetchLight(s_lightIdx);    
 
             // If current scalar and vector light index match, we process the light
@@ -196,7 +199,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         bool fastPath = false;
     #ifdef LIGHTLOOP_TILE_PASS
         GetCountAndStart(posInput, LIGHTCATEGORY_AREA, lightStart, lightCount);
-#if SCALARIZE_CLUSTER
+#if SCALARIZE_LIGHT_LOOP
         // Fast path is when we all pixels in a wave is accessing same tile or cluster.
         uint lightStartLane0 = WaveReadFirstLane(lightStart);
         fastPath = all(Ballot(lightStart == lightStartLane0) == ~0);
@@ -214,7 +217,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         if (lightCount > 0)
         {
             i = 0;
-#if SCALARIZE_CLUSTER
+#if SCALARIZE_LIGHT_LOOP
             if (fastPath)
             {
                 lightStart = lightStartLane0;
@@ -272,7 +275,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         // Fetch first env light to provide the scene proxy for screen space computation
 #ifdef LIGHTLOOP_TILE_PASS
         GetCountAndStart(posInput, LIGHTCATEGORY_ENV, envLightStart, envLightCount);
-    #if SCALARIZE_CLUSTER
+    #if SCALARIZE_LIGHT_LOOP
         // Fast path is when we all pixels in a wave is accessing same tile or cluster.
         uint envStartFirstLane = WaveReadFirstLane(envLightStart);
         fastPath = all(Ballot(envLightStart == envStartFirstLane) == ~0);
@@ -317,8 +320,8 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         {
             context.sampleReflection = SINGLE_PASS_CONTEXT_SAMPLE_REFLECTION_PROBES;
 
-#if SCALARIZE_CLUSTER
-            UNITY_BRANCH if (fastPath)
+#if SCALARIZE_LIGHT_LOOP
+            if (fastPath)
             {
                 envLightStart = envStartFirstLane;
             }
@@ -329,11 +332,16 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
             while (v_envLightListIdx < envLightCount)
             {
                 v_envLightIdx = FetchIndex(envLightStart, v_envLightListIdx);
-                #if SCALARIZE_CLUSTER
-                uint s_envLightIdx = min(WaveMinUint(v_envLightIdx), max(_EnvLightCount - 1, 0));
-                #else
                 uint s_envLightIdx = v_envLightIdx;
-                #endif
+
+#if SCALARIZE_LIGHT_LOOP
+                if (!fastPath)
+                {
+                    // If we are not in fast path, s_envLightIdx is not scalar 
+                    s_envLightIdx = min(WaveMinUint(v_envLightIdx), max(_EnvLightCount - 1, 0));
+                }
+#endif
+
                 EnvLightData s_envLightData = FetchEnvLight(s_envLightIdx);    // Scalar load.
 
                 if (s_envLightIdx >= v_envLightIdx)
