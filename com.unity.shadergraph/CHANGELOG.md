@@ -4,7 +4,19 @@ All notable changes to this package are documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [4.1.0-preview] - 2018-09-28
+## [4.1.0-preview] - 2018-10-17
+
+### Added
+
+### Changed
+- The `Light Probe` node is now a `Baked GI` node. When you use LWRP with lightmaps, this node now returns the correct lightmap data. This node is supported in HDRP.
+- `Reflection Probe` nodes now only work with LWRP. This solves compilation errors in HDRP.
+- `Ambient` nodes now only work with LWRP. This solves compilation errors in HDRP.
+- `Fog` nodes now only work with LWRP. This solves compilation errors in HDRP.
+- In HDRP, the `Position` port for the `Object` node now returns the absolute world position.
+- The `Baked GI`, `Reflection Probe`, and `Ambient` nodes are now in the `Input/Lighting` category.
+
+### Fixed
 
 ## [4.0.0-preview] - 2018-09-28
 ### Added
@@ -51,12 +63,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - You can now connect Sub Graphs to vertex shader slots. If a node in the Sub Graph specifies a shader stage, that specific Sub Graph node is locked to that stage. When an instance of a Sub Graph node is connected to a slot that specifies a shader stage, all slots on that instance are locked to the stage.
 - Separated material options and tags.
 - Master node settings are now recreated when a topological modification occurs.
-- The `Light Probe` node is now a `Baked GI` node. When you use LWRP with lightmaps, this node now returns the correct lightmap data. This node is supported in HDRP.
-- `Reflection Probe` nodes now only work with LWRP. This solves compilation errors in HDRP.
-- `Ambient` nodes now only work with LWRP. This solves compilation errors in HDRP.
-- `Fog` nodes now only work with LWRP. This solves compilation errors in HDRP.
-- In HDRP, the `Position` port for the `Object` node now returns the absolute world position.
-- The `Baked GI`, `Reflection Probe`, and `Ambient` nodes are now in the `Input/Lighting` category.
 
 ### Fixed
 - Vector 1 nodes now evaluate correctly. ([#334](https://github.com/Unity-Technologies/ShaderGraph/issues/334) and [#337](https://github.com/Unity-Technologies/ShaderGraph/issues/337))
