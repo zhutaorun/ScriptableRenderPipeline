@@ -190,6 +190,10 @@ void EvalDecalMask(PositionInputs posInput, float3 positionRWSDdx, float3 positi
     }
 }
 
+#ifndef SCALARIZE_CLUSTER
+#define SCALARIZE_CLUSTER (1 && defined(SUPPORTS_WAVE_INTRINSICS) && defined(LIGHTLOOP_TILE_PASS))
+#endif 
+
 DecalSurfaceData GetDecalSurfaceData(PositionInputs posInput, inout float alpha)
 {
     int mask = 0;
@@ -209,11 +213,10 @@ DecalSurfaceData GetDecalSurfaceData(PositionInputs posInput, inout float alpha)
 
     #ifdef LIGHTLOOP_TILE_PASS
     GetCountAndStart(posInput, LIGHTCATEGORY_DECAL, decalStart, decalCount);
-    bool fastPath = false;
 #if SCALARIZE_CLUSTER
 // Fast path is when we all pixels in a wave are accessing same tile or cluster.
     uint decalStartLane0 = WaveReadFirstLane(decalStart);
-    fastPath = all(Ballot(decalStart == decalStartLane0) == ~0);
+    bool fastPath = all(Ballot(decalStart == decalStartLane0) == ~0);
 #endif
     #else
     decalCount = _DecalCount;
@@ -226,46 +229,35 @@ DecalSurfaceData GetDecalSurfaceData(PositionInputs posInput, inout float alpha)
     float3 positionRWSDdx = ddx(positionRWS);
     float3 positionRWSDdy = ddy(positionRWS);
 
-#if SCALARIZE_CLUSTER
-    if (fastPath)
+    // Scalarized loop. All decals that are in a tile/cluster touched by any pixel in the wave are loaded (scalar load), only the ones relevant to current thread/pixel are processed.
+    // For clarity, the following code will follow the convention: variables starting with s_ are wave uniform (meant for scalar register),
+    // v_ are variables that might have different value for each thread in the wave (meant for vector registers).
+    // This will perform more loads than it is supposed to, however, the benefits should offset the downside, especially given that decal data accessed should be largely coherent
+    // Note that the above is valid only if wave intriniscs are supported.
+    uint v_decalListIdx = 0;
+    uint v_decalIdx = decalStart;
+    while (v_decalListIdx < decalCount)
     {
-        decalStart = decalStartLane0;
-
+#ifdef LIGHTLOOP_TILE_PASS
+        v_decalIdx = FetchIndex(decalStart, v_decalListIdx);
+#else        
+        v_decalIdx = decalStart + v_decalListIdx;
 #endif
 
-        for (uint i = 0; i < decalCount; i++)
-        {
-            DecalData decalData = FetchDecal(decalStart, i);
-            EvalDecalMask(posInput, positionRWSDdx, positionRWSDdy, decalData, DBuffer0, DBuffer1, DBuffer2, DBuffer3, mask, alpha);
-
-        }
 #if SCALARIZE_CLUSTER
-    }
-    else
-    {
-        // Scalarized loop. All decals that are in a tile/cluster touched by any pixel in the wave are loaded (scalar load), only the ones relevant to current thread/pixel are processed.
-        // For clarity, the following code will follow the convention: variables starting with s_ are wave uniform (meant for scalar register),
-        // v_ are variables that might have different value for each thread in the wave (meant for vector registers).
-        // This will perform more loads than it is supposed to, however, the benefits should offset the downside, especially given that decal data accessed should be largely coherent
-        uint v_decalListIdx = 0;
-        uint v_decalIdx = decalStart;
-        while (v_decalListIdx < lightCount)
-        {
-            v_decalIdx = FetchIndex(decalStart, v_decalListIdx);
-            uint s_decalIdx = min(WaveMinUint(v_decalIdx), max(_DecalCount - 1, 0));
-
-            DecalData s_decalData = FetchDecal(s_decalIdx);    // Scalar load.
-
-            if (s_decalIdx >= v_decalIdx)
-            {
-                v_decalListIdx++;
-                EvalDecalMask(posInput, positionRWSDdx, positionRWSDdy, s_decalData, DBuffer0, DBuffer1, DBuffer2, DBuffer3, mask, alpha);
-            }
-        }
-
-    }
+        uint s_decalIdx = min(WaveMinUint(v_decalIdx), max(_DecalCount - 1, 0));
+#else
+        uint s_decalIdx = v_decalIdx;
 #endif
 
+        DecalData s_decalData = FetchDecal(s_decalIdx);
+
+        if (s_decalIdx >= v_decalIdx)
+        {
+            v_decalListIdx++;
+            EvalDecalMask(posInput, positionRWSDdx, positionRWSDdy, s_decalData, DBuffer0, DBuffer1, DBuffer2, DBuffer3, mask, alpha);
+        }
+    }
 #else
     mask = UnpackByte(LOAD_TEXTURE2D(_DecalHTileTexture, posInput.positionSS / 8).r);
 #endif
