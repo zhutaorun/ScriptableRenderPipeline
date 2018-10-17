@@ -17,7 +17,7 @@ namespace UnityEngine.Experimental.Rendering
         public enum StereoRenderingMode
         {
             MultiPass = 0,
-            SinglePassDoubleWide,
+            SinglePass,
             SinglePassInstanced,
             SinglePassMultiView
         };
@@ -98,22 +98,9 @@ namespace UnityEngine.Experimental.Rendering
             get
             {
                 if (!enabled)
-                    return StereoRenderingMode.SinglePassDoubleWide;
+                    return StereoRenderingMode.SinglePass;
 #if UNITY_2018_3_OR_NEWER
-                XRSettings.StereoRenderingMode stereoRenderMode = XRSettings.stereoRenderingMode;
-                switch (stereoRenderMode)
-                {
-                    case XRSettings.StereoRenderingMode.MultiPass:
-                        return StereoRenderingMode.MultiPass;
-                    case XRSettings.StereoRenderingMode.SinglePass:
-                        return StereoRenderingMode.SinglePassDoubleWide;
-                    case XRSettings.StereoRenderingMode.SinglePassInstanced:
-                        return StereoRenderingMode.SinglePassInstanced;
-                    case XRSettings.StereoRenderingMode.SinglePassMultiview:
-                        return StereoRenderingMode.SinglePassMultiView;
-                    default:
-                        return StereoRenderingMode.SinglePassDoubleWide;
-                }
+                return (StereoRenderingMode)XRSettings.stereoRenderingMode;
 #else // Reverse engineer it
                 if (!enabled)
                     return StereoRenderingMode.SinglePassMultiView;
@@ -130,7 +117,7 @@ namespace UnityEngine.Experimental.Rendering
         }
         public static uint GetPixelOffset(uint eye)
         {
-            if (!enabled || stereoRenderingMode != StereoRenderingMode.SinglePassDoubleWide)
+            if (!enabled || stereoRenderingMode != StereoRenderingMode.SinglePass)
                 return 0;
             return (uint)(Mathf.CeilToInt((eye * XRSettings.eyeTextureWidth) / 2));
         }
