@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added an option to clear the shadow atlases in the debug menu
 - Added a color visualization of the shadow atlas rescale in debug mode
 - Added support for disabling SSR on materials
+- Added custom specular occlusion mode to Lit Shader Graph Master node.
 
 ### Fixed
 - Fixed a normal bias issue with Stacklit (Was causing light leaking)
