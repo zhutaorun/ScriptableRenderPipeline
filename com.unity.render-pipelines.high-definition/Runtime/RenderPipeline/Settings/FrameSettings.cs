@@ -311,16 +311,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 enableForwardRenderingOnly = true;
 
                 // TODO: The work will be implemented piecemeal to support all passes
-                //enableMotionVectors = !enableMSAA;
                 enableMotionVectors = enablePostprocess && !enableMSAA;
                 enableDecals = false;
                 enableDistortion = false;
-                //enablePostprocess = false;
                 enableRoughRefraction = false;
                 enableSSAO = false;
                 enableSSR = false;
                 enableSubsurfaceScattering = false;
-                enableTransparentObjects = false;
             }
         }
 
