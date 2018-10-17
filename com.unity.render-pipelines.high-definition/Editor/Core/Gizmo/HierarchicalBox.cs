@@ -5,8 +5,8 @@ using System.Reflection;
 namespace UnityEditor.Experimental.Rendering
 {
     /// <summary>
-    /// Provide a gizmo representing a box where all face can be moved independently.
-    /// Also add a contained sub gizmo box if contained is used at creation.
+    /// Provide a gizmo/handle representing a box where all face can be moved independently.
+    /// Also add a contained sub gizmo/handle box if contained is used at creation.
     /// </summary>
     /// <example>
     /// <code>
@@ -37,15 +37,29 @@ namespace UnityEditor.Experimental.Rendering
     ///         box.size = comp.transform.scale;
     ///         box.DrawHull(gizmoType == GizmoType.Selected);
     ///         
-    ///         box.center = comp.innerposition;
-    ///         box.size = comp.innerScale;
-    ///         box.DrawHull(gizmoType == GizmoType.Selected);
+    ///         containedBox.center = comp.innerposition;
+    ///         containedBox.size = comp.innerScale;
+    ///         containedBox.DrawHull(gizmoType == GizmoType.Selected);
     ///     }
     ///
     ///     void OnSceneGUI()
     ///     {
+    ///         EditorGUI.BeginChangeCheck();
+    ///
+    ///         //container box must be also set for contained box for clamping
+    ///         box.center = comp.transform.position;
+    ///         box.size = comp.transform.scale;
     ///         box.DrawHandle();
+    ///         
     ///         containedBox.DrawHandle();
+    ///         containedBox.center = comp.innerposition;
+    ///         containedBox.size = comp.innerScale;
+    ///         
+    ///         if(EditorGUI.EndChangeCheck())
+    ///         {
+    ///             comp.innerposition = containedBox.center;
+    ///             comp.innersize = containedBox.size;
+    ///         }
     ///     }
     /// }
     /// </code>
@@ -59,7 +73,9 @@ namespace UnityEditor.Experimental.Rendering
         readonly Mesh m_Face;
         readonly Material m_Material;
         readonly Color[] m_PolychromeHandleColor;
-        readonly Color m_MonochromeHandleColor;
+        Color m_MonochromeHandleColor;
+        Color m_WireframeColor;
+        Color m_WireframeColorBehind;
 
         readonly HierarchicalBox m_container;
 
@@ -67,7 +83,7 @@ namespace UnityEditor.Experimental.Rendering
 
         /// <summary>
         /// Allow to switch between the mode where all axis are controlled together or not
-        /// Note that if there is several handles, they will use the polychrom colors.
+        /// Note that if there is several handles, they will use the polychrome colors.
         /// </summary>
         public bool monoHandle { get { return m_MonoHandle; } set { m_MonoHandle = value; } }
 
@@ -78,6 +94,22 @@ namespace UnityEditor.Experimental.Rendering
 
         /// <summary>The size of the box in Handle.matrix space.</summary>
         public Vector3 size { get; set; }
+
+        /// <summary>The baseColor used to fill hull. All other colors are deduced from it except specific handle colors.</summary>
+        public Color baseColor
+        {
+            get { return m_Material.color; }
+            set
+            {
+                m_Material.color = value;
+                value.a = 1f;
+                m_MonochromeHandleColor = value;
+                value.a = 0.7f;
+                m_WireframeColor = value;
+                value.a = 0.2f;
+                m_WireframeColorBehind = value;
+            }
+        }
 
         //Note: Handles.Slider not allow to use a specific ControlID.
         //Thus Slider1D is used (with reflection)
@@ -109,30 +141,24 @@ namespace UnityEditor.Experimental.Rendering
 
 
         /// <summary>Constructor. Used to setup colors and also the container if any.</summary>
-        /// <param name="faceColor">The color of each face of the box.</param>
+        /// <param name="baseColor">The color of each face of the box. Other colors are deduced from it.</param>
         /// <param name="polychromeHandleColors">The color of handle when they are separated. When they are grouped, they use a variation of the faceColor instead.</param>
         /// <param name="container">The HierarchicalBox containing this box. If null, the box will not be limited in size.</param>
-        public HierarchicalBox(Color faceColor, Color[] polychromeHandleColors = null, HierarchicalBox container = null)
+        public HierarchicalBox(Color baseColor, Color[] polychromeHandleColors = null, HierarchicalBox container = null)
         {
             m_container = container;
             m_Material = new Material(Shader.Find("Hidden/UnlitTransparentColored"));
-            m_Material.color = faceColor.gamma;
+            this.baseColor = baseColor;
             m_Face = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
-            if(polychromeHandleColors != null && polychromeHandleColors.Length != 6)
+            if (polychromeHandleColors != null && polychromeHandleColors.Length != 6)
             {
                 throw new System.ArgumentException("polychromeHandleColors must be null or have a size of 6.");
             }
             m_PolychromeHandleColor = polychromeHandleColors ?? new Color[]
             {
-                new Color(1f, 0f, 0f, 1f),
-                new Color(0f, 1f, 0f, 1f),
-                new Color(0f, 0f, 1f, 1f),
-                new Color(1f, 0f, 0f, 1f),
-                new Color(0f, 1f, 0f, 1f),
-                new Color(0f, 0f, 1f, 1f)
+                Handles.xAxisColor, Handles.yAxisColor, Handles.zAxisColor,
+                Handles.xAxisColor, Handles.yAxisColor, Handles.zAxisColor
             };
-            faceColor.a = 0.7f;
-            m_MonochromeHandleColor = faceColor;
         }
 
         Color GetHandleColor(NamedFace name)
@@ -141,15 +167,16 @@ namespace UnityEditor.Experimental.Rendering
         }
 
         /// <summary>Draw the hull which means the boxes without the handles</summary>
-        public void DrawHull(bool selected)
+        public void DrawHull(bool filled)
         {
-            if (selected)
+            Color previousColor = Handles.color;
+            if (filled)
             {
                 Vector3 xSize = new Vector3(size.z, size.y, 1f);
                 m_Material.SetPass(0);
                 Graphics.DrawMeshNow(m_Face, Handles.matrix * Matrix4x4.TRS(center + size.x * .5f * Vector3.left, Quaternion.FromToRotation(Vector3.forward, Vector3.left), xSize));
                 Graphics.DrawMeshNow(m_Face, Handles.matrix * Matrix4x4.TRS(center + size.x * .5f * Vector3.right, Quaternion.FromToRotation(Vector3.forward, Vector3.right), xSize));
-                
+
                 Vector3 ySize = new Vector3(size.x, size.z, 1f);
                 Graphics.DrawMeshNow(m_Face, Handles.matrix * Matrix4x4.TRS(center + size.y * .5f * Vector3.up, Quaternion.FromToRotation(Vector3.forward, Vector3.up), ySize));
                 Graphics.DrawMeshNow(m_Face, Handles.matrix * Matrix4x4.TRS(center + size.y * .5f * Vector3.down, Quaternion.FromToRotation(Vector3.forward, Vector3.down), ySize));
@@ -169,31 +196,34 @@ namespace UnityEditor.Experimental.Rendering
                     yRecal.y = 0;
                     zRecal.z = 0;
 
-                    Color previousColor = Handles.color;
-                    Handles.color = m_container.GetHandleColor(NamedFace.Left);
-                    Debug.Log(Handles.color);
+                    Handles.color = GetHandleColor(NamedFace.Left);
                     Handles.DrawLine(m_container.center + xRecal + m_container.size.x * .5f * Vector3.left, center + size.x * .5f * Vector3.left);
 
-                    Handles.color = m_container.GetHandleColor(NamedFace.Right);
+                    Handles.color = GetHandleColor(NamedFace.Right);
                     Handles.DrawLine(m_container.center + xRecal + m_container.size.x * .5f * Vector3.right, center + size.x * .5f * Vector3.right);
 
-                    Handles.color = m_container.GetHandleColor(NamedFace.Top);
+                    Handles.color = GetHandleColor(NamedFace.Top);
                     Handles.DrawLine(m_container.center + yRecal + m_container.size.y * .5f * Vector3.up, center + size.y * .5f * Vector3.up);
 
-                    Handles.color = m_container.GetHandleColor(NamedFace.Bottom);
+                    Handles.color = GetHandleColor(NamedFace.Bottom);
                     Handles.DrawLine(m_container.center + yRecal + m_container.size.y * .5f * Vector3.down, center + size.y * .5f * Vector3.down);
 
-                    Handles.color = m_container.GetHandleColor(NamedFace.Front);
+                    Handles.color = GetHandleColor(NamedFace.Front);
                     Handles.DrawLine(m_container.center + zRecal + m_container.size.z * .5f * Vector3.forward, center + size.z * .5f * Vector3.forward);
 
-                    Handles.color = m_container.GetHandleColor(NamedFace.Back);
+                    Handles.color = GetHandleColor(NamedFace.Back);
                     Handles.DrawLine(m_container.center + zRecal + m_container.size.z * .5f * Vector3.back, center + size.z * .5f * Vector3.back);
-
-                    Handles.color = previousColor;
                 }
             }
 
+            Handles.color = m_WireframeColor;
+            Handles.zTest = UnityEngine.Rendering.CompareFunction.LessEqual;
             Handles.DrawWireCube(center, size);
+            Handles.color = m_WireframeColorBehind;
+            Handles.zTest = UnityEngine.Rendering.CompareFunction.Greater;
+            Handles.DrawWireCube(center, size);
+            Handles.zTest = UnityEngine.Rendering.CompareFunction.Always;
+            Handles.color = previousColor;
         }
 
         /// <summary>Draw the manipulable handles</summary>
@@ -272,12 +302,26 @@ namespace UnityEditor.Experimental.Rendering
                     }
 
                     Vector3 tempSize = size - Vector3.one * decal;
+
+                    //ensure that the box face are still facing outside
                     for (int axis = 0; axis < 3; ++axis)
                     {
                         if (tempSize[axis] < 0)
                         {
                             decal += tempSize[axis];
                             tempSize = size - Vector3.one * decal;
+                        }
+                    }
+
+                    //ensure containedBox do not exit container
+                    if (m_container != null)
+                    {
+                        for (int axis = 0; axis < 3; ++axis)
+                        {
+                            if (tempSize[axis] > m_container.size[axis])
+                            {
+                                tempSize[axis] = m_container.size[axis];
+                            }
                         }
                     }
 
@@ -300,6 +344,24 @@ namespace UnityEditor.Experimental.Rendering
                             else
                             {
                                 min[axis] = max[axis];
+                            }
+                        }
+                    }
+
+                    //center = (max + min) * .5f;
+
+                    //ensure containedBox do not exit container
+                    if (m_container != null)
+                    {
+                        for (int axis = 0; axis < 3; ++axis)
+                        {
+                            if (min[axis] < m_container.center[axis] - m_container.size[axis] * 0.5f)
+                            {
+                                min[axis] = m_container.center[axis] - m_container.size[axis] * 0.5f;
+                            }
+                            if (max[axis] > m_container.center[axis] + m_container.size[axis] * 0.5f)
+                            {
+                                max[axis] = m_container.center[axis] + m_container.size[axis] * 0.5f;
                             }
                         }
                     }
