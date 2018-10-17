@@ -519,7 +519,7 @@ namespace UnityEngine.Experimental.Rendering
             Debug.LogError(msg);
 
 #if UNITY_EDITOR
-            foreach (UnityEditor.SceneView sv in Resources.FindObjectsOfTypeAll(typeof(UnityEditor.SceneView)))
+            foreach (UnityEditor.SceneView sv in UnityEditor.SceneView.sceneViews)
                 sv.ShowNotification(new GUIContent(msg));
 #endif
         }
@@ -541,7 +541,7 @@ namespace UnityEngine.Experimental.Rendering
         {
             bool animateMaterials = true;
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
             animateMaterials = Application.isPlaying;
 
             if (camera.cameraType == CameraType.SceneView)
@@ -549,7 +549,7 @@ namespace UnityEngine.Experimental.Rendering
                 animateMaterials = false;
 
                 // Determine whether the "Animated Materials" checkbox is checked for the current view.
-                foreach (UnityEditor.SceneView sv in Resources.FindObjectsOfTypeAll(typeof(UnityEditor.SceneView)))
+                foreach (UnityEditor.SceneView sv in UnityEditor.SceneView.sceneViews)
                 {
                     if (sv.camera == camera && sv.sceneViewState.showMaterialUpdate)
                     {
@@ -562,7 +562,7 @@ namespace UnityEngine.Experimental.Rendering
             {
                 animateMaterials = false;
 
-                // Determine whether the "Animated Materials" checkbox is checked for the current view.
+               /* // Determine whether the "Animated Materials" checkbox is checked for the current view.
                 foreach (UnityEditor.MaterialEditor med in Resources.FindObjectsOfTypeAll(typeof(UnityEditor.MaterialEditor)))
                 {
                     // Warning: currently, there's no way to determine whether a given camera corresponds to this MaterialEditor.
@@ -572,7 +572,7 @@ namespace UnityEngine.Experimental.Rendering
                         animateMaterials = true;
                         break;
                     }
-                }
+                }*/
             }
 
             // TODO: how to handle reflection views? We don't know the parent window they are being rendered into,
@@ -590,7 +590,7 @@ namespace UnityEngine.Experimental.Rendering
             // which simply amounts to a recursive call, and then the story repeats itself.
             //
             // TLDR: we need to know the caller and its status/properties to make decisions.
-        #endif
+#endif
 
             return animateMaterials;
         }
@@ -605,7 +605,7 @@ namespace UnityEngine.Experimental.Rendering
                 fogEnable = false;
 
                 // Determine whether the "Animated Materials" checkbox is checked for the current view.
-                foreach (UnityEditor.SceneView sv in Resources.FindObjectsOfTypeAll(typeof(UnityEditor.SceneView)))
+                foreach (UnityEditor.SceneView sv in UnityEditor.SceneView.sceneViews)
                 {
                     if (sv.camera == camera && sv.sceneViewState.showFog)
                     {

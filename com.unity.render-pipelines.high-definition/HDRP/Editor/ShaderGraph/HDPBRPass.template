@@ -22,6 +22,8 @@ Pass
     #pragma target 4.5
     #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
     //#pragma enable_d3d11_debug_symbols
+    //enable GPU instancing support
+    #pragma multi_compile_instancing
 
     //-------------------------------------------------------------------------------------
     // Variant Definitions (active field translations to HDRP defines)
@@ -204,6 +206,8 @@ ${Graph}
         {
             FragInputs output;
             ZERO_INITIALIZE(FragInputs, output);
+            
+            UNITY_SETUP_INSTANCE_ID(input);
 
             // Init to some default value to make the computer quiet (else it output 'divide by zero' warning even if value is not used).
             // TODO: this is a really poor workaround, but the variable is used in a bunch of places

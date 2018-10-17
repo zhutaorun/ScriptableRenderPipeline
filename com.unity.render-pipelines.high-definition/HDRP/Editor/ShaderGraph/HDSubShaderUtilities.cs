@@ -19,6 +19,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             [Semantic("TEXCOORD2")][Optional]  Vector2 uv2;
             [Semantic("TEXCOORD3")][Optional]  Vector2 uv3;
             [Semantic("COLOR")][Optional]      Vector4 color;
+            [Semantic("SV_InstanceID")][OverrideType("uint")][PreprocessorIf("defined(UNITY_INSTANCING_ENABLED)")] uint instanceID;
         };
 
         struct VaryingsMeshToPS
@@ -32,6 +33,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             [Optional]                          Vector2 texCoord2;
             [Optional]                          Vector2 texCoord3;
             [Optional]                          Vector4 color;
+            [Semantic("SV_InstanceID")][OverrideType("uint")][PreprocessorIf("defined(UNITY_INSTANCING_ENABLED)")] uint instanceID;
             [Optional][Semantic("FRONT_FACE_SEMANTIC")][OverrideType("FRONT_FACE_TYPE")][PreprocessorIf("SHADER_STAGE_FRAGMENT")]
             bool cullFace;
 
@@ -45,6 +47,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 new Dependency("VaryingsMeshToPS.texCoord2",        "VaryingsMeshToDS.texCoord2"),
                 new Dependency("VaryingsMeshToPS.texCoord3",        "VaryingsMeshToDS.texCoord3"),
                 new Dependency("VaryingsMeshToPS.color",            "VaryingsMeshToDS.color"),
+                new Dependency("VaryingsMeshToPS.instanceID",       "VaryingsMeshToDS.instanceID")
             };
 
             public static Dependency[] standardDependencies = new Dependency[]
@@ -57,6 +60,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 new Dependency("VaryingsMeshToPS.texCoord2",        "AttributesMesh.uv2"),
                 new Dependency("VaryingsMeshToPS.texCoord3",        "AttributesMesh.uv3"),
                 new Dependency("VaryingsMeshToPS.color",            "AttributesMesh.color"),
+                new Dependency("VaryingsMeshToPS.instanceID",       "AttributesMesh.instanceID")
             };
         };
 
@@ -70,6 +74,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             [Optional]      Vector2 texCoord2;
             [Optional]      Vector2 texCoord3;
             [Optional]      Vector4 color;
+            [Semantic("SV_InstanceID")][OverrideType("uint")][PreprocessorIf("defined(UNITY_INSTANCING_ENABLED)")] uint instanceID;
 
             public static Dependency[] tessellationDependencies = new Dependency[]
             {
@@ -79,6 +84,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 new Dependency("VaryingsMeshToDS.texCoord2",        "VaryingsMeshToPS.texCoord2"),
                 new Dependency("VaryingsMeshToDS.texCoord3",        "VaryingsMeshToPS.texCoord3"),
                 new Dependency("VaryingsMeshToDS.color",            "VaryingsMeshToPS.color"),
+                new Dependency("VaryingsMeshToDS.instanceID",       "VaryingsMeshToPS.instanceID"),
             };
         };
 
