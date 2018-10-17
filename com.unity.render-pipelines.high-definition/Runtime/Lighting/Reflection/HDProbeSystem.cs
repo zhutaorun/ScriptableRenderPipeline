@@ -142,9 +142,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         List<HDProbe> m_BakedProbes = new List<HDProbe>();
         List<HDProbe> m_RealtimeViewDependentProbes = new List<HDProbe>();
         List<HDProbe> m_RealtimeViewIndependentProbes = new List<HDProbe>();
-        int m_RealtimePlanarProbeCount = 0;
-        PlanarReflectionProbe[] m_RealtimePlanarProbes = new PlanarReflectionProbe[32];
-        BoundingSphere[] m_RealtimePlanarProbeBounds = new BoundingSphere[32];
+        int m_PlanarProbeCount = 0;
+        PlanarReflectionProbe[] m_PlanarProbes = new PlanarReflectionProbe[32];
+        BoundingSphere[] m_PlanarProbeBounds = new BoundingSphere[32];
 
         public IList<HDProbe> bakedProbes
         { get { RemoveDestroyedProbes(m_BakedProbes); return m_BakedProbes; } }
@@ -162,25 +162,33 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     m_BakedProbes.Add(probe);
                     break;
                 case ProbeSettings.Mode.Realtime:
-                    switch (probe.settings.type)
+                    switch (settings.type)
                     {
                         case ProbeSettings.ProbeType.PlanarProbe:
                             m_RealtimeViewDependentProbes.Add(probe);
-                            // Grow the arrays
-                            if (m_RealtimePlanarProbeCount == m_RealtimePlanarProbes.Length)
-                            {
-                                Array.Resize(ref m_RealtimePlanarProbes, m_RealtimePlanarProbes.Length * 2);
-                                Array.Resize(ref m_RealtimePlanarProbeBounds, m_RealtimePlanarProbeBounds.Length * 2);
-                            }
-                            m_RealtimePlanarProbes[m_RealtimePlanarProbeCount] = (PlanarReflectionProbe)probe;
-                            m_RealtimePlanarProbeBounds[m_RealtimePlanarProbeCount] = ((PlanarReflectionProbe)probe).boundingSphere;
-                            ++m_RealtimePlanarProbeCount;
                             break;
                         case ProbeSettings.ProbeType.ReflectionProbe:
                             m_RealtimeViewIndependentProbes.Add(probe);
                             break;
                     }
                     break;
+            }
+
+            switch (settings.type)
+            {
+                case ProbeSettings.ProbeType.PlanarProbe:
+                    {
+                        // Grow the arrays
+                        if (m_PlanarProbeCount == m_PlanarProbes.Length)
+                        {
+                            Array.Resize(ref m_PlanarProbes, m_PlanarProbes.Length * 2);
+                            Array.Resize(ref m_PlanarProbeBounds, m_PlanarProbeBounds.Length * 2);
+                        }
+                        m_PlanarProbes[m_PlanarProbeCount] = (PlanarReflectionProbe)probe;
+                        m_PlanarProbeBounds[m_PlanarProbeCount] = ((PlanarReflectionProbe)probe).boundingSphere;
+                        ++m_PlanarProbeCount;
+                        break;
+                    }
             }
         }
 
@@ -191,15 +199,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_RealtimeViewIndependentProbes.Remove(probe);
 
             // Remove swap back
-            var index = Array.IndexOf(m_RealtimePlanarProbes, probe);
+            var index = Array.IndexOf(m_PlanarProbes, probe);
             if (index != -1)
             {
-                if (index < m_RealtimePlanarProbeCount)
+                if (index < m_PlanarProbeCount)
                 {
-                    m_RealtimePlanarProbes[index] = m_RealtimePlanarProbes[m_RealtimePlanarProbeCount - 1];
-                    m_RealtimePlanarProbeBounds[index] = m_RealtimePlanarProbeBounds[m_RealtimePlanarProbeCount - 1];
+                    m_PlanarProbes[index] = m_PlanarProbes[m_PlanarProbeCount - 1];
+                    m_PlanarProbeBounds[index] = m_PlanarProbeBounds[m_PlanarProbeCount - 1];
                 }
-                --m_RealtimePlanarProbeCount;
+                --m_PlanarProbeCount;
             }
         }
 
@@ -207,10 +215,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             var cullingGroup = new CullingGroup();
             cullingGroup.targetCamera = camera;
-            cullingGroup.SetBoundingSpheres(m_RealtimePlanarProbeBounds);
-            cullingGroup.SetBoundingSphereCount(m_RealtimePlanarProbeCount);
+            cullingGroup.SetBoundingSpheres(m_PlanarProbeBounds);
+            cullingGroup.SetBoundingSphereCount(m_PlanarProbeCount);
 
-            results.PrepareCull(cullingGroup, m_RealtimePlanarProbes);
+            results.PrepareCull(cullingGroup, m_PlanarProbes);
         }
 
         void RemoveDestroyedProbes(List<HDProbe> probes)

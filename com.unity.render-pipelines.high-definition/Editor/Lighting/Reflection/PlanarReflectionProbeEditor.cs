@@ -195,7 +195,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         };
         ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.overrideableAdvancedSettings => new ProbeSettingsOverride();
-        Type HDProbeUI.IProbeUISettingsProvider.customTextureType => typeof(Cubemap);
+        Type HDProbeUI.IProbeUISettingsProvider.customTextureType => typeof(Texture2D);
         static readonly HDProbeUI.ToolBar[] k_Toolbars = { HDProbeUI.ToolBar.InfluenceShape | HDProbeUI.ToolBar.Blend };
         HDProbeUI.ToolBar[] HDProbeUI.IProbeUISettingsProvider.toolbars => k_Toolbars;
     }
