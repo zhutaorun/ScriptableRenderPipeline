@@ -140,7 +140,7 @@ void FillVolumetricDensityBuffer(PositionInputs posInput, float3 rayOriginWS, fl
         // TODO: the fog value at the center is likely different from the average value across the voxel.
         // Compute the average value.
         float fragmentHeight   = voxelCenterWS.y;
-        float heightMultiplier = ComputeHeightFogMultiplier(fragmentHeight, _HeightFogBaseHeight, _HeightFogExponent);
+        float heightMultiplier = ComputeHeightFogMultiplier(fragmentHeight, _HeightFogBaseHeight, _HeightFogExponents);
 
         // Start by sampling the height fog.
         float3 voxelScattering = _HeightFogBaseScattering * heightMultiplier;
