@@ -35,13 +35,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             serializedLegacyObject.Update();
             base.Update();
 
-            //check if the transform have been rotated
-            if (legacyOffset.vector3Value != ((Component)serializedLegacyObject.targetObject).transform.rotation * probeSettings.influence.offset.vector3Value)
-            {
-                //call the offset setter as it will update legacy reflection probe
-                ((HDAdditionalReflectionData)serializedObject.targetObject).influenceVolume.offset = probeSettings.influence.offset.vector3Value;
-            }
-
             // Set the legacy blend distance to 0 so the legacy culling system use the probe extent
             legacyBlendDistance.floatValue = 0;
         }

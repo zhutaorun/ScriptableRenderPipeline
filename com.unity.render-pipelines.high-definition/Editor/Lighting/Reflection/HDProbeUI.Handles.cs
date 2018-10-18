@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering.HDPipeline;
@@ -6,10 +7,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     partial class HDProbeUI
     {
-
+        static List<HDProbe> s_DrawHandles_Target = new List<HDProbe>();
         internal static void DrawHandles(HDProbeUI s, SerializedHDProbe d, Editor o)
         {
-            HDProbe probe = d.target as HDProbe;
+            var probe = d.target;
             var mat = Matrix4x4.TRS(probe.transform.position, probe.transform.rotation, Vector3.one);
 
             switch (EditMode.editMode)
@@ -23,23 +24,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 case EditInfluenceNormalShape:
                     InfluenceVolumeUI.DrawHandles_EditInfluenceNormal(s.probeSettings.influence, d.probeSettings.influence, o, mat, probe);
                     break;
-                case EditCenter:
+                case EditCapturePosition:
                     {
-                        using (new Handles.DrawingScope(Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one)))
+                        var proxyToWorldMatrix = probe.proxyToWorld;
+                        using (new Handles.DrawingScope(proxyToWorldMatrix))
                         {
-                            Vector3 offsetWorld = probe.transform.position + probe.transform.rotation * probe.influenceVolume.offset;
+                            var capturePosition = d.probeSettings.proxyCapturePositionProxySpace.vector3Value;
                             EditorGUI.BeginChangeCheck();
-                            var newOffsetWorld = Handles.PositionHandle(offsetWorld, probe.transform.rotation);
+                            capturePosition = Handles.PositionHandle(capturePosition, Quaternion.identity);
                             if (EditorGUI.EndChangeCheck())
-                            {
-                                Vector3 newOffset = Quaternion.Inverse(probe.transform.rotation) * (newOffsetWorld - probe.transform.position);
-                                Undo.RecordObjects(new Object[] { probe, probe.transform }, "Translate Influence Position");
-                                d.probeSettings.influence.offset.vector3Value = newOffset;
-                                d.probeSettings.influence.Apply();
-
-                                //call modification to legacy ReflectionProbe
-                                probe.influenceVolume.offset = newOffset;
-                            }
+                                d.probeSettings.proxyCapturePositionProxySpace.vector3Value = capturePosition;
                         }
                         break;
                     }

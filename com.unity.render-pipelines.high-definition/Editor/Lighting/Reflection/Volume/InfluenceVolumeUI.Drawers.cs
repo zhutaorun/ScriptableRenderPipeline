@@ -127,11 +127,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             HDProbeUI.Drawer_ToolBarButton(HDProbeUI.ToolBar.InfluenceShape, o, GUILayout.Width(28f), GUILayout.MinHeight(22f));
             EditorGUILayout.EndHorizontal();
 
-            if (drawOffset)
-            {
-                Drawer_Offset(s, d, o);
-            }
-            
             GUILayout.Space(EditorGUIUtility.standardVerticalSpacing);
             
             EditorGUILayout.BeginHorizontal();
@@ -226,11 +221,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             HDProbeUI.Drawer_ToolBarButton(HDProbeUI.ToolBar.InfluenceShape, o, GUILayout.Width(28f), GUILayout.MinHeight(22f));
             EditorGUILayout.EndHorizontal();
 
-            if(drawOffset)
-            {
-                Drawer_Offset(s, d, o);
-            }
-
             EditorGUILayout.Space();
             var maxBlendDistance = d.sphereRadius.floatValue;
 
@@ -256,22 +246,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 HDProbeUI.Drawer_ToolBarButton(HDProbeUI.ToolBar.NormalBlend, o, GUILayout.ExpandHeight(true), GUILayout.Width(28f), GUILayout.MinHeight(22f), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight + 3));
                 EditorGUILayout.EndHorizontal();
             }
-        }
-
-        static void Drawer_Offset(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o)
-        {
-            EditorGUILayout.BeginHorizontal();
-            EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(d.offset, offsetContent);
-            if(EditorGUI.EndChangeCheck())
-            {
-                //call the offset setter as it will update legacy reflection probe
-                var editor = (IHDProbeEditor)o;
-                InfluenceVolume influenceVolume = editor.GetTarget(editor.target).influenceVolume;
-                influenceVolume.offset = d.offset.vector3Value;
-            }
-            HDProbeUI.Drawer_ToolBarButton(HDProbeUI.ToolBar.CapturePosition, o, GUILayout.Width(28f), GUILayout.MinHeight(22f));
-            EditorGUILayout.EndHorizontal();
         }
     }
 }

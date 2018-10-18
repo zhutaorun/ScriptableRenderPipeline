@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using UnityEditorInternal;
+using UnityEngine;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 
 using static UnityEditor.Experimental.Rendering.HDPipeline.HDEditorUtils;
@@ -34,10 +37,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if ((displayedFields.probe & proxy) != 0)
             {
                 PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyUseInfluenceVolumeAsProxyVolume, d.proxyUseInfluenceVolumeAsProxyVolume, _.GetContent("Use Influence Volume As Proxy Volume"), @override.probe, displayedFields.probe, overridableFields.probe);
-                PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyCapturePositionProxySpace, d.proxyCapturePositionProxySpace, _.GetContent("Capture Position Proxy Space"), @override.probe, displayedFields.probe, overridableFields.probe);
-                PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyCaptureRotationProxySpace, d.proxyCaptureRotationProxySpace, _.GetContent("Capture Rotation Proxy Space"), @override.probe, displayedFields.probe, overridableFields.probe);
-                PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyMirrorPositionProxySpace, d.proxyMirrorPositionProxySpace, _.GetContent("Mirror Position Proxy Space"), @override.probe, displayedFields.probe, overridableFields.probe);
-                PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyMirrorRotationProxySpace, d.proxyMirrorRotationProxySpace, _.GetContent("Mirror Rotation Proxy Space"), @override.probe, displayedFields.probe, overridableFields.probe);
+                PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyCapturePositionProxySpace, d.proxyCapturePositionProxySpace, _.GetContent("Capture Position|Capture Position in Proxy Space"), @override.probe, displayedFields.probe, overridableFields.probe,
+                    (p, l) =>
+                    {
+                        EditorGUILayout.PropertyField(p, l);
+                        HDProbeUI.Drawer_ToolBarButton(HDProbeUI.ToolBar.CapturePosition, o, GUILayout.Width(28f), GUILayout.MinHeight(22f));
+                    }
+                );
+                PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyCaptureRotationProxySpace, d.proxyCaptureRotationProxySpace, _.GetContent("Capture Rotation|Capture Rotation in Proxy Space"), @override.probe, displayedFields.probe, overridableFields.probe);
+                PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyMirrorPositionProxySpace, d.proxyMirrorPositionProxySpace, _.GetContent("Mirror Position|Mirror Position in Proxy Space"), @override.probe, displayedFields.probe, overridableFields.probe);
+                PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyMirrorRotationProxySpace, d.proxyMirrorRotationProxySpace, _.GetContent("Mirror Rotation|Mirror Rotation in Proxy Space"), @override.probe, displayedFields.probe, overridableFields.probe);
                 EditorGUILayout.Space();
             }
 

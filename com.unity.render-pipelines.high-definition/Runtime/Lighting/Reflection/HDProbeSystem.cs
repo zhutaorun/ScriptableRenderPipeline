@@ -60,15 +60,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ProbeSettings.Mode targetMode
         )
         {
-            var planarProbe = probe as PlanarReflectionProbe;
-            if (planarProbe == null)
-                return;
-
             switch (targetMode)
             {
-                case ProbeSettings.Mode.Baked: planarProbe.bakedRenderData = renderData; break;
-                case ProbeSettings.Mode.Custom: planarProbe.customRenderData = renderData; break;
-                case ProbeSettings.Mode.Realtime: planarProbe.realtimeRenderData = renderData; break;
+                case ProbeSettings.Mode.Baked: probe.bakedRenderData = renderData; break;
+                case ProbeSettings.Mode.Custom: probe.customRenderData = renderData; break;
+                case ProbeSettings.Mode.Realtime: probe.realtimeRenderData = renderData; break;
             }
         }
 

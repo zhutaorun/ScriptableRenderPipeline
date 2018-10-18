@@ -18,7 +18,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 if (i.shape == InfluenceShape.Sphere)
                 {
 #pragma warning disable CS0618
-                    i.m_Offset = i.m_ObsoleteSphereBaseOffset;
+                    i.m_ObsoleteOffset = i.m_ObsoleteSphereBaseOffset;
 #pragma warning restore CS0618
                 }
             })
@@ -32,6 +32,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #pragma warning disable 649 //never assigned
         [SerializeField, FormerlySerializedAs("m_SphereBaseOffset"), Obsolete("For Data Migration")]
         Vector3 m_ObsoleteSphereBaseOffset;
+        [SerializeField, FormerlySerializedAs("m_BoxBaseOffset"), FormerlySerializedAs("m_Offset")]
+        Vector3 m_ObsoleteOffset;
 #pragma warning restore 649 //never assigned
 
         public void OnBeforeSerialize() { }

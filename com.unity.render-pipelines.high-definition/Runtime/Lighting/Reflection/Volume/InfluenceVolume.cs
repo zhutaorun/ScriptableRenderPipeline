@@ -10,8 +10,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Serialized data
         [SerializeField, FormerlySerializedAs("m_ShapeType")]
         InfluenceShape m_Shape = InfluenceShape.Box;
-        [SerializeField, FormerlySerializedAs("m_BoxBaseOffset")]
-        Vector3 m_Offset;
 
         // Box
         [SerializeField, FormerlySerializedAs("m_BoxBaseSize")]
@@ -43,8 +41,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         /// <summary>Get the extents of the influence.</summary>
         public Vector3 extents => GetExtents(shape);
 
-        /// <summary>Offset of this influence volume to the component handling him.</summary>
-        public Vector3 offset { get => m_Offset; set => m_Offset = value; }
         /// <summary>Size of the InfluenceVolume in Box Mode.</summary>
         public Vector3 boxSize { get => m_BoxSize; set => m_BoxSize = value; }
 
@@ -104,7 +100,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var h = new Hash128();
             var h2 = new Hash128();
             HashUtilities.ComputeHash128(ref m_Shape, ref h);
-            HashUtilities.ComputeHash128(ref m_Offset, ref h2);
+            HashUtilities.ComputeHash128(ref m_ObsoleteOffset, ref h2);
             HashUtilities.AppendHash(ref h2, ref h);
             HashUtilities.ComputeHash128(ref m_BoxBlendDistanceNegative, ref h2);
             HashUtilities.AppendHash(ref h2, ref h);
@@ -129,48 +125,37 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return h;
         }
 
-        internal BoundingSphere GetBoundingSphereAt(Transform probeTransform)
+        internal BoundingSphere GetBoundingSphereAt(Vector3 position)
         {
             switch (shape)
             {
                 default:
                 case InfluenceShape.Sphere:
-                    return new BoundingSphere(probeTransform.TransformPoint(offset), sphereRadius);
+                    return new BoundingSphere(position, sphereRadius);
                 case InfluenceShape.Box:
                     {
-                        var position = probeTransform.TransformPoint(offset);
                         var radius = Mathf.Max(boxSize.x, Mathf.Max(boxSize.y, boxSize.z));
                         return new BoundingSphere(position, radius);
                     }
             }
         }
 
-        internal Bounds GetBoundsAt(Transform probeTransform)
+        internal Bounds GetBoundsAt(Vector3 position)
         {
             switch (shape)
             {
                 default:
                 case InfluenceShape.Sphere:
-                    return new Bounds(probeTransform.position, Vector3.one * sphereRadius);
+                    return new Bounds(position, Vector3.one * sphereRadius);
                 case InfluenceShape.Box:
                     {
-                        var position = probeTransform.TransformPoint(offset);
                         return new Bounds(position, boxSize);
                     }
             }
         }
 
-        internal Vector3 GetWorldPosition(Transform probeTransform)
-        {
-            return probeTransform.TransformPoint(offset);
-        }
-
-        internal Matrix4x4 GetInfluenceToWorld(Transform probeTransform)
-        {
-            var tr = probeTransform;
-            var influencePosition = GetWorldPosition(tr);
-            return Matrix4x4.TRS(influencePosition, tr.rotation, Vector3.one);
-        }
+        internal Matrix4x4 GetInfluenceToWorld(Transform transform)
+             => Matrix4x4.TRS(transform.position, transform.rotation, Vector3.one);
 
         internal EnvShapeType envShape
         {
@@ -192,7 +177,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             //keep the m_Probe as it is used to reset the probe
 
             data.m_Shape = m_Shape;
-            data.m_Offset = m_Offset;
+            data.m_ObsoleteOffset = m_ObsoleteOffset;
             data.m_BoxSize = m_BoxSize;
             data.m_BoxBlendDistancePositive = m_BoxBlendDistancePositive;
             data.m_BoxBlendDistanceNegative = m_BoxBlendDistanceNegative;

@@ -20,15 +20,5 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             type = ProbeSettings.ProbeType.PlanarProbe;
             k_Migration.Migrate(this);
         }
-
-        protected override void PopulateSettings(ref ProbeSettings settings)
-        {
-            base.PopulateSettings(ref settings);
-
-            ComputeTransformRelativeToInfluence(
-                out settings.proxySettings.mirrorPositionProxySpace,
-                out settings.proxySettings.mirrorRotationProxySpace
-            );
-        }
     }
 }

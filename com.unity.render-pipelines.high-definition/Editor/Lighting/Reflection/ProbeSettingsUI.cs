@@ -20,11 +20,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public override void Update()
         {
-            //bool frameSettingsOverriden = data.captureSettings.renderingPath.enumValueIndex == (int)HDAdditionalCameraData.RenderingPath.Custom;
-            //isFrameSettingsOverriden.value = frameSettingsOverriden;
-            //if (frameSettingsOverriden)
-            //    frameSettings.Update();
-
             influence.Update(data.influence);
             camera.Update(data.cameraSettings);
             base.Update();

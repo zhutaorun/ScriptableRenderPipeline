@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 
@@ -9,6 +10,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     public class HDEditorUtils
     {
+        static readonly Action<SerializedProperty, GUIContent> k_DefaultDrawer = (p, l) => EditorGUILayout.PropertyField(p, l);
+
         delegate void MaterialResetter(Material material);
         static Dictionary<string, MaterialResetter> k_MaterialResetters = new Dictionary<string, MaterialResetter>()
         {
@@ -81,7 +84,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public static void PropertyFieldWithOptionalFlagToggle<TEnum>(
             TEnum v, SerializedProperty property, GUIContent label,
-            SerializedProperty @override, bool showOverrideButton
+            SerializedProperty @override, bool showOverrideButton,
+            Action<SerializedProperty, GUIContent> drawer = null
         )
             where TEnum : struct, IConvertible // restrict to ~enum
         {
@@ -96,7 +100,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 GUI.enabled = FlagToggle(v, @override);
             else
                 ReserveAndGetFlagToggleRect();
-            EditorGUILayout.PropertyField(property, label);
+            (drawer ?? k_DefaultDrawer)(property, label);
 
             GUI.enabled = true;
             EditorGUI.indentLevel = i;
@@ -108,7 +112,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public static void PropertyFieldWithFlagToggleIfDisplayed<TEnum>(
             TEnum v, SerializedProperty property, GUIContent label,
             SerializedProperty @override,
-            TEnum displayed, TEnum overrideable
+            TEnum displayed, TEnum overrideable,
+            Action<SerializedProperty, GUIContent> drawer = null
         )
             where TEnum : struct, IConvertible // restrict to ~enum
         {
@@ -118,7 +123,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 var intOverridable = (int)(object)overrideable;
                 var isOverrideable = (intOverridable & intV) == intV;
-                PropertyFieldWithOptionalFlagToggle(v, property, label, @override, isOverrideable);
+                PropertyFieldWithOptionalFlagToggle(v, property, label, @override, isOverrideable, drawer);
             }
         }
 
@@ -126,6 +131,40 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             CoreEditorUtils.DrawSplitter(false);
             return CoreEditorUtils.DrawHeaderFoldout(title, isExpanded, false);
+        }
+
+        static internal void DrawToolBarButton<TEnum>(
+            TEnum button, Editor owner,
+            Dictionary<TEnum, EditMode.SceneViewEditMode> toolbarMode,
+            Dictionary<TEnum, GUIContent> toolbarContent,
+            params GUILayoutOption[] options
+        )
+            where TEnum : struct, IConvertible
+        {
+            var intButton = (int)(object)button;
+            bool enabled = toolbarMode[button] == EditMode.editMode;
+            EditorGUI.BeginChangeCheck();
+            enabled = GUILayout.Toggle(enabled, toolbarContent[button], EditorStyles.miniButton, options);
+            if (EditorGUI.EndChangeCheck())
+            {
+                EditMode.SceneViewEditMode targetMode = EditMode.editMode == toolbarMode[button] ? EditMode.SceneViewEditMode.None : toolbarMode[button];
+                EditMode.ChangeEditMode(targetMode, GetBoundsGetter(owner)(), owner);
+            }
+        }
+
+        internal static Func<Bounds> GetBoundsGetter(Editor o)
+        {
+            return () =>
+            {
+                var bounds = new Bounds();
+                foreach (Component targetObject in o.targets)
+                {
+                    var rp = targetObject.transform;
+                    var b = rp.position;
+                    bounds.Encapsulate(b);
+                }
+                return bounds;
+            };
         }
     }
 }

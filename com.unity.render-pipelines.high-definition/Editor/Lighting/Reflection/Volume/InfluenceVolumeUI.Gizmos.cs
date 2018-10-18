@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering.HDPipeline;
-using UnityEngine.Experimental.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
@@ -29,8 +28,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 Gizmos.color = k_GizmoThemeColorBase;
                 switch (d.shape)
                 {
-                    case InfluenceShape.Box: Gizmos.DrawWireCube(d.offset, d.boxSize); break;
-                    case InfluenceShape.Sphere: Gizmos.DrawWireSphere(d.offset, d.sphereRadius); break;
+                    case InfluenceShape.Box: Gizmos.DrawWireCube(Vector3.zero, d.boxSize); break;
+                    case InfluenceShape.Sphere: Gizmos.DrawWireSphere(Vector3.zero, d.sphereRadius); break;
                 }
             }
 
@@ -39,8 +38,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 Gizmos.color = k_GizmoThemeColorInfluence;
                 switch (d.shape)
                 {
-                    case InfluenceShape.Box: Gizmos.DrawWireCube(d.offset + d.boxBlendOffset, d.boxSize + d.boxBlendSize); break;
-                    case InfluenceShape.Sphere: Gizmos.DrawWireSphere(d.offset, d.sphereRadius - d.sphereBlendDistance); break;
+                    case InfluenceShape.Box: Gizmos.DrawWireCube(d.boxBlendOffset, d.boxSize + d.boxBlendSize); break;
+                    case InfluenceShape.Sphere: Gizmos.DrawWireSphere(Vector3.zero, d.sphereRadius - d.sphereBlendDistance); break;
                 }
             }
 
@@ -49,8 +48,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 Gizmos.color = k_GizmoThemeColorInfluenceNormal;
                 switch (d.shape)
                 {
-                    case InfluenceShape.Box: Gizmos.DrawWireCube(d.offset + d.boxBlendNormalOffset, d.boxSize + d.boxBlendNormalSize); break;
-                    case InfluenceShape.Sphere: Gizmos.DrawWireSphere(d.offset, d.sphereRadius - d.sphereBlendNormalDistance); break;
+                    case InfluenceShape.Box: Gizmos.DrawWireCube(d.boxBlendNormalOffset, d.boxSize + d.boxBlendNormalSize); break;
+                    case InfluenceShape.Sphere: Gizmos.DrawWireSphere(Vector3.zero, d.sphereRadius - d.sphereBlendNormalDistance); break;
                 }
             }
 

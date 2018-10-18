@@ -23,18 +23,26 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             base.PrepareCulling();
             var influence = settings.influence;
+            var tr = transform;
+            var position = tr.position;
             var cubeProbe = reflectionProbe;
             switch (influence.shape)
             {
                 case InfluenceShape.Box:
                     cubeProbe.size = influence.boxSize;
-                    cubeProbe.center = transform.rotation * influence.offset;
+                    cubeProbe.center = Vector3.zero;
                     break;
                 case InfluenceShape.Sphere:
                     cubeProbe.size = Vector3.one * (2 * influence.sphereRadius);
-                    cubeProbe.center = transform.rotation * influence.offset;
+                    cubeProbe.center = Vector3.zero;
                     break;
             }
+
+            // Reassign back the position
+            // If we updated ReflectionProbe.center, it will have moved the transform
+            // But we only want to update the ReflectionProbe.center property
+            // So we need to restore the position after the update.
+            tr.position = position;
         }
     }
 }

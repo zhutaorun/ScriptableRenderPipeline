@@ -36,7 +36,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         const EditMode.SceneViewEditMode EditBaseShape = EditMode.SceneViewEditMode.ReflectionProbeBox;
         const EditMode.SceneViewEditMode EditInfluenceShape = EditMode.SceneViewEditMode.GridBox;
         const EditMode.SceneViewEditMode EditInfluenceNormalShape = EditMode.SceneViewEditMode.Collider;
-        const EditMode.SceneViewEditMode EditCenter = EditMode.SceneViewEditMode.GridMove;
+        const EditMode.SceneViewEditMode EditCapturePosition = EditMode.SceneViewEditMode.GridMove;
         //Note: EditMode.SceneViewEditMode.ReflectionProbeOrigin is still used
         //by legacy reflection probe and have its own mecanism that we don't want
 
@@ -45,7 +45,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             { ToolBar.InfluenceShape,  EditBaseShape },
             { ToolBar.Blend,  EditInfluenceShape },
             { ToolBar.NormalBlend,  EditInfluenceNormalShape },
-            { ToolBar.CapturePosition,  EditCenter }
+            { ToolBar.CapturePosition,  EditCapturePosition }
         };
 
         //[TODO] change this to be modifiable shortcuts
@@ -121,7 +121,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 GUI.changed = false;
 
                 for (int i = 0; i < k_ListModes.Length; ++i)
-                    EditMode.DoInspectorToolbar(k_ListModes[i], k_ListContent[i], GetBoundsGetter(o), o);
+                    EditMode.DoInspectorToolbar(k_ListModes[i], k_ListContent[i], HDEditorUtils.GetBoundsGetter(o), o);
 
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
@@ -152,7 +152,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                     var targetMode = k_ToolbarMode[toolbar];
                     var mode = EditMode.editMode == targetMode ? EditMode.SceneViewEditMode.None : targetMode;
-                    EditMode.ChangeEditMode(mode, GetBoundsGetter(owner)(), owner);
+                    EditMode.ChangeEditMode(mode, HDEditorUtils.GetBoundsGetter(owner)(), owner);
                     evt.Use();
                 }
             }
@@ -413,16 +413,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        static internal void Drawer_ToolBarButton(ToolBar button, Editor owner, params GUILayoutOption[] options)
-        {
-            bool enabled = k_ToolbarMode[button] == EditMode.editMode;
-            EditorGUI.BeginChangeCheck();
-            enabled = GUILayout.Toggle(enabled, k_ToolbarContents[button], EditorStyles.miniButton, options);
-            if (EditorGUI.EndChangeCheck())
-            {
-                EditMode.SceneViewEditMode targetMode = EditMode.editMode == k_ToolbarMode[button] ? EditMode.SceneViewEditMode.None : k_ToolbarMode[button];
-                EditMode.ChangeEditMode(targetMode, GetBoundsGetter(owner)(), owner);
-            }
-        }
+        static internal void Drawer_ToolBarButton(
+            ToolBar button, Editor owner,
+            params GUILayoutOption[] options
+        )
+            => HDEditorUtils.DrawToolBarButton(button, owner, k_ToolbarMode, k_ToolbarContents, options);
     }
 }

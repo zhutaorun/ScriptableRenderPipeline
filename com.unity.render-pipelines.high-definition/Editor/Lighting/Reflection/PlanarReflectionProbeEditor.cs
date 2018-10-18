@@ -63,6 +63,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             => new SerializedPlanarReflectionProbe(so);
         internal override HDProbe GetTarget(Object editorTarget) => editorTarget as HDProbe;
 
+        protected override void DrawAdditionalCaptureSettings(
+            PlanarReflectionProbeUI s, SerializedPlanarReflectionProbe d, Editor o
+        )
+        {
+            ++EditorGUI.indentLevel;
+            GUI.enabled = d.probeSettings.mode.intValue != (int)ProbeSettings.Mode.Realtime;
+            EditorGUILayout.PropertyField(d.localReferencePosition, _.GetContent("Reference Local Position"));
+            GUI.enabled = true;
+            --EditorGUI.indentLevel;
+        }
+
         protected override void DrawHandles(
             PlanarReflectionProbeUI s,
             SerializedPlanarReflectionProbe d,
@@ -73,10 +84,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             SceneViewOverlay_Window(_.GetContent("Planar Probe"), OnOverlayGUI, -100, target);
 
-            var referencePosition = d.target.transform.TransformPoint(d.localReferencePosition.vector3Value);
-            referencePosition = Handles.PositionHandle(referencePosition, d.target.transform.rotation);
-            d.localReferencePosition.vector3Value = d.target.transform.InverseTransformPoint(referencePosition);
-            d.serializedObject.ApplyModifiedProperties();
+            using (new Handles.DrawingScope(Matrix4x4.TRS(d.target.transform.position, d.target.transform.rotation, Vector3.one)))
+            {
+                var referencePosition = d.localReferencePosition.vector3Value;
+                EditorGUI.BeginChangeCheck();
+                referencePosition = Handles.PositionHandle(referencePosition, Quaternion.identity);
+                if (EditorGUI.EndChangeCheck())
+                    d.localReferencePosition.vector3Value = referencePosition;
+            }
         }
 
         void OnOverlayGUI(Object target, SceneView sceneView)
@@ -136,6 +151,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             });
         }
 
+        static Mesh k_QuadMesh;
+        static Material k_PreviewMaterial;
         [DrawGizmo(GizmoType.Selected)]
         static void DrawSelectedGizmo(PlanarReflectionProbe probe, GizmoType gizmoType)
         {
@@ -151,6 +168,27 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 InfluenceVolumeUI.HandleType.None,
                 InfluenceVolumeUI.HandleType.Base | InfluenceVolumeUI.HandleType.Influence
             );
+
+            // Capture gizmo
+            if (k_QuadMesh == null)
+                k_QuadMesh = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
+            if (k_PreviewMaterial == null)
+                k_PreviewMaterial = new Material(Shader.Find("Debug/PlanarReflectionProbePreview"));
+
+            var proxyToWorld = probe.proxyToWorld;
+            var settings = probe.settings;
+            var mirrorPosition = proxyToWorld.MultiplyPoint(settings.proxySettings.mirrorPositionProxySpace);
+            var mirrorRotation = proxyToWorld.rotation * settings.proxySettings.mirrorRotationProxySpace * Quaternion.Euler(0, 180, 0);
+            var renderData = probe.renderData;
+
+            k_PreviewMaterial.SetTexture("_MainTex", probe.texture);
+            k_PreviewMaterial.SetMatrix("_ViewProjectionMatrix", renderData.projectionMatrix * renderData.worldToCameraRHS);
+            var cameraPositionWS = Vector3.zero;
+            if (Camera.main != null)
+                cameraPositionWS = Camera.main.transform.position;
+            k_PreviewMaterial.SetVector("_CameraPositionWS", new Vector4(-cameraPositionWS.x, -cameraPositionWS.y, cameraPositionWS.z, 0));
+            k_PreviewMaterial.SetPass(0);
+            Graphics.DrawMeshNow(k_QuadMesh, Matrix4x4.TRS(mirrorPosition, mirrorRotation, Vector3.one * capturePointPreviewSize));
         }
     }
 

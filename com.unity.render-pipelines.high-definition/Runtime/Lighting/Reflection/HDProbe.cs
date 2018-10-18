@@ -14,7 +14,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 get
                 {
-                    var v = worldToCameraRHS.GetColumn(3);
+                    var v = -worldToCameraRHS.GetColumn(3);
                     return new Vector3(v.x, v.y, -v.z);
                 }
             }
@@ -144,8 +144,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3 proxyExtents
             => proxyVolume != null ? proxyVolume.proxyVolume.extents : influenceExtents;
 
-        public BoundingSphere boundingSphere => influenceVolume.GetBoundingSphereAt(transform);
-        public Bounds bounds => influenceVolume.GetBoundsAt(transform);
+        public BoundingSphere boundingSphere => influenceVolume.GetBoundingSphereAt(transform.position);
+        public Bounds bounds => influenceVolume.GetBoundsAt(transform.position);
 
         internal ProbeSettings settings
         {
@@ -155,7 +155,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // Special case here, we reference a component that is a wrapper
                 // So we need to update with the actual value for the proxyVolume
                 settings.proxy = m_ProxyVolume?.proxyVolume;
-                PopulateSettings(ref settings);
                 return settings;
             }
         }
@@ -184,41 +183,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (isActiveAndEnabled)
                 HDProbeSystem.RegisterProbe(this);
-        }
-
-        // Private API
-        protected virtual void PopulateSettings(ref ProbeSettings settings) { }
-
-        protected void ComputeTransformRelativeToInfluence(out Vector3 position, out Quaternion rotation)
-        {
-            if (proxyVolume == null)
-            {
-                if (isProjectionInfinite)
-                {
-                    // The proxy is the world itself
-                    // The position is the position of the game object
-                    position = transform.position;
-                    rotation = transform.rotation;
-                }
-                else
-                {
-                    // The proxy is the influence volume
-                    // The position is at the center of the influence
-                    position = Vector3.zero;
-                    rotation = Quaternion.identity;
-                }
-            }
-            else
-            {
-                var influenceToWorld = transform.localToWorldMatrix;
-                var proxyToWorld = proxyVolume.transform.localToWorldMatrix;
-                var proxyToInfluence = proxyToWorld.inverse * influenceToWorld;
-                // The mirror is a the center of the influence
-                var positionPS = proxyToInfluence.MultiplyPoint(Vector3.zero);
-                var rotationPS = proxyToInfluence.rotation;
-                position = positionPS;
-                rotation = rotationPS;
-            }
         }
     }
 }

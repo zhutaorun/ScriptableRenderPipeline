@@ -57,26 +57,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 material = new Material(Shader.Find("Debug/ReflectionProbePreview"));
 
             var additional = target.GetComponent<HDAdditionalReflectionData>();
+            var renderData = additional.renderData;
+            var capturePosition = renderData.capturePosition;
 
             material.SetTexture("_Cubemap", additional.texture);
             material.SetPass(0);
-            Graphics.DrawMeshNow(sphere, Matrix4x4.TRS(target.transform.position, Quaternion.identity, Vector3.one * capturePointPreviewSize));
+            Graphics.DrawMeshNow(sphere, Matrix4x4.TRS(capturePosition, Quaternion.identity, Vector3.one * capturePointPreviewSize));
         }
-
-        static Func<float> s_CapturePointPreviewSizeGetter = ComputeCapturePointPreviewSizeGetter();
-        static Func<float> ComputeCapturePointPreviewSizeGetter()
-        {
-            var type = Type.GetType("UnityEditor.AnnotationUtility,UnityEditor");
-            var property = type.GetProperty("iconSize", BindingFlags.Static | BindingFlags.NonPublic);
-            var lambda = Expression.Lambda<Func<float>>(
-                Expression.Multiply(
-                    Expression.Property(null, property),
-                    Expression.Constant(30.0f)
-                )
-            );
-            return lambda.Compile();
-        }
-        static float capturePointPreviewSize
-        { get { return s_CapturePointPreviewSizeGetter(); } }
     }
 }

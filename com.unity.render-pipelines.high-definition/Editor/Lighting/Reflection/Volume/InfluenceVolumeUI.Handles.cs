@@ -15,22 +15,19 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 {
                     case InfluenceShape.Box:
                         {
-                            s.boxBaseHandle.center = d.offset.vector3Value;
+                            s.boxBaseHandle.center = Vector3.zero;
                             s.boxBaseHandle.size = d.boxSize.vector3Value;
 
                             EditorGUI.BeginChangeCheck();
                             s.boxBaseHandle.DrawHandle();
                             s.boxBaseHandle.DrawHull(true);
                             if (EditorGUI.EndChangeCheck())
-                            {
-                                d.offset.vector3Value = s.boxBaseHandle.center;
                                 d.boxSize.vector3Value = s.boxBaseHandle.size;
-                            }
                             break;
                         }
                     case InfluenceShape.Sphere:
                         {
-                            s.sphereBaseHandle.center = d.offset.vector3Value;
+                            s.sphereBaseHandle.center = Vector3.zero;
                             s.sphereBaseHandle.radius = d.sphereRadius.floatValue;
 
                             EditorGUI.BeginChangeCheck();
@@ -49,7 +46,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 }
             }
         }
-
 
         public static void DrawHandles_EditInfluence(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, Matrix4x4 matrix, Object sourceAsset)
         {
@@ -115,7 +111,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static void DrawBoxFadeHandle(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, Object sourceAsset, HierarchicalBox box, SerializedProperty positive, SerializedProperty negative)
         {
-            box.center = d.offset.vector3Value - (positive.vector3Value - negative.vector3Value) * 0.5f;
+            box.center = - (positive.vector3Value - negative.vector3Value) * 0.5f;
             box.size = d.boxSize.vector3Value - positive.vector3Value - negative.vector3Value;
             box.monoHandle = !d.editorAdvancedModeEnabled.boolValue;
 
@@ -126,7 +122,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 Undo.RecordObject(sourceAsset, "Modified Influence Volume");
 
-                var influenceCenter = d.offset.vector3Value;
+                var influenceCenter = Vector3.zero;
                 var halfInfluenceSize = d.boxSize.vector3Value * .5f;
 
                 var centerDiff = box.center - influenceCenter;
@@ -145,7 +141,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static void DrawSphereHandle(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, Object sourceAsset,  SphereBoundsHandle sphere)
         {
-            sphere.center = d.offset.vector3Value;
+            sphere.center = Vector3.zero;
             sphere.radius = d.sphereRadius.floatValue;
 
             EditorGUI.BeginChangeCheck();
@@ -164,7 +160,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static void DrawSphereFadeHandle(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, Object sourceAsset, SphereBoundsHandle sphere, SerializedProperty radius)
         {
-            sphere.center = d.offset.vector3Value;
+            sphere.center = Vector3.zero;
             sphere.radius = radius.floatValue;
 
             EditorGUI.BeginChangeCheck();

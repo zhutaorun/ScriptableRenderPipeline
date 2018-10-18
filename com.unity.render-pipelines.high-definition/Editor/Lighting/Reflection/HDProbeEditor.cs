@@ -1,4 +1,7 @@
+using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 using Object = UnityEngine.Object;
@@ -75,13 +78,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 --EditorGUI.indentLevel;
             }
             if (DrawAndSetSectionFoldout(s, HDProbeUI.Flag.SectionExpandedCapture, "Capture Settings"))
+            {
+                DrawAdditionalCaptureSettings(s, p, o);
                 HDProbeUI.Drawer<TProvider>.DrawCaptureSettings(s, p, o);
+            }
             if (DrawAndSetSectionFoldout(s, HDProbeUI.Flag.SectionExpandedCustom, "Custom Settings"))
                 HDProbeUI.Drawer<TProvider>.DrawCustomSettings(s, p, o);
             HDProbeUI.Drawer<TProvider>.DrawBakeButton(s, p, o);
         }
 
         protected virtual void DrawHandles(TUI s, TSerialized d, Editor o) { }
+        protected virtual void DrawAdditionalCaptureSettings(TUI s, TSerialized d, Editor o) { }
 
         // TODO: generalize this
         static bool DrawAndSetSectionFoldout(TUI s, HDProbeUI.Flag flag, string title)
@@ -100,5 +107,23 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (EditorGUI.EndChangeCheck())
                 m_SerializedHDProbe.Apply();
         }
+
+
+
+        static Func<float> s_CapturePointPreviewSizeGetter = ComputeCapturePointPreviewSizeGetter();
+        static Func<float> ComputeCapturePointPreviewSizeGetter()
+        {
+            var type = Type.GetType("UnityEditor.AnnotationUtility,UnityEditor");
+            var property = type.GetProperty("iconSize", BindingFlags.Static | BindingFlags.NonPublic);
+            var lambda = Expression.Lambda<Func<float>>(
+                Expression.Multiply(
+                    Expression.Property(null, property),
+                    Expression.Constant(30.0f)
+                )
+            );
+            return lambda.Compile();
+        }
+        internal static float capturePointPreviewSize
+        { get { return s_CapturePointPreviewSizeGetter(); } }
     }
 }

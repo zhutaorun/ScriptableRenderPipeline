@@ -20,6 +20,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             System.Array.Resize(ref m_TypedTargets, serializedObject.targetObjects.Length);
             for (int i = 0; i < serializedObject.targetObjects.Length; ++i)
                 m_TypedTargets[i] = (ReflectionProxyVolumeComponent)serializedObject.targetObjects[i];
+
+            m_Handle = m_Handle ?? new HierarchicalBox(k_HandleColor);
+            m_UIState = m_UIState ?? new ReflectionProxyVolumeComponentUI();
+
+            m_Handle.monoHandle = false;
         }
 
         public override void OnInspectorGUI()
