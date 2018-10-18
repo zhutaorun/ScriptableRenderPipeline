@@ -393,9 +393,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     if (EditorGUI.EndChangeCheck())
                     {
                         Undo.RecordObjects(new Object[] { densityVolume, densityVolume.transform }, "ChangeDensity Volume Bounding Box");
-                        densityVolume.transform.position += shapeBox.center;
+                        densityVolume.transform.position += densityVolume.transform.rotation * shapeBox.center;
                         densityVolume.parameters.size = shapeBox.size;
-                        Vector3 halfSize = shapeBox.size * 0.5f;
                     }
                 }
             }
