@@ -100,8 +100,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             if (renderingData.shadowData.supportsAdditionalLightShadows)
             {
-                m_AdditionalLightsShadowCasterPass.Setup(AdditionalLightsShadowmap, ref renderingData, renderer.maxVisibleAdditionalLights);
-                renderer.EnqueuePass(m_AdditionalLightsShadowCasterPass);
+                bool additionalLightShadows = m_AdditionalLightsShadowCasterPass.Setup(AdditionalLightsShadowmap, ref renderingData, renderer.maxVisibleAdditionalLights);
+                if (additionalLightShadows)
+                    renderer.EnqueuePass(m_AdditionalLightsShadowCasterPass);
             }
 
             bool resolveShadowsInScreenSpace = mainLightShadows && renderingData.shadowData.requiresScreenSpaceShadowResolve;

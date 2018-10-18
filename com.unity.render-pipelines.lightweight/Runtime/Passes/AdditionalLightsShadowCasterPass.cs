@@ -67,11 +67,11 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             Bounds bounds;
             List<VisibleLight> visibleLights = renderingData.lightData.visibleLights;
             int additionalLightsCount = renderingData.lightData.additionalLightsCount;
-            for (int i = 0; i < additionalLightsCount; ++i)
+            for (int i = 0; i < visibleLights.Count && m_AdditionalShadowCastingLightIndices.Count < additionalLightsCount; ++i)
             {
                 if (i == renderingData.lightData.mainLightIndex)
                     continue;
-
+                
                 VisibleLight shadowLight = visibleLights[i];
                 Light light = shadowLight.light;
 
