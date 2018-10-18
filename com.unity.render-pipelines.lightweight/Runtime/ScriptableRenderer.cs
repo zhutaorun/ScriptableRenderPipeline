@@ -315,7 +315,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         public static RendererConfiguration GetRendererConfiguration(int additionalLightsCount)
         {
-            RendererConfiguration configuration = RendererConfiguration.PerObjectReflectionProbes | RendererConfiguration.PerObjectLightmaps | RendererConfiguration.PerObjectLightProbe;
+            RendererConfiguration configuration = RendererConfiguration.PerObjectReflectionProbes | RendererConfiguration.PerObjectLightmaps | RendererConfiguration.PerObjectLightProbe | RendererConfiguration.PerObjectOcclusionProbe;
             if (additionalLightsCount > 0)
             {
                 if (useStructuredBufferForLights)

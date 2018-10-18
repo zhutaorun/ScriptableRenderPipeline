@@ -106,6 +106,8 @@ real4 unity_LightIndicesOffsetAndCount;
 real4 unity_4LightIndices0;
 real4 unity_4LightIndices1;
 
+half4 unity_ProbesOcclusion;
+
 // Reflection Probe 0 block feature
 // HDR environment map decode instructions
 real4 unity_SpecCube0_HDR;

@@ -115,7 +115,7 @@ Light GetMainLight()
 #if defined(_MIXED_LIGHTING_SUBTRACTIVE) && defined(LIGHTMAP_ON)
     light.distanceAttenuation = _MainLightPosition.w;
 #else
-    light.distanceAttenuation = 1.0;
+    light.distanceAttenuation = unity_ProbesOcclusion.x;
 #endif
     light.shadowAttenuation = 1.0;
     light.color = _MainLightColor.rgb;
