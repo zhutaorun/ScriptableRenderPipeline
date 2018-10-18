@@ -172,7 +172,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             }
 
             CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.MainLightShadows, true);
-            CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.MainLightShadowCascades, true);
+            CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.MainLightShadowCascades, shadowData.mainLightShadowCascadesCount > 1);
             CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.SoftShadows, shadowLight.light.shadows == LightShadows.Soft && shadowData.supportsSoftShadows);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
