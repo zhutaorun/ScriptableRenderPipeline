@@ -1,5 +1,5 @@
 {
-    "name": "LWGraphicsTests",
+    "name": "LWGraphicsTestsXR",
     "references": [
         "UnityEngine.TestTools.Graphics",
         "Unity.RenderPipelines.Lightweight.Runtime",
