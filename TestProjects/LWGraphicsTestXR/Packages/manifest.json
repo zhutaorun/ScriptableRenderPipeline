@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "com.unity.render-pipelines.core": "file:../../../com.unity.render-pipelines.core",
+    "com.unity.render-pipelines.lightweight": "file:../../../com.unity.render-pipelines.lightweight",
+    "com.unity.shadergraph": "file:../../../com.unity.shadergraph",
+    "com.unity.testframework.graphics": "file:../../../com.unity.testframework.graphics",
+    "com.unity.testing.srp.lightweight-xr": "file:../../../com.unity.testing.srp.lightweight-xr",
+    "com.unity.modules.vr": "1.0.0",
+    "com.unity.modules.xr": "1.0.0"
+  },
+  "testables": [
+    "com.unity.render-pipelines.lightweight",
+    "com.unity.testing.srp.lightweight-xr",
+    "com.unity.testframework.graphics"
+  ]
+}

@@ -1,0 +1,272 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/001_SimpleCube_XR.unity
+    guid: c309fe5af23a64c0ca9e802d0207fe45
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/004_Camera_TargetTexture_XR.unity
+    guid: d51b895e7851e460baaabb1d1225c9d0
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/005_LitBakedEmission_XR.unity
+    guid: e573b586150fd443abb11c0d650406ec
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/006_LitShaderLightProbes_XR.unity
+    guid: 39def7fb1337746488a0fb4a43f95684
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/007_LitShaderMaps_XR.unity
+    guid: 30fd8271db5d647879befad7e424c659
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/010_Lighting_DirectionalCascades_XR.unity
+    guid: ca4e4c052d9694e8598a2282410b1a39
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/011_UnlitSprites_XR.unity
+    guid: d7bc644c831e94a11af465e33de5c1a0
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/012_PBS_EnvironmentBRDF_Spheres_XR.unity
+    guid: e4de82e16876241539cc9286bdf18dbc
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/013_CameraMulti_Splitscreen_XR.unity
+    guid: 9dc478b18ad4a47358e3d7f28d31b59c
+  - enabled: 0
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/014_CameraMulti_MiniMap_XR.unity
+    guid: ee232fa36986641238b3ac27aef76d47
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/015_CameraMulti_FPSCam_XR.unity
+    guid: 670421d495f6f4139ba168407ff97c67
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/016_Lighting_Scene_Directional_XR.unity
+    guid: 79e8813ed93c44480aa6047722dcdfd2
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/017_Lighting_Scene_DirectionalBaked_XR.unity
+    guid: 3bc57d5aa23de4e83a6dc41ab14fe07d
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/019_Lighting_Scene_PointLights_XR.unity
+    guid: 01a1214fa2a4b44ad989c049a03fe2eb
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/020_Lighting_BasicDirectional_XR.unity
+    guid: 4c7aa914e4bc849fba89f062601c57fd
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/021_Lighting_BasicPoint_XR.unity
+    guid: b43817b75348b44f19043e10bcddbe88
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/022_Lighting_BasicSpot_XR.unity
+    guid: 65ec0a0abf41949a2a82cf50b339c1f4
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/023_Lighting_Mixed_Indirect_XR.unity
+    guid: fe35019fbaff44ecd9ba498ed599e700
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/024_Shader_PBRvalidation_Specular_XR.unity
+    guid: 083d4d61df19b4589a198a430cb0f2f1
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/025_Shader_PBRvalidation_Metallic_XR.unity
+    guid: 7d84f09ffecc746779978693dabf7301
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/026_Shader_PBRscene_XR.unity
+    guid: a98b8d3402e694dc8af5dec6f8fe81ec
+  - enabled: 0
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/027_PostProcessing_XR.unity
+    guid: 65f111b5df676469d9580f5ad6011ce0
+  - enabled: 0
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/028_PostProcessing_Custom_XR.unity
+    guid: 805e5d07355104dacb34f113bdfc055b
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/029_Particles_XR.unity
+    guid: 630042b924aba446b8567286c1b9d987
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/031_Shader_GlossyEnvironmentSky_XR.unity
+    guid: 06f20014a605d4561a908f18858e43fc
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/033_Shader_HighlightsEnvironmentGradientSH_XR.unity
+    guid: c6407a35936b247bfa82992140032a05
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/034_Shader_HighlightsEnvironmentGradientBaked_XR.unity
+    guid: 3b6ffed31763b41898f7c158557fa889
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/035_Shader_TerrainShaders_XR.unity
+    guid: 820715a63235e4bc9b63816ae0269e0d
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/036_Lighting_Scene_DirectionalBakedDirectional_XR.unity
+    guid: 3e6883d83a24741de9f1a2163ca20e5b
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/037_Particles_Standard_XR.unity
+    guid: b6054d51df90b4764a8b296e95449ad5
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/040_UpgradeScene_XR.unity
+    guid: c24179060c1df4f329dd6a078f4a2e29
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/041_Lighting_BasicArea_XR.unity
+    guid: 147de01f47d9248ebbd6993b151e395c
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/042_Lighting_Scene_VertexLighting_XR.unity
+    guid: c310be162df694214ac331f8ea7a1c70
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/043_Lighting_Mixed_ShadowMask_XR.unity
+    guid: 652ab965d80884ea2af5c65c8e562797
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/044_Lighting_ReflectionProbe_XR.unity
+    guid: 8ab3bc1b3509e4401acbbe9483b38cc1
+  - enabled: 0
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/045_CustomLWPipe_XR.unity
+    guid: 9672a8d844065455fb38872fe90f2ecc
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/046_Camera_OpaqueTexture_XR.unity
+    guid: b1df1a427a50c4f5fba8ff70e1b3b415
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/047_Lighting_DirectionalCascades_XR.unity
+    guid: fc3dcdff4a57447efa9860dc88b1b412
+  - enabled: 0
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/048_Lighting_LocalShadows_XR.unity
+    guid: 9474bc3e973484cddb214a54e2625f5a
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/049_Lighting_Mixed_Subtractive_XR.unity
+    guid: 82d7e00e6be444c19bdc807b47c22bd2
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/050_Shader_Graphs_XR.unity
+    guid: d29341207de764d2381e05c7d701a859
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/051_Lighting_Scene_NoLighting_XR.unity
+    guid: e519b27a5ee9a412bb986ee6444e8bd5
+  - enabled: 0
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/052_LWCallbacks_XR.unity
+    guid: 8d8344c39f47f44df98d76404ae08f69
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/053_UnlitShader_XR.unity
+    guid: f1b947a03c6ed46259c98ccf0cab870c
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/054_Lighting_Attenuation_XR.unity
+    guid: e43d235651f6b4c0ebc6d9acf4d81a92
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight-xr/Tests/Scenes/055_Lighting_Attenuation_Spot_Point_XR.unity
+    guid: 50aac9c6ae83146a5a845197b71233b3
+  m_configObjects: {}
