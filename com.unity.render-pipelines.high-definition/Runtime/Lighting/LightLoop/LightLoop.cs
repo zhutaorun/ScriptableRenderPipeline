@@ -150,7 +150,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         };
 
         internal const int k_MaxCacheSize = 2000000000; //2 GigaByte
-        public const int k_MaxDirectionalLightsOnScreen = 4;
+        public const int k_MaxDirectionalLightsOnScreen = 16;
         public const int k_MaxPunctualLightsOnScreen    = 512;
         public const int k_MaxAreaLightsOnScreen        = 64;
         public const int k_MaxDecalsOnScreen = 512;
