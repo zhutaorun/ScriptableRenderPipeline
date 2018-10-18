@@ -48,6 +48,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         CullResultsCull,
         CopyDepthForSceneView,
         DisplayCookies,
+        DownsampleShadowMaps,
 
         // Profile sampler for tile pass
         TPPrepareLightsForGPU,

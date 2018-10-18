@@ -2,6 +2,36 @@
 // To use deferred directional shadow with cascaded shadow map,
 // it is required to define USE_DEFERRED_DIRECTIONAL_SHADOWS before including this files
 
+// A special case of an ellipsoid with two minor axes of the same length.
+struct BoundingSpheroid
+{
+    float3 positionWS;
+    float3 majorAxisDir;
+    float  majorAxisLen;
+    float  minorAxisLen;
+};
+ // 'texelDensity' is the size of the of a texel in meters on the light's shadow projection plane
+// at a unit distance. Note that we cannot handle the case of non-square texels using the current
+// simplified code. Note that for a cubemap, you should pass the direction of the face.
+float ComputeShadowLoD(BoundingSpheroid bs, float3 lightPosWS, float3 lightDirWS, float texelDensity, bool perspProj)
+{
+    // We select between the major and the minor axes of the spheroid using
+    // the angle between the major axis and the light direction.
+    // We use the major axis if they are orthogonal, and the minor axis if they are parallel.
+    float cosTheta = abs(dot(bs.majorAxisDir, lightDirWS));
+    float sinTheta = sqrt(saturate(1 - cosTheta * cosTheta));
+    float lenWS    = bs.minorAxisLen * cosTheta + bs.majorAxisLen * sinTheta;
+     if (perspProj)
+    {
+        // After selecting the axis, we need to perform oblique perspective projection onto the (Z = 1) plane.
+        float3 centerL  = lightPosWS - bs.positionWS;
+        float  projDist = abs(dot(centerL, lightDirWS));
+         lenWS *= rcp(projDist);
+    }
+     // Convert the length from meters to texels, and compute the LoD.
+    return log2(texelDensity * lenWS);
+}
+
 //-----------------------------------------------------------------------------
 // Directional Light evaluation helper
 //-----------------------------------------------------------------------------
@@ -173,8 +203,8 @@ half ShadowPlane(half3 worldPos, half4 plane, half feather)
 // None of the outputs are premultiplied.
 // distances = {d, d^2, 1/d, d_proj}, where d_proj = dot(lightToSample, lightData.forward).
 // Note: When doing transmission we always have only one shadow sample to do: Either front or back. We use NdotL to know on which side we are
-void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs posInput,
-                            LightData lightData, BakeLightingData bakeLightingData,
+void EvaluateLight_Punctual_ShadowLOD(LightLoopContext lightLoopContext, PositionInputs posInput,
+                            LightData lightData, BakeLightingData bakeLightingData, float shadowLod,
                             float3 N, float3 L, float3 lightToSample, float4 distances,
                             out float3 color, out float attenuation)
 {
@@ -217,7 +247,7 @@ void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs po
     {
         // TODO: make projector lights cast shadows.
         // Note:the case of NdotL < 0 can appear with isThinModeTransmission, in this case we need to flip the shadow bias
-        shadow = GetPunctualShadowAttenuation(lightLoopContext.shadowContext, positionWS, N, lightData.shadowIndex, L, distances.x, posInput.positionSS);
+        shadow = GetPunctualShadowAttenuation(lightLoopContext.shadowContext, positionWS, N, lightData.shadowIndex, shadowLod, L, distances.x, posInput.positionSS);
 
 #ifdef SHADOWS_SHADOWMASK
         // Note: Legacy Unity have two shadow mask mode. ShadowMask (ShadowMask contain static objects shadow and ShadowMap contain only dynamic objects shadow, final result is the minimun of both value)
@@ -240,6 +270,14 @@ void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs po
     }
 
     attenuation *= shadow;
+}
+
+void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs posInput,
+                            LightData lightData, BakeLightingData bakeLightingData,
+                            float3 N, float3 L, float3 lightToSample, float4 distances,
+                            out float3 color, out float attenuation)
+{
+    EvaluateLight_Punctual_ShadowLOD(lightLoopContext, posInput, lightData, bakeLightingData, 0.0, N, L, lightToSample, distances, color, attenuation);
 }
 
 // Environment map share function

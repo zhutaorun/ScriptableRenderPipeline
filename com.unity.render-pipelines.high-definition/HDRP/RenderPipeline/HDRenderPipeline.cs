@@ -1024,6 +1024,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             // This call overwrites camera properties passed to the shader system.
                             m_LightLoop.RenderShadows(renderContext, cmd, m_CullResults);
 
+                            //SS modification
+                            if (hdCamera.frameSettings.enableVolumetrics)
+                            {
+                                // Downsample the shadow atlas.  Already assuming we are in ESM-2 format
+                                // Used to create soft, aliasing-free shadow maps for the volumetric lighting pass.
+                                m_LightLoop.DownsampleShadowMaps(cmd);
+                            }
+                            // ////////////////////////////////////////
+
                             // Overwrite camera properties set during the shadow pass with the original camera properties.
                             renderContext.SetupCameraProperties(camera, hdCamera.frameSettings.enableStereo);
                             hdCamera.SetupGlobalParams(cmd, m_Time, m_LastTime, m_FrameCount);
@@ -1067,7 +1076,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                         // Render the volumetric lighting.
                         // The pass requires the volume properties, the light list and the shadows, and can run async.
-                        m_VolumetricLightingSystem.VolumetricLightingPass(hdCamera, cmd, m_FrameCount);
+                        m_VolumetricLightingSystem.VolumetricLightingPass(hdCamera, cmd, m_FrameCount, m_LightLoop.GetGlobalEvsmData()); 
 
                         RenderDeferredLighting(hdCamera, cmd);
 
