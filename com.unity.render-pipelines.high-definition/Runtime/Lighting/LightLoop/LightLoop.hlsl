@@ -165,11 +165,11 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         // v_ are variables that might have different value for each thread in the wave (meant for vector registers).
         // This will perform more loads than it is supposed to, however, the benefits should offset the downside, especially given that light data accessed should be largely coherent.
         // Note that the above is valid only if wave intriniscs are supported.
-        uint v_lightListIdx = 0;
+        uint v_lightListOffset = 0;
         uint v_lightIdx = lightStart;
-        while (v_lightListIdx < lightCount)
+        while (v_lightListOffset < lightCount)
         {
-            v_lightIdx = FetchIndex(lightStart, v_lightListIdx);
+            v_lightIdx = FetchIndex(lightStart, v_lightListOffset);
             uint s_lightIdx = v_lightIdx;
 #if SCALARIZE_LIGHT_LOOP
             if (!fastPath)
@@ -183,10 +183,12 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
 #endif
             LightData s_lightData = FetchLight(s_lightIdx);    
 
-            // If current scalar and vector light index match, we process the light. The v_lightListIdx for current thread is increased.
+            // If current scalar and vector light index match, we process the light. The v_lightListOffset for current thread is increased.
+            // TODO: Note that we move the index even if s_lightIdx > v_lightIdx but we don't evaluate the light in such case.
+            // This acts as a safeguard for a GPU hang that we otherwise get. We need to investigate the root of the issue further. Visually no error was found in current state. 
             if (s_lightIdx >= v_lightIdx) 
             {
-                v_lightListIdx++;
+                v_lightListOffset++;
 
                 if (s_lightIdx == v_lightIdx && IsMatchingLightLayer(s_lightData.lightLayers, builtinData.renderingLayers))
                 {
@@ -329,11 +331,11 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
             }
         #endif
             // Scalarized loop, same rationale of the punctual light version
-            uint v_envLightListIdx = 0;
+            uint v_envLightListOffset = 0;
             uint v_envLightIdx = envLightStart;
-            while (v_envLightListIdx < envLightCount)
+            while (v_envLightListOffset < envLightCount)
             {
-                v_envLightIdx = FetchIndex(envLightStart, v_envLightListIdx);
+                v_envLightIdx = FetchIndex(envLightStart, v_envLightListOffset);
                 uint s_envLightIdx = v_envLightIdx;
 
             #if SCALARIZE_LIGHT_LOOP
@@ -352,7 +354,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
 
                 if (s_envLightIdx >= v_envLightIdx)
                 {
-                    v_envLightListIdx++;
+                    v_envLightListOffset++;
                     if (s_envLightIdx == v_envLightIdx && reflectionHierarchyWeight < 1.0)
                     {
                         EVALUATE_BSDF_ENV(s_envLightData, REFLECTION, reflection);

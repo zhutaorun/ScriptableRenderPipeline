@@ -215,7 +215,7 @@ DecalSurfaceData GetDecalSurfaceData(PositionInputs posInput, inout float alpha)
     GetCountAndStart(posInput, LIGHTCATEGORY_DECAL, decalStart, decalCount);
 
     #if SCALARIZE_LIGHT_LOOP
-// Fast path is when we all pixels in a wave are accessing same tile or cluster.
+    // Fast path is when we all pixels in a wave are accessing same tile or cluster.
     uint decalStartLane0 = WaveReadFirstLane(decalStart);
     bool fastPath = all(Ballot(decalStart == decalStartLane0) == ~0);
     #endif
@@ -236,14 +236,14 @@ DecalSurfaceData GetDecalSurfaceData(PositionInputs posInput, inout float alpha)
     // v_ are variables that might have different value for each thread in the wave (meant for vector registers).
     // This will perform more loads than it is supposed to, however, the benefits should offset the downside, especially given that decal data accessed should be largely coherent
     // Note that the above is valid only if wave intriniscs are supported.
-    uint v_decalListIdx = 0;
+    uint v_decalListOffset = 0;
     uint v_decalIdx = decalStart;
-    while (v_decalListIdx < decalCount)
+    while (v_decalListOffset < decalCount)
     {
 #ifdef LIGHTLOOP_TILE_PASS
-        v_decalIdx = FetchIndex(decalStart, v_decalListIdx);
+        v_decalIdx = FetchIndex(decalStart, v_decalListOffset);
 #else        
-        v_decalIdx = decalStart + v_decalListIdx;
+        v_decalIdx = decalStart + v_decalListOffset;
 #endif // LIGHTLOOP_TILE_PASS
 
         uint s_decalIdx = v_decalIdx;
@@ -261,7 +261,7 @@ DecalSurfaceData GetDecalSurfaceData(PositionInputs posInput, inout float alpha)
 
         if (s_decalIdx >= v_decalIdx)
         {
-            v_decalListIdx++;
+            v_decalListOffset++;
             EvalDecalMask(posInput, positionRWSDdx, positionRWSDdy, s_decalData, DBuffer0, DBuffer1, DBuffer2, DBuffer3, mask, alpha);
         }
     }
