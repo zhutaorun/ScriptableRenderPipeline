@@ -211,17 +211,19 @@ DecalSurfaceData GetDecalSurfaceData(PositionInputs posInput, inout float alpha)
 	float2 DBuffer3 = float2(1.0f, 1.0f);
     #endif
 
-    #ifdef LIGHTLOOP_TILE_PASS
+#ifdef LIGHTLOOP_TILE_PASS
     GetCountAndStart(posInput, LIGHTCATEGORY_DECAL, decalStart, decalCount);
-#if SCALARIZE_LIGHT_LOOP
+
+    #if SCALARIZE_LIGHT_LOOP
 // Fast path is when we all pixels in a wave are accessing same tile or cluster.
     uint decalStartLane0 = WaveReadFirstLane(decalStart);
     bool fastPath = all(Ballot(decalStart == decalStartLane0) == ~0);
-#endif
-    #else
+    #endif
+
+#else // LIGHTLOOP_TILE_PASS
     decalCount = _DecalCount;
     decalStart = 0;
-    #endif
+#endif
 
     float3 positionRWS = posInput.positionWS;
 
@@ -242,7 +244,7 @@ DecalSurfaceData GetDecalSurfaceData(PositionInputs posInput, inout float alpha)
         v_decalIdx = FetchIndex(decalStart, v_decalListIdx);
 #else        
         v_decalIdx = decalStart + v_decalListIdx;
-#endif
+#endif // LIGHTLOOP_TILE_PASS
 
         uint s_decalIdx = v_decalIdx;
 #if SCALARIZE_LIGHT_LOOP
@@ -253,7 +255,7 @@ DecalSurfaceData GetDecalSurfaceData(PositionInputs posInput, inout float alpha)
         // Note that the WaveReadFirstLane should not be needed, but the compiler might insist in putting the result in VGPR.
         // However, we are certain at this point that the index is scalar.
         s_decalIdx = WaveReadFirstLane(s_decalIdx);
-#endif
+#endif // SCALARIZE_LIGHT_LOOP
 
         DecalData s_decalData = FetchDecal(s_decalIdx);
 
@@ -263,7 +265,7 @@ DecalSurfaceData GetDecalSurfaceData(PositionInputs posInput, inout float alpha)
             EvalDecalMask(posInput, positionRWSDdx, positionRWSDdy, s_decalData, DBuffer0, DBuffer1, DBuffer2, DBuffer3, mask, alpha);
         }
     }
-#else
+#else // _SURFACE_TYPE_TRANSPARENT
     mask = UnpackByte(LOAD_TEXTURE2D(_DecalHTileTexture, posInput.positionSS / 8).r);
 #endif
     DecalSurfaceData decalSurfaceData;

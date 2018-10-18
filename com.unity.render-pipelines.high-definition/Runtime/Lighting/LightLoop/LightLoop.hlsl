@@ -140,17 +140,19 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
     {
         uint lightCount, lightStart;
         bool fastPath = false;
-    #ifdef LIGHTLOOP_TILE_PASS
+#ifdef LIGHTLOOP_TILE_PASS
         GetCountAndStart(posInput, LIGHTCATEGORY_PUNCTUAL, lightStart, lightCount);
-#if SCALARIZE_LIGHT_LOOP
+
+    #if SCALARIZE_LIGHT_LOOP
         // Fast path is when we all pixels in a wave are accessing same tile or cluster.
         uint lightStartLane0 = WaveReadFirstLane(lightStart);
         fastPath = all(Ballot(lightStart == lightStartLane0) == ~0);
-#endif
-#else
+    #endif
+
+#else   // LIGHTLOOP_TILE_PASS
         lightCount = _PunctualLightCount;
         lightStart = 0;
-    #endif
+#endif
 
 #if SCALARIZE_LIGHT_LOOP
         if (fastPath)
@@ -181,13 +183,12 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
 #endif
             LightData s_lightData = FetchLight(s_lightIdx);    
 
-            // If current scalar and vector light index match, we process the light
-            // The v_lightListIdx for current thread is increased.
+            // If current scalar and vector light index match, we process the light. The v_lightListIdx for current thread is increased.
             if (s_lightIdx >= v_lightIdx) 
             {
                 v_lightListIdx++;
 
-                if (IsMatchingLightLayer(s_lightData.lightLayers, builtinData.renderingLayers))
+                if (s_lightIdx == v_lightIdx && IsMatchingLightLayer(s_lightData.lightLayers, builtinData.renderingLayers))
                 {
                     DirectLighting lighting = EvaluateBSDF_Punctual(context, V, posInput, preLightData, s_lightData, bsdfData, builtinData);
                     AccumulateDirectLighting(lighting, aggregateLighting);
@@ -200,17 +201,19 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
     {
         uint lightCount, lightStart;
         bool fastPath = false;
-    #ifdef LIGHTLOOP_TILE_PASS
+#ifdef LIGHTLOOP_TILE_PASS
         GetCountAndStart(posInput, LIGHTCATEGORY_AREA, lightStart, lightCount);
-#if SCALARIZE_LIGHT_LOOP
+
+    #if SCALARIZE_LIGHT_LOOP
         // Fast path is when we all pixels in a wave is accessing same tile or cluster.
         uint lightStartLane0 = WaveReadFirstLane(lightStart);
         fastPath = all(Ballot(lightStart == lightStartLane0) == ~0);
-#endif
-    #else
+    #endif
+
+#else // LIGHTLOOP_TILE_PASS
         lightCount = _AreaLightCount;
         lightStart = _PunctualLightCount;
-    #endif
+#endif
 
         // COMPILER BEHAVIOR WARNING!
         // If rectangle lights are before line lights, the compiler will duplicate light matrices in VGPR because they are used differently between the two types of lights.
@@ -272,12 +275,14 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         // Fetch first env light to provide the scene proxy for screen space computation
 #ifdef LIGHTLOOP_TILE_PASS
         GetCountAndStart(posInput, LIGHTCATEGORY_ENV, envLightStart, envLightCount);
+
     #if SCALARIZE_LIGHT_LOOP
         // Fast path is when we all pixels in a wave is accessing same tile or cluster.
         uint envStartFirstLane = WaveReadFirstLane(envLightStart);
         fastPath = all(Ballot(envLightStart == envStartFirstLane) == ~0);
     #endif
-#else
+
+#else // SCALARIZE_LIGHT_LOOP
         envLightCount = _EnvLightCount;
         envLightStart = 0;
 #endif
@@ -317,12 +322,12 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
         {
             context.sampleReflection = SINGLE_PASS_CONTEXT_SAMPLE_REFLECTION_PROBES;
 
-#if SCALARIZE_LIGHT_LOOP
+        #if SCALARIZE_LIGHT_LOOP
             if (fastPath)
             {
                 envLightStart = envStartFirstLane;
             }
-#endif
+        #endif
             // Scalarized loop, same rationale of the punctual light version
             uint v_envLightListIdx = 0;
             uint v_envLightIdx = envLightStart;
@@ -331,7 +336,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
                 v_envLightIdx = FetchIndex(envLightStart, v_envLightListIdx);
                 uint s_envLightIdx = v_envLightIdx;
 
-#if SCALARIZE_LIGHT_LOOP
+            #if SCALARIZE_LIGHT_LOOP
                 if (!fastPath)
                 {
                     // If we are not in fast path, s_envLightIdx is not scalar
@@ -341,14 +346,14 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
                 // However, we are certain at this point that the index is scalar.
                 s_envLightIdx = WaveReadFirstLane(s_envLightIdx);
 
-#endif
+            #endif
 
                 EnvLightData s_envLightData = FetchEnvLight(s_envLightIdx);    // Scalar load.
 
                 if (s_envLightIdx >= v_envLightIdx)
                 {
                     v_envLightListIdx++;
-                    if (reflectionHierarchyWeight < 1.0)
+                    if (s_envLightIdx == v_envLightIdx && reflectionHierarchyWeight < 1.0)
                     {
                         EVALUATE_BSDF_ENV(s_envLightData, REFLECTION, reflection);
                     }
@@ -357,7 +362,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
                     // The refraction probe is rarely used and happen only with sphere shape and high IOR. So we accept the slow path that use more simple code and
                     // doesn't affect the performance of the reflection which is more important.
                     // We reuse LIGHTFEATUREFLAGS_SSREFRACTION flag as refraction is mainly base on the screen. Would be a waste to not use screen and only cubemap.
-                    if ((featureFlags & LIGHTFEATUREFLAGS_SSREFRACTION) && refractionHierarchyWeight < 1.0)
+                    if (s_envLightIdx == v_envLightIdx && (featureFlags & LIGHTFEATUREFLAGS_SSREFRACTION) && refractionHierarchyWeight < 1.0)
                     {
                         EVALUATE_BSDF_ENV(s_envLightData, REFRACTION, refraction);
                     }
