@@ -7,8 +7,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     public class StackLitGUI : BaseMaterialGUI
     {
+        protected override uint defaultExpendedState { get { return (uint)(Expendable.Base | Expendable.Input | Expendable.VertexAnimation | Expendable.Detail | Expendable.Emissive | Expendable.Transparency | Expendable.Other); } }
+
         protected static class StylesStackLit
         {
+            public const string stackOptionText = "Stack Options";
+
             public static GUIContent useLocalPlanarMapping = new GUIContent("Use Local Planar Mapping", "Use local space for planar/triplanar mapping instead of world space");
         };
 
@@ -208,6 +212,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         private ComboProperty DualSpecularLobeParametrization;
 
         private Property CapHazinessWrtMetallic;
+
+        protected bool stackOptionExpended = true;
 
         private bool IsMetallicParametrizationUsed
         {
@@ -567,8 +573,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             //{
             //    Debug.Log(_materialProperties.ToShaderPropertiesStringInternal());
             //}
-
-            _materialProperties.OnGUI(material);
+            
+            using (var header = new HeaderScope(StylesStackLit.stackOptionText, (uint)Expendable.Input, this, spaceAtEnd: false))
+            {
+                if (header.expended)
+                    _materialProperties.OnGUI(material);
+            }
         }
 
         protected override void MaterialPropertiesAdvanceGUI(Material material)
