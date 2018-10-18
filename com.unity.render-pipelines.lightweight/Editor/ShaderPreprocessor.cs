@@ -1,6 +1,4 @@
-//#define LOG_VARIANTS
-//#define LOG_ONLY_LWRP_VARIANTS
-
+using System;
 using System.Collections.Generic;
 using UnityEditor.Build;
 using UnityEditor.Rendering;
@@ -8,30 +6,40 @@ using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.LightweightPipeline;
 using UnityEngine.Rendering;
-using LightweightRP = UnityEngine.Experimental.Rendering.LightweightPipeline.LightweightPipeline;
 
 namespace UnityEditor.Experimental.Rendering.LightweightPipeline
 {
-    public static class LightweightKeyword
+    internal class ShaderPreprocessor : IPreprocessShaders
     {
-        public static readonly ShaderKeyword AdditionalLights = new ShaderKeyword(LightweightKeywordStrings.AdditionalLights);
-        public static readonly ShaderKeyword VertexLights = new ShaderKeyword(LightweightKeywordStrings.VertexLights);
-        public static readonly ShaderKeyword MixedLightingSubtractive = new ShaderKeyword(LightweightKeywordStrings.MixedLightingSubtractive);
-        public static readonly ShaderKeyword DirectionalShadows = new ShaderKeyword(LightweightKeywordStrings.DirectionalShadows);
-        public static readonly ShaderKeyword LocalShadows = new ShaderKeyword(LightweightKeywordStrings.LocalShadows);
-        public static readonly ShaderKeyword SoftShadows = new ShaderKeyword(LightweightKeywordStrings.SoftShadows);
-        public static readonly ShaderKeyword CascadeShadows = new ShaderKeyword(LightweightKeywordStrings.CascadeShadows);
+        [Flags]
+        enum ShaderFeatures
+        {
+            MainLight = (1 << 0),
+            MainLightShadows = (1 << 1),
+            AdditionalLights = (1 << 2),
+            AdditionalLightShadows = (1 << 3),
+            VertexLighting = (1 << 4),
+            SoftShadows = (1 << 5),
+            MixedLighting = (1 << 6),
+        }
 
-        public static readonly ShaderKeyword Lightmap = new ShaderKeyword("LIGHTMAP_ON");
-        public static readonly ShaderKeyword DirectionalLightmap = new ShaderKeyword("DIRLIGHTMAP_COMBINED");
-    }
+        ShaderKeyword m_MainLightShadows = new ShaderKeyword(ShaderKeywordStrings.MainLightShadows);
+        ShaderKeyword m_AdditionalLightsVertex = new ShaderKeyword(ShaderKeywordStrings.AdditionalLightsVertex);
+        ShaderKeyword m_AdditionalLightsPixel = new ShaderKeyword(ShaderKeywordStrings.AdditionalLightsPixel);
+        ShaderKeyword m_AdditionalLightShadows = new ShaderKeyword(ShaderKeywordStrings.AdditionalLightShadows);
+        ShaderKeyword m_CascadeShadows = new ShaderKeyword(ShaderKeywordStrings.MainLightShadows);
+        ShaderKeyword m_SoftShadows = new ShaderKeyword(ShaderKeywordStrings.SoftShadows);
+        ShaderKeyword m_MixedLightingSubtractive = new ShaderKeyword(ShaderKeywordStrings.MixedLightingSubtractive);
+        ShaderKeyword m_Lightmap = new ShaderKeyword("LIGHTMAP_ON");
+        ShaderKeyword m_DirectionalLightmap = new ShaderKeyword("DIRLIGHTMAP_COMBINED");
 
-    public class ShaderPreprocessor : IPreprocessShaders
-    {
-#if LOG_VARIANTS
+        ShaderKeyword m_DeprecatedVertexLights = new ShaderKeyword("_VERTEX_LIGHTS");
+        ShaderKeyword m_DeprecatedShadowsEnabled = new ShaderKeyword("_SHADOWS_ENABLED");
+        ShaderKeyword m_DeprecatedShadowsCascade = new ShaderKeyword("_SHADOWS_CASCADE");
+        ShaderKeyword m_DeprecatedLocalShadowsEnabled = new ShaderKeyword("_LOCAL_SHADOWS_ENABLED");
+
         int m_TotalVariantsInputCount;
         int m_TotalVariantsOutputCount;
-#endif
 
         // Multiple callback may be implemented.
         // The first one executed is the one where callbackOrder is returning the smallest number.
@@ -45,7 +53,7 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             if (shader.name.Contains("HDRenderPipeline"))
                 return true;
 
-            if (!CoreUtils.HasFlag(features, ShaderFeatures.DirectionalShadows) &&
+            if (!CoreUtils.HasFlag(features, ShaderFeatures.MainLightShadows) &&
                 shader.name.Contains("ScreenSpaceShadows"))
                 return true;
 
@@ -58,55 +66,100 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
                 return true;
 
             if (snippetData.passType == PassType.ShadowCaster)
-                if (!CoreUtils.HasFlag(features, ShaderFeatures.DirectionalShadows) && !CoreUtils.HasFlag(features, ShaderFeatures.LocalShadows))
+                if (!CoreUtils.HasFlag(features, ShaderFeatures.MainLightShadows) && !CoreUtils.HasFlag(features, ShaderFeatures.AdditionalLightShadows))
                     return true;
 
             return false;
         }
 
-        bool StripUnusedVariant(ShaderFeatures features, ShaderCompilerData compilerData)
+        bool StripUnusedFeatures(ShaderFeatures features, ShaderCompilerData compilerData)
         {
-            if (compilerData.shaderKeywordSet.IsEnabled(LightweightKeyword.AdditionalLights) &&
-                !CoreUtils.HasFlag(features, ShaderFeatures.AdditionalLights))
+            // strip main light shadows and cascade variants
+            if (!CoreUtils.HasFlag(features, ShaderFeatures.MainLightShadows))
+            {
+                if (compilerData.shaderKeywordSet.IsEnabled(m_MainLightShadows))
+                    return true;
+
+                if (compilerData.shaderKeywordSet.IsEnabled(m_CascadeShadows))
+                    return true;
+            }
+
+            bool isAdditionalLightPerVertex = compilerData.shaderKeywordSet.IsEnabled(m_AdditionalLightsVertex);
+            bool isAdditionalLightPerPixel = compilerData.shaderKeywordSet.IsEnabled(m_AdditionalLightsPixel);
+            bool isAdditionalLightShadow = compilerData.shaderKeywordSet.IsEnabled(m_AdditionalLightShadows);
+
+            // Additional light are shaded per-vertex. Strip additional lights per-pixel and shadow variants
+            if (CoreUtils.HasFlag(features, ShaderFeatures.VertexLighting) &&
+                (isAdditionalLightPerPixel || isAdditionalLightShadow))
                 return true;
 
-            if (compilerData.shaderKeywordSet.IsEnabled(LightweightKeyword.VertexLights) &&
-                !CoreUtils.HasFlag(features, ShaderFeatures.VertexLights))
+            // No additional lights
+            if (!CoreUtils.HasFlag(features, ShaderFeatures.AdditionalLights) &&
+                (isAdditionalLightPerPixel || isAdditionalLightPerVertex || isAdditionalLightShadow))
                 return true;
 
-            if (compilerData.shaderKeywordSet.IsEnabled(LightweightKeyword.DirectionalShadows) &&
-                !CoreUtils.HasFlag(features, ShaderFeatures.DirectionalShadows))
+            // No additional light shadows
+            if (!CoreUtils.HasFlag(features, ShaderFeatures.AdditionalLightShadows) && isAdditionalLightShadow)
                 return true;
 
-            if (compilerData.shaderKeywordSet.IsEnabled(LightweightKeyword.LocalShadows) &&
-                !CoreUtils.HasFlag(features, ShaderFeatures.LocalShadows))
+            if (!CoreUtils.HasFlag(features, ShaderFeatures.SoftShadows) &&
+                compilerData.shaderKeywordSet.IsEnabled(m_SoftShadows))
                 return true;
 
-            if (compilerData.shaderKeywordSet.IsEnabled(LightweightKeyword.SoftShadows) &&
-                !CoreUtils.HasFlag(features, ShaderFeatures.SoftShadows))
+            if (compilerData.shaderKeywordSet.IsEnabled(m_MixedLightingSubtractive) &&
+                !CoreUtils.HasFlag(features, ShaderFeatures.MixedLighting))
                 return true;
+
+            return false;
+        }
+
+        bool StripUnsupportedVariants(ShaderCompilerData compilerData)
+        {
+            // Dynamic GI is not supported so we can strip variants that have directional lightmap
+            // enabled but not baked lightmap.
+            if (compilerData.shaderKeywordSet.IsEnabled(m_DirectionalLightmap) &&
+                !compilerData.shaderKeywordSet.IsEnabled(m_Lightmap))
+                return true;
+
+            if (compilerData.shaderCompilerPlatform == ShaderCompilerPlatform.GLES20)
+            {
+                if (compilerData.shaderKeywordSet.IsEnabled(m_CascadeShadows))
+                    return true;
+            }
 
             return false;
         }
 
         bool StripInvalidVariants(ShaderCompilerData compilerData)
         {
-            bool isDirectionalShadows = compilerData.shaderKeywordSet.IsEnabled(LightweightKeyword.DirectionalShadows);
-            bool isShadowVariant = isDirectionalShadows || compilerData.shaderKeywordSet.IsEnabled(LightweightKeyword.LocalShadows);
+            bool isMainShadow = compilerData.shaderKeywordSet.IsEnabled(m_MainLightShadows);
+            bool isAdditionalShadow = compilerData.shaderKeywordSet.IsEnabled(m_AdditionalLightShadows);
+            bool isShadowVariant = isMainShadow || isAdditionalShadow;
 
-            if (!isDirectionalShadows && compilerData.shaderKeywordSet.IsEnabled(LightweightKeyword.CascadeShadows))
+            if (!isMainShadow && compilerData.shaderKeywordSet.IsEnabled(m_CascadeShadows))
                 return true;
 
-            if (!isShadowVariant && compilerData.shaderKeywordSet.IsEnabled(LightweightKeyword.SoftShadows))
+            if (!isShadowVariant && compilerData.shaderKeywordSet.IsEnabled(m_SoftShadows))
                 return true;
 
-            if (compilerData.shaderKeywordSet.IsEnabled(LightweightKeyword.VertexLights) &&
-                !compilerData.shaderKeywordSet.IsEnabled(LightweightKeyword.AdditionalLights))
+            if (isAdditionalShadow && !compilerData.shaderKeywordSet.IsEnabled(m_AdditionalLightsPixel)) 
                 return true;
 
-            // Note: LWRP doesn't support Dynamic Lightmap.
-            if (compilerData.shaderKeywordSet.IsEnabled(LightweightKeyword.DirectionalLightmap) &&
-                !compilerData.shaderKeywordSet.IsEnabled(LightweightKeyword.Lightmap))
+            return false;
+        }
+
+        bool StripDeprecated(ShaderCompilerData compilerData)
+        {
+            if (compilerData.shaderKeywordSet.IsEnabled(m_DeprecatedVertexLights))
+                return true;
+
+            if (compilerData.shaderKeywordSet.IsEnabled(m_DeprecatedShadowsCascade))
+                return true;
+
+            if (compilerData.shaderKeywordSet.IsEnabled(m_DeprecatedShadowsEnabled))
+                return true;
+
+            if (compilerData.shaderKeywordSet.IsEnabled(m_DeprecatedLocalShadowsEnabled))
                 return true;
 
             return false;
@@ -120,21 +173,24 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             if (StripUnusedPass(features, snippetData))
                 return true;
 
-            if (StripUnusedVariant(features, compilerData))
+            if (StripUnusedFeatures(features, compilerData))
+                return true;
+
+            if (StripUnsupportedVariants(compilerData))
                 return true;
 
             if (StripInvalidVariants(compilerData))
                 return true;
 
+            if (StripDeprecated(compilerData))
+                return true;
+
             return false;
         }
 
-#if LOG_VARIANTS
-        void LogVariants(Shader shader, ShaderSnippetData snippetData, int prevVariantsCount, int currVariantsCount)
+        void LogShaderVariants(Shader shader, ShaderSnippetData snippetData, ShaderVariantLogLevel logLevel, int prevVariantsCount, int currVariantsCount)
         {
-#if LOG_ONLY_LWRP_VARIANTS
-            if (shader.name.Contains("LightweightPipeline"))
-#endif
+            if (logLevel == ShaderVariantLogLevel.AllShaders || shader.name.Contains("Lightweight Render Pipeline"))
             {
                 float percentageCurrent = (float)currVariantsCount / (float)prevVariantsCount * 100f;
                 float percentageTotal = (float)m_TotalVariantsOutputCount / (float)m_TotalVariantsInputCount * 100f;
@@ -148,15 +204,14 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             }
         }
 
-#endif
-
         public void OnProcessShader(Shader shader, ShaderSnippetData snippetData, IList<ShaderCompilerData> compilerDataList)
         {
-            LightweightRP lw = RenderPipelineManager.currentPipeline as LightweightRP;
-            if (lw == null)
+            LightweightRenderPipelineAsset lwrpAsset = GraphicsSettings.renderPipelineAsset as LightweightRenderPipelineAsset;
+            if (lwrpAsset == null || compilerDataList == null || compilerDataList.Count == 0)
                 return;
 
-            ShaderFeatures features = LightweightRP.GetSupportedShaderFeatures();
+            ShaderFeatures features = GetSupportedShaderFeatures(lwrpAsset);
+
             int prevVariantCount = compilerDataList.Count;
 
             for (int i = 0; i < compilerDataList.Count; ++i)
@@ -168,12 +223,44 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
                 }
             }
 
-#if LOG_VARIANTS
-            m_TotalVariantsInputCount += prevVariantCount;
-            m_TotalVariantsOutputCount += compilerDataList.Count;
+            if (lwrpAsset.shaderVariantLogLevel != ShaderVariantLogLevel.Disabled)
+            {
+                m_TotalVariantsInputCount += prevVariantCount;
+                m_TotalVariantsOutputCount += compilerDataList.Count;
+                LogShaderVariants(shader, snippetData, lwrpAsset.shaderVariantLogLevel, prevVariantCount, compilerDataList.Count);
+            }
+        }
 
-            LogVariants(shader, snippetData, prevVariantCount, compilerDataList.Count);
-#endif
+        ShaderFeatures GetSupportedShaderFeatures(LightweightRenderPipelineAsset pipelineAsset)
+        {
+            ShaderFeatures shaderFeatures;
+            shaderFeatures = ShaderFeatures.MainLight;
+
+            if (pipelineAsset.supportsMainLightShadows)
+                shaderFeatures |= ShaderFeatures.MainLightShadows;
+
+            if (pipelineAsset.additionalLightsRenderingMode == LightRenderingMode.PerVertex)
+            {
+                shaderFeatures |= ShaderFeatures.AdditionalLights;
+                shaderFeatures |= ShaderFeatures.VertexLighting;
+            }
+            else if (pipelineAsset.additionalLightsRenderingMode == LightRenderingMode.PerPixel)
+            {
+                shaderFeatures |= ShaderFeatures.AdditionalLights;
+
+                if (pipelineAsset.supportsAdditionalLightShadows)
+                    shaderFeatures |= ShaderFeatures.AdditionalLightShadows;
+            }
+
+            bool anyShadows = pipelineAsset.supportsMainLightShadows ||
+                              CoreUtils.HasFlag(shaderFeatures, ShaderFeatures.AdditionalLightShadows);
+            if (pipelineAsset.supportsSoftShadows && anyShadows)
+                shaderFeatures |= ShaderFeatures.SoftShadows;
+
+            if (pipelineAsset.supportsMixedLighting)
+                shaderFeatures |= ShaderFeatures.MixedLighting;
+
+            return shaderFeatures;
         }
     }
 }

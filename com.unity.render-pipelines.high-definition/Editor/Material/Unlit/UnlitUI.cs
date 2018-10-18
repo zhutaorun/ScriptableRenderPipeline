@@ -6,6 +6,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     class UnlitGUI : BaseUnlitGUI
     {
+        protected override uint defaultExpendedState { get { return (uint)(Expendable.Base | Expendable.Input | Expendable.Transparency); }  }
+
         protected static class Styles
         {
             public static string InputsText = "Inputs";
@@ -35,24 +37,27 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         protected override void MaterialPropertiesGUI(Material material)
         {
-            EditorGUILayout.LabelField(Styles.InputsText, EditorStyles.boldLabel);
+            using (var header = new HeaderScope(Styles.InputsText, (uint)Expendable.Input, this))
+            {
+                if (header.expended)
+                {
+                    m_MaterialEditor.TexturePropertySingleLine(Styles.colorText, colorMap, color);
+                    m_MaterialEditor.TextureScaleOffsetProperty(colorMap);
 
-            m_MaterialEditor.TexturePropertySingleLine(Styles.colorText, colorMap, color);
-            m_MaterialEditor.TextureScaleOffsetProperty(colorMap);
-
-            m_MaterialEditor.TexturePropertySingleLine(Styles.emissiveText, emissiveColorMap, emissiveColor);
-            m_MaterialEditor.TextureScaleOffsetProperty(emissiveColorMap);
-
+                    m_MaterialEditor.TexturePropertySingleLine(Styles.emissiveText, emissiveColorMap, emissiveColor);
+                    m_MaterialEditor.TextureScaleOffsetProperty(emissiveColorMap);
+                }
+            }
             var surfaceTypeValue = (SurfaceType)surfaceType.floatValue;
             if (surfaceTypeValue == SurfaceType.Transparent)
             {
-                EditorGUILayout.Space();
-                EditorGUILayout.LabelField(StylesBaseUnlit.TransparencyInputsText, EditorStyles.boldLabel);
-                ++EditorGUI.indentLevel;
-
-                DoDistortionInputsGUI();
-
-                --EditorGUI.indentLevel;
+                using (var header = new HeaderScope(StylesBaseUnlit.TransparencyInputsText, (uint)Expendable.Transparency, this))
+                {
+                    if (header.expended)
+                    {
+                        DoDistortionInputsGUI();
+                    }
+                }
             }
         }
 

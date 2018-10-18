@@ -139,7 +139,7 @@ void SampleGGXDir(real2   u,
                   bool     VeqN = false)
 {
     // GGX NDF sampling
-    real cosTheta = sqrt((1.0 - u.x) / (1.0 + (roughness * roughness - 1.0) * u.x));
+    real cosTheta = sqrt(SafeDiv(1.0 - u.x, 1.0 + (roughness * roughness - 1.0) * u.x));
     real phi      = TWO_PI * u.y;
 
     real3 localH = SphericalToCartesian(phi, cosTheta);
@@ -168,6 +168,7 @@ void SampleGGXDir(real2   u,
 }
 
 // Ref: "A Simpler and Exact Sampling Routine for the GGX Distribution of Visible Normals".
+// Note: this code will most likely fail if roughness is 0.
 void SampleVisibleAnisoGGXDir(real2 u, real3 V, real3x3 localToWorld,
                               real roughnessT, real roughnessB,
                               out real3 L,
@@ -186,6 +187,7 @@ void SampleVisibleAnisoGGXDir(real2 u, real3 V, real3x3 localToWorld,
     }
     else
     {
+        // TODO: this code is tacky. We should make it cleaner.
         viewToLocal[2] = normalize(real3(roughnessT * localV.x, roughnessB * localV.y, localV.z));
         viewToLocal[0] = (viewToLocal[2].z < 0.9999) ? normalize(cross(viewToLocal[2], real3(0, 0, 1))) : real3(1, 0, 0);
         viewToLocal[1] = cross(viewToLocal[0], viewToLocal[2]);
@@ -340,18 +342,21 @@ void ImportanceSampleAnisoGGX(real2   u,
 
 #if !defined SHADER_API_GLES
 // Ref: Listing 18 in "Moving Frostbite to PBR" + https://knarkowicz.wordpress.com/2014/12/27/analytical-dfg-term-for-ibl/
-real4 IntegrateGGXAndDisneyDiffuseFGD(real3 V, real3 N, real roughness, uint sampleCount = 8192)
+real4 IntegrateGGXAndDisneyDiffuseFGD(real NdotV, real roughness, uint sampleCount = 4096)
 {
-    real NdotV     = ClampNdotV(dot(N, V));
-    real4 acc      = real4(0.0, 0.0, 0.0, 0.0);
-    // Add some jittering on Hammersley2d
-    real2 randNum  = InitRandom(V.xy * 0.5 + 0.5);
+    // Note that our LUT covers the full [0, 1] range.
+    // Therefore, we don't really want to clamp NdotV here (else the lerp slope is wrong).
+    // However, if NdotV is 0, the integral is 0, so that's not what we want, either.
+    // Our runtime NdotV bias is quite large, so we use a smaller one here instead.
+    NdotV     = max(NdotV, FLT_EPS);
+    real3 V   = real3(sqrt(1 - NdotV * NdotV), 0, NdotV);
+    real4 acc = real4(0.0, 0.0, 0.0, 0.0);
 
-    real3x3 localToWorld = GetLocalFrame(N);
+    real3x3 localToWorld = k_identity3x3;
 
     for (uint i = 0; i < sampleCount; ++i)
     {
-        real2 u = frac(randNum + Hammersley2d(i, sampleCount));
+        real2 u = Hammersley2d(i, sampleCount);
 
         real VdotH;
         real NdotL;
@@ -394,70 +399,6 @@ real4 IntegrateGGXAndDisneyDiffuseFGD(real3 V, real3 N, real roughness, uint sam
 #else
 // Not supported due to lack of random library in GLES 2
 #define IntegrateGGXAndDisneyDiffuseFGD ERROR_ON_UNSUPPORTED_FUNCTION(IntegrateGGXAndDisneyDiffuseFGD)
-#endif
-
-#if !defined SHADER_API_GLES
-real4 IntegrateCharlieAndFabricLambertFGD(real3 V, real3 N, real roughness, uint sampleCount = 8192)
-{
-    real NdotV     = ClampNdotV(dot(N, V));
-    real4 acc      = real4(0.0, 0.0, 0.0, 0.0);
-    // Add some jittering on Hammersley2d
-    real2 randNum  = InitRandom(V.xy * 0.5 + 0.5);
-
-    real3x3 localToWorld = GetLocalFrame(N);
-
-    for (uint i = 0; i < sampleCount; ++i)
-    {
-        real2 u = frac(randNum + Hammersley2d(i, sampleCount));
-
-        real NdotL;
-        real weightOverPdf;
-
-        // Ref: Production Friendly Microfacet Sheen BRDF
-        // Paper recommend plain uniform sampling of upper hemisphere instead of importance sampling for Charlie
-        real3 localL = SampleHemisphereUniform(u.x, u.y);
-        real3 L = mul(localL, localToWorld);
-        NdotL = saturate(dot(N, L));
-
-        if (NdotL > 0.0)
-        {
-            // Sampling weight for each sample
-            // pdf = 1 / 2PI
-            // weight = fr * (N.L) with fr = CharlieV * CharlieD  / PI
-            // weight over pdf is:
-            // weightOverPdf = (CharlieV * CharlieD / PI) * (N.L) / (1 / 2PI)
-            // weightOverPdf = 2 * CharlieV * CharlieD * (N.L)
-            real3 H = normalize(V + L);
-            real NdotH = dot(N, H);
-            // Note: we use V_Charlie and not the approx when computing FGD texture as we can afford it
-            weightOverPdf = 2.0 * V_Charlie(NdotL, NdotV, roughness) * D_CharlieNoPI(NdotH, roughness) * NdotL;
-
-            // Integral{BSDF * <N,L> dw} =
-            // Integral{(F0 + (1 - F0) * (1 - <V,H>)^5) * (BSDF / F) * <N,L> dw} =
-            // (1 - F0) * Integral{(1 - <V,H>)^5 * (BSDF / F) * <N,L> dw} + F0 * Integral{(BSDF / F) * <N,L> dw}=
-            // (1 - F0) * x + F0 * y = lerp(x, y, F0)
-            real VdotH = dot(V, H);
-            acc.x += weightOverPdf * pow(1 - VdotH, 5);
-            acc.y += weightOverPdf;
-        }
-
-        // for Fabric Lambert we still use a Cosine importance sampling
-        ImportanceSampleLambert(u, localToWorld, L, NdotL, weightOverPdf);
-
-        if (NdotL > 0.0)
-        {
-            real fabricLambert = FabricLambertNoPI(roughness);
-            acc.z += fabricLambert * weightOverPdf;
-        }
-    }
-
-    acc /= sampleCount;
-
-    return acc;
-}
-#else
-// Not supported due to lack of random library in GLES 2
-#define IntegrateCharlieAndFabricLambertFGD ERROR_ON_UNSUPPORTED_FUNCTION(IntegrateCharlieAndFabricLambertFGD)
 #endif
 
 uint GetIBLRuntimeFilterSampleCount(uint mipLevel)
@@ -601,6 +542,93 @@ real4 IntegrateLD(TEXTURECUBE_ARGS(tex, sampl),
     return real4(lightInt / cbsdfInt, 1.0);
 }
 
+real4 IntegrateLDCharlie(TEXTURECUBE_ARGS(tex, sampl),
+                   real3 V,
+                   real3 N,
+                   real roughness,
+                   uint sampleCount,
+                   real invOmegaP,
+                   bool prefilter)
+{
+    // Local frame for the local to world sample transformation
+    real3x3 localToWorld = GetLocalFrame(N);
+    float NdotV = 1;
+
+    // Cumulative values
+    real3 lightInt = real3(0.0, 0.0, 0.0);
+    real  cbsdfInt = 0.0;
+
+    for (uint i = 0; i < sampleCount; ++i)
+    {
+        // Generate a new random number
+        real2 u = Hammersley2d(i, sampleCount);
+
+        // Generate the matching direction with a cosine importance sampling
+        float3 localL = SampleHemisphereCosine(u.x, u.y);
+
+        // Convert it to world space
+        real3 L = mul(localL, localToWorld);
+        float NdotL = saturate(dot(N, L));
+
+        // Are we in the hemisphere?
+        if (NdotL <= 0) continue; // Note that some samples will have 0 contribution
+
+        // The goal of this function is to use Monte-Carlo integration to find
+        // X = Integral{Radiance(L) * CBSDF(L, N, V) dL} / Integral{CBSDF(L, N, V) dL}.
+        // Note: Integral{CBSDF(L, N, V) dL} is given by the FDG texture.
+        // CBSDF  = F * D * V * NdotL.
+        // PDF    =  1.0 / NdotL
+        // Weight = CBSDF / PDF = F * D * V
+        // Since we perform filtering with the assumption that (V == N),
+        // (LdotH == NdotH) && (NdotV == 1) && (Weight ==  F * D * V)
+        // Therefore, after the Monte Carlo expansion of the integrals,
+        // X = Sum(Radiance(L) * Weight) / Sum(Weight) = Sum(Radiance(L) * F * D * V) / Sum(F * D * V).
+
+        // We are in the supposition that N == V
+        float LdotV, NdotH, LdotH, invLenLV;
+        GetBSDFAngle(V, L, NdotL, NdotV, LdotV, NdotH, LdotH, NdotV, invLenLV);
+
+        // BRDF data
+        real F = 1;
+        real D = D_Charlie(NdotH, roughness);
+        real Vis = V_Charlie(NdotL, NdotV, roughness);
+
+        real mipLevel = 0;
+        if (prefilter) // Prefiltered BRDF importance sampling
+        {
+            // Use lower MIP-map levels for fetching samples with low probabilities
+            // in order to reduce the variance.
+            // Ref: http://http.developer.nvidia.com/GPUGems3/gpugems3_ch20.html
+            //
+            // - OmegaS: Solid angle associated with the sample
+            // - OmegaP: Solid angle associated with the texel of the cubemap
+
+            real omegaS;
+
+            // real PDF = 1.0f / NdotL
+            // Since (N == V), NdotH == LdotH.
+            real pdf = 1.0 /  NdotL;
+            // TODO: improve the accuracy of the sample's solid angle fit for GGX.
+            omegaS    = rcp(sampleCount) * rcp(pdf);
+
+            // 'invOmegaP' is precomputed on CPU and provided as a parameter to the function.
+            // real omegaP = FOUR_PI / (6.0 * cubemapWidth * cubemapWidth);
+            const real mipBias = roughness;
+            mipLevel = 0.5 * log2(omegaS * invOmegaP) + mipBias;
+        }
+
+        // TODO: use a Gaussian-like filter to generate the MIP pyramid.
+        real3 val = SAMPLE_TEXTURECUBE_LOD(tex, sampl, L, mipLevel).rgb;
+
+        // Use the approximation from "Real Shading in Unreal Engine 4": Weight ≈ NdotL.
+        lightInt +=  val * F * D * Vis;
+        cbsdfInt += F * D * Vis;
+    }
+
+    return real4(lightInt / cbsdfInt, 1.0);
+}
+
+
 // Searches the row 'j' containing 'n' elements of 'haystack' and
 // returns the index of the first element greater or equal to 'needle'.
 uint BinarySearchRow(uint j, real needle, TEXTURE2D(haystack), uint n)
@@ -638,8 +666,6 @@ real4 IntegrateLD_MIS(TEXTURECUBE_ARGS(envMap, sampler_envMap),
 {
     real3x3 localToWorld = GetLocalFrame(N);
 
-    real2 randNum  = InitRandom(V.xy * 0.5 + 0.5);
-
     real3 lightInt = real3(0.0, 0.0, 0.0);
     real  cbsdfInt = 0.0;
 
@@ -658,7 +684,7 @@ real4 IntegrateLD_MIS(TEXTURECUBE_ARGS(envMap, sampler_envMap),
     // Perform light importance sampling.
     for (uint i = 0; i < sampleCount; i++)
     {
-        real2 s = frac(randNum + Hammersley2d(i, sampleCount));
+        real2 s = Hammersley2d(i, sampleCount);
 
         // Sample a row from the marginal distribution.
         uint y = BinarySearchRow(0, s.x, marginalRowDensities, height - 1);

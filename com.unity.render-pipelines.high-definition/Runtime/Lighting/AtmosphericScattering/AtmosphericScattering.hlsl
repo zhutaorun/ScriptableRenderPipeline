@@ -4,9 +4,9 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/VolumeRendering.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Filtering.hlsl"
 
-#include "AtmosphericScattering.cs.hlsl"
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderVariables.hlsl"
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Volumetrics/VBuffer.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/AtmosphericScattering/AtmosphericScattering.cs.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/VolumetricLighting/VBuffer.hlsl"
 
 #ifdef DEBUG_DISPLAY
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
@@ -23,7 +23,8 @@ float3 GetFogColor(PositionInputs posInput)
         // Based on Uncharted 4 "Mip Sky Fog" trick: http://advances.realtimerendering.com/other/2016/naughty_dog/NaughtyDog_TechArt_Final.pdf
         float mipLevel = (1.0 - _MipFogMaxMip * saturate((posInput.linearDepth - _MipFogNear) / (_MipFogFar - _MipFogNear))) * _SkyTextureMipCount;
         float3 dir = -GetWorldSpaceNormalizeViewDir(posInput.positionWS);
-        return SampleSkyTexture(dir, mipLevel).rgb;
+        // For the atmosphéric scattering, we use the GGX convoluted version of the cubemap. That matches the of the idnex 0
+        return SampleSkyTexture(dir, mipLevel, 0).rgb;
     }
     else // Should not be possible.
         return  float3(0.0, 0.0, 0.0);
@@ -70,7 +71,7 @@ float4 EvaluateAtmosphericScattering(PositionInputs posInput)
                                                      _VBufferDepthDecodingParams,
                                                      true, true);
 
-            fogFactor = 1 - volFog.a;                              // Opacity from transmittance
+            fogFactor = volFog.a;
             fogColor  = volFog.rgb * min(rcp(fogFactor), FLT_MAX); // Un-premultiply, clamp to avoid (0 * INF = NaN)
             break;
         }

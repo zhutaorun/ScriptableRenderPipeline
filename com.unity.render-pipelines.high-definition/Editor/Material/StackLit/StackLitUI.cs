@@ -7,8 +7,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     class StackLitGUI : BaseMaterialGUI
     {
+        protected override uint defaultExpendedState { get { return (uint)(Expendable.Base | Expendable.Input | Expendable.VertexAnimation | Expendable.Detail | Expendable.Emissive | Expendable.Transparency | Expendable.Other); } }
+
         protected static class StylesStackLit
         {
+            public const string stackOptionText = "Stack Options";
+
             public static GUIContent useLocalPlanarMapping = new GUIContent("Use Local Planar Mapping", "Use local space for planar/triplanar mapping instead of world space");
         };
 
@@ -191,7 +195,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         private Property CapHazinessWrtMetallic;
 
+        protected bool stackOptionExpended = true;
+
         private bool IsMetallicParametrizationUsed
+
         {
             get { return (!BaseParametrization.IsValid) || ((StackLit.BaseParametrization)BaseParametrization.FloatValue == StackLit.BaseParametrization.BaseMetallic); }
         }
@@ -446,8 +453,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             //{
             //    Debug.Log(_materialProperties.ToShaderPropertiesStringInternal());
             //}
-
-            _materialProperties.OnGUI();
+            
+            using (var header = new HeaderScope(StylesStackLit.stackOptionText, (uint)Expendable.Input, this, spaceAtEnd: false))
+            {
+                if (header.expended)
+                    _materialProperties.OnGUI();
+            }
         }
 
         protected override void MaterialPropertiesAdvanceGUI(Material material)
