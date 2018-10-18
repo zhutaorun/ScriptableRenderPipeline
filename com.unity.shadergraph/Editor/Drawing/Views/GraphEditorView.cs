@@ -169,8 +169,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             Add(content);
         }
 
-
-
         void OnSpaceDown(KeyDownEvent evt)
         {
             if (evt.keyCode == KeyCode.F1)
@@ -276,12 +274,14 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void OnElementsAddedToGroup(Group graphGroup, IEnumerable<GraphElement> element)
         {
+            m_Graph.owner.RegisterCompleteObjectUndo("Adding to group node");
             var groupData = graphGroup.userData as GroupData;
             if (groupData != null)
             {
                 foreach (var materialNodeView in element.Select(e => e).OfType<MaterialNodeView>())
                 {
-                    materialNodeView.node.groupGuid = groupData.guid;
+                    //materialNodeView.node.groupGuid = groupData.guid;
+                    m_Graph.SetNodeGroup(materialNodeView.node, groupData);
                 }
             }
         }
@@ -373,6 +373,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     }
                 }
             }
+            //RemoveEmptyGroups();
 
 
             foreach (var node in m_Graph.removedNodes)

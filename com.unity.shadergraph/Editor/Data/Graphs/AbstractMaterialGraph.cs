@@ -134,6 +134,9 @@ namespace UnityEditor.ShaderGraph
             get { return m_RemovedGroups; }
         }
 
+        [NonSerialized]
+        List<GroupNodeStruct> m_groupNodeStruct = new List<GroupNodeStruct>();
+
         #endregion
 
 
@@ -241,6 +244,14 @@ namespace UnityEditor.ShaderGraph
         {
             m_Groups.Remove(groupData);
             m_RemovedGroups.Add(groupData);
+        }
+
+        public void SetNodeGroup(AbstractMaterialNode node, GroupData group)
+        {
+            // TODO: Record this change in a list with node id, previous group id, and new node id
+            var groupStruct = new GroupNodeStruct(){nodeGuid = node.guid, oldGroupGuid = node.groupGuid, newGroupGuid = group.guid};
+            m_groupNodeStruct.Add(groupStruct);
+            //node.groupGuid = group.guid;
         }
 
         void AddNodeNoValidate(INode node)
