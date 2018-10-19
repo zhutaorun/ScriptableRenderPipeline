@@ -174,8 +174,15 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
 #if SCALARIZE_LIGHT_LOOP
             if (!fastPath)
             {
-                // If we are not in fast path, v_lightIdx is not scalar
-                s_lightIdx = min(WaveMinUint(v_lightIdx), max(_PunctualLightCount - 1, 0));
+                // If we are not in fast path, v_lightIdx is not scalar, so we need to query the Min value across the wave. 
+                s_lightIdx = WaveMinUint(v_lightIdx);
+                // TODO: Probably due to bad code generation by the compiler, rarely WaveMin can return -1 causing a GPU hang. If this rare case happens, we skip one iteration.
+                // Check again once query with central teams has been resolved.
+                if (s_lightIdx == -1)
+                {
+                    v_lightListOffset++;
+                    continue;
+                }
             }
             // Note that the WaveReadFirstLane should not be needed, but the compiler might insist in putting the result in VGPR.
             // However, we are certain at this point that the index is scalar.
@@ -184,13 +191,11 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
             LightData s_lightData = FetchLight(s_lightIdx);    
 
             // If current scalar and vector light index match, we process the light. The v_lightListOffset for current thread is increased.
-            // TODO: Note that we move the index even if s_lightIdx > v_lightIdx but we don't evaluate the light in such case.
-            // This acts as a safeguard for a GPU hang that we otherwise get. We need to investigate the root of the issue further. Visually no error was found in current state. 
-            if (s_lightIdx >= v_lightIdx) 
+            if (s_lightIdx == v_lightIdx) 
             {
                 v_lightListOffset++;
 
-                if (s_lightIdx == v_lightIdx && IsMatchingLightLayer(s_lightData.lightLayers, builtinData.renderingLayers))
+                if (IsMatchingLightLayer(s_lightData.lightLayers, builtinData.renderingLayers))
                 {
                     DirectLighting lighting = EvaluateBSDF_Punctual(context, V, posInput, preLightData, s_lightData, bsdfData, builtinData);
                     AccumulateDirectLighting(lighting, aggregateLighting);
@@ -341,8 +346,17 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
             #if SCALARIZE_LIGHT_LOOP
                 if (!fastPath)
                 {
+                    s_envLightIdx = WaveMinUint(v_envLightIdx);
+
                     // If we are not in fast path, s_envLightIdx is not scalar
-                    s_envLightIdx = min(WaveMinUint(v_envLightIdx), max(_EnvLightCount - 1, 0));
+                    // TODO: Probably due to bad code generation by the compiler, rarely WaveMin can return -1 causing a GPU hang. If this rare case happens, we skip one iteration.
+                    // Check again once query with central teams has been resolved.
+                    if (s_envLightIdx == -1)
+                    {
+                        v_envLightListOffset++;
+                        continue;
+                    }
+
                 }
                 // Note that the WaveReadFirstLane should not be needed, but the compiler might insist in putting the result in VGPR.
                 // However, we are certain at this point that the index is scalar.
@@ -352,10 +366,10 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
 
                 EnvLightData s_envLightData = FetchEnvLight(s_envLightIdx);    // Scalar load.
 
-                if (s_envLightIdx >= v_envLightIdx)
+                if (s_envLightIdx == v_envLightIdx)
                 {
                     v_envLightListOffset++;
-                    if (s_envLightIdx == v_envLightIdx && reflectionHierarchyWeight < 1.0)
+                    if (reflectionHierarchyWeight < 1.0)
                     {
                         EVALUATE_BSDF_ENV(s_envLightData, REFLECTION, reflection);
                     }
@@ -364,7 +378,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
                     // The refraction probe is rarely used and happen only with sphere shape and high IOR. So we accept the slow path that use more simple code and
                     // doesn't affect the performance of the reflection which is more important.
                     // We reuse LIGHTFEATUREFLAGS_SSREFRACTION flag as refraction is mainly base on the screen. Would be a waste to not use screen and only cubemap.
-                    if (s_envLightIdx == v_envLightIdx && (featureFlags & LIGHTFEATUREFLAGS_SSREFRACTION) && refractionHierarchyWeight < 1.0)
+                    if ((featureFlags & LIGHTFEATUREFLAGS_SSREFRACTION) && refractionHierarchyWeight < 1.0)
                     {
                         EVALUATE_BSDF_ENV(s_envLightData, REFRACTION, refraction);
                     }
