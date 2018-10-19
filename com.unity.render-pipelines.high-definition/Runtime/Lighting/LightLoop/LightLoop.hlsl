@@ -176,12 +176,11 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
             {
                 // If we are not in fast path, v_lightIdx is not scalar, so we need to query the Min value across the wave. 
                 s_lightIdx = WaveMinUint(v_lightIdx);
-                // TODO: Probably due to bad code generation by the compiler, rarely WaveMin can return -1 causing a GPU hang. If this rare case happens, we skip one iteration.
-                // Check again once query with central teams has been resolved.
+
+                // If WaveMinUint returns 0xffffffff it means that all lanes are actually dead, so we can safely ignore the loop and move forward. 
                 if (s_lightIdx == -1)
                 {
-                    v_lightListOffset++;
-                    continue;
+                    break;
                 }
             }
             // Note that the WaveReadFirstLane should not be needed, but the compiler might insist in putting the result in VGPR.
@@ -349,14 +348,11 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
                     s_envLightIdx = WaveMinUint(v_envLightIdx);
 
                     // If we are not in fast path, s_envLightIdx is not scalar
-                    // TODO: Probably due to bad code generation by the compiler, rarely WaveMin can return -1 causing a GPU hang. If this rare case happens, we skip one iteration.
-                    // Check again once query with central teams has been resolved.
+                    // If WaveMinUint returns 0xffffffff it means that all lanes are actually dead, so we can safely ignore the loop and move forward. 
                     if (s_envLightIdx == -1)
                     {
-                        v_envLightListOffset++;
-                        continue;
+                        break;
                     }
-
                 }
                 // Note that the WaveReadFirstLane should not be needed, but the compiler might insist in putting the result in VGPR.
                 // However, we are certain at this point that the index is scalar.

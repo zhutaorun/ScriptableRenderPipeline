@@ -252,12 +252,10 @@ DecalSurfaceData GetDecalSurfaceData(PositionInputs posInput, inout float alpha)
         {
             // If we are not in fast path, v_lightIdx is not scalar, so we need to query the Min value across the wave. 
             s_decalIdx = WaveMinUint(v_decalIdx);
-            // TODO: Probably due to bad code generation by the compiler, rarely WaveMin can return -1 causing a GPU hang. If this rare case happens, we skip one iteration.
-            // Check again once query with central teams has been resolved.
+            // If WaveMinUint returns 0xffffffff it means that all lanes are actually dead, so we can safely ignore the loop and move forward. 
             if (s_decalIdx == -1)
             {
-                v_decalListOffset++;
-                continue;
+                break;
             }
         }
         // Note that the WaveReadFirstLane should not be needed, but the compiler might insist in putting the result in VGPR.
