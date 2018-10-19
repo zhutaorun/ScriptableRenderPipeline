@@ -1331,7 +1331,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             probe.settings, probePositionSettings, probe.texture,
                             out CameraSettings cameraSettings, out CameraPositionSettings cameraPositionSettings
                         );
-                        capturePosition = cameraPositionSettings.position * test;
+                        capturePosition = cameraPositionSettings.position;
 
                         break;
                     }
