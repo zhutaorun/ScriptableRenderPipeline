@@ -5,7 +5,7 @@ using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    public class StackLitGUI : BaseMaterialGUI
+    class StackLitGUI : BaseMaterialGUI
     {
         protected override uint defaultExpendedState { get { return (uint)(Expendable.Base | Expendable.Input | Expendable.VertexAnimation | Expendable.Detail | Expendable.Emissive | Expendable.Transparency | Expendable.Other); } }
 
