@@ -5,15 +5,14 @@ Material:
   serializedVersion: 6
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
   m_Name: TestStackMat_Metal_Coat_DualNormal
   m_Shader: {fileID: 4800000, guid: 3a796817b9614b347895c0e8db89b63a, type: 3}
   m_ShaderKeywords: _MATERIAL_FEATURE_COAT _MATERIAL_FEATURE_COAT_NORMALMAP
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 2000
   stringTagMap: {}
   disabledShaderPasses:
   - DistortionVectors
@@ -252,7 +251,6 @@ Material:
     - _AnisotropyBMapUV: 0
     - _AnisotropyBMapUVLocal: 0
     - _AnisotropyBUseMap: 0
-    - _AnisotropyShow: 0
     - _BaseColorMapSamplerSharingOptout: 0
     - _BaseColorMapShow: 1
     - _BaseColorMapUV: 0

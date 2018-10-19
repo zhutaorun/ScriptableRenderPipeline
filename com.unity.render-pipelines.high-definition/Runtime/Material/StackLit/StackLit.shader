@@ -502,7 +502,6 @@ Shader "HDRenderPipeline/StackLit"
         [HideInInspector] _DebugShow("_DebugShow", Float) = 0.0
         [HideInInspector] _SSSShow("_SSSShow", Float) = 0.0
         [HideInInspector] _DualSpecularLobeShow("_DualSpecularLobeShow", Float) = 0.0
-        [HideInInspector] _AnisotropyShow("_AnisotropyShow", Float) = 0.0
         [HideInInspector] _TransmissionShow("_TransmissionShow", Float) = 0.0
         [HideInInspector] _IridescenceShow("_IridescenceShow", Float) = 0.0
         [HideInInspector] _SpecularAntiAliasingShow("_SpecularAntiAliasingShow", Float) = 0.0

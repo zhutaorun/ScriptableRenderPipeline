@@ -252,7 +252,6 @@ Material:
     - _AnisotropyBMapUV: 0
     - _AnisotropyBMapUVLocal: 0
     - _AnisotropyBUseMap: 0
-    - _AnisotropyShow: 0
     - _BaseColorMapSamplerSharingOptout: 0
     - _BaseColorMapShow: 1
     - _BaseColorMapUV: 0
