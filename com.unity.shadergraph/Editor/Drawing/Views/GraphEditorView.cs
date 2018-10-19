@@ -5,6 +5,7 @@ using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
 using UnityEditor.Graphing;
+using UnityEditor.Graphs;
 using UnityEditor.ShaderGraph.Drawing.Inspector;
 using UnityEngine.Experimental.UIElements.StyleEnums;
 using UnityEngine.Experimental.UIElements.StyleSheets;
@@ -36,7 +37,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         EdgeConnectorListener m_EdgeConnectorListener;
         BlackboardProvider m_BlackboardProvider;
 
-        List<MaterialGraphGroup> m_GraphGroups = new List<MaterialGraphGroup>();
+        System.Collections.Generic.List<MaterialGraphGroup> m_GraphGroups = new System.Collections.Generic.List<MaterialGraphGroup>();
 
         const string k_FloatingWindowsLayoutKey = "UnityEditor.ShaderGraph.FloatingWindowsLayout";
         FloatingWindowsLayout m_FloatingWindowsLayout;
@@ -274,13 +275,26 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void OnElementsAddedToGroup(Group graphGroup, IEnumerable<GraphElement> element)
         {
-            m_Graph.owner.RegisterCompleteObjectUndo("Adding to group node");
             var groupData = graphGroup.userData as GroupData;
             if (groupData != null)
             {
+                var anyChanged = false;
                 foreach (var materialNodeView in element.Select(e => e).OfType<MaterialNodeView>())
                 {
-                    //materialNodeView.node.groupGuid = groupData.guid;
+                    if (materialNodeView.node.guid != groupData.guid)
+                    {
+                        anyChanged = true;
+                        break;
+                    }
+                }
+
+                if (!anyChanged)
+                    return;
+
+                m_Graph.owner.RegisterCompleteObjectUndo("Adding to group node :: " + groupData.title);
+
+                foreach (var materialNodeView in element.Select(e => e).OfType<MaterialNodeView>())
+                {
                     m_Graph.SetNodeGroup(materialNodeView.node, groupData);
                 }
             }
@@ -288,17 +302,38 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void OnElementsRemovedFromGroup(Group graphGroup, IEnumerable<GraphElement> element)
         {
-            bool actuallyRemovedANode = false;
+            //bool actuallyRemovedANode = false;
             var groupData = graphGroup.userData as GroupData;
             if (groupData != null)
             {
+//                foreach (var materialNodeView in element.Select(e => e).OfType<MaterialNodeView>())
+//                {
+//                    if (materialNodeView.node != null)
+//                    {
+//                        //materialNodeView.node.groupGuid = Guid.Empty;
+//                        m_Graph.SetNodeGroup(materialNodeView.node, null);
+//                        //actuallyRemovedANode = true;
+//                    }
+//                }
+
+                var anyChanged = false;
                 foreach (var materialNodeView in element.Select(e => e).OfType<MaterialNodeView>())
                 {
-                    if (materialNodeView.node != null)
+                    if (materialNodeView.node.guid == groupData.guid)
                     {
-                        materialNodeView.node.groupGuid = Guid.Empty;
-                        actuallyRemovedANode = true;
+                        anyChanged = true;
+                        break;
                     }
+                }
+
+                if (!anyChanged)
+                    return;
+
+                m_Graph.owner.RegisterCompleteObjectUndo("Removing from node :: " + groupData.title);
+
+                foreach (var materialNodeView in element.Select(e => e).OfType<MaterialNodeView>())
+                {
+                    m_Graph.SetNodeGroup(materialNodeView.node, null);
                 }
             }
 
@@ -313,7 +348,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (m_GraphView == null)
                 return;
 
-            var dependentNodes = new List<INode>();
+            var dependentNodes = new System.Collections.Generic.List<INode>();
             NodeUtils.CollectNodesNodeFeedsInto(dependentNodes, inNode);
             foreach (var node in dependentNodes)
             {
@@ -339,7 +374,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         }
 
         HashSet<MaterialNodeView> m_NodeViewHashSet = new HashSet<MaterialNodeView>();
-
+        HashSet<Guid> m_PotentialEmptyGroupNodes = new HashSet<Guid>();
         public void HandleGraphChanges()
         {
 
@@ -357,7 +392,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 {
                     if (group.userData == groupData)
                     {
-                        List<INode> removeNodes = new List<INode>();
+                        System.Collections.Generic.List<INode> removeNodes = new System.Collections.Generic.List<INode>();
                         foreach (GraphElement element in group.containedElements)
                         {
                             //Debug.Log("DELETING NODE::: " + (element.userData as INode).name);
@@ -373,9 +408,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                     }
                 }
             }
+
             //RemoveEmptyGroups();
-
-
             foreach (var node in m_Graph.removedNodes)
             {
                 //m_GraphView.selection.Clear();
@@ -399,6 +433,46 @@ namespace UnityEditor.ShaderGraph.Drawing
             {
                 AddNewGroupNode(groupData);
             }
+
+            foreach (var groupNodeStruct in m_Graph.groupNodeStruct)
+            {
+                var nodeView = (MaterialNodeView)m_GraphView.GetNodeByGuid(groupNodeStruct.nodeGuid.ToString());
+                if (nodeView != null)
+                {
+                    nodeView.node.groupGuid = groupNodeStruct.newGroupGuid;
+                }
+
+                if (groupNodeStruct.oldGroupGuid != Guid.Empty)
+                {
+                    Debug.Log("OLD ID:: " + groupNodeStruct.oldGroupGuid);
+                    m_PotentialEmptyGroupNodes.Add(groupNodeStruct.oldGroupGuid);
+                }
+                //materialNodeView.node.groupGuid = groupData.guid;
+
+            }
+
+            foreach (var guid in m_PotentialEmptyGroupNodes)
+            {
+                //var node = m_GraphView.graphElements.ToList().FirstOrDefault((e => e.persistenceKey == guid.ToString()));
+
+                //var node = m_GraphView.GetElementByGuid(guid.ToString());
+                //var nod = m_GraphView.GetNodeByGuid(guid.ToString());
+
+                List<GraphElement> groups = m_GraphView.graphElements.ToList().FindAll(p => p.userData is GroupData);
+                foreach (GraphElement element in groups)
+                {
+                    Group group = element as Group;
+                    if (group != null)
+                    {
+                        GroupData groupData = (GroupData)group.userData;
+                        if(groupData.guid == guid && !group.containedElements.Any())
+                        {
+                            graphView.RemoveElement(group);
+                        }
+                    }
+                }
+            }
+            m_PotentialEmptyGroupNodes.Clear();
 
             foreach (var node in m_Graph.pastedNodes)
             {

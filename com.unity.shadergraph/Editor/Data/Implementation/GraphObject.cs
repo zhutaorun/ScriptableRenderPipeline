@@ -35,6 +35,7 @@ namespace UnityEditor.Graphing
 
         public void RegisterCompleteObjectUndo(string name)
         {
+            Debug.Log(Environment.StackTrace);
             Undo.RegisterCompleteObjectUndo(this, name);
             m_IsDirty = true;
         }

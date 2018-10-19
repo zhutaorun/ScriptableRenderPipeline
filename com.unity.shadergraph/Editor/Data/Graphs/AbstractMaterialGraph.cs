@@ -137,6 +137,11 @@ namespace UnityEditor.ShaderGraph
         [NonSerialized]
         List<GroupNodeStruct> m_groupNodeStruct = new List<GroupNodeStruct>();
 
+        public IEnumerable<GroupNodeStruct> groupNodeStruct
+        {
+            get { return m_groupNodeStruct; }
+        }
+
         #endregion
 
 
@@ -203,6 +208,8 @@ namespace UnityEditor.ShaderGraph
             m_AddedNodes.Clear();
             m_RemovedNodes.Clear();
             m_PastedNodes.Clear();
+            m_groupNodeStruct.Clear();
+            //m_Groups.Clear();
             m_AddedGroups.Clear();
             m_RemovedGroups.Clear();
             m_AddedEdges.Clear();
@@ -249,7 +256,19 @@ namespace UnityEditor.ShaderGraph
         public void SetNodeGroup(AbstractMaterialNode node, GroupData group)
         {
             // TODO: Record this change in a list with node id, previous group id, and new node id
-            var groupStruct = new GroupNodeStruct(){nodeGuid = node.guid, oldGroupGuid = node.groupGuid, newGroupGuid = group.guid};
+            // Checking if the groupdata is null. If it is, then it means node has been removed out of a group.
+            Guid groupGuid;
+            if (group != null)
+                groupGuid = group.guid;
+            else
+                groupGuid = Guid.Empty;
+
+            var groupStruct = new GroupNodeStruct()
+            {
+                nodeGuid = node.guid,
+                oldGroupGuid = node.groupGuid,
+                newGroupGuid = groupGuid
+            };
             m_groupNodeStruct.Add(groupStruct);
             //node.groupGuid = group.guid;
         }
@@ -651,7 +670,7 @@ namespace UnityEditor.ShaderGraph
 //                //removedGroupDatas.AddRange(m_Groups);
 //                foreach (var groupData in removedGroupDatas)
 //                {
-//                    Debug.Log("REplaceWith GroupData:: " + groupData.title);
+//                    Debug.Log("ReplaceWith GroupData:: " + groupData.title);
 //                    RemoveGroupData(groupData);
 //                }
 //            }
