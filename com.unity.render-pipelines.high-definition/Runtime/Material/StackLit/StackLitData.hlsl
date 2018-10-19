@@ -519,16 +519,24 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     if (_TangentUseMap)
     {
         float4 tmp = (float4)0;
+        // If using the normal sampling macro, we will get a WS gradient and we must not call Transform*ToWorld,
         SHARED_SAMPLING_NORMAL(tmp, _TangentUseMap, _TangentMap, /*scale*/ 1.0, _TangentMapObjSpace);
-
+        // but we need to resolve at the end with SurfaceGradientResolveNormal():
+        surfaceData.tangentWS = SurfaceGradientResolveNormal(input.worldToTangent[2], tmp.xyz);
+        #if 0
+        // We can also skip gradients and unpack and transform here:
+        SHARED_SAMPLING(tmp, rgba, _TangentUseMap, _TangentMap);
         if (_TangentMapObjSpace)
         {
+            tmp.xyz = UnpackNormalRGB(tmp);
             surfaceData.tangentWS = TransformObjectToWorldDir(tmp.xyz);
         }
         else
         {
+            tmp.xyz = UnpackNormalmapRGorAG(tmp);
             surfaceData.tangentWS = TransformTangentToWorld(tmp.xyz, input.worldToTangent);
         }
+        #endif
     }
 #endif
 
