@@ -1295,14 +1295,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var capturePosition = Vector3.zero;
             var influenceToWorld = probe.influenceToWorld;
 
-            // Calculate settings to use for the probe
-            var probePositionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, camera.transform);
-            HDRenderUtilities.ComputeCameraSettingsFromProbeSettings(
-                probe.settings, probePositionSettings, probe.texture,
-                out CameraSettings cameraSettings, out CameraPositionSettings cameraPositionSettings
-            );
-            capturePosition = cameraPositionSettings.position;
-
             // 31 bits index, 1 bit cache type
             var envIndex = -1;
             switch (probe)
@@ -1312,8 +1304,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         var fetchIndex = m_ReflectionPlanarProbeCache.FetchSlice(cmd, probe.texture);
                         envIndex = (fetchIndex << 1) | (int)EnvCacheType.Texture2D;
 
-                        var worldToCameraRHSMatrix = cameraPositionSettings.GetUsedWorldToCameraMatrix();
-                        var projectionMatrix = cameraSettings.frustum.GetUsedProjectionMatrix();
+                        var renderData = planarProbe.renderData;
+                        var worldToCameraRHSMatrix = renderData.worldToCameraRHS;
+                        var projectionMatrix = renderData.projectionMatrix;
+
+                        // We don't need to provide the capture position
+                        // It is already encoded in the 'worldToCameraRHSMatrix'
+                        capturePosition = Vector3.zero;
+
                         // get the device dependent projection matrix
                         var gpuProj = GL.GetGPUProjectionMatrix(projectionMatrix, true);
                         var gpuView = worldToCameraRHSMatrix;
@@ -1326,6 +1324,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {
                         envIndex = m_ReflectionProbeCache.FetchSlice(cmd, probe.texture);
                         envIndex = envIndex << 1 | (int)EnvCacheType.Cubemap;
+
+                        // Calculate settings to use for the probe
+                        var probePositionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, camera.transform);
+                        HDRenderUtilities.ComputeCameraSettingsFromProbeSettings(
+                            probe.settings, probePositionSettings, probe.texture,
+                            out CameraSettings cameraSettings, out CameraPositionSettings cameraPositionSettings
+                        );
+                        capturePosition = cameraPositionSettings.position * test;
+
                         break;
                     }
             }
