@@ -2,9 +2,8 @@
 using System;
 using UnityEditor;
 using UnityEditor.ProjectWindowCallback;
-using UnityEngine.Rendering;
-
 #endif
+using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 {
@@ -111,9 +110,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         [SerializeField] bool m_SupportsDynamicBatching = true;
         [SerializeField] bool m_MixedLightingSupported = true;
         // TODO: Render Pipeline Batcher
-
-        [SerializeField] XRGraphicsConfig m_SavedXRConfig = XRGraphicsConfig.s_DefaultXRConfig;
-
+        
         // Deprecated settings
         [SerializeField] ShadowQuality m_ShadowType = ShadowQuality.HardShadows;
         [SerializeField] bool m_LocalShadowsSupported = false;
@@ -121,7 +118,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         [SerializeField] int m_MaxPixelLights = 0;
         [SerializeField] ShadowResolution m_ShadowAtlasResolution = ShadowResolution._256;
 
-        [SerializeField] LightweightRenderPipelineResources m_ResourcesAsset;
+        [SerializeField] LightweightRenderPipelineResources m_ResourcesAsset = null;
         [SerializeField] ShaderVariantLogLevel m_ShaderVariantLogLevel = ShaderVariantLogLevel.Disabled;
 #if UNITY_EDITOR
         [NonSerialized]
@@ -412,7 +409,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         public override Shader defaultShader
         {
             get
-            {
+        {
                 if (m_DefaultShader == null)
                     m_DefaultShader = Shader.Find(ShaderUtils.GetShaderPath(ShaderPathID.PhysicallyBased));
                 return m_DefaultShader;
@@ -455,13 +452,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         {
             get { return resources != null ? resources.samplingShader : null; }
         }
-
-        public XRGraphicsConfig savedXRGraphicsConfig
-        {
-            get { return m_SavedXRConfig; }
-            set { m_SavedXRConfig = value;  }
-        }
-
+        
         public void OnBeforeSerialize()
         {
         }
