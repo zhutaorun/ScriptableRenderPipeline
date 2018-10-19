@@ -169,6 +169,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 InfluenceVolumeUI.HandleType.Base | InfluenceVolumeUI.HandleType.Influence
             );
 
+            DrawCapturePositionGizmo(probe);
+        }
+
+        static void DrawCapturePositionGizmo(PlanarReflectionProbe probe)
+        {
+            if (Event.current.type != EventType.Repaint)
+                return;
+
             // Capture gizmo
             if (k_QuadMesh == null)
                 k_QuadMesh = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
@@ -181,14 +189,25 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var mirrorRotation = proxyToWorld.rotation * settings.proxySettings.mirrorRotationProxySpace * Quaternion.Euler(0, 180, 0);
             var renderData = probe.renderData;
 
-            k_PreviewMaterial.SetTexture("_MainTex", probe.texture);
-            k_PreviewMaterial.SetMatrix("_ViewProjectionMatrix", renderData.projectionMatrix * renderData.worldToCameraRHS);
+            var gpuProj = GL.GetGPUProjectionMatrix(renderData.projectionMatrix, true);
+            var gpuView = renderData.worldToCameraRHS;
+            var vp = gpuProj * gpuView;
+
             var cameraPositionWS = Vector3.zero;
-            if (Camera.main != null)
-                cameraPositionWS = Camera.main.transform.position;
-            k_PreviewMaterial.SetVector("_CameraPositionWS", new Vector4(-cameraPositionWS.x, -cameraPositionWS.y, cameraPositionWS.z, 0));
+            var capturePositionWS = renderData.capturePosition;
+            if (SceneView.currentDrawingSceneView?.camera != null)
+            {
+                cameraPositionWS = SceneView.currentDrawingSceneView.camera.transform.position;
+                // For Camera relative rendering, we need to translate with the position of the currently rendering camera
+                capturePositionWS -= cameraPositionWS;
+            }
+
+            k_PreviewMaterial.SetTexture("_MainTex", probe.texture);
+            k_PreviewMaterial.SetMatrix("_CaptureVPMatrix", vp);
+            k_PreviewMaterial.SetVector("_CameraPositionWS", new Vector4(0, 0, 0, 0));
+            k_PreviewMaterial.SetVector("_CapturePositionWS", new Vector4(capturePositionWS.x, capturePositionWS.y, -capturePositionWS.z, 0));
             k_PreviewMaterial.SetPass(0);
-            Graphics.DrawMeshNow(k_QuadMesh, Matrix4x4.TRS(mirrorPosition, mirrorRotation, Vector3.one * capturePointPreviewSize));
+            Graphics.DrawMeshNow(k_QuadMesh, Matrix4x4.TRS(mirrorPosition, mirrorRotation, Vector3.one * capturePointPreviewSize * 2));
         }
     }
 
