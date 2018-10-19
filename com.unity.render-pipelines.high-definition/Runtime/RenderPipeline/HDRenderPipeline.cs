@@ -1003,7 +1003,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     m_SkyManager.UpdateCurrentSkySettings(hdCamera);
 
                     ScriptableCullingParameters cullingParams;
-                    if (!camera.TryGetCullingParameters(hdCamera.frameSettings.enableStereo, out cullingParams)) // Fixme remove stereo passdown?
+                    if (!camera.TryGetCullingParameters(camera.stereoEnabled, out cullingParams)) // Fixme remove stereo passdown?
                     {
                         renderContext.Submit();
                         continue;
