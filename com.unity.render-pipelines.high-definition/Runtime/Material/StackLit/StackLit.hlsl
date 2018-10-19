@@ -183,6 +183,11 @@ TEXTURE2D(_GBufferTexture0);
 //-----------------------------------------------------------------------------
 // Helper functions/variable specific to this material
 //-----------------------------------------------------------------------------
+// SSReflection
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightDefinition.cs.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Reflection/VolumeProjection.hlsl"
+
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/ScreenSpaceLighting/ScreenSpaceLighting.hlsl"
 
 // The only way to get Coat now is with vlayering
 bool IsVLayeredEnabled(BSDFData bsdfData)
@@ -3389,7 +3394,47 @@ IndirectLighting EvaluateBSDF_ScreenSpaceReflection(PositionInputs posInput,
     IndirectLighting lighting;
     ZERO_INITIALIZE(IndirectLighting, lighting);
 
-    // TODO
+    // TODO: this texture is sparse (mostly black). Can we avoid reading every texel? How about using Hi-S?
+    float4 ssrLighting = LOAD_TEXTURE2D(_SsrLightingTexture, posInput.positionSS);
+
+    // For performance reasons, SSR doesn't allow us to be discriminating per lobe, ie wrt direction, roughness,
+    // anisotropy, etc. 
+    // At least the vlayered BSDF stack model already represents the stack with a single interface with multiple
+    // effective/equivalent lobes.
+
+    // We could combine a "total reflectance value" so we won't be missing some intense reflections from
+    // any lobe.
+    // We can also try to match the data fed to the SSR compute via ConvertSurfaceDataToNormalData.
+    // This is the approach we take since roughnesses between coat and base lobes can be very different, while
+    // if the coat exist, ConvertSurfaceDataToNormalData will output the roughness of the coat and we don't need
+    // a boost of sharp reflections from a potentially rough bottom layer.
+    
+    float3 reflectanceFactor = (float3)0.0;
+
+    if (IsVLayeredEnabled(bsdfData))
+    {
+        reflectanceFactor = preLightData.specularFGD[COAT_LOBE_IDX];
+        reflectanceFactor *= preLightData.hemiSpecularOcclusion[COAT_LOBE_IDX];
+        // TODOENERGY: If vlayered, should be done in ComputeAdding with FGD formulation for non dirac lights.
+        // Incorrect, but for now:
+        reflectanceFactor *= preLightData.energyCompensationFactor[COAT_LOBE_IDX];
+    }
+    else
+    {
+        for(int i = 0; i < TOTAL_NB_LOBES; i++)
+        {
+            float3 lobeFactor = preLightData.specularFGD[i]; // note: includes the lobeMix factor, see PreLightData.
+            lobeFactor *= preLightData.hemiSpecularOcclusion[i];
+            // TODOENERGY: If vlayered, should be done in ComputeAdding with FGD formulation for non dirac lights.
+            // Incorrect, but for now:
+            lobeFactor *= preLightData.energyCompensationFactor[i];
+            reflectanceFactor += lobeFactor;
+        }
+    }
+
+    // Note: RGB is already premultiplied by A.
+    lighting.specularReflected = ssrLighting.rgb /* * ssrLighting.a */ * reflectanceFactor;
+    reflectionHierarchyWeight  = ssrLighting.a;
 
     return lighting;
 }
