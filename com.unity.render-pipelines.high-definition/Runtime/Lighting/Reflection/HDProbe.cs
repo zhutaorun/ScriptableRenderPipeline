@@ -9,14 +9,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             public Matrix4x4 worldToCameraRHS;
             public Matrix4x4 projectionMatrix;
+            public Vector3 capturePosition;
 
-            public Vector3 capturePosition
+            public RenderData(CameraSettings camera, CameraPositionSettings position)
             {
-                get
-                {
-                    var v = -worldToCameraRHS.GetColumn(3);
-                    return new Vector3(v.x, v.y, -v.z);
-                }
+                worldToCameraRHS = position.GetUsedWorldToCameraMatrix();
+                projectionMatrix = camera.frustum.GetUsedProjectionMatrix();
+                capturePosition = position.position;
             }
         }
 

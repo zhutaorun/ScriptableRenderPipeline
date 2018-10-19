@@ -129,7 +129,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             Render(
                 settings, position, target,
-                out Matrix4x4 worldToCameraRHSMatrix, out Matrix4x4 projectionMatrix,
+                out CameraSettings cameraSettings, out CameraPositionSettings cameraPosition,
                 forceFlipY: forceFlipY
             );
         }
@@ -139,9 +139,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ProbeCapturePositionSettings position,
             Texture target,
             out CameraSettings cameraSettings,
-            out CameraPositionSettings cameraPositionSettings,
-            out Matrix4x4 worldToCameraRHSMatrix,
-            out Matrix4x4 projectionMatrix
+            out CameraPositionSettings cameraPositionSettings
         )
         {
             // Copy settings
@@ -153,25 +151,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 ref settings, ref position,
                 ref cameraSettings, ref cameraPositionSettings
             );
-
-            worldToCameraRHSMatrix = cameraPositionSettings.GetUsedWorldToCameraMatrix();
-            projectionMatrix = cameraSettings.frustum.GetUsedProjectionMatrix();
         }
 
         public static void Render(
             ProbeSettings settings,
             ProbeCapturePositionSettings position,
             Texture target,
-            out Matrix4x4 worldToCameraRHSMatrix,
-            out Matrix4x4 projectionMatrix,
+            out CameraSettings cameraSettings,
+            out CameraPositionSettings cameraPositionSettings,
             bool forceFlipY = false
         )
         {
             // Copy settings
             ComputeCameraSettingsFromProbeSettings(
                 settings, position, target,
-                out CameraSettings cameraSettings, out CameraPositionSettings cameraPositionSettings,
-                out worldToCameraRHSMatrix, out projectionMatrix
+                out cameraSettings, out cameraPositionSettings
             );
 
             if (forceFlipY)

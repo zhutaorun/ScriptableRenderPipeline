@@ -43,15 +43,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 probe.settings,
                 positionSettings,
                 outTarget,
-                out Matrix4x4 worldToCameraRHSMatrix, out Matrix4x4 projectionMatrix,
+                out CameraSettings cameraSettings, out CameraPositionSettings cameraPosition,
                 forceFlipY: forceFlipY
             );
 
-            outRenderData = new HDProbe.RenderData
-            {
-                projectionMatrix = projectionMatrix,
-                worldToCameraRHS = worldToCameraRHSMatrix
-            };
+            outRenderData = new HDProbe.RenderData(cameraSettings, cameraPosition);
         }
 
         public static void AssignRenderData(

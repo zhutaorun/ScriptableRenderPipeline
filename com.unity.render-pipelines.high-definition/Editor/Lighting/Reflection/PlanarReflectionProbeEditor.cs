@@ -196,15 +196,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var cameraPositionWS = Vector3.zero;
             var capturePositionWS = renderData.capturePosition;
             if (SceneView.currentDrawingSceneView?.camera != null)
-            {
                 cameraPositionWS = SceneView.currentDrawingSceneView.camera.transform.position;
+            if (ShaderConfig.s_CameraRelativeRendering != 0)
+            {
+                cameraPositionWS = Vector3.zero;
                 // For Camera relative rendering, we need to translate with the position of the currently rendering camera
                 capturePositionWS -= cameraPositionWS;
             }
 
             k_PreviewMaterial.SetTexture("_MainTex", probe.texture);
             k_PreviewMaterial.SetMatrix("_CaptureVPMatrix", vp);
-            k_PreviewMaterial.SetVector("_CameraPositionWS", new Vector4(0, 0, 0, 0));
+            k_PreviewMaterial.SetVector("_CameraPositionWS", new Vector4(cameraPositionWS.x, cameraPositionWS.y, -cameraPositionWS.z, 0));
             k_PreviewMaterial.SetVector("_CapturePositionWS", new Vector4(capturePositionWS.x, capturePositionWS.y, -capturePositionWS.z, 0));
             k_PreviewMaterial.SetPass(0);
             Graphics.DrawMeshNow(k_QuadMesh, Matrix4x4.TRS(mirrorPosition, mirrorRotation, Vector3.one * capturePointPreviewSize * 2));

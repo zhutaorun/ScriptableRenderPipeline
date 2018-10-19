@@ -24,6 +24,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 EditorGUI.showMixedValue = false;
                 return;
             }
+            else
+                EditorGUILayout.PropertyField(d.shape, shapeContent);
 
             switch ((ProxyShape)d.shape.intValue)
             {

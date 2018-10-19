@@ -41,7 +41,8 @@ Shader "Debug/PlanarReflectionProbePreview"
 
             TEXTURE2D(_MainTex);
 
-            float4x4 _ViewProjectionMatrix;
+            float4x4 _CaptureVPMatrix;
+            float3 _CapturePositionWS;
             float3 _CameraPositionWS;
             float _MipLevel;
             float _Exposure;
@@ -60,8 +61,9 @@ Shader "Debug/PlanarReflectionProbePreview"
             float4 frag(v2f i) : SV_Target
             {
                 float3 viewDirWS = _CameraPositionWS - i.positionWS;
-                float3 reflectViewDirWS = reflect(viewDirWS, i.normalWS);
-                float3 ndc = ComputeNormalizedDeviceCoordinatesWithZ(reflectViewDirWS, _ViewProjectionMatrix);
+                float3 reflectViewDirWS = reflect(-viewDirWS, i.normalWS);
+                float3 projectedPositionCaptureSpace = i.positionWS + normalize(reflectViewDirWS) * 65504 - _CapturePositionWS;
+                float3 ndc = ComputeNormalizedDeviceCoordinatesWithZ(projectedPositionCaptureSpace, _CaptureVPMatrix);
                 float4 color = SAMPLE_TEXTURE2D_LOD(_MainTex, s_trilinear_clamp_sampler, ndc.xy, _MipLevel);
                 color.a = any(ndc.xyz < 0) || any(ndc.xyz > 1) ? 0.0 : 1.0;
                 color.rgb *= color.a;

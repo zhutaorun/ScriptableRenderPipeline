@@ -1295,35 +1295,39 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var capturePosition = Vector3.zero;
             var influenceToWorld = probe.influenceToWorld;
 
+            // Calculate settings to use for the probe
+            var probePositionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, camera.transform);
+            HDRenderUtilities.ComputeCameraSettingsFromProbeSettings(
+                probe.settings, probePositionSettings, probe.texture,
+                out CameraSettings cameraSettings, out CameraPositionSettings cameraPositionSettings
+            );
+            capturePosition = cameraPositionSettings.position;
+
             // 31 bits index, 1 bit cache type
             var envIndex = -1;
-            var planarProbe = probe as PlanarReflectionProbe;
-            var cubeProbe = probe as HDAdditionalReflectionData;
-            if (planarProbe != null)
+            switch (probe)
             {
-                var renderData = planarProbe.renderData;
-                var fetchIndex = m_ReflectionPlanarProbeCache.FetchSlice(cmd, probe.texture);
-                envIndex = (fetchIndex << 1) | (int)EnvCacheType.Texture2D;
+                case PlanarReflectionProbe planarProbe:
+                    {
+                        var fetchIndex = m_ReflectionPlanarProbeCache.FetchSlice(cmd, probe.texture);
+                        envIndex = (fetchIndex << 1) | (int)EnvCacheType.Texture2D;
 
-                // get the device dependent projection matrix
-                var gpuProj = GL.GetGPUProjectionMatrix(renderData.projectionMatrix, true);
-                var gpuView = renderData.worldToCameraRHS;
+                        var worldToCameraRHSMatrix = cameraPositionSettings.GetUsedWorldToCameraMatrix();
+                        var projectionMatrix = cameraSettings.frustum.GetUsedProjectionMatrix();
+                        // get the device dependent projection matrix
+                        var gpuProj = GL.GetGPUProjectionMatrix(projectionMatrix, true);
+                        var gpuView = worldToCameraRHSMatrix;
 
-                var vp = gpuProj * gpuView;
-                m_Env2DCaptureVP[fetchIndex] = vp;
-            }
-            else if (cubeProbe != null)
-            {
-                envIndex = m_ReflectionProbeCache.FetchSlice(cmd, probe.texture);
-                envIndex = envIndex << 1 | (int)EnvCacheType.Cubemap;
-                var renderData = cubeProbe.renderData;
-                var probePositionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, camera.transform);
-                HDRenderUtilities.ComputeCameraSettingsFromProbeSettings(
-                    probe.settings, probePositionSettings, probe.texture,
-                    out CameraSettings cameraSettings, out CameraPositionSettings cameraPositionSettings,
-                    out Matrix4x4 worldToCameraRHSMatrix, out Matrix4x4 projectionMatrix
-                );
-                capturePosition = cameraPositionSettings.position;
+                        var vp = gpuProj * gpuView;
+                        m_Env2DCaptureVP[fetchIndex] = vp;
+                        break;
+                    }
+                case HDAdditionalReflectionData cubeProbe:
+                    {
+                        envIndex = m_ReflectionProbeCache.FetchSlice(cmd, probe.texture);
+                        envIndex = envIndex << 1 | (int)EnvCacheType.Cubemap;
+                        break;
+                    }
             }
             // -1 means that the texture is not ready yet (ie not convolved/compressed yet)
             if (envIndex == -1)

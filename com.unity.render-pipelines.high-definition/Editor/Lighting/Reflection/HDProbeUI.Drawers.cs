@@ -224,11 +224,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 if (d.target.proxyVolume == null)
                 {
                     EditorGUI.BeginChangeCheck();
-                    d.probeSettings.proxyUseInfluenceVolumeAsProxyVolume.boolValue = !EditorGUILayout.Toggle(useInfiniteProjectionContent, !d.probeSettings.proxyUseInfluenceVolumeAsProxyVolume.boolValue);
+                    EditorGUILayout.PropertyField(d.probeSettings.proxyUseInfluenceVolumeAsProxyVolume);
                     if (EditorGUI.EndChangeCheck())
-                    {
                         d.Apply();
-                    }
                 }
 
                 if (d.proxyVolume.objectReferenceValue != null)
@@ -245,7 +243,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 else
                 {
                     EditorGUILayout.HelpBox(
-                            d.probeSettings.proxyUseInfluenceVolumeAsProxyVolume.boolValue ? noProxyInfiniteHelpBoxText : noProxyHelpBoxText,
+                            d.probeSettings.proxyUseInfluenceVolumeAsProxyVolume.boolValue ? noProxyHelpBoxText : noProxyInfiniteHelpBoxText,
                             MessageType.Info,
                             true
                             );

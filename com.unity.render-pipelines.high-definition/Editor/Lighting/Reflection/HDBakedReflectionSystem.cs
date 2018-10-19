@@ -412,15 +412,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             settings,
                             positionSettings,
                             planarRT,
-                            out Matrix4x4 worldToCameraRHSMatrix, out Matrix4x4 projectionMatrix
+                            out CameraSettings cameraSettings, out CameraPositionSettings cameraPositionSettings
                         );
                         HDBakingUtilities.CreateParentDirectoryIfMissing(targetFile);
                         HDTextureUtilities.WriteTextureFileToDisk(planarRT, targetFile);
-                        var renderData = new PlanarReflectionProbe.RenderData
-                        {
-                            projectionMatrix = projectionMatrix,
-                            worldToCameraRHS = worldToCameraRHSMatrix
-                        };
+                        var renderData = new HDProbe.RenderData(cameraSettings, cameraPositionSettings);
                         HDBakingUtilities.TrySerializeToDisk(renderData, targetFile + ".renderData");
                         break;
                     }
