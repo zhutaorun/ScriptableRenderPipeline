@@ -17,12 +17,7 @@
 #define HAS_LIGHTLOOP // Allow to not define LightLoop related function in Material.hlsl
 
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightDefinition.cs.hlsl"
-
-#ifndef USE_CORE_SHADOW_SYSTEM
-# include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/HDShadow.hlsl"
-#else
-# include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/Shadow.hlsl"
-#endif
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/HDShadow.hlsl"
 
 #if defined(LIGHTLOOP_SINGLE_PASS) || defined(LIGHTLOOP_TILE_PASS)
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoopDef.hlsl"
@@ -34,7 +29,11 @@
 #ifndef UNITY_MATERIAL_VOLUMETRIC
     // LightLoop use evaluation BSDF function for light type define in Material.hlsl
     #if defined(LIGHTLOOP_SINGLE_PASS) || defined(LIGHTLOOP_TILE_PASS)
-    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoop.hlsl"
+        #if HDRP_MATERIAL_TYPE_SIMPLE
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/SimpleLightLoop.hlsl"
+        #else
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoop.hlsl"
+        #endif
     #endif
 #endif
 

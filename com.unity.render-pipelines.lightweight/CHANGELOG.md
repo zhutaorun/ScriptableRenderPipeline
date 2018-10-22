@@ -4,7 +4,25 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [4.0.0-preview] - 2019-09-21
+## [5.0.0-preview] - 2018-09-28
+### Added
+- Added occlusion mesh rendering/hookup for VR
+- You can now configure default depth and normal shadow bias values in the pipeline asset.
+- You can now add the `LWRPAdditionalLightData` component to a `Light` to override the default depth and normal shadow bias.
+- You can now log the amount of shader variants in your build. To do so, go to the `Pipeline Asset`. Under `Advanced`, select and set the `Shader Variant Log Level`.
+### Changed
+- Removed the `supportedShaderFeatures` property from LWRP core. The shader stripper now figures out which variants to strip based on the current assigned pipeline Asset in the Graphics settings.
+### Fixed
+- In the Simple Lit shader, per-vertex additional lights are now shaded properly.
+- Shader variant stripping now works when you're building a Project with Cloud Build. This greatly reduces build times from Cloud Build.
+- Dynamic Objects now receive lighting when the light mode is set to mixed.
+- MSAA now works on Desktop platforms.
+- The shadow bias value is now computed correctly for shadow cascades and different shadow resolutions. [case 1076285](https://issuetracker.unity3d.com/issues/lwrp-realtime-directional-light-shadow-maps-exhibit-artifacts)
+
+### Changed
+Read/write XRGraphicsConfig -> Read-only XRGraphics interface to XRSettings. 
+
+## [4.0.0-preview] - 2018-09-28
 ### Added
 - When you have enabled Gizmos, they now appear correctly in the Game view.
 - Added requiresDepthPrepass field to RenderingData struct to tell if the runtime platform requires a depth prepass to generate a camera depth texture.
@@ -16,12 +34,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Sorting of opaque objects disables front-to-back sorting flag, when camera settings allow that and the GPU has hidden surface removal.
 - LWRP now has a Custom Light Explorer that suits its feature set.
 - LWRP now supports Vertex Lit shaders for detail meshes on terrain.
+- LWRP now has three interactive Autodesk shaders: Autodesk Interactive, Autodesk Interactive Masked and Autodesk Interactive Transparent.
 - [Shader API] The `GetMainLight` and `GetAdditionalLight` functions can now compute shadow attenuation and store it in the new `shadowAttenuation` field in `LightData` struct.
 - [Shader API] Added a `VertexPositionInputs` struct that contains vertex position in difference spaces (world, view, hclip).
 - [Shader API] Added a `GetVertexPositionInputs` function to get an initialized `VertexPositionInputs`.
 - [Shader API] Added a `GetPerObjectLightIndex` function to return the per-object index given a for-loop index.
 - [Shader API] Added a `GetShadowCoord` function that takes a `VertexPositionInputs` as input.
-- LWRP now has three interactive Autodesk shaders: Autodesk Interactive, Autodesk Interactive Masked and Autodesk Interactive Transparent.
+- [ShaderLibrary] Added VertexNormalInputs struct that contains data for per-pixel normal computation.
+- [ShaderLibrary] Added GetVertexNormalInputs function to return an initialized VertexNormalInputs.
+
 ### Changed
 - The `RenderingData` struct is now read-only.
 - `ScriptableRenderer`always performs a Clear before calling `IRendererSetup::Setup.` 
@@ -65,6 +86,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - [ShaderLibrary] Renamed `InputBuiltin.hlsl` to `UnityInput.hlsl`.
 - [ShaderLibrary] Renamed `LightweightPassMetaCommon.hlsl` to `MetaInput.hlsl`.
 - [ShaderLibrary] Renamed `InputSurfaceCommon.hlsl` to `SurfaceInput.hlsl`.
+- [ShaderLibrary] Removed LightInput struct and GetLightDirectionAndAttenuation. Use GetAdditionalLight function instead.
+- [ShaderLibrary] Removed ApplyFog and ApplyFogColor functions. Use MixFog and MixFogColor instead.
+- [ShaderLibrary] Removed TangentWorldToNormal function. Use TransformTangentToWorld instead.
+- [ShaderLibrary] Removed view direction normalization functions. View direction should always be normalized per pixel for accurate results.
+- [ShaderLibrary] Renamed FragmentNormalWS function to NormalizeNormalPerPixel.
 
 ### Fixed
 - If you have more than 16 lights in a scene, LWRP no longer causes random glitches while rendering lights.

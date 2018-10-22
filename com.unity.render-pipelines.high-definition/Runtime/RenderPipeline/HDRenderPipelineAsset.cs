@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine.Serialization;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
@@ -38,6 +39,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Not serialized, not visible, the settings effectively used
         FrameSettings m_FrameSettingsRuntime = new FrameSettings();
 
+        [SerializeField]
+        FrameSettings m_BakedOrCustomReflectionFrameSettings = new FrameSettings();
+
+        [SerializeField]
+        FrameSettings m_RealtimeReflectionFrameSettings = new FrameSettings();
+        
         bool m_frameSettingsIsDirty = true;
         public bool frameSettingsIsDirty
         {
@@ -47,6 +54,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public FrameSettings GetFrameSettings()
         {
             return m_FrameSettingsRuntime;
+        }
+        
+        public FrameSettings GetBakedOrCustomReflectionFrameSettings()
+        {
+            return m_BakedOrCustomReflectionFrameSettings;
+        }
+
+        public FrameSettings GetRealtimeReflectionFrameSettings()
+        {
+            return m_RealtimeReflectionFrameSettings;
         }
 
         // See comment in FrameSettings.UpdateDirtyFrameSettings()
@@ -105,6 +122,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         public bool allowShaderVariantStripping = true;
+        public bool enableSRPBatcher = false;
 
         [SerializeField]
         public DiffusionProfileSettings diffusionProfileSettings;
@@ -156,20 +174,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return m_RenderPipelineResources.materials.defaultDiffuseMat;
         }
 
+        #if UNITY_EDITOR
+        // call to GetAutodeskInteractiveShaderXXX are only from within editor
         public override Shader GetAutodeskInteractiveShader()
         {
-            return m_RenderPipelineResources.shaderGraphs.autodeskInteractiveSG;
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(HDUtils.GetHDRenderPipelinePath() + "Runtime/RenderPipelineResources/ShaderGraph/AutodeskInteractive.ShaderGraph");
         }
 
         public override Shader GetAutodeskInteractiveTransparentShader()
         {
-            return m_RenderPipelineResources.shaderGraphs.autodeskInteractiveTransparentSG;
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(HDUtils.GetHDRenderPipelinePath() + "Runtime/RenderPipelineResources/ShaderGraph/AutodeskInteractiveTransparent.ShaderGraph");
         }
 
         public override Shader GetAutodeskInteractiveMaskedShader()
         {
-            return m_RenderPipelineResources.shaderGraphs.autodeskInteractiveMaskedSG;
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(HDUtils.GetHDRenderPipelinePath() + "Runtime/RenderPipelineResources/ShaderGraph/AutodeskInteractiveMasked.ShaderGraph");
         }
+        #endif
 
         // Note: This function is HD specific
         public Material GetDefaultDecalMaterial()
@@ -235,5 +256,53 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_Version = currentVersion;
             }
         }
+
+#if UNITY_EDITOR
+        // Array structure that allow us to manipulate the set of defines that the HD render pipeline needs
+        List<string> defineArray = new List<string>();
+
+        bool UpdateDefineList(bool flagValue, string defineMacroValue)
+        {
+            bool macroExists = defineArray.Contains(defineMacroValue);
+            if (flagValue)
+            {
+                if (!macroExists)
+                {
+                    defineArray.Add(defineMacroValue);
+                    return true;
+                }
+            }
+            else
+            {
+                if (macroExists)
+                {
+                    defineArray.Remove(defineMacroValue);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // This function allows us to raise or remove some preprocessing defines based on the render pipeline settings
+        public void EvaluateSettings()
+        {
+#if REALTIME_RAYTRACING_SUPPORT
+            // Grab the current set of defines and split them
+            string currentDefineList = UnityEditor.PlayerSettings.GetScriptingDefineSymbolsForGroup(UnityEditor.BuildTargetGroup.Standalone);
+            defineArray.Clear();
+            defineArray.AddRange(currentDefineList.Split(';'));
+
+            // Update all the individual defines
+            bool needUpdate = false;
+            needUpdate |= UpdateDefineList(renderPipelineSettings.supportRayTracing, "ENABLE_RAYTRACING");
+
+            // Only set if it changed
+            if(needUpdate)
+            {
+                UnityEditor.PlayerSettings.SetScriptingDefineSymbolsForGroup(UnityEditor.BuildTargetGroup.Standalone, string.Join(";", defineArray.ToArray()));
+            }
+#endif
+        }
+#endif
     }
 }

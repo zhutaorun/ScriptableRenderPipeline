@@ -33,14 +33,19 @@
     uint _NumTileClusteredX;
     uint _NumTileClusteredY;
     
-    real4 _ShadowAtlasSize;
+    float4 _ShadowAtlasSize;
+    float4 _CascadeShadowAtlasSize;
+    uint _CascadeShadowCount;
 
     float4x4 _Env2DCaptureVP[MAX_ENV2D_LIGHT];
 
+    // TODO: move this elsewhere
+    int _DebugSingleShadowIndex;
+
+    int _EnvSliceSize;
 #else
 
     #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightDefinition.cs.hlsl"
-    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Shadow/ShadowBase.cs.hlsl"
 
     StructuredBuffer<uint>  g_vLightListGlobal;      // don't support Buffer yet in unity
 

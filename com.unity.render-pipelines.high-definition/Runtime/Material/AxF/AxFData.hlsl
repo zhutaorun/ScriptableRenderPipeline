@@ -51,6 +51,8 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     // _AXF_BRDF_TYPE_SVBRDF
     //-----------------------------------------------------------------------------
 
+    float alpha = 1.0;
+
 #ifdef _AXF_BRDF_TYPE_SVBRDF
 
     surfaceData.diffuseColor = SAMPLE_TEXTURE2D(_SVBRDF_DiffuseColorMap, sampler_SVBRDF_DiffuseColorMap, UV0).xyz;
@@ -70,10 +72,10 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     GetNormalWS(input, 2.0 * SAMPLE_TEXTURE2D(_SVBRDF_NormalMap, sampler_SVBRDF_NormalMap, UV0).xyz - 1.0, surfaceData.normalWS);
     GetNormalWS(input, 2.0 * SAMPLE_TEXTURE2D(_ClearcoatNormalMap, sampler_ClearcoatNormalMap, UV0).xyz - 1.0, surfaceData.clearcoatNormalWS);
 
-    float alpha = SAMPLE_TEXTURE2D(_SVBRDF_AlphaMap, sampler_SVBRDF_AlphaMap, UV0).x;
+    alpha = SAMPLE_TEXTURE2D(_SVBRDF_AlphaMap, sampler_SVBRDF_AlphaMap, UV0).x;
 
     // Useless for SVBRDF
-    surfaceData.flakesUV = input.texCoord0;
+    surfaceData.flakesUV = input.texCoord0.xy;
     surfaceData.flakesMipLevel = 0.0;
 
     //-----------------------------------------------------------------------------
@@ -107,9 +109,6 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     surfaceData.height_mm = 0;
     surfaceData.anisotropyAngle = 0;
     surfaceData.clearcoatColor = 0;
-
-    float alpha = 1.0;
-
 #endif
 
     // Finalize tangent space
@@ -137,6 +136,10 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
         // Not debug streaming information with AxF (this should never be stream)
         surfaceData.diffuseColor = float3(0.0, 0.0, 0.0);
     }
+
+    // We need to call ApplyDebugToSurfaceData after filling the surfarcedata and before filling builtinData
+    // as it can modify attribute use for static lighting
+    ApplyDebugToSurfaceData(input.worldToTangent, surfaceData);
 #endif
 
     // -------------------------------------------------------------

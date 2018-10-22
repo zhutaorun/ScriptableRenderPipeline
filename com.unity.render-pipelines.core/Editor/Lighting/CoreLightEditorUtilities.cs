@@ -332,7 +332,49 @@ namespace UnityEditor.Experimental.Rendering
             float innerAngle = outerAngleInnerAngleRange.y;
             float range = outerAngleInnerAngleRange.z;
 
+            if (innerAngle > 0f)
+            {
+                innerAngle = SizeSliderSpotAngle(Vector3.zero, Vector3.forward, Vector3.right, range, innerAngle);
+                innerAngle = SizeSliderSpotAngle(Vector3.zero, Vector3.forward, Vector3.left, range, innerAngle);
+                innerAngle = SizeSliderSpotAngle(Vector3.zero, Vector3.forward, Vector3.up, range, innerAngle);
+                innerAngle = SizeSliderSpotAngle(Vector3.zero, Vector3.forward, Vector3.down, range, innerAngle);
+            }
+            outerAngle = SizeSliderSpotAngle(Vector3.zero, Vector3.forward, Vector3.right, range, outerAngle);
+            outerAngle = SizeSliderSpotAngle(Vector3.zero, Vector3.forward, Vector3.left, range, outerAngle);
+            outerAngle = SizeSliderSpotAngle(Vector3.zero, Vector3.forward, Vector3.up, range, outerAngle);
+            outerAngle = SizeSliderSpotAngle(Vector3.zero, Vector3.forward, Vector3.down, range, outerAngle);
+            range = SliderLineHandle(Vector3.zero, Vector3.forward, range);
+
             return new Vector3(outerAngle, innerAngle, range);
+        }
+
+        public static void DrawAreaLightWireframe(Vector2 rectangleSize)
+        {
+            Handles.DrawWireCube(Vector3.zero, rectangleSize);
+        }
+
+        public static Vector2 DrawAreaLightHandle(Vector2 rectangleSize, bool withYAxis)
+        {
+            float halfWidth = rectangleSize.x * 0.5f;
+            float halfHeight = rectangleSize.y * 0.5f;
+            EditorGUI.BeginChangeCheck();
+            halfWidth = SliderLineHandle(Vector3.zero, Vector3.right, halfWidth);
+            halfWidth = SliderLineHandle(Vector3.zero, Vector3.left, halfWidth);
+            if (EditorGUI.EndChangeCheck())
+            {
+                halfWidth = Mathf.Max(0f, halfWidth);
+            }
+            if (withYAxis)
+            {
+                EditorGUI.BeginChangeCheck();
+                halfHeight = SliderLineHandle(Vector3.zero, Vector3.up, halfHeight);
+                halfHeight = SliderLineHandle(Vector3.zero, Vector3.down, halfHeight);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    halfHeight = Mathf.Max(0f, halfHeight);
+                }
+            }
+            return new Vector2(halfWidth * 2f, halfHeight * 2f);
         }
 
         // Don't use Handles.Disc as it break the highlight of the gizmo axis, use our own draw disc function instead for gizmo
@@ -424,7 +466,7 @@ namespace UnityEditor.Experimental.Rendering
             bool temp = GUI.changed;
             GUI.changed = false;
 
-            var newMagnitude = Mathf.Max(0f, SliderLineHandle(forward * range, centerToLeftOnSphere.normalized, centerToLeftOnSphere.magnitude));
+            var newMagnitude = Mathf.Max(0f, SliderLineHandle(position + forward * range, centerToLeftOnSphere.normalized, centerToLeftOnSphere.magnitude));
             if (GUI.changed)
             {
                 s_SliderSpotAngleId = GUIUtility.hotControl;
@@ -462,24 +504,6 @@ namespace UnityEditor.Experimental.Rendering
                 //Draw Range disc
                 DrawWireDisc(spotlight.gameObject.transform.rotation, spotlight.gameObject.transform.position + spotlight.gameObject.transform.forward * innerDiscDistance, spotlight.gameObject.transform.forward, innerDiscRadius);
             }
-        }
-
-        public static void DrawArealightGizmo(Light arealight)
-        {
-            var RectangleSize = new Vector3(arealight.areaSize.x, arealight.areaSize.y, 0);
-            // Remove scale for light, not take into account
-            var localToWorldMatrix = Matrix4x4.TRS(arealight.transform.position, arealight.transform.rotation, Vector3.one);
-            Gizmos.matrix = localToWorldMatrix;
-            Gizmos.DrawWireCube(Vector3.zero, RectangleSize);
-            Gizmos.matrix = Matrix4x4.identity;
-            Gizmos.DrawWireSphere(arealight.transform.position, arealight.range);
-        }
-
-        [Obsolete("Should use the legacy gizmo draw")]
-        public static void DrawPointlightGizmo(Light pointlight, bool selected)
-        {
-            if (pointlight.shadows != LightShadows.None && selected) Gizmos.DrawWireSphere(pointlight.transform.position, pointlight.shadowNearPlane);
-            Gizmos.DrawWireSphere(pointlight.transform.position, pointlight.range);
         }
 
         // Same as Gizmo.DrawFrustum except that when aspect is below one, fov represent fovX instead of fovY
@@ -588,18 +612,6 @@ namespace UnityEditor.Experimental.Rendering
             Gizmos.DrawLine(s2, e2);
             Gizmos.DrawLine(s3, e3);
             Gizmos.DrawLine(s4, e4);
-        }
-
-        [Obsolete("Should use the legacy gizmo draw")]
-        public static void DrawDirectionalLightGizmo(Light directionalLight)
-        {
-            var gizmoSize = 0.2f;
-            DrawWireDisc(directionalLight.transform.rotation, directionalLight.transform.position, directionalLight.gameObject.transform.forward, gizmoSize);
-            Gizmos.DrawLine(directionalLight.transform.position, directionalLight.transform.position + directionalLight.transform.forward);
-            Gizmos.DrawLine(directionalLight.transform.position + directionalLight.transform.up * gizmoSize, directionalLight.transform.position + directionalLight.transform.up * gizmoSize + directionalLight.transform.forward);
-            Gizmos.DrawLine(directionalLight.transform.position + directionalLight.transform.up * -gizmoSize, directionalLight.transform.position + directionalLight.transform.up * -gizmoSize + directionalLight.transform.forward);
-            Gizmos.DrawLine(directionalLight.transform.position + directionalLight.transform.right * gizmoSize, directionalLight.transform.position + directionalLight.transform.right * gizmoSize + directionalLight.transform.forward);
-            Gizmos.DrawLine(directionalLight.transform.position + directionalLight.transform.right * -gizmoSize, directionalLight.transform.position + directionalLight.transform.right * -gizmoSize + directionalLight.transform.forward);
         }
 
         static Vector2 SliderPlaneHandle(Vector3 origin, Vector3 axis1, Vector3 axis2, Vector2 position)

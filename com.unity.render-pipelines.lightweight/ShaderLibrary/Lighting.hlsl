@@ -4,8 +4,8 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/EntityLighting.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/ImageBasedLighting.hlsl"
-#include "Core.hlsl"
-#include "Shadows.hlsl"
+#include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Core.hlsl"
+#include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Shadows.hlsl"
 
 // If lightmap is not defined than we evaluate GI (ambient + probes) from SH
 // We might do it fully or partially in vertex to save shader ALU
@@ -35,15 +35,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //                          Light Helpers                                    //
 ///////////////////////////////////////////////////////////////////////////////
-
-// Abstraction over Light input constants
-struct LightInput
-{
-    float4  position;
-    half3   color;
-    half4   distanceAndSpotAttenuation;
-    half4   spotDirection;
-};
 
 // Abstraction over Light shading data.
 struct Light
@@ -113,18 +104,6 @@ half AngleAttenuation(half3 spotDirection, half3 lightDirection, half2 spotAtten
     return atten * atten;
 }
 
-half4 GetLightDirectionAndAttenuation(LightInput lightInput, float3 positionWS)
-{
-    half4 directionAndAttenuation;
-    float3 posToLightVec = lightInput.position.xyz - positionWS * lightInput.position.w;
-    float distanceSqr = max(dot(posToLightVec, posToLightVec), FLT_MIN);
-
-    directionAndAttenuation.xyz = half3(posToLightVec * rsqrt(distanceSqr));
-    directionAndAttenuation.w = DistanceAttenuation(distanceSqr, lightInput.distanceAndSpotAttenuation.xy);
-    directionAndAttenuation.w *= AngleAttenuation(lightInput.spotDirection.xyz, directionAndAttenuation.xyz, lightInput.distanceAndSpotAttenuation.zw);
-    return directionAndAttenuation;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //                      Light Abstraction                                    //
 ///////////////////////////////////////////////////////////////////////////////
@@ -133,7 +112,11 @@ Light GetMainLight()
 {
     Light light;
     light.direction = _MainLightPosition.xyz;
+#if defined(_MIXED_LIGHTING_SUBTRACTIVE) && defined(LIGHTMAP_ON)
     light.distanceAttenuation = _MainLightPosition.w;
+#else
+    light.distanceAttenuation = 1.0;
+#endif
     light.shadowAttenuation = 1.0;
     light.color = _MainLightColor.rgb;
 
