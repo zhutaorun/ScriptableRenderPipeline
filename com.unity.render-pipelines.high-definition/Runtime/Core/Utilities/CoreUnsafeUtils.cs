@@ -6,6 +6,72 @@ namespace UnityEngine.Experimental.Rendering
 {
     public static unsafe class CoreUnsafeUtils
     {
+        internal struct FixedBufferStringQueue
+        {
+            byte* m_ReadCursor;
+            byte* m_WriteCursor;
+
+            readonly byte* m_BufferEnd;
+            readonly byte* m_BufferStart;
+            readonly int m_BufferLength;
+
+            public int Count { get; private set; }
+
+            public FixedBufferStringQueue(byte* ptr, int length)
+            {
+                m_BufferStart = ptr;
+                m_BufferLength = length;
+
+                m_BufferEnd = m_BufferStart + m_BufferLength;
+                m_ReadCursor = m_BufferStart;
+                m_WriteCursor = m_BufferStart;
+                Count = 0;
+                Clear();
+            }
+
+            public bool TryPush(string v)
+            {
+                var size = v.Length * sizeof(char) + sizeof(int);
+                if (m_WriteCursor + size >= m_BufferEnd)
+                    return false;
+
+                *(int*)m_WriteCursor = v.Length;
+                m_WriteCursor += sizeof(int);
+
+                var charPtr = (char*)m_WriteCursor;
+                for (int i = 0; i < v.Length; ++i, ++charPtr)
+                    *charPtr = v[i];
+
+                m_WriteCursor += sizeof(int) * v.Length;
+                ++Count;
+
+                return true;
+            }
+
+            public bool TryPop(out string v)
+            {
+                var size = *(int*)m_ReadCursor;
+                if (size != 0)
+                {
+                    m_ReadCursor += sizeof(int);
+                    v = new string((char*)m_ReadCursor, 0, size);
+                    m_ReadCursor += size * sizeof(char);
+                    return true;
+                }
+
+                v = default;
+                return false;
+            }
+
+            public void Clear()
+            {
+                m_WriteCursor = m_BufferStart;
+                m_ReadCursor = m_BufferStart;
+                Count = 0;
+                UnsafeUtility.MemClear(m_BufferStart, m_BufferLength);
+            }
+        }
+
         public interface IKeyGetter<TValue, TKey>
         {
             TKey Get(ref TValue v);

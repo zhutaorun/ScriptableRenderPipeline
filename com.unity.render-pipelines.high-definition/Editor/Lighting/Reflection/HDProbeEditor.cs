@@ -59,7 +59,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected virtual void OnDisable()
         {
             foreach (var target in serializedObject.targetObjects)
-                s_Editors.Remove((Component)target);
+            {
+                if (target != null && !target.Equals(null))
+                    s_Editors.Remove((Component)target);
+            }
+                
         }
 
         protected virtual void Draw(TUI s, TSerialized p, Editor o)

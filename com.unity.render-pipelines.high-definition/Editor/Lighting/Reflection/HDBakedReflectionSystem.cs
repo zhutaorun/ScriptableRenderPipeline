@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEditor;
 using UnityEditor.Experimental.Rendering;
@@ -330,7 +331,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             );
 
             var indicesSet = new HashSet<int>(indices);
-            AssetDatabase.StartAssetEditing();
+
+            const int bufferLength = 1 << 10;
+            var bufferStart = stackalloc byte[bufferLength];
+            var buffer = new CoreUnsafeUtils.FixedBufferStringQueue(bufferStart, bufferLength);
+
             // Look for baked assets in scene folders
             for (int sceneI = 0, sceneC = SceneManager.sceneCount; sceneI< sceneC; ++sceneI)
             {
@@ -344,22 +349,34 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         sceneFolder,
                         HDBakingUtilities.HDProbeAssetPattern(types[typeI])
                     );
-                    ProbeSettings.ProbeType fileProbeType;
-                    int fileIndex;
                     for (int fileI = 0; fileI < files.Length; ++fileI)
                     {
                         if (!HDBakingUtilities.TryParseBakedProbeAssetFileName(
-                            files[fileI], out fileProbeType, out fileIndex
+                            files[fileI], out ProbeSettings.ProbeType fileProbeType, out int fileIndex
                         ))
                             continue;
 
                         // This file is a baked asset for a destroyed game object
                         // We can destroy it
                         if (!indicesSet.Contains(fileIndex))
-                            AssetDatabase.DeleteAsset(files[fileI]);
+                        {
+                            if (!buffer.TryPush(files[fileI]))
+                                DeleteAllAssetsIn(ref buffer);
+                        }
                     }
                 }
             }
+            DeleteAllAssetsIn(ref buffer);
+        }
+
+        static void DeleteAllAssetsIn(ref CoreUnsafeUtils.FixedBufferStringQueue queue)
+        {
+            if (queue.Count == 0)
+                return;
+
+            AssetDatabase.StartAssetEditing();
+            while (queue.TryPop(out string path))
+                AssetDatabase.DeleteAsset(path);
             AssetDatabase.StopAssetEditing();
         }
 
