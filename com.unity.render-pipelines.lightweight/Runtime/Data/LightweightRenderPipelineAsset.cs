@@ -56,9 +56,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
     public enum LightRenderingMode
     {
-        Disabled,
-        PerPixel,
-        PerVertex,
+        Disabled = 0,
+        PerVertex = 2,
+        PerPixel = 1,
     }
 
     public enum ShaderVariantLogLevel
@@ -110,7 +110,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         [SerializeField] bool m_SupportsDynamicBatching = true;
         [SerializeField] bool m_MixedLightingSupported = true;
         // TODO: Render Pipeline Batcher
-        
+
         // Deprecated settings
         [SerializeField] ShadowQuality m_ShadowType = ShadowQuality.HardShadows;
         [SerializeField] bool m_LocalShadowsSupported = false;
