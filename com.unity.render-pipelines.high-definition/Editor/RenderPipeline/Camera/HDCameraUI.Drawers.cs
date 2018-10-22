@@ -190,7 +190,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 var targetTexture = p.targetTexture.objectReferenceValue as RenderTexture;
                 if (targetTexture
                     && targetTexture.antiAliasing > 1
-                    && !p.frameSettings.enableForwardRenderingOnly.boolValue)
+                    && !p.frameSettings.shaderLitMode.boolValue)
                 {
                     EditorGUILayout.HelpBox(msaaWarningMessage, MessageType.Warning, true);
                 }

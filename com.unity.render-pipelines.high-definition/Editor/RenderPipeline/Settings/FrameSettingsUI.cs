@@ -28,7 +28,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public override void Update()
         {
             isSectionExpandedXRSupported.target = PlayerSettings.virtualRealitySupported;
-            isSectionExpandedUseForwardOnly.target = !data.enableForwardRenderingOnly.boolValue;
+            isSectionExpandedUseForwardOnly.target = !data.shaderLitMode.boolValue;
             lightLoopSettings.Update();
         }
     }
