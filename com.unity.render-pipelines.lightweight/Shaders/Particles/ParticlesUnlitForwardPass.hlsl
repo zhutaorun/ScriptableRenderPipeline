@@ -90,12 +90,27 @@ VaryingsParticle vertParticleUnlit(AttributesParticle input)
 {
     VaryingsParticle output = (VaryingsParticle)0;
     VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);
+    VertexNormalInputs normalInput = GetVertexNormalInputs(input.normal, input.tangent);
 
     // position ws is used to compute eye depth in vertFading
     output.positionWS.xyz = vertexInput.positionWS;
     output.positionWS.w = ComputeFogFactor(vertexInput.positionCS.z);
     output.clipPos = vertexInput.positionCS;
     output.color = input.color;
+    
+    half3 viewDirWS = GetCameraPositionWS() - vertexInput.positionWS;
+#if !SHADER_HINT_NICE_QUALITY
+    viewDirWS = SafeNormalize(viewDirWS);
+#endif
+    
+#ifdef _NORMALMAP
+    output.normalWS = half4(normalInput.normalWS, viewDirWS.x);
+    output.tangentWS = half4(normalInput.tangentWS, viewDirWS.y);
+    output.bitangentWS = half4(normalInput.bitangentWS, viewDirWS.z);
+#else
+    output.normalWS = normalInput.normalWS;
+    output.viewDirWS = viewDirWS;
+#endif
 
     // TODO: Instancing
     //vertColor(output.color);
@@ -128,8 +143,10 @@ half4 fragParticleUnlit(VaryingsParticle input) : SV_Target
 
     half4 albedo = SampleAlbedo(uv, blendUv, _BaseColor, input.color, projectedPosition, TEXTURE2D_PARAM(_BaseMap, sampler_BaseMap));
     
+    half3 normalTS = SampleNormalTS(uv, blendUv, TEXTURE2D_PARAM(_BumpMap, sampler_BumpMap));
+    
 #if defined (_DISTORTION_ON)   
-    albedo.rgb = Distortion(albedo, float3(0, 0, 1), _DistortionBlend, projectedPosition);
+    albedo.rgb = Distortion(albedo, normalTS, _DistortionStrengthScaled, _DistortionBlend, projectedPosition);
 #endif
     
     half3 diffuse = AlphaModulate(albedo.rgb, albedo.a);

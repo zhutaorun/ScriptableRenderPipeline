@@ -39,7 +39,6 @@ half4 SampleAlbedo(float2 uv, float3 blendUv, half4 color, float4 particleColor,
 {
     half4 albedo = BlendTexture(TEXTURE2D_PARAM(albedoMap, sampler_albedoMap), uv, blendUv) * color;
 
-    // No distortion Support
     half4 colorAddSubDiff = half4(0, 0, 0, 0);
 #if defined (_COLORADDSUBDIFF_ON)
     colorAddSubDiff = _BaseColorAddSubDiff;

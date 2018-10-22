@@ -34,6 +34,8 @@ Shader "Lightweight Render Pipeline/Particles/Simple Lit"
         _SoftParticlesFarFadeDistance("Soft Particles Far Fade", Float) = 1.0
         _CameraNearFadeDistance("Camera Near Fade", Float) = 1.0
         _CameraFarFadeDistance("Camera Far Fade", Float) = 2.0
+        _DistortionBlend("Distortion Blend", Float) = 0.5
+        _DistortionStrength("Distortion Strength", Float) = 1.0
 
         // Hidden properties
         [HideInInspector] _Mode("__mode", Float) = 0.0
@@ -51,6 +53,8 @@ Shader "Lightweight Render Pipeline/Particles/Simple Lit"
         [HideInInspector] _CameraFadeParams("__camerafadeparams", Vector) = (0,0,0,0)
         [HideInInspector] _ColorMode("_ColorMode", Float) = 0.0
         [HideInInspector] _BaseColorAddSubDiff("_ColorMode", Vector) = (0,0,0,0)
+        [HideInInspector] _DistortionEnabled("__distortionenabled", Float) = 0.0
+        [HideInInspector] _DistortionStrengthScaled("Distortion Strength Scaled", Float) = 0.1
     }
 
     SubShader
@@ -81,6 +85,7 @@ Shader "Lightweight Render Pipeline/Particles/Simple Lit"
             #pragma shader_feature _NORMALMAP
             #pragma shader_feature _EMISSION
             #pragma shader_feature _FADING_ON
+            #pragma shader_feature _DISTORTION_ON
             #pragma shader_feature _REQUIRE_UV2
             
             // -------------------------------------

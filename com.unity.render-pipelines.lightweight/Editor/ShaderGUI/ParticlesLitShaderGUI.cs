@@ -62,6 +62,10 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             public static GUIContent cameraFadingEnabled = new GUIContent("Enable Camera Fading", "Fade out particle geometry when it gets close to the camera.");
             public static GUIContent cameraNearFadeDistanceText = new GUIContent("Near fade", "Camera near fade distance.");
             public static GUIContent cameraFarFadeDistanceText = new GUIContent("Far fade", "Camera far fade distance.");
+            
+            public static GUIContent distortionEnabled = new GUIContent("Distortion", "This makes use of the 'CameraOpaque' texture from teh pipeline to give the ability yo distort the background pixels");
+            public static GUIContent distortionStrength = new GUIContent("Strength", "How much the normal map affects the warping of the background pixels.");
+            public static GUIContent distortionBlend = new GUIContent("Blend", "Weighting between the Base color of the particle and the backround color.");
 
             public static GUIContent emissionEnabled = new GUIContent("Emission");
 
@@ -99,10 +103,13 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
         MaterialProperty emissionMap;
         MaterialProperty softParticlesEnabled;
         MaterialProperty cameraFadingEnabled;
+        MaterialProperty distortionEnabled;
         MaterialProperty softParticlesNearFadeDistance;
         MaterialProperty softParticlesFarFadeDistance;
         MaterialProperty cameraNearFadeDistance;
         MaterialProperty cameraFarFadeDistance;
+        private MaterialProperty distortionBlend;
+        private MaterialProperty distortionStrength;
 
         MaterialEditor m_MaterialEditor;
         List<ParticleSystemRenderer> m_RenderersUsingThisMaterial = new List<ParticleSystemRenderer>();
@@ -128,10 +135,13 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             emissionMap = FindProperty("_EmissionMap", props);
             softParticlesEnabled = FindProperty("_SoftParticlesEnabled", props);
             cameraFadingEnabled = FindProperty("_CameraFadingEnabled", props);
+            distortionEnabled = FindProperty("_DistortionEnabled", props, false);
             softParticlesNearFadeDistance = FindProperty("_SoftParticlesNearFadeDistance", props);
             softParticlesFarFadeDistance = FindProperty("_SoftParticlesFarFadeDistance", props);
             cameraNearFadeDistance = FindProperty("_CameraNearFadeDistance", props);
             cameraFarFadeDistance = FindProperty("_CameraFarFadeDistance", props);
+            distortionBlend = FindProperty("_DistortionBlend", props, false);
+            distortionStrength = FindProperty("_DistortionStrength", props, false);           
         }
 
         public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] props)
@@ -172,6 +182,25 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
                 FlipbookModePopup();
                 TwoSidedPopup(material);
                 FadingPopup(material);
+
+                if (distortionEnabled != null)
+                {
+                    EditorGUI.BeginChangeCheck();
+                    var enabled = distortionEnabled.floatValue;
+                    enabled = EditorGUILayout.Toggle(Styles.distortionEnabled, enabled != 0.0f) ? 1.0f : 0.0f;
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        m_MaterialEditor.RegisterPropertyChangeUndo("Distortion Enabled");
+                        distortionEnabled.floatValue = enabled;
+                    }
+                    
+                    if (enabled != 0.0f)
+                    {
+                        int indentation = 2;
+                        m_MaterialEditor.ShaderProperty(distortionStrength, Styles.distortionStrength, indentation);
+                        m_MaterialEditor.ShaderProperty(distortionBlend, Styles.distortionBlend, indentation);
+                    }
+                }
 
                 EditorGUILayout.Space();
                 GUILayout.Label(Styles.mapsOptionsText, EditorStyles.boldLabel);
@@ -410,22 +439,18 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             if (metallicMap == null)
                 return;
 
-            bool useLighting = (material.GetFloat("_LightingEnabled") > 0.0f);
-            if (useLighting)
-            {
+
                 bool hasGlossMap = metallicMap.textureValue != null;
                 m_MaterialEditor.TexturePropertySingleLine(Styles.metallicMapText, metallicMap, hasGlossMap ? null : metallic);
 
                 int indentation = 2; // align with labels of texture properties
                 bool showSmoothnessScale = hasGlossMap;
                 m_MaterialEditor.ShaderProperty(smoothness, showSmoothnessScale ? Styles.smoothnessScaleText : Styles.smoothnessText, indentation);
-            }
         }
 
         void DoNormalMapArea(Material material)
         {
-            bool useLighting = (material.GetFloat("_LightingEnabled") > 0.0f);
-            if (useLighting)
+            if (bumpMap != null)
             {
                 m_MaterialEditor.TexturePropertySingleLine(Styles.normalMapText, bumpMap, bumpMap.textureValue != null ? bumpScale : null);
             }
@@ -434,7 +459,7 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
         void DoVertexStreamsArea(Material material)
         {
             // Display list of streams required to make this shader work
-            bool useLighting = (material.GetFloat("_LightingEnabled") > 0.0f);
+            bool useLighting = true;//(material.GetFloat("_LightingEnabled") > 0.0f);
             bool useFlipbookBlending = (material.GetFloat("_FlipbookMode") > 0.0f);
             bool useTangents = material.GetTexture("_BumpMap") && useLighting;
 
@@ -697,6 +722,12 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             else
                 material.SetVector("_CameraFadeParams", new Vector4(0.0f, Mathf.Infinity, 0.0f, 0.0f));
 
+            // distortion
+            bool useDistortion = (material.GetFloat("_DistortionEnabled") > 0.0f);
+            SetKeyword(material, "_DISTORTION_ON", useDistortion);
+            if(useDistortion)
+                material.SetFloat("_DistortionStrengthScaled", material.GetFloat("_DistortionStrength") * 0.1f);
+            
             // Set the define for distortion + grabpass (Distortion not supported)
             material.SetShaderPassEnabled("Always", false);
         }

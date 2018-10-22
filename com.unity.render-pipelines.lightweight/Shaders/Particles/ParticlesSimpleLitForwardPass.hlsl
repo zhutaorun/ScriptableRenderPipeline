@@ -146,11 +146,11 @@ half4 ParticlesLitFragment(VaryingsParticle input) : SV_Target
 #if defined(SOFTPARTICLES_ON) || defined(_FADING_ON)
     projectedPosition = input.projectedPosition;
 #endif
-    
-    half4 albedo = SampleAlbedo(uv, blendUv, _BaseColor, input.color, projectedPosition, TEXTURE2D_PARAM(_BaseMap, sampler_BaseMap)); 
+
+    half3 normalTS = SampleNormalTS(uv, blendUv, TEXTURE2D_PARAM(_BumpMap, sampler_BumpMap));
+    half4 albedo = SampleAlbedo(uv, blendUv, _BaseColor, input.color, projectedPosition, TEXTURE2D_PARAM(_BaseMap, sampler_BaseMap));
     half3 diffuse = AlphaModulate(albedo.rgb, albedo.a);
     half alpha = AlphaBlendAndTest(albedo.a, _Cutoff);
-    half3 normalTS = SampleNormalTS(uv, blendUv, TEXTURE2D_PARAM(_BumpMap, sampler_BumpMap));
 #if defined(_EMISSION)
     half3 emission = BlendTexture(TEXTURE2D_PARAM(_EmissionMap, sampler_EmissionMap), uv, blendUv) * _EmissionColor.rgb;
 #else
@@ -158,6 +158,10 @@ half4 ParticlesLitFragment(VaryingsParticle input) : SV_Target
 #endif
     half4 specularGloss = SampleSpecularGloss(uv, blendUv, albedo.a, _SpecColor, TEXTURE2D_PARAM(_SpecGlossMap, sampler_SpecGlossMap));
     half shininess = 0.5;
+    
+#if defined(_DISTORTION_ON)
+    diffuse = Distortion(half4(diffuse, alpha), normalTS, _DistortionStrengthScaled, _DistortionBlend, projectedPosition);
+#endif
 
     InputData inputData;
     InitializeInputData(input, normalTS, inputData);

@@ -83,6 +83,10 @@ inline void InitializeParticleLitSurfaceData(float2 uv, float3 blendUv, float4 p
     half3 emission = half3(0 ,0 ,0 );
 #endif
 
+#if defined(_DISTORTION_ON)
+    albedo.rgb = Distortion(albedo, normalTS, _DistortionStrengthScaled, _DistortionBlend, projectedPosition);
+#endif
+
     outSurfaceData.albedo = albedo.rgb;
     outSurfaceData.specular = half3(0.0h, 0.0h, 0.0h);
     outSurfaceData.normalTS = normalTS;

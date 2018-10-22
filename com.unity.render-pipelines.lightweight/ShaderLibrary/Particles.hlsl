@@ -81,10 +81,10 @@ half3 AlphaModulate(half3 albedo, half alpha)
 #endif
 }
 
-half3 Distortion(float4 baseColor, float3 normal, half blend, float4 projection)
+half3 Distortion(float4 baseColor, float3 normal, half strength, half blend, float4 projection)
 {
-    float2 screenUV = (projection.xy / projection.w) + normal.xy * baseColor.a;
-    float4 Distortion = SAMPLE_DEPTH_TEXTURE(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, screenUV);
+    float2 screenUV = (projection.xy / projection.w) + normal.xy * strength * baseColor.a;
+    float4 Distortion = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, screenUV);
     return lerp(Distortion, baseColor.rgb, saturate(baseColor.a - blend));
 }
 
