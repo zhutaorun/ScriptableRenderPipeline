@@ -60,7 +60,6 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
         LightweightRenderPipelineAsset m_LightweightRenderPipeline;
         LWRPAdditionalCameraData m_AdditionalCameraData;
         SerializedObject m_AdditionalCameraDataSO;
-        SerializedObject m_LightweightRenderPipelineSO;
 
         readonly AnimBool m_ShowBGColorAnim = new AnimBool();
         readonly AnimBool m_ShowOrthoAnim = new AnimBool();
@@ -93,7 +92,6 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
         public new void OnEnable()
         {
             m_LightweightRenderPipeline = GraphicsSettings.renderPipelineAsset as LightweightRenderPipelineAsset;
-            m_LightweightRenderPipelineSO = new SerializedObject(m_LightweightRenderPipeline);
 
             m_AdditionalCameraData = camera.gameObject.GetComponent<LWRPAdditionalCameraData>();
             settings.OnEnable();
