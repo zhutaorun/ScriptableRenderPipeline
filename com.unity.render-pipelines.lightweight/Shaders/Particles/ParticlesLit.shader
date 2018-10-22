@@ -13,7 +13,7 @@ Shader "Lightweight Render Pipeline/Particles/Lit"
 
         _MetallicGlossMap("Metallic", 2D) = "white" {}
         [Gamma] _Metallic("Metallic", Range(0.0, 1.0)) = 0.0
-        _Glossiness("Smoothness", Range(0.0, 1.0)) = 0.5
+        _Smoothness("Smoothness", Range(0.0, 1.0)) = 0.5
 
         _BumpScale("Scale", Float) = 1.0
         _BumpMap("Normal Map", 2D) = "bump" {}
@@ -28,6 +28,8 @@ Shader "Lightweight Render Pipeline/Particles/Lit"
 
         // Hidden properties
         [HideInInspector] _Mode("__mode", Float) = 0.0
+        [HideInInspector] _ColorMode("_ColorMode", Float) = 0.0
+        [HideInInspector] _BaseColorAddSubDiff("_ColorMode", Vector) = (0,0,0,0)
         [HideInInspector] _FlipbookMode("__flipbookmode", Float) = 0.0
         [HideInInspector] _LightingEnabled("__lightingenabled", Float) = 1.0
         [HideInInspector] _EmissionEnabled("__emissionenabled", Float) = 0.0
@@ -59,72 +61,37 @@ Shader "Lightweight Render Pipeline/Particles/Lit"
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
             #pragma exclude_renderers d3d11_9x
-            #pragma vertex ParticlesLitVertex
-            #pragma fragment ParticlesLitFragment
             #pragma multi_compile __ SOFTPARTICLES_ON
             #pragma target 2.0
 
+            // -------------------------------------
+            // Material Keywords
             #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON _ALPHAPREMULTIPLY_ON _ALPHAMODULATE_ON
+            #pragma shader_feature _ _COLOROVERLAY_ON _COLORCOLOR_ON _COLORADDSUBDIFF_ON
             #pragma shader_feature _METALLICGLOSSMAP
             #pragma shader_feature _NORMALMAP
             #pragma shader_feature _EMISSION
             #pragma shader_feature _FADING_ON
             #pragma shader_feature _REQUIRE_UV2
+            
+            // -------------------------------------
+            // Lightweight Pipeline keywords
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile _ _SHADOWS_SOFT
+            #pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
+
+            // -------------------------------------
+            // Unity defined keywords
+            #pragma multi_compile_fog
+
+            #pragma vertex ParticlesLitVertex
+            #pragma fragment ParticlesLitFragment
 
             #include "ParticlesLitInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Lighting.hlsl"
-
-            VaryingsParticle ParticlesLitVertex(AttributesParticle input)
-            {
-                VaryingsParticle output;
-                VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);
-                VertexNormalInputs normalInput = GetVertexNormalInputs(input.normal
-#if defined(_NORMALMAP)
-                    , input.tangent
-#endif
-                );
-                half3 viewDirWS = GetCameraPositionWS() - vertexInput.positionWS;
-#if !SHADER_HINT_NICE_QUALITY
-                viewDirWS = SafeNormalize(viewDirWS);
-#endif
-
-                output.normal = normalInput.normalWS;
-#ifdef _NORMAL_MAP
-                output.tangent = normalInput.tangentWS;
-                output.bitangent = normalInput.bitangentWS;
-#endif
-
-                output.posWS.xyz = vertexInput.positionWS;
-                output.posWS.w = ComputeFogFactor(vertexInput.positionCS.z);
-                output.clipPos = vertexInput.positionCS;
-                output.viewDirShininess = half4(viewDirWS, 0.0);
-                output.color = input.color;
-
-                // TODO: Instancing
-                // vertColor(output.color);
-                vertTexcoord(input, output);
-#if defined(SOFTPARTICLES_ON) || defined(_FADING_ON)
-                output.projectedPosition = vertexInput.positionNDC;
-#endif
-                return output;
-            }
-
-            half4 ParticlesLitFragment(VaryingsParticle input) : SV_Target
-            {
-                SurfaceData surfaceData;
-                InitializeSurfaceData(input, surfaceData);
-
-                InputData inputData;
-                InitializeInputData(input, surfaceData.normalTS, inputData);
-
-                half4 color = LightweightFragmentPBR(inputData, surfaceData.albedo,
-                    surfaceData.metallic, half3(0, 0, 0), surfaceData.smoothness, surfaceData.occlusion, surfaceData.emission, surfaceData.alpha);
-                color.rgb = MixFog(color.rgb, inputData.fogCoord);
-                //color.rgb = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, input.projectedPosition.xy / input.projectedPosition.w), _ZBufferParams);
-                //color.a = 1;
-                return color;
-            }
-
+            #include "ParticlesLitForwardPass.hlsl"
             ENDHLSL
         }
     }

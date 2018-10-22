@@ -14,7 +14,7 @@ Shader "Lightweight Render Pipeline/Particles/Simple Lit"
         _Shininess("Shininess", Range(0.01, 1.0)) = 1.0
         _GlossMapScale("Smoothness Factor", Range(0.0, 1.0)) = 1.0
 
-        _Glossiness("Glossiness", Range(0.0, 1.0)) = 0.5
+        _Smoothness("Smoothness", Range(0.0, 1.0)) = 0.5
         [Enum(Specular Alpha,0,Albedo Alpha,1)] _SmoothnessTextureChannel("Smoothness texture channel", Float) = 0
 
         [HideInInspector] _SpecSource("Specular Color Source", Float) = 0.0
@@ -49,6 +49,8 @@ Shader "Lightweight Render Pipeline/Particles/Simple Lit"
         [HideInInspector] _CameraFadingEnabled("__camerafadingenabled", Float) = 0.0
         [HideInInspector] _SoftParticleFadeParams("__softparticlefadeparams", Vector) = (0,0,0,0)
         [HideInInspector] _CameraFadeParams("__camerafadeparams", Vector) = (0,0,0,0)
+        [HideInInspector] _ColorMode("_ColorMode", Float) = 0.0
+        [HideInInspector] _BaseColorAddSubDiff("_ColorMode", Vector) = (0,0,0,0)
     }
 
     SubShader
@@ -67,12 +69,12 @@ Shader "Lightweight Render Pipeline/Particles/Simple Lit"
             HLSLPROGRAM
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
-            #pragma vertex ParticlesLitVertex
-            #pragma fragment ParticlesLitFragment
-            #pragma multi_compile __ SOFTPARTICLES_ON
             #pragma exclude_renderers d3d11_9x
+            #pragma multi_compile __ SOFTPARTICLES_ON
             #pragma target 2.0
 
+            // -------------------------------------
+            // Material Keywords
             #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON _ALPHAPREMULTIPLY_ON _ALPHAMODULATE_ON
             #pragma shader_feature _ _SPECGLOSSMAP _SPECULAR_COLOR
             #pragma shader_feature _ _GLOSSINESS_FROM_BASE_ALPHA
@@ -80,67 +82,26 @@ Shader "Lightweight Render Pipeline/Particles/Simple Lit"
             #pragma shader_feature _EMISSION
             #pragma shader_feature _FADING_ON
             #pragma shader_feature _REQUIRE_UV2
+            
+            // -------------------------------------
+            // Lightweight Pipeline keywords
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile _ _SHADOWS_SOFT
+            #pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
 
+            // -------------------------------------
+            // Unity defined keywords
+            #pragma multi_compile_fog
+            
+            #pragma vertex ParticlesLitVertex
+            #pragma fragment ParticlesLitFragment
             #define BUMP_SCALE_NOT_SUPPORTED 1
-
-            #include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Particles.hlsl"
-            #include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Lighting.hlsl"
-
-            VaryingsParticle ParticlesLitVertex(AttributesParticle input)
-            {
-                VaryingsParticle output;
-
-                VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);
-                VertexNormalInputs normalInput = GetVertexNormalInputs(input.normal
-#if defined(_NORMALMAP)
-                    , input.tangent
-#endif
-                );
-                half3 viewDirWS = GetCameraPositionWS() - vertexInput.positionWS;
-#if !SHADER_HINT_NICE_QUALITY
-                viewDirWS = SafeNormalize(viewDirWS);
-#endif
-
-                output.normal = normalInput.normalWS;
-#ifdef _NORMALMAP
-                output.tangent = normalInput.tangentWS;
-                output.bitangent = normalInput.bitangentWS;
-#endif
-
-                output.posWS.xyz = vertexInput.positionWS.xyz;
-                output.posWS.w = ComputeFogFactor(vertexInput.positionCS.z);
-                output.clipPos = vertexInput.positionCS;
-                output.viewDirShininess = half4(viewDirWS, _Shininess * 128.0h);
-                output.color = input.color;
-
-                // TODO: Instancing
-                // vertColor(output.color);
-                vertTexcoord(input, output);
-#if defined(SOFTPARTICLES_ON) || defined(_FADING_ON)
-                output.projectedPosition = ComputeScreenPos(vertexInput.positionCS);
-#endif
-                return output;
-            }
-
-            half4 ParticlesLitFragment(VaryingsParticle input) : SV_Target
-            {
-                half4 albedo = SampleAlbedo(input, TEXTURE2D_PARAM(_BaseMap, sampler_BaseMap));
-                half3 diffuse = AlphaModulate(albedo.rgb, albedo.a);
-                half alpha = AlphaBlendAndTest(albedo.a, _Cutoff);
-                half3 normalTS = SampleNormalTS(input, TEXTURE2D_PARAM(_BumpMap, sampler_BumpMap));
-                half3 emission = SampleEmission(input, _EmissionColor.rgb, TEXTURE2D_PARAM(_EmissionMap, sampler_EmissionMap));
-                half4 specularGloss = SampleSpecularGloss(input, albedo.a, _SpecColor, TEXTURE2D_PARAM(_SpecGlossMap, sampler_SpecGlossMap));
-                half shininess = input.viewDirShininess.w;
-
-                InputData inputData;
-                InitializeInputData(input, normalTS, inputData);
-
-                half4 color = LightweightFragmentBlinnPhong(inputData, diffuse, specularGloss, shininess, emission, alpha);
-
-                color.rgb = MixFog(color.rgb, inputData.fogCoord);
-                return color;
-            }
-
+            
+            #include "ParticlesSimpleLitInput.hlsl"
+            #include "ParticlesSimpleLitForwardPass.hlsl"
             ENDHLSL
         }
     }

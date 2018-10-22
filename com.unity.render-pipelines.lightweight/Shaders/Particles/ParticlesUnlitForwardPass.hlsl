@@ -1,0 +1,150 @@
+#ifndef LIGHTWEIGHT_PARTICLES_UNLIT_FORWARD_PASS_INCLUDED
+#define LIGHTWEIGHT_PARTICLES_UNLIT_FORWARD_PASS_INCLUDED
+
+#include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Lighting.hlsl"
+
+struct AttributesParticle
+{
+    float4 vertex : POSITION;
+    float3 normal : NORMAL;
+    half4 color : COLOR;
+#if defined(_REQUIRE_UV2) && !defined(UNITY_PARTICLE_INSTANCING_ENABLED)
+    float4 texcoords : TEXCOORD0;
+    float texcoordBlend : TEXCOORD1;
+#else
+    float2 texcoords : TEXCOORD0;
+#endif
+    float4 tangent : TANGENT;
+};
+
+struct VaryingsParticle
+{
+    half4 color                     : COLOR;
+    float2 texcoord                 : TEXCOORD0;
+    
+    float4 positionWS               : TEXCOORD1;
+
+#ifdef _NORMALMAP
+    half4 normalWS                  : TEXCOORD2;    // xyz: normal, w: viewDir.x
+    half4 tangentWS                 : TEXCOORD3;    // xyz: tangent, w: viewDir.y
+    half4 bitangentWS               : TEXCOORD4;    // xyz: bitangent, w: viewDir.z
+#else
+    half3 normalWS                  : TEXCOORD2;
+    half3 viewDirWS                 : TEXCOORD3;
+#endif
+
+#if defined(_REQUIRE_UV2)
+    float3 texcoord2AndBlend        : TEXCOORD5;
+#endif
+#if defined(SOFTPARTICLES_ON) || defined(_FADING_ON)
+    float4 projectedPosition        : TEXCOORD6;
+#endif
+
+#if defined(_MAIN_LIGHT_SHADOWS) && !defined(_RECEIVE_SHADOWS_OFF)
+    float4 shadowCoord              : TEXCOORD7;
+#endif
+
+    float3 vertexSH                 : TEXCOORD8; // SH
+    float4 clipPos                  : SV_POSITION;
+};
+
+void InitializeInputData(VaryingsParticle input, half3 normalTS, out InputData output)
+{
+    output = (InputData)0;
+
+    output.positionWS = input.positionWS.xyz;
+
+#ifdef _NORMALMAP
+    half3 viewDirWS = half3(input.normalWS.w, input.tangentWS.w, input.bitangentWS.w);
+    output.normalWS = TransformTangentToWorld(normalTS,
+        half3x3(input.tangentWS.xyz, input.bitangentWS.xyz, input.normalWS.xyz));
+#else
+    half3 viewDirWS = input.viewDirWS;
+    output.normalWS = input.normalWS;
+#endif
+
+    output.normalWS = NormalizeNormalPerPixel(output.normalWS);
+    
+#if SHADER_HINT_NICE_QUALITY
+    viewDirWS = SafeNormalize(viewDirWS);
+#endif
+
+    output.viewDirectionWS = viewDirWS;
+    
+#if defined(_MAIN_LIGHT_SHADOWS) && !defined(_RECEIVE_SHADOWS_OFF)
+    output.shadowCoord = input.shadowCoord;
+#else
+    output.shadowCoord = float4(0, 0, 0, 0);
+#endif
+
+    output.fogCoord = (half)input.positionWS.w;
+    output.vertexLighting = half3(0.0h, 0.0h, 0.0h);
+    output.bakedGI = SampleSHPixel(input.vertexSH, output.normalWS);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//                  Vertex and Fragment functions                            //
+///////////////////////////////////////////////////////////////////////////////
+
+VaryingsParticle vertParticleUnlit(AttributesParticle input)
+{
+    VaryingsParticle output = (VaryingsParticle)0;
+    VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);
+
+    // position ws is used to compute eye depth in vertFading
+    output.positionWS.xyz = vertexInput.positionWS;
+    output.positionWS.w = ComputeFogFactor(vertexInput.positionCS.z);
+    output.clipPos = vertexInput.positionCS;
+    output.color = input.color;
+
+    // TODO: Instancing
+    //vertColor(output.color);
+    
+    output.texcoord = input.texcoords.xy;
+#ifdef _REQUIRE_UV2
+    output.texcoord2AndBlend.xy = input.texcoords.zw;
+    output.texcoord2AndBlend.z = input.texcoordBlend;
+#endif
+    
+#if defined(SOFTPARTICLES_ON) || defined(_FADING_ON)
+    output.projectedPosition = ComputeScreenPos(vertexInput.positionCS);
+#endif
+
+    return output;
+}
+
+half4 fragParticleUnlit(VaryingsParticle input) : SV_Target
+{
+    float2 uv = input.texcoord;
+    float3 blendUv = float3(0, 0, 0);
+#if defined(_REQUIRE_UV2)
+    blendUv = input.texcoord2AndBlend;
+#endif
+
+    float4 projectedPosition = float4(0,0,0,0);
+#if defined(SOFTPARTICLES_ON) || defined(_FADING_ON)
+    projectedPosition = input.projectedPosition;
+#endif
+
+    half4 albedo = SampleAlbedo(uv, blendUv, _BaseColor, input.color, projectedPosition, TEXTURE2D_PARAM(_BaseMap, sampler_BaseMap));
+    
+#if defined (_DISTORTION_ON)   
+    albedo.rgb = Distortion(albedo, float3(0, 0, 1), _DistortionBlend, projectedPosition);
+#endif
+    
+    half3 diffuse = AlphaModulate(albedo.rgb, albedo.a);
+    half alpha = AlphaBlendAndTest(albedo.a, _Cutoff);
+    
+#if defined(_EMISSION)
+    half3 emission = BlendTexture(TEXTURE2D_PARAM(_EmissionMap, sampler_EmissionMap), uv, blendUv) * _EmissionColor.rgb;
+#else
+    half3 emission = half3(0, 0, 0);
+#endif
+
+    half3 result = diffuse + emission;
+    half fogFactor = input.positionWS.w;
+    result = MixFogColor(result, half3(0, 0, 0), fogFactor);
+    return half4(result, alpha);
+}
+
+#endif // LIGHTWEIGHT_PARTICLES_UNLIT_FORWARD_PASS_INCLUDED

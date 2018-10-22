@@ -9,7 +9,7 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
         private MaterialProperty sampleGIProp;
         private MaterialProperty bumpMap;
 
-        private static class Styles
+        private static class StylesUnlit
         {
             public static string surfaceProperties = "Surface Properties";
             public static GUIContent normalMapLabel = new GUIContent("Normal Map", "This property takes a Tangent Space Normal Map to add the illusion of more detail");
@@ -43,7 +43,7 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             EditorGUI.BeginChangeCheck();
             {
                 EditorGUI.BeginDisabledGroup(sampleGIProp.floatValue < 1.0);
-                materialEditor.TexturePropertySingleLine(Styles.normalMapLabel, bumpMap);
+                materialEditor.TexturePropertySingleLine(StylesUnlit.normalMapLabel, bumpMap);
                 EditorGUI.EndDisabledGroup();
                 DrawBaseTileOffset();
             }
@@ -57,7 +57,7 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
         public override void DrawAdvancedOptions(Material material)
         {
             EditorGUI.BeginChangeCheck();
-            materialEditor.ShaderProperty(sampleGIProp, Styles.sampleGILabel);
+            materialEditor.ShaderProperty(sampleGIProp, StylesUnlit.sampleGILabel);
             if (EditorGUI.EndChangeCheck())
             {
                 foreach (var target in blendModeProp.targets)

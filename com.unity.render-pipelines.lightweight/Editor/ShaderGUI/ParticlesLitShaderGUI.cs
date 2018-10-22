@@ -120,7 +120,7 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             alphaCutoff = FindProperty("_Cutoff", props);
             metallicMap = FindProperty("_MetallicGlossMap", props, false);
             metallic = FindProperty("_Metallic", props, false);
-            smoothness = FindProperty("_Glossiness", props, false);
+            smoothness = FindProperty("_Smoothness", props, false);
             bumpScale = FindProperty("_BumpScale", props, false);
             bumpMap = FindProperty("_BumpMap", props, false);
             emissionEnabled = FindProperty("_EmissionEnabled", props);
@@ -614,19 +614,19 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
                     material.DisableKeyword("_COLOROVERLAY_ON");
                     material.DisableKeyword("_COLORCOLOR_ON");
                     material.EnableKeyword("_COLORADDSUBDIFF_ON");
-                    material.SetVector("_ColorAddSubDiff", new Vector4(-1.0f, 1.0f, 0.0f, 0.0f));
+                    material.SetVector("_BaseColorAddSubDiff", new Vector4(-1.0f, 1.0f, 0.0f, 0.0f));
                     break;
                 case ColorMode.Additive:
                     material.DisableKeyword("_COLOROVERLAY_ON");
                     material.DisableKeyword("_COLORCOLOR_ON");
                     material.EnableKeyword("_COLORADDSUBDIFF_ON");
-                    material.SetVector("_ColorAddSubDiff", new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
+                    material.SetVector("_BaseColorAddSubDiff", new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
                     break;
                 case ColorMode.Subtractive:
                     material.DisableKeyword("_COLOROVERLAY_ON");
                     material.DisableKeyword("_COLORCOLOR_ON");
                     material.EnableKeyword("_COLORADDSUBDIFF_ON");
-                    material.SetVector("_ColorAddSubDiff", new Vector4(-1.0f, 0.0f, 0.0f, 0.0f));
+                    material.SetVector("_BaseColorAddSubDiff", new Vector4(-1.0f, 0.0f, 0.0f, 0.0f));
                     break;
             }
         }

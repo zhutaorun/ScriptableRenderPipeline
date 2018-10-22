@@ -33,6 +33,7 @@ Shader "Lightweight Render Pipeline/Particles/Unlit"
         [HideInInspector] _SoftParticleFadeParams("__softparticlefadeparams", Vector) = (0,0,0,0)
         [HideInInspector] _CameraFadeParams("__camerafadeparams", Vector) = (0,0,0,0)
         [HideInInspector] _BaseColorAddSubDiff("__coloraddsubdiff", Vector) = (0,0,0,0)
+        [HideInInspector] _ColorMode("_ColorMode", Float) = 0.0
     }
 
     Category
@@ -67,41 +68,9 @@ Shader "Lightweight Render Pipeline/Particles/Unlit"
                 #pragma vertex vertParticleUnlit
                 #pragma fragment fragParticleUnlit
 
-                #include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Particles.hlsl"
-
-                VaryingsParticle vertParticleUnlit(AttributesParticle input)
-                {
-                    VaryingsParticle output = (VaryingsParticle)0;
-                    VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);
-
-                    // position ws is used to compute eye depth in vertFading
-                    output.posWS.xyz = vertexInput.positionWS;
-                    output.posWS.w = ComputeFogFactor(vertexInput.positionCS.z);
-                    output.clipPos = vertexInput.positionCS;
-                    output.color = input.color;
-
-                    // TODO: Instancing
-                    //vertColor(output.color);
-                    vertTexcoord(input, output);
-#if defined(SOFTPARTICLES_ON) || defined(_FADING_ON)
-                    output.projectedPosition = ComputeScreenPos(vertexInput.positionCS);
-#endif
-
-                    return output;
-                }
-
-                half4 fragParticleUnlit(VaryingsParticle input) : SV_Target
-                {
-                    half4 albedo = SampleAlbedo(input, TEXTURE2D_PARAM(_BaseMap, sampler_BaseMap));
-                    half3 diffuse = AlphaModulate(albedo.rgb, albedo.a);
-                    half alpha = AlphaBlendAndTest(albedo.a, _Cutoff);
-                    half3 emission = SampleEmission(input, _EmissionColor.rgb, TEXTURE2D_PARAM(_EmissionMap, sampler_EmissionMap));
-
-                    half3 result = diffuse + emission;
-                    half fogFactor = input.posWS.w;
-                    result = MixFogColor(result, half3(0, 0, 0), fogFactor);
-                    return half4(result, alpha);
-                }
+                #include "ParticlesUnlitInput.hlsl"
+                #include "ParticlesUnlitForwardPass.hlsl"
+                
                 ENDHLSL
             }
         }
