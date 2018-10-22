@@ -172,7 +172,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                 {
                     MaterialNodeView materialNodeView = selectable as MaterialNodeView;
                     AbstractMaterialNode abstractMaterialNode = materialNodeView.node;
-                    abstractMaterialNode.groupGuid = groupData.guid;
+                    //abstractMaterialNode.groupGuid = groupData.guid;
+                    graph.SetNodeGroup(abstractMaterialNode, groupData);
                 }
             }
 

@@ -281,7 +281,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 var anyChanged = false;
                 foreach (var materialNodeView in element.Select(e => e).OfType<MaterialNodeView>())
                 {
-                    if (materialNodeView.node.guid != groupData.guid)
+                    if (materialNodeView.node.groupGuid != groupData.guid)
                     {
                         anyChanged = true;
                         break;
@@ -291,11 +291,12 @@ namespace UnityEditor.ShaderGraph.Drawing
                 if (!anyChanged)
                     return;
 
-                m_Graph.owner.RegisterCompleteObjectUndo("Adding to group node :: " + groupData.title);
+                m_Graph.owner.RegisterCompleteObjectUndo(":: " + groupData.title);
 
                 foreach (var materialNodeView in element.Select(e => e).OfType<MaterialNodeView>())
                 {
                     m_Graph.SetNodeGroup(materialNodeView.node, groupData);
+                    Debug.Log(materialNodeView.node.name);
                 }
             }
         }
@@ -319,7 +320,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 var anyChanged = false;
                 foreach (var materialNodeView in element.Select(e => e).OfType<MaterialNodeView>())
                 {
-                    if (materialNodeView.node.guid == groupData.guid)
+                    if (materialNodeView.node.groupGuid == groupData.guid)
                     {
                         anyChanged = true;
                         break;
@@ -429,10 +430,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 AddNode(node);
             }
 
-            foreach (GroupData groupData in m_Graph.addedGroups)
-            {
-                AddNewGroupNode(groupData);
-            }
+
 
             foreach (var groupNodeStruct in m_Graph.groupNodeStruct)
             {
@@ -450,6 +448,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                 //materialNodeView.node.groupGuid = groupData.guid;
 
             }
+
+
 
             foreach (var guid in m_PotentialEmptyGroupNodes)
             {
@@ -473,6 +473,11 @@ namespace UnityEditor.ShaderGraph.Drawing
                 }
             }
             m_PotentialEmptyGroupNodes.Clear();
+
+            foreach (GroupData groupData in m_Graph.addedGroups)
+            {
+                AddNewGroupNode(groupData);
+            }
 
             foreach (var node in m_Graph.pastedNodes)
             {
@@ -546,25 +551,22 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void AddNewGroupNode(GroupData groupData)
         {
-            MaterialGraphGroup graphGroupNode = new MaterialGraphGroup();
+            MaterialGraphGroup graphGroup = new MaterialGraphGroup();
 
-            graphGroupNode.userData = groupData;
-            graphGroupNode.SetPosition(new Rect(groupData.position.x, groupData.position.y, 100, 100));
-            graphGroupNode.title = groupData.title;
+            graphGroup.userData = groupData;
+//            graphGroup.SetPosition(new Rect(groupData.position.x, groupData.position.y, 100, 100));
+            graphGroup.title = groupData.title;
 
-            m_GraphView.AddElement(graphGroupNode);
-            m_GraphGroups.Add(graphGroupNode);
+            m_GraphView.AddElement(graphGroup);
+            m_GraphGroups.Add(graphGroup);
 
             // Need to figure out why I used this one before
             List<MaterialNodeView> allNodesInThisGroup = m_GraphView.nodes.ToList().OfType<MaterialNodeView>().Where(x => x.node.groupGuid == groupData.guid).ToList();
-            MaterialGraphGroup graphGroup = m_GraphView.graphElements.ToList().OfType<MaterialGraphGroup>().ToList().First(g => g.userData == groupData);
+//            MaterialGraphGroup graphGroup = m_GraphView.graphElements.ToList().OfType<MaterialGraphGroup>().ToList().First(g => g.userData == groupData);
 
             foreach (MaterialNodeView materialNodeView in allNodesInThisGroup)
             {
-                if (materialNodeView.node != null)
-                {
-                    graphGroup.AddElement(materialNodeView);
-                }
+                graphGroup.AddElement(materialNodeView);
             }
         }
 
