@@ -77,6 +77,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     ref cameraSettings, ref cameraPosition
                 );
             }
+
+            // Frame Settings Overrides
+            var sourceFrameSettings = new FrameSettings();
+            var hd = (HDRenderPipeline)RenderPipelineManager.currentPipeline;
+            switch (settings.mode)
+            {
+                case ProbeSettings.Mode.Realtime:
+                    sourceFrameSettings = hd.asset.GetRealtimeReflectionFrameSettings();
+                    break;
+                case ProbeSettings.Mode.Baked:
+                case ProbeSettings.Mode.Custom:
+                    sourceFrameSettings = hd.asset.GetBakedOrCustomReflectionFrameSettings();
+                    break;
+            }
+            cameraSettings.frameSettings = cameraSettings.frameSettings.NewWithOverrides(sourceFrameSettings);
         }
 
         internal static void ApplyMirroredReferenceTransform(

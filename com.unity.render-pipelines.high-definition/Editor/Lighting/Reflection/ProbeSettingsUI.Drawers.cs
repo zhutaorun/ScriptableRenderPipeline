@@ -45,8 +45,20 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     }
                 );
                 PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyCaptureRotationProxySpace, d.proxyCaptureRotationProxySpace, _.GetContent("Capture Rotation|Capture Rotation in Proxy Space"), @override.probe, displayedFields.probe, overridableFields.probe);
-                PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyMirrorPositionProxySpace, d.proxyMirrorPositionProxySpace, _.GetContent("Mirror Position|Mirror Position in Proxy Space"), @override.probe, displayedFields.probe, overridableFields.probe);
-                PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyMirrorRotationProxySpace, d.proxyMirrorRotationProxySpace, _.GetContent("Mirror Rotation|Mirror Rotation in Proxy Space"), @override.probe, displayedFields.probe, overridableFields.probe);
+                PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyMirrorPositionProxySpace, d.proxyMirrorPositionProxySpace, _.GetContent("Mirror Position|Mirror Position in Proxy Space"), @override.probe, displayedFields.probe, overridableFields.probe,
+                    (p, l) =>
+                    {
+                        EditorGUILayout.PropertyField(p, l);
+                        HDProbeUI.Drawer_ToolBarButton(HDProbeUI.ToolBar.MirrorPosition, o, GUILayout.Width(28f), GUILayout.MinHeight(22f));
+                    }
+                );
+                PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.proxyMirrorRotationProxySpace, d.proxyMirrorRotationProxySpace, _.GetContent("Mirror Rotation|Mirror Rotation in Proxy Space"), @override.probe, displayedFields.probe, overridableFields.probe,
+                    (p, l) =>
+                    {
+                        EditorGUILayout.PropertyField(p, l);
+                        HDProbeUI.Drawer_ToolBarButton(HDProbeUI.ToolBar.MirrorRotation, o, GUILayout.Width(28f), GUILayout.MinHeight(22f));
+                    }
+                );
                 EditorGUILayout.Space();
             }
 

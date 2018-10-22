@@ -22,7 +22,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                             s.boxBaseHandle.DrawHandle();
                             s.boxBaseHandle.DrawHull(true);
                             if (EditorGUI.EndChangeCheck())
+                            {
                                 d.boxSize.vector3Value = s.boxBaseHandle.size;
+                            }
                             break;
                         }
                     case InfluenceShape.Sphere:

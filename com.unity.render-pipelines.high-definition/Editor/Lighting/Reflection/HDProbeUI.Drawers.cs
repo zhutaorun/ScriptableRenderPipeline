@@ -19,7 +19,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             InfluenceShape = 1 << 0,
             Blend = 1 << 1,
             NormalBlend = 1 << 2,
-            CapturePosition = 1 << 3
+            CapturePosition = 1 << 3,
+            MirrorPosition = 1 << 4,
+            MirrorRotation = 1 << 5
         }
 
         internal interface IProbeUISettingsProvider
@@ -33,19 +35,23 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         }
 
         // Constants
-        const EditMode.SceneViewEditMode EditBaseShape = EditMode.SceneViewEditMode.ReflectionProbeBox;
-        const EditMode.SceneViewEditMode EditInfluenceShape = EditMode.SceneViewEditMode.GridBox;
-        const EditMode.SceneViewEditMode EditInfluenceNormalShape = EditMode.SceneViewEditMode.Collider;
-        const EditMode.SceneViewEditMode EditCapturePosition = EditMode.SceneViewEditMode.GridMove;
+        const EditMode.SceneViewEditMode EditBaseShape = (EditMode.SceneViewEditMode)100;
+        const EditMode.SceneViewEditMode EditInfluenceShape = (EditMode.SceneViewEditMode)101;
+        const EditMode.SceneViewEditMode EditInfluenceNormalShape = (EditMode.SceneViewEditMode)102;
+        const EditMode.SceneViewEditMode EditCapturePosition = (EditMode.SceneViewEditMode)103;
+        const EditMode.SceneViewEditMode EditMirrorPosition = (EditMode.SceneViewEditMode)104;
+        const EditMode.SceneViewEditMode EditMirrorRotation = (EditMode.SceneViewEditMode)105;
         //Note: EditMode.SceneViewEditMode.ReflectionProbeOrigin is still used
         //by legacy reflection probe and have its own mecanism that we don't want
 
         static readonly Dictionary<ToolBar, EditMode.SceneViewEditMode> k_ToolbarMode = new Dictionary<ToolBar, EditMode.SceneViewEditMode>
         {
-            { ToolBar.InfluenceShape,  EditBaseShape },
-            { ToolBar.Blend,  EditInfluenceShape },
-            { ToolBar.NormalBlend,  EditInfluenceNormalShape },
-            { ToolBar.CapturePosition,  EditCapturePosition }
+            { ToolBar.InfluenceShape, EditBaseShape },
+            { ToolBar.Blend, EditInfluenceShape },
+            { ToolBar.NormalBlend, EditInfluenceNormalShape },
+            { ToolBar.CapturePosition, EditCapturePosition },
+            { ToolBar.MirrorPosition, EditMirrorPosition },
+            { ToolBar.MirrorRotation, EditMirrorRotation }
         };
 
         //[TODO] change this to be modifiable shortcuts

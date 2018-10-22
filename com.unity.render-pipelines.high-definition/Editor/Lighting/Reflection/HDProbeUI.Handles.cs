@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEditorInternal;
 using UnityEngine;
@@ -25,18 +26,48 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     InfluenceVolumeUI.DrawHandles_EditInfluenceNormal(s.probeSettings.influence, d.probeSettings.influence, o, mat, probe);
                     break;
                 case EditCapturePosition:
+                case EditMirrorPosition:
                     {
                         var proxyToWorldMatrix = probe.proxyToWorld;
                         // Set scale to 1
                         proxyToWorldMatrix.m00 = 1.0f;
                         proxyToWorldMatrix.m11 = 1.0f;
+
+                        SerializedProperty target;
+                        switch (EditMode.editMode)
+                        {
+                            case EditCapturePosition: target = d.probeSettings.proxyCapturePositionProxySpace; break;
+                            case EditMirrorPosition: target = d.probeSettings.proxyMirrorPositionProxySpace; break;
+                            default: throw new ArgumentOutOfRangeException();
+                        }
+
                         using (new Handles.DrawingScope(proxyToWorldMatrix))
                         {
-                            var capturePosition = d.probeSettings.proxyCapturePositionProxySpace.vector3Value;
+                            var position = target.vector3Value;
                             EditorGUI.BeginChangeCheck();
-                            capturePosition = Handles.PositionHandle(capturePosition, Quaternion.identity);
+                            position = Handles.PositionHandle(position, Quaternion.identity);
                             if (EditorGUI.EndChangeCheck())
-                                d.probeSettings.proxyCapturePositionProxySpace.vector3Value = capturePosition;
+                                target.vector3Value = position;
+                        }
+                        break;
+                    }
+                case EditMirrorRotation:
+                    {
+                        var proxyToWorldMatrix = probe.proxyToWorld;
+                        // Set scale to 1
+                        proxyToWorldMatrix.m00 = 1.0f;
+                        proxyToWorldMatrix.m11 = 1.0f;
+
+                        var target = d.probeSettings.proxyMirrorRotationProxySpace;
+                        var position = d.probeSettings.proxyMirrorPositionProxySpace.vector3Value;
+
+                        using (new Handles.DrawingScope(proxyToWorldMatrix))
+                        {
+                            var rotation = target.quaternionValue;
+                            EditorGUI.BeginChangeCheck();
+                            rotation = Handles.RotationHandle(rotation, position);
+                            if (EditorGUI.EndChangeCheck())
+                                target.quaternionValue = rotation;
                         }
                         break;
                     }

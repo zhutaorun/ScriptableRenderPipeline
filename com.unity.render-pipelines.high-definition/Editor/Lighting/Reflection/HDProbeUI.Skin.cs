@@ -1,10 +1,5 @@
-using System;
 using System.Collections.Generic;
-using UnityEditor.AnimatedValues;
 using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.Experimental.Rendering.HDPipeline;
-using UnityEngine.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
@@ -40,7 +35,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             { ToolBar.InfluenceShape,  EditorGUIUtility.IconContent("EditCollider", "|Modify the base shape. (SHIFT+1)") },
             { ToolBar.Blend,  EditorGUIUtility.IconContent("PreMatCube", "|Modify the influence volume. (SHIFT+2)") },
             { ToolBar.NormalBlend,  EditorGUIUtility.IconContent("SceneViewOrtho", "|Modify the influence normal volume. (SHIFT+3)") },
-            { ToolBar.CapturePosition,  EditorGUIUtility.IconContent("MoveTool", "|Change the capture position.") }
+            { ToolBar.CapturePosition,  EditorGUIUtility.IconContent("MoveTool", "|Change the capture position.") },
+            { ToolBar.MirrorPosition,  EditorGUIUtility.IconContent("MoveTool", "|Change the mirror position.") },
+            { ToolBar.MirrorRotation,  EditorGUIUtility.IconContent("RotateTool", "|Change the mirror rotation.") }
         };
     }
 }

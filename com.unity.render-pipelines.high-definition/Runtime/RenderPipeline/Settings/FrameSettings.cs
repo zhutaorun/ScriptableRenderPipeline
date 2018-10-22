@@ -179,7 +179,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             this.lightLoopSettings.CopyTo(frameSettings.lightLoopSettings);
         }
 
-        public FrameSettings Override(FrameSettings overridedFrameSettings)
+        public FrameSettings NewWithOverrides(FrameSettings overridedFrameSettings)
         {
             if(overrides == 0)
             {

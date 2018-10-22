@@ -84,13 +84,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             SceneViewOverlay_Window(_.GetContent("Planar Probe"), OnOverlayGUI, -100, target);
 
-            using (new Handles.DrawingScope(Matrix4x4.TRS(d.target.transform.position, d.target.transform.rotation, Vector3.one)))
+            if (d.probeSettings.mode.intValue != (int)ProbeSettings.Mode.Realtime)
             {
-                var referencePosition = d.localReferencePosition.vector3Value;
-                EditorGUI.BeginChangeCheck();
-                referencePosition = Handles.PositionHandle(referencePosition, Quaternion.identity);
-                if (EditorGUI.EndChangeCheck())
-                    d.localReferencePosition.vector3Value = referencePosition;
+                using (new Handles.DrawingScope(Matrix4x4.TRS(d.target.transform.position, d.target.transform.rotation, Vector3.one)))
+                {
+                    var referencePosition = d.localReferencePosition.vector3Value;
+                    EditorGUI.BeginChangeCheck();
+                    referencePosition = Handles.PositionHandle(referencePosition, Quaternion.identity);
+                    if (EditorGUI.EndChangeCheck())
+                        d.localReferencePosition.vector3Value = referencePosition;
+                }
             }
         }
 

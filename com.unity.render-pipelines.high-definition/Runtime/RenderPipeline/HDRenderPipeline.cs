@@ -872,7 +872,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     additionalCameraData.UpdateDirtyFrameSettings(assetFrameSettingsIsDirty, m_Asset.GetFrameSettings());
                     if (camera.cameraType != CameraType.Reflection)
                     {
-                        srcFrameSettings = additionalCameraData.GetFrameSettings().Override(m_Asset.GetFrameSettings());
+                        srcFrameSettings = additionalCameraData.GetFrameSettings().NewWithOverrides(m_Asset.GetFrameSettings());
                     }
                     else 
                     {

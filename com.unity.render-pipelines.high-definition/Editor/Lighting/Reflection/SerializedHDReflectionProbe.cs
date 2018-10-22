@@ -41,7 +41,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         internal override void Apply()
         {
-            // Sync mode with legacy reflection probe
+            // Force the mode to real time so its influence is properly culled by the camera.
             legacyMode.intValue = 1;
 
             serializedLegacyObject.ApplyModifiedProperties();
