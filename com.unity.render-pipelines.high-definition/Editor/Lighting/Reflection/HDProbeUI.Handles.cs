@@ -27,6 +27,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 case EditCapturePosition:
                     {
                         var proxyToWorldMatrix = probe.proxyToWorld;
+                        // Set scale to 1
+                        proxyToWorldMatrix.m00 = 1.0f;
+                        proxyToWorldMatrix.m11 = 1.0f;
                         using (new Handles.DrawingScope(proxyToWorldMatrix))
                         {
                             var capturePosition = d.probeSettings.proxyCapturePositionProxySpace.vector3Value;

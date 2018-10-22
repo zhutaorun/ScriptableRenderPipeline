@@ -108,8 +108,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 m_SerializedHDProbe.Apply();
         }
 
-
-
         static Func<float> s_CapturePointPreviewSizeGetter = ComputeCapturePointPreviewSizeGetter();
         static Func<float> ComputeCapturePointPreviewSizeGetter()
         {

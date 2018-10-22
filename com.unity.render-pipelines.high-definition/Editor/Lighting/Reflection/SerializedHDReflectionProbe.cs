@@ -42,7 +42,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         internal override void Apply()
         {
             // Sync mode with legacy reflection probe
-            legacyMode.intValue = probeSettings.mode.intValue;
+            legacyMode.intValue = 1;
 
             serializedLegacyObject.ApplyModifiedProperties();
             base.Apply();

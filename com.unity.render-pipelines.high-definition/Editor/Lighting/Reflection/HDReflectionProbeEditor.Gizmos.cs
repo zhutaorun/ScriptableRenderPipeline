@@ -56,11 +56,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if(material == null)
                 material = new Material(Shader.Find("Debug/ReflectionProbePreview"));
 
-            var additional = target.GetComponent<HDAdditionalReflectionData>();
-            var renderData = additional.renderData;
-            var capturePosition = renderData.capturePosition;
 
-            material.SetTexture("_Cubemap", additional.texture);
+            var probe = target.GetComponent<HDAdditionalReflectionData>();
+            var probePositionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, null);
+            HDRenderUtilities.ComputeCameraSettingsFromProbeSettings(
+                probe.settings, probePositionSettings, probe.texture,
+                out CameraSettings cameraSettings, out CameraPositionSettings cameraPositionSettings
+            );
+            var capturePosition = cameraPositionSettings.position;
+
+            material.SetTexture("_Cubemap", probe.texture);
             material.SetPass(0);
             Graphics.DrawMeshNow(sphere, Matrix4x4.TRS(capturePosition, Quaternion.identity, Vector3.one * capturePointPreviewSize));
         }
