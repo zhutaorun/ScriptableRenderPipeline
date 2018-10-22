@@ -42,7 +42,7 @@ namespace UnityEngine.Experimental.Rendering
                 for (int i = 0; i < v.Length; ++i, ++charPtr)
                     *charPtr = v[i];
 
-                m_WriteCursor += sizeof(int) * v.Length;
+                m_WriteCursor += sizeof(char) * v.Length;
                 ++Count;
 
                 return true;
